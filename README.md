@@ -87,7 +87,3 @@ OpenFaith is an ambitious project, and community contributions are welcome! (Det
 ## License
 
 This project will be licensed under an open-source license (e.g., MIT or Apache 2.0 - TBD).
-
----
-
-The "Connector Definition" section is now more descriptive of what a code-based adapter would entail without showing a specific code implementation. This keeps the README focused on the "what" and "why" at a high level.
