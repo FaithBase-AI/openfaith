@@ -11,6 +11,11 @@ Our vision is to empower churches and developers by:
 
 Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, and foster innovation by allowing different church software solutions to work together seamlessly.
 
+## Key Docs
+
+- [Canonical Data Model (CDM)](/docs/CDM.md)
+- [External Links](/docs//ExternalLinks.md)
+
 ## Core Architectural Principles
 
 - **[Canonical Data Model (CDM)](/docs/CDM.md):** OpenFaith defines its own internal, standardized representation for core church entities (e.g., Person, Group, Team, Event, Donation). This CDM, defined using [Effect Schema](https://effect.website/docs/schema/introduction/), serves as the "lingua franca" for all data within the system.
