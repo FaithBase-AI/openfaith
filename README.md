@@ -40,7 +40,7 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, a
   - **Transformation Engine:** Converts data between external formats and the CDM.
   - **State Manager:** Tracks `last_synced_timestamp`, ID mappings, etc.
   - **Conflict Resolution Module:** (e.g., "Last Write Wins" as a starting point).
-- **ChMS Adapters (Connectors):** Pluggable modules, one for each external system.
+- **[ChMS Adapters (Connectors)](/docs/ChMSAdapters.md):** Pluggable modules, one for each external system.
 
 ## Connector Definition: Code-First Integration
 
