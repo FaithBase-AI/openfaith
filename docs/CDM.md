@@ -2,7 +2,7 @@
 
 At the heart of OpenFaith is a flexible and extensible Canonical Data Model (CDM) designed to represent core church-related information in a standardized way. This model serves as the "lingua franca" for data within the OpenFaith platform and is the target for transformations when synchronizing with external Church Management Systems (ChMS).
 
-The CDM is defined using [Effect.Schema](https://github.com/Effect-TS/schema), ensuring strong typing, validation, and the ability to derive various representations (e.g., database schemas via Drizzle ORM, API response DTOs).
+The CDM is defined using [Effect Schema](https://effect.website/docs/schema/introduction/), ensuring strong typing, validation, and the ability to derive various representations (e.g., database schemas via Drizzle ORM, API response DTOs).
 
 ### Design Philosophy
 
@@ -20,7 +20,7 @@ OpenFaith Canonical Data Model (CDM) - Text Overview
 I. Core Entity Principles & Common Fields
 ===============================================================================
 * Every Entity Type generally includes:
-  - `id` (Unique Identifier, typically UUID)
+  - `id` (Unique Identifier, using [typeid](https://github.com/jetify-com/typeid): person_xxxx)
   - `_tag` (Primary entity type string, e.g., "person", "group")
   - `orgId` (Organization ID for multi-tenancy)
   - `type` (Optional sub-type or category string)
@@ -31,8 +31,8 @@ I. Core Entity Principles & Common Fields
   - `tags` (Array of strings for user-driven categorization)
 * (Note: An `externalId` field on core entities is for informational purposes;
   primary linking to external systems is handled by the `ExternalLink` entity).
-* Entity definitions leverage Effect.Schema, facilitating transformation to
-  Drizzle ORM / ZeroSQL schemas, including index definitions.
+* Entity definitions leverage Effect Schema, facilitating transformation to
+  [Drizzle ORM](https://orm.drizzle.team/docs/overview) / [Zero](https://zero.rocicorp.dev/docs/introduction) schemas, including index definitions.
 * The system is built to be a sync engine at its core, with OpenFaith acting
   as the source of truth even when integrating with other ChMS.
 * Apps can be built to create new Modules and Entity Types within this framework.
@@ -136,32 +136,12 @@ III. Key Cron Jobs (System Operations)
   - 1 hour Interval: Refresh external API tokens.
 ```
 
-### Key Modules and Entity Types (Descriptive Text - already part of your previous README)
+### Special Entity Concepts
 
-_(This is where the existing descriptive text for each module would follow, as generated previously. I'm omitting it here for brevity as it's unchanged, but it would naturally fit after the ASCII diagram and the "Core Entity Principles" summary)._
+- **`Folder` (in Collection):** A generic, hierarchical entity that can contain other `Folder`s or be linked (via `Edge`s) to any other entity type. This allows users to create custom organizational structures for services, groups, documents, etc., reducing the need for many specialized container-type entities.
+- **`Location` (in Directory):** Acts as a "hub" or joining entity. It doesn't just store an address but can be linked (via `Edge`s) to an `Address`, `Gathering`/`Service` entities (where events occur), `Time` entities (operating hours), and potentially `Resource` entities available at that location.
+- **`Edge` (in System):** The backbone of relationships. Instead of numerous foreign keys or join tables for specific relationships, `Edge`s provide a universal way to connect `(Source Entity) --[Relationship Type]--> (Target Entity)`, with optional properties on the edge itself.
 
-- **Management:** ...
-- **Directory:** ...
-- _(etc. for all modules)_
+### Summary
 
-### Special Entity Concepts (Descriptive Text - already part of your previous README)
-
-- **`Folder` (in Collection):** ...
-- **`Location` (in Directory):** ...
-- **`Edge` (in System):** ...
-
-### Summary (Descriptive Text - already part of your previous README)
-
-The OpenFaith CDM is designed to be a robust, flexible, and schema-enforced foundation...
-
----
-
-**Notes on the ASCII Diagram section:**
-
-- It's explicitly labeled as a "Text Overview" to set expectations.
-- I've tried to incorporate the key notes from the left panel of your visual diagram into section "I. Core Entity Principles & Common Fields" to preserve that important context.
-- The module boxes are simple and list the entities.
-- It's not a perfect visual replacement but provides a good textual structure that a developer can quickly scan.
-- I corrected "Invatation" to "Invitation". If the typo was intentional, you can revert it. I also noted "Household" from the diagram.
-
-This should integrate well into your README!
+The OpenFaith CDM is designed to be a robust, flexible, and schema-enforced foundation. By using a common set of core fields, a powerful `Edge` system for relationships, generic `Folder`s for hierarchy, and clear distinctions for `System` and `External` integration entities, it aims to provide a comprehensive yet adaptable model for church data that can evolve and integrate with a wide array of external systems.
