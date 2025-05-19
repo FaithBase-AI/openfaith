@@ -15,6 +15,7 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, a
 
 - [Canonical Data Model (CDM)](/docs/CDM.md)
 - [External Links](/docs//ExternalLinks.md)
+- [Partial Sync](/docs/PartialSync.md)
 
 ## Core Architectural Principles
 
