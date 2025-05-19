@@ -13,7 +13,7 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, a
 
 ## Core Architectural Principles
 
-- **Canonical Data Model (CDM):** OpenFaith defines its own internal, standardized representation for core church entities (e.g., Person, Group, Team, Event, Donation). This CDM, defined using [Effect Schema](https://effect.website/docs/schema/introduction/), serves as the "lingua franca" for all data within the system.
+- **[Canonical Data Model (CDM)](/docs/CDM.md):** OpenFaith defines its own internal, standardized representation for core church entities (e.g., Person, Group, Team, Event, Donation). This CDM, defined using [Effect Schema](https://effect.website/docs/schema/introduction/), serves as the "lingua franca" for all data within the system.
 - **Adapter/Connector Pattern:** For each external ChMS or application, an "Adapter" is responsible for understanding that system's API, authentication, and data structures. Adapters translate data between the external system's format and the OpenFaith CDM.
 - **Sync Engine:** A central orchestrator manages sync jobs, handles change detection (via webhooks or polling), implements conflict resolution strategies, and maintains sync state.
 - **Schema-Driven:** Data shapes, transformations, and even parts of connector behavior are driven by schemas and declarative configurations, complemented by code for complex logic.
