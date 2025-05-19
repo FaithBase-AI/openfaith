@@ -19,13 +19,14 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 - [AI-First Architecture](/docs/AIArch.md)
 - [External Links](/docs/ExternalLinks.md)
 - [Sync Engine](/docs/SyncEngine.md)
+- [Schema Design](/docs/SchemaDesign.md)
 
 ## Core Architectural Principles
 
 - **[Canonical Data Model (CDM)](/docs/CDM.md):** OpenFaith defines its own internal, standardized representation for core church entities (e.g., Person, Group, Team, Event, Donation). This CDM, defined using [Effect Schema](https://effect.website/docs/schema/introduction/), serves as the "lingua franca" for all data within the system and is structured to support AI tool usage.
 - **[Adapter/Connector Pattern](/docs/ChMSAdapters.md):** For each external ChMS or application, an "Adapter" is responsible for understanding that system's API, authentication, and data structures. Adapters translate data between the external system's format and the OpenFaith CDM.
 - **[Sync Engine](/docs/SyncEngine.md):** A central orchestrator manages sync jobs, handles change detection (via webhooks or polling), implements conflict resolution strategies, and maintains sync state.
-- **Schema-Driven:** Data shapes, transformations, and even parts of connector behavior are driven by schemas and declarative configurations, complemented by code for complex logic.
+- **[Schema-Driven](/docs/SchemaDesign.md):** Data shapes, transformations, and even parts of connector behavior are driven by schemas and declarative configurations, complemented by code for complex logic.
 - **[AI-First Design](/docs/AIArch.md):** The platform is architected with intelligent interaction in mind. The CDM and its access layers are designed as "active schemas" with built-in tooling, enabling Large Language Models (LLMs) to understand the data model, query information, and perform actions via natural language.
 - **`Edge`-Based Relationships:** A generic `Edge` entity allows flexible, many-to-many relationships between any entities in the system, enabling rich data modeling that AI can also leverage.
 - **Extensibility:** Designed for custom fields, user-defined hierarchical structures (via a generic `Folder` entity), and future support for dynamically created modules and entity types.
