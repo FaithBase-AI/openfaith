@@ -1,0 +1,107 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "ignore": [
+      ".expo",
+      ".turbo",
+      "expo-env.d.ts",
+      "ios",
+      "android",
+      "shared/a5"
+    ],
+    "rules": {
+      "correctness": {
+        "useExhaustiveDependencies": "error",
+        "noInnerDeclarations": "off",
+        "noUnnecessaryContinue": "off",
+        "noConstructorReturn": "off",
+        "noUnusedImports": "error"
+      },
+      "suspicious": {
+        "noImplicitAnyLet": "off",
+        "noConfusingVoidType": "off",
+        "noEmptyInterface": "off",
+        "noExplicitAny": "off",
+        "noArrayIndexKey": "off",
+        "noDoubleEquals": "off",
+        "noAssignInExpressions": "off",
+        "noRedeclare": "off",
+        "noShadowRestrictedNames": "off"
+      },
+      "style": {
+        "noParameterAssign": "off",
+        "noNonNullAssertion": "off",
+        "noArguments": "off",
+        "noUnusedTemplateLiteral": "off",
+        "useDefaultParameterLast": "off",
+        "useConst": "off",
+        "useEnumInitializers": "off",
+        "useTemplate": "off",
+        "useSelfClosingElements": "off",
+        "useConsistentArrayType": {
+          "level": "warn",
+          "options": {
+            "syntax": "generic"
+          }
+        }
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "off",
+        "noDangerouslySetInnerHtmlWithChildren": "off"
+      },
+      "performance": {
+        "noDelete": "off",
+        "noAccumulatingSpread": "off"
+      },
+      "complexity": {
+        "noForEach": "off",
+        "noBannedTypes": "off",
+        "useLiteralKeys": "off",
+        "useSimplifiedLogicExpression": "off",
+        "useOptionalChain": "off"
+      },
+      "a11y": {
+        "noSvgWithoutTitle": "off",
+        "useMediaCaption": "off",
+        "noHeaderScope": "off",
+        "useAltText": "off",
+        "useButtonType": "off"
+      },
+      "nursery": {
+        "useSortedClasses": {
+          "level": "warn",
+          "options": {
+            "functions": ["cn", "cva"]
+          }
+        }
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "ignore": [
+      ".expo",
+      ".turbo",
+      "expo-env.d.ts",
+      "ios",
+      "android",
+      "shared/a5"
+    ]
+  },
+  "javascript": {
+    "formatter": {
+      "trailingCommas": "all",
+      "jsxQuoteStyle": "single",
+      "semicolons": "asNeeded",
+      "quoteStyle": "single"
+    }
+  }
+}
