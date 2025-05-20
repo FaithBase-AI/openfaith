@@ -21,6 +21,8 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 - [Sync Engine](/docs/SyncEngine.md)
 - [Schema Design](/docs/SchemaDesign.md)
 - [`Edge`-Based Relationships](/docs/EdgeRelationships.md)
+- [Custom Fields](/docs/CustomFields.md)
+- [User-defined Hierarchical Structures](/docs/Folders.md)
 
 ## Core Architectural Principles
 
@@ -30,7 +32,7 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 - **[Schema-Driven](/docs/SchemaDesign.md):** Data shapes, transformations, and even parts of connector behavior are driven by schemas and declarative configurations, complemented by code for complex logic.
 - **[AI-First Design](/docs/AIArch.md):** The platform is architected with intelligent interaction in mind. The CDM and its access layers are designed as "active schemas" with built-in tooling, enabling Large Language Models (LLMs) to understand the data model, query information, and perform actions via natural language.
 - **[`Edge`-Based Relationships](/docs/EdgeRelationships.md):** A generic `Edge` entity allows flexible, many-to-many relationships between any entities in the system, enabling rich data modeling that AI can also leverage.
-- **Extensibility:** Designed for custom fields, user-defined hierarchical structures (via a generic `Folder` entity), and future support for dynamically created modules and entity types.
+- **Extensibility:** Designed for [custom fields](/docs/CustomFields.md), [user-defined hierarchical structures](/docs/Folders.md) (via a generic `Folder` entity), and future support for dynamically created modules and entity types.
 
 ## Key Components
 
