@@ -29,6 +29,7 @@
   },
   "packageManager": "bun@1.2.13",
   "workspaces": [
+    "adapters/*",
     "apps/*",
     "backend/*",
     "packages/*",

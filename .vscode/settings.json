@@ -1,0 +1,10 @@
+{
+  "editor.defaultFoldingRangeProvider": "biomejs.biome",
+  "editor.defaultFormatter": "biomejs.biome",
+  "notebook.defaultFormatter": "biomejs.biome",
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true,
+  "notebook.formatOnSave.enabled": true,
+  "editor.formatOnType": true,
+  "files.autoSaveWhenNoErrors": true
+}

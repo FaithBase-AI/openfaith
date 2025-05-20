@@ -3,11 +3,6 @@
   "private": true,
   "version": "0.3.0",
   "type": "module",
-  "exports": {
-    "./base": "./base.js",
-    "./nextjs": "./nextjs.js",
-    "./react": "./react.js"
-  },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
     "format": "biome lint .",
