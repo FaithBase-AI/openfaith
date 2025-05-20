@@ -31,6 +31,7 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 - [Adapting for Diverse Ministries](/docs/DiverseMinistries.md)
 - [Authentication and Authorization](/docs/Authentication.md)
 - [Permissions and Secure Data Access](/docs/Permissions.md)
+- [Data Storage (PostgreSQL & Drizzle ORM)](/docs/DataStorage.md)
 
 ## Core Architectural Principles
 
@@ -42,6 +43,7 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 - **[`Edge`-Based Relationships](/docs/EdgeRelationships.md):** A generic `Edge` entity allows flexible, many-to-many relationships between any entities in the system, enabling rich data modeling that AI can also leverage.
 - **[Sub-Typing for Adaptability](/docs/SubTypes.md):** Core entities utilize a `type` field, allowing organizations to define specialized variations (e.g., a "Team" as a `type` of "Circle") to match their specific ministry language without altering the fundamental data model.
 - **[Authentication & Authorization](/docs/Authentication.md):** Utilizes a dedicated library (e.g., Better Auth) for robust Authentication (AuthN), while implementing its own [Role-Based Access Control (RBAC) system with contextual scoping](/docs/Permissions.md) for Authorization (AuthZ), ensuring secure, granular, and ministry-aware data access.
+- **[Data Storage Strategy](/docs/DataStorage.md):** Employs PostgreSQL as the primary database, with Drizzle ORM for type-safe schema definition and queries, supporting the CDM's flexible structure (including JSONB for custom fields) and integrating with client sync.
 - **Extensibility:** Designed for [custom fields](/docs/CustomFields.md), [user-defined hierarchical structures](/docs/Folders.md) (via a generic `Folder` entity), and future support for dynamically created modules and entity types.
 
 ## Key Components

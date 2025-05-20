@@ -4,21 +4,6 @@ Based on what you have and the typical needs for a project of this scope, here's
 
 **I. Core Concepts & Architecture (Expanding on existing ideas or new deep dives):**
 
-1.  **`Permissions.md` (Permissions Deep Dive):**
-
-    - Detail the RBAC with campus scoping model you decided on for V1.
-    - Explain how `Role`, `UserRoleAssignment`, and `campusId` scoping work.
-    - Discuss how the `PermissionService.can()` method would evaluate permissions.
-    - Outline future plans for more granular permissions (ABAC, Folder-level ACLs, etc.) if you foresee them.
-    - How permissions interact with AI queries and the SQL fallback.
-
-2.  **`DataStorage.md` (Database & Storage Strategy):**
-
-    - Choice of PostgreSQL: Why? Key features utilized (JSONB, indexing strategies).
-    - Schema management and migrations (e.g., using Drizzle Kit or similar).
-    - Briefly mention `zero-cache`'s SQLite replica in the client sync context.
-    - Strategy for handling large binary objects (Files/Documents) – stored in DB, or object storage (S3, etc.) with metadata in DB?
-
 3.  **`JobQueue.md` (Background Task Management):**
 
     - Detail the choice for the job queue system (e.g., PostgreSQL-based for V1, or BullMQ/Redis).
