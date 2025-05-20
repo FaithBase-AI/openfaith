@@ -29,6 +29,8 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 - [FE SDK](/docs/FESdk.md)
 - [Client Sync](/docs/ClientSync.md)
 - [Adapting for Diverse Ministries](/docs/DiverseMinistries.md)
+- [Authentication and Authorization](/docs/Authentication.md)
+- [Permissions and Secure Data Access](/docs/Permissions.md)
 
 ## Core Architectural Principles
 
@@ -39,6 +41,7 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 - **[AI-First Design](/docs/AIArch.md):** The platform is architected with intelligent interaction in mind. The CDM and its access layers are designed as "active schemas" with built-in tooling, enabling Large Language Models (LLMs) to understand the data model, query information, and perform actions via natural language.
 - **[`Edge`-Based Relationships](/docs/EdgeRelationships.md):** A generic `Edge` entity allows flexible, many-to-many relationships between any entities in the system, enabling rich data modeling that AI can also leverage.
 - **[Sub-Typing for Adaptability](/docs/SubTypes.md):** Core entities utilize a `type` field, allowing organizations to define specialized variations (e.g., a "Team" as a `type` of "Circle") to match their specific ministry language without altering the fundamental data model.
+- **[Authentication & Authorization](/docs/Authentication.md):** Utilizes a dedicated library (e.g., Better Auth) for robust Authentication (AuthN), while implementing its own [Role-Based Access Control (RBAC) system with contextual scoping](/docs/Permissions.md) for Authorization (AuthZ), ensuring secure, granular, and ministry-aware data access.
 - **Extensibility:** Designed for [custom fields](/docs/CustomFields.md), [user-defined hierarchical structures](/docs/Folders.md) (via a generic `Folder` entity), and future support for dynamically created modules and entity types.
 
 ## Key Components
