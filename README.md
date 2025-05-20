@@ -24,6 +24,8 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 - [Custom Fields](/docs/CustomFields.md)
 - [User-defined Hierarchical Structures](/docs/Folders.md)
 - [Sub Types](/docs/SubTypes.md)
+- [FE SDK](/docs/FESdk.md)
+- [Client Sync](/docs/ClientSync.md)
 
 ## Core Architectural Principles
 
@@ -51,6 +53,8 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
   - **Conflict Resolution Module:** (e.g., "Last Write Wins" as a starting point).
 - **[ChMS Adapters (Connectors)](/docs/ChMSAdapters.md):** Pluggable modules, one for each external system.
 - **LLM Orchestration Layer (Conceptual):** A component responsible for managing interactions with LLMs, including prompt engineering, tool dispatch, and response handling. _(More details in [AI-First Architecture](/docs/AIArch.md))._
+- **[Frontend SDK](/docs/FESdk.md):** A library of pre-built, customizable React components (using shadcn/ui) and helper functions to dynamically generate UI (tables, forms) from the OpenFaith Canonical Data Model schemas. This accelerates UI development and ensures consistency, also supporting AI chat interactions for displaying data and forms.
+- **[Client Sync Engine (via Zero)](/docs/ClientSync.md):** Leverages Zero to provide instantaneous, local-first application experiences with real-time, query-driven synchronization of OpenFaith CDM data to client devices.
 
 ## Connector Definition: Code-First Integration
 
