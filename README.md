@@ -2,6 +2,8 @@
 
 **OpenFaith is an open-source initiative to create a standardized, flexible, and extensible platform for synchronizing, managing, and intelligently interacting with church data across various Church Management Systems (ChMS) and church-related applications.**
 
+A core design philosophy of OpenFaith is its adaptability. The platform's [Canonical Data Model (CDM)](/docs/CDM.md) and architectural principles like [Sub-Typing](/docs/SubTypes.md) and [Edge-Based Relationships](/docs/EdgeRelationships.md) are engineered to serve not just traditional local churches, but a diverse spectrum of faith-based organizations, including missions, parachurch ministries, and denominations / church networks. This ensures OpenFaith can be tailored to fit various operational needs beyond standard ChMS functionalities. ([Learn more about Adapting for Diverse Ministries](/docs/DiverseMinistries.md))
+
 Our vision is to empower churches and developers by:
 
 1.  Providing a **Canonical Data Model (CDM)** for core church entities, designed for both structured access and AI-driven interaction.
@@ -26,6 +28,7 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 - [Sub Types](/docs/SubTypes.md)
 - [FE SDK](/docs/FESdk.md)
 - [Client Sync](/docs/ClientSync.md)
+- [Adapting for Diverse Ministries](/docs/DiverseMinistries.md)
 
 ## Core Architectural Principles
 
