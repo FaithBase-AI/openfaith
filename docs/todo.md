@@ -15,16 +15,6 @@ Based on what you have and the typical needs for a project of this scope, here's
 
 **II. Developer Guides & Contribution:**
 
-5.  **`Contributing.md` (Standard Contribution Guide):**
-
-    - Code of Conduct.
-    - How to set up the development environment.
-    - Coding standards, linting, formatting.
-    - Branching strategy (e.g., Gitflow).
-    - Pull Request process.
-    - How to run tests.
-    - Where to find issues to work on.
-
 6.  **`BuildingAnAdapter.md` (Guide to Creating a New ChMS Adapter):**
 
     - Detailed breakdown of the `ChMSAdapter` interface/base class.
@@ -83,7 +73,6 @@ Based on what you have and the typical needs for a project of this scope, here's
 You don't need all of these on day one. I'd prioritize:
 
 - **Deep dives into core concepts already linked:** `Permissions.md` should be high on the list as it's complex and critical.
-- **Developer Guides:** `Contributing.md` is essential for an open-source project. `BuildingAnAdapter.md` and `UsingTheFrontendSDK.md` will be vital once you want others to extend the platform or build UIs.
 - **Operational:** A basic `Deployment.md` will be needed relatively early.
 
 The "Zero" docs you provided are a good example of how to structure a `/docs` directory with many focused markdown files covering different aspects of the system. OpenFaith can follow a similar, well-organized approach.

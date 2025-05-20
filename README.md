@@ -32,6 +32,8 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 - [Authentication and Authorization](/docs/Authentication.md)
 - [Permissions and Secure Data Access](/docs/Permissions.md)
 - [Data Storage (PostgreSQL & Drizzle ORM)](/docs/DataStorage.md)
+- [Contributing to OpenFaith](/docs/Contributors.md)
+- [Project Overview & Entry Point (This Document)](README.md)
 
 ## Core Architectural Principles
 
@@ -44,6 +46,7 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 - **[Sub-Typing for Adaptability](/docs/SubTypes.md):** Core entities utilize a `type` field, allowing organizations to define specialized variations (e.g., a "Team" as a `type` of "Circle") to match their specific ministry language without altering the fundamental data model.
 - **[Authentication & Authorization](/docs/Authentication.md):** Utilizes a dedicated library (e.g., Better Auth) for robust Authentication (AuthN), while implementing its own [Role-Based Access Control (RBAC) system with contextual scoping](/docs/Permissions.md) for Authorization (AuthZ), ensuring secure, granular, and ministry-aware data access.
 - **[Data Storage Strategy](/docs/DataStorage.md):** Employs PostgreSQL as the primary database, with Drizzle ORM for type-safe schema definition and queries, supporting the CDM's flexible structure (including JSONB for custom fields) and integrating with client sync.
+- **Comprehensive Onboarding & Documentation ([Project README](README.md)):** The project is committed to clear and accessible documentation, with the main `README.md` serving as the central hub. It provides a high-level overview of OpenFaith's vision, links to all key detailed documents, outlines architectural principles, lists core components, and guides contributors, ensuring a well-defined entry point for all stakeholders.
 - **Extensibility:** Designed for [custom fields](/docs/CustomFields.md), [user-defined hierarchical structures](/docs/Folders.md) (via a generic `Folder` entity), and future support for dynamically created modules and entity types.
 
 ## Key Components
@@ -110,7 +113,9 @@ A core goal of OpenFaith is to enable users to interact with their data through 
 
 ## Contributing
 
-OpenFaith is an ambitious project, and community contributions are welcome! (Details on contribution guidelines, code of conduct, and specific areas needing help will be added here as the project matures).
+OpenFaith is an ambitious project, and community contributions are not just welcome, they are vital to its success and ethos. We believe in building this platform together, as a service to the wider Church. Whether you're a developer, designer, writer, or tester, your skills and passion can make a significant impact.
+
+Please see our [Contributor Guidelines](/docs/Contributors.md) for detailed information on how to get started, our guiding principles, and the different ways you can help. All contributors are expected to adhere to our [Code of Conduct](/docs/CodeOfConduct.md) to ensure a respectful and collaborative environment.
 
 ## License
 
