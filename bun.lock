@@ -12,7 +12,7 @@
       },
     },
     "adapters/pco": {
-      "name": "@openfaith/pco-adapter",
+      "name": "@openfaith/pco",
       "version": "0.1.0",
       "dependencies": {
         "@openfaith/schema": "workspace:*",
@@ -238,7 +238,7 @@
 
     "@openfaith/eslint-config": ["@openfaith/eslint-config@workspace:tooling/eslint"],
 
-    "@openfaith/pco-adapter": ["@openfaith/pco-adapter@workspace:adapters/pco"],
+    "@openfaith/pco": ["@openfaith/pco@workspace:adapters/pco"],
 
     "@openfaith/schema": ["@openfaith/schema@workspace:packages/schema"],
 

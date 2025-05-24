@@ -1,5 +1,5 @@
 {
-  "name": "@openfaith/pco-adapter",
+  "name": "@openfaith/pco",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -8,6 +8,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "format": "biome lint .",
     "lint:biome": "biome lint .",
+    "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

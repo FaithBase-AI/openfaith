@@ -16,8 +16,9 @@
     "lint:biome:fix": "turbo run lint:biome --continue -- --unsafe --fix",
     "lint:eslint": "turbo run lint:eslint --continue -- --cache --cache-location .cache/.eslintcache",
     "lint:eslint:fix": "turbo run lint:eslint --continue -- --fix --cache --cache-location .cache/.eslintcache",
+    "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "check": "turbo run format lint:biome lint:eslint typecheck --ui=stream",
+    "check": "turbo run format lint:biome lint:eslint typecheck test --ui=stream",
     "ui-add": "turbo run ui-add"
   },
   "devDependencies": {
@@ -28,11 +29,5 @@
     "typescript": "5.8.3"
   },
   "packageManager": "bun@1.2.13",
-  "workspaces": [
-    "adapters/*",
-    "apps/*",
-    "backend/*",
-    "packages/*",
-    "tooling/*"
-  ]
+  "workspaces": ["adapters/*", "apps/*", "backend/*", "packages/*", "tooling/*"]
 }
