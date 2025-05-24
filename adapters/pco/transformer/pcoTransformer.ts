@@ -112,6 +112,11 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
       const customFieldsDecoded = pipe(
         customFields as Array<CustomFieldSchema>,
         Array.reduce({}, (b, customField) => {
+          // Skip custom fields that are not from PCO
+          if (customField.source !== 'pco') {
+            return b
+          }
+
           // Extract the original PCO field name by removing the 'pco_' prefix
           const pcoFieldName = pipe(customField.name, String.replace(/^pco_/, ''))
           return {

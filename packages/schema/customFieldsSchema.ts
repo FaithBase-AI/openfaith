@@ -1,4 +1,4 @@
-import { pipe, Schema, Array, Option, Record } from 'effect'
+import { pipe, Schema, Array, Option } from 'effect'
 
 const BaseCustomFieldSchema = Schema.Struct({
   name: Schema.String.annotations({
