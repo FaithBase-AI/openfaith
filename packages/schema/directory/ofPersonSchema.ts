@@ -1,5 +1,5 @@
 import { Schema } from 'effect'
-import { BaseSystemFieldsSchema, IdentificationFieldsSchema } from './systemSchema'
+import { BaseSystemFieldsSchema, IdentificationFieldsSchema } from '../systemSchema'
 
 export const BasePerson = Schema.Struct({
   ...BaseSystemFieldsSchema.fields,

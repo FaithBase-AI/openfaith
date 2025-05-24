@@ -1,4 +1,5 @@
 export * from '@openfaith/schema/customFieldsSchema'
-export * from '@openfaith/schema/directorySchema'
+export * from '@openfaith/schema/directory/ofPersonSchema'
+export * from '@openfaith/schema/directory/ofPhoneNumberSchema'
 export * from '@openfaith/schema/schema'
 export * from '@openfaith/schema/systemSchema'
