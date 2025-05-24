@@ -1,3 +1,5 @@
+import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
+import { BasePerson } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PCOPersonAttributes = Schema.Struct({
@@ -31,6 +33,8 @@ export const PCOPersonAttributes = Schema.Struct({
   updated_at: Schema.String,
 })
 export type PCOPersonAttributes = typeof PCOPersonAttributes.Type
+
+export const pcoPersonTransformer = pcoToOf(PCOPersonAttributes, BasePerson)
 
 export const PCOPerson = Schema.Struct({
   type: Schema.Literal('Person'),
