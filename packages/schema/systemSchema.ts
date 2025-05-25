@@ -34,6 +34,12 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   status: Schema.Literal('active', 'inactive').annotations({
     description: 'The status of the record',
   }),
+  inactivatedAt: Schema.String.annotations({
+    description: 'The datetime the record was inactivated',
+  }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
+  inactivatedBy: Schema.String.annotations({
+    description: 'The typeid of the user who inactivated the record',
+  }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
   tags: Schema.Array(Schema.String).annotations({
     description: 'The tags for the record',
   }),

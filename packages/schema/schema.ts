@@ -1,13 +1,15 @@
-import { pipe, SchemaAST, Array, Option } from 'effect'
+import { Array, Option, SchemaAST, pipe } from 'effect'
 
 export const OFFieldName = Symbol.for('ofFieldName')
 export const OFCustomField = Symbol.for('ofCustomField')
+export const OFSkipField = Symbol.for('ofSkipField')
 
 declare module 'effect/Schema' {
   namespace Annotations {
     interface GenericSchema<A> extends Schema<A> {
       [OFFieldName]?: string
       [OFCustomField]?: boolean
+      [OFSkipField]?: boolean
     }
   }
 }

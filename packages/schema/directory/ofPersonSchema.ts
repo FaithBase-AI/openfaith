@@ -21,6 +21,12 @@ export const BasePerson = Schema.Struct({
   birthdate: Schema.String.annotations({
     description: 'The birthdate of the person',
   }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
+  anniversary: Schema.String.annotations({
+    description: 'The anniversary of the person',
+  }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
+  avatar: Schema.String.annotations({
+    description: 'The avatar of the person',
+  }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
   gender: Schema.Literal('male', 'female')
     .annotations({
       description: 'The gender of the person. He made them male and female.',
@@ -30,6 +36,7 @@ export const BasePerson = Schema.Struct({
     description: 'The membership of the person',
   }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
 })
+export type BasePerson = typeof BasePerson.Type
 
 export const Person = Schema.Struct({
   ...BasePerson.fields,

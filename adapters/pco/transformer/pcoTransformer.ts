@@ -1,11 +1,12 @@
 import {
-  getUnderlyingType,
-  mkCustomField,
+  type CustomFieldSchema,
   OFCustomField,
   OFFieldName,
-  type CustomFieldSchema,
+  OFSkipField,
+  getUnderlyingType,
+  mkCustomField,
 } from '@openfaith/schema'
-import { pipe, Schema, Record, Array, SchemaAST, Option, Boolean, String } from 'effect'
+import { Array, Boolean, Option, Record, Schema, SchemaAST, String, pipe } from 'effect'
 
 type MergeShape = Record<string, unknown> & {
   customFields: Array<CustomFieldSchema>
@@ -29,10 +30,13 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
           const customField = SchemaAST.getAnnotation<boolean>(OFCustomField)(
             field.ast as SchemaAST.Annotated,
           ).pipe(Option.getOrElse(() => false))
+          const skipField = SchemaAST.getAnnotation<boolean>(OFSkipField)(
+            field.ast as SchemaAST.Annotated,
+          ).pipe(Option.getOrElse(() => false))
 
           const type = getUnderlyingType(field.ast as SchemaAST.AST)
 
-          if (type === 'unknown') {
+          if (type === 'unknown' || skipField) {
             return Option.none()
           }
 
@@ -84,9 +88,13 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
           const customField = SchemaAST.getAnnotation<boolean>(OFCustomField)(
             fieldAst as SchemaAST.Annotated,
           ).pipe(Option.getOrElse(() => false))
+          const skipField = SchemaAST.getAnnotation<boolean>(OFSkipField)(
+            fieldAst as SchemaAST.Annotated,
+          ).pipe(Option.getOrElse(() => false))
 
           // Skip custom fields as they're handled separately
-          if (customField) {
+          // Also skip fields marked with OFSkipField
+          if (customField || skipField) {
             return Option.none()
           }
 

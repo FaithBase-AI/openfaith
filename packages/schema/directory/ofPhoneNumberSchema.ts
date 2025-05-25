@@ -19,10 +19,10 @@ export const BasePhoneNumber = Schema.Struct({
     description: 'The location type of the phone number (e.g., Mobile, Home, Work)',
   }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
 })
+export type BasePhoneNumber = typeof BasePhoneNumber.Type
 
 export const PhoneNumber = Schema.Struct({
   ...BasePhoneNumber.fields,
   ...IdentificationFieldsSchema.fields,
 })
-
 export type PhoneNumber = typeof PhoneNumber.Type

@@ -1,23 +1,50 @@
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BasePhoneNumber } from '@openfaith/schema'
+import { BasePhoneNumber, OFSkipField } from '@openfaith/schema'
+import { OFCustomField, OFFieldName } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PCOPhoneNumberAttributes = Schema.Struct({
-  carrier: Schema.NullOr(Schema.String),
-  country_code: Schema.NullOr(Schema.String),
-  created_at: Schema.String,
-  e164: Schema.NullOr(Schema.String),
-  international: Schema.NullOr(Schema.String),
+  carrier: Schema.NullOr(Schema.String).annotations({
+    [OFFieldName]: 'carrier',
+    [OFCustomField]: true,
+  }),
+  country_code: Schema.NullOr(Schema.String).annotations({
+    [OFFieldName]: 'countryCode',
+  }),
+  created_at: Schema.String.annotations({
+    [OFFieldName]: 'createdAt',
+  }),
+  e164: Schema.NullOr(Schema.String).annotations({
+    [OFFieldName]: 'number',
+    [OFCustomField]: true,
+  }),
+  international: Schema.NullOr(Schema.String).annotations({
+    [OFFieldName]: 'international',
+    [OFCustomField]: true,
+  }),
   location: Schema.NullOr(
     Schema.Union(
       Schema.Literal('Mobile', 'Home', 'Work', 'Other', 'Pager', 'Fax', 'Skype'),
       Schema.String,
     ),
-  ),
-  national: Schema.NullOr(Schema.String),
-  number: Schema.String,
-  primary: Schema.Boolean,
-  updated_at: Schema.NullOr(Schema.String),
+  ).annotations({
+    [OFFieldName]: 'location',
+  }),
+  national: Schema.NullOr(Schema.String).annotations({
+    [OFFieldName]: 'national',
+    [OFCustomField]: true,
+  }),
+  number: Schema.String.annotations({
+    [OFFieldName]: 'number',
+    // We skip because `e164` gives us the number in E.164 format.
+    [OFSkipField]: true,
+  }),
+  primary: Schema.Boolean.annotations({
+    [OFFieldName]: 'primary',
+  }),
+  updated_at: Schema.NullOr(Schema.String).annotations({
+    [OFFieldName]: 'updatedAt',
+  }),
 })
 export type PCOPhoneNumberAttributes = typeof PCOPhoneNumberAttributes.Type
 
