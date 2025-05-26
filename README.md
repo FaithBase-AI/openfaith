@@ -2,6 +2,8 @@
 
 **OpenFaith is an open-source initiative to create a standardized, flexible, and extensible platform for synchronizing, managing, and intelligently interacting with church data across various Church Management Systems (ChMS) and church-related applications.**
 
+> **New to OpenFaith or looking for a simpler explanation?** Check out our [**Church Leader's Guide to OpenFaith**](/docs/BetterChurchSoftware.md) for a non-technical overview of how OpenFaith can benefit your ministry.
+
 A core design philosophy of OpenFaith is its adaptability. The platform's [Canonical Data Model (CDM)](/docs/CDM.md) and architectural principles like [Sub-Typing](/docs/SubTypes.md) and [Edge-Based Relationships](/docs/EdgeRelationships.md) are engineered to serve not just traditional local churches, but a diverse spectrum of faith-based organizations, including missions, parachurch ministries, and denominations / church networks. This ensures OpenFaith can be tailored to fit various operational needs beyond standard ChMS functionalities. ([Learn more about Adapting for Diverse Ministries](/docs/DiverseMinistries.md))
 
 Our vision is to empower churches and developers by:
@@ -16,6 +18,7 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 
 ## Key Docs
 
+- [**Church Leader's Guide to OpenFaith (Start Here for Non-Technical Overview)**](/docs/BetterChurchSoftware.md)
 - [Canonical Data Model (CDM)](/docs/CDM.md)
 - [ChMS Adapters](/docs/ChMSAdapters.md)
 - [AI-First Architecture](/docs/AIArch.md)
@@ -34,6 +37,17 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 - [Data Storage (PostgreSQL & Drizzle ORM)](/docs/DataStorage.md)
 - [Contributing to OpenFaith](/docs/Contributors.md)
 - [Project Overview & Entry Point (This Document)](README.md)
+
+## The Problem We're Solving
+
+Many churches today juggle multiple software tools—one for member management, another for online giving, separate tools for volunteer scheduling, websites, and communications. **The challenge? These tools rarely talk to each other.** This leads to:
+
+- **Wasted Time:** Manual data entry across multiple systems
+- **Out-of-Date Information:** Changes in one system don't reflect everywhere
+- **Siloed Data:** Difficulty getting a complete picture of ministry engagement
+- **Limited Choices:** Feeling "locked in" to specific software vendors
+
+**OpenFaith changes this by creating a universal translator and central hub for your church's data**, enabling all your ministry tools to work together seamlessly.
 
 ## Core Architectural Principles
 
