@@ -1,6 +1,5 @@
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BasePerson } from '@openfaith/schema'
-import { OFCustomField, OFFieldName } from '@openfaith/schema'
+import { BasePerson, OFCustomField, OFFieldName } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PCOPersonAttributes = Schema.Struct({

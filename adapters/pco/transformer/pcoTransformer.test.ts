@@ -1,9 +1,7 @@
 import { expect, test } from 'bun:test'
-import { OFCustomField, OFSkipField } from '@openfaith/schema'
-import { OFFieldName } from '@openfaith/schema'
-import { CustomFieldSchema } from '@openfaith/schema/customFieldsSchema'
+import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
+import { CustomFieldSchema, OFCustomField, OFFieldName, OFSkipField } from '@openfaith/schema'
 import { Schema } from 'effect'
-import { pcoToOf } from './pcoTransformer'
 
 const PCOItem = Schema.Struct({
   first_name: Schema.NullOr(Schema.String).annotations({

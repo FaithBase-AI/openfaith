@@ -1,6 +1,5 @@
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BaseAddress } from '@openfaith/schema'
-import { OFFieldName } from '@openfaith/schema'
+import { BaseAddress, OFFieldName } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PCOAddressAttributes = Schema.Struct({

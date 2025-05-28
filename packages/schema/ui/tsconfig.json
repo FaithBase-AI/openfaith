@@ -1,10 +1,10 @@
 {
   "extends": "@openfaith/tsconfig/base.json",
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "../../ui",
     "paths": {
-      "@openfaith/schema/*": ["./*"]
+      "@openfaith/shared/*": ["../../ui/*"]
     }
   },
-  "include": [".", "../ui"]
+  "include": ["../../ui"]
 }

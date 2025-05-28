@@ -13,9 +13,9 @@
   },
   "dependencies": {
     "@openfaith/schema": "workspace:*",
-    "effect": "^3.15.2"
+    "effect": "catalog:"
   },
   "devDependencies": {
-    "typescript": "5.8.3"
+    "typescript": "catalog:"
   }
 }

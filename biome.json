@@ -1,23 +1,21 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.0.0-beta.5/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
-    "ignore": [
-      ".expo",
-      ".turbo",
-      "expo-env.d.ts",
-      "ios",
-      "android",
-      "shared/a5"
+    "includes": [
+      "**",
+      "!**/.expo",
+      "!**/.turbo",
+      "!**/expo-env.d.ts",
+      "!**/ios",
+      "!**/android",
+      "!**/shared/a5"
     ],
     "rules": {
       "correctness": {
         "useExhaustiveDependencies": "error",
         "noInnerDeclarations": "off",
-        "noUnnecessaryContinue": "off",
         "noConstructorReturn": "off",
         "noUnusedImports": "error"
       },
@@ -47,7 +45,12 @@
           "options": {
             "syntax": "generic"
           }
-        }
+        },
+        "useAsConstAssertion": "error",
+        "useSingleVarDeclarator": "error",
+        "useNumberNamespace": "error",
+        "noInferrableTypes": "error",
+        "noUselessElse": "error"
       },
       "security": {
         "noDangerouslySetInnerHtml": "off",
@@ -62,7 +65,8 @@
         "noBannedTypes": "off",
         "useLiteralKeys": "off",
         "useSimplifiedLogicExpression": "off",
-        "useOptionalChain": "off"
+        "useOptionalChain": "off",
+        "noUselessContinue": "off"
       },
       "a11y": {
         "noSvgWithoutTitle": "off",
@@ -87,13 +91,14 @@
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 100,
-    "ignore": [
-      ".expo",
-      ".turbo",
-      "expo-env.d.ts",
-      "ios",
-      "android",
-      "shared/a5"
+    "includes": [
+      "**",
+      "!**/.expo",
+      "!**/.turbo",
+      "!**/expo-env.d.ts",
+      "!**/ios",
+      "!**/android",
+      "!**/shared/a5"
     ]
   },
   "javascript": {

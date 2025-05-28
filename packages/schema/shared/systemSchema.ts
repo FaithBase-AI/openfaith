@@ -1,5 +1,5 @@
+import { CustomFieldSchema } from '@openfaith/schema/shared/customFieldsSchema'
 import { Schema } from 'effect'
-import { CustomFieldSchema } from './customFieldsSchema'
 
 export const BaseSystemFieldsSchema = Schema.Struct({
   customFields: Schema.Array(CustomFieldSchema).annotations({

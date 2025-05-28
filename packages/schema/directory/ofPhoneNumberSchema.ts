@@ -1,5 +1,8 @@
+import {
+  BaseSystemFieldsSchema,
+  IdentificationFieldsSchema,
+} from '@openfaith/schema/shared/systemSchema'
 import { Schema } from 'effect'
-import { BaseSystemFieldsSchema, IdentificationFieldsSchema } from '../systemSchema'
 
 export const BasePhoneNumber = Schema.Struct({
   ...BaseSystemFieldsSchema.fields,

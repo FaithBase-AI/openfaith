@@ -23,6 +23,6 @@
   "devDependencies": {
     "@openfaith/tsconfig": "*",
     "eslint": "9.27.0",
-    "typescript": "5.8.3"
+    "typescript": "catalog:"
   }
 }

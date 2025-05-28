@@ -17,17 +17,29 @@
     "lint:eslint": "turbo run lint:eslint --continue -- --cache --cache-location .cache/.eslintcache",
     "lint:eslint:fix": "turbo run lint:eslint --continue -- --fix --cache --cache-location .cache/.eslintcache",
     "test": "turbo run test",
-    "typecheck": "turbo run typecheck",
+    "typecheck": "turbo run typecheck --ui=stream",
     "check": "turbo run format lint:biome lint:eslint typecheck test --ui=stream",
     "ui-add": "turbo run ui-add"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "2.0.0-beta.5",
     "@turbo/gen": "^2.5.1",
     "@types/bun": "latest",
     "turbo": "^2.5.1",
     "typescript": "5.8.3"
   },
   "packageManager": "bun@1.2.13",
-  "workspaces": ["adapters/*", "apps/*", "backend/*", "packages/*", "tooling/*"]
+  "workspaces": {
+    "packages": [
+      "adapters/*",
+      "apps/*",
+      "backend/*",
+      "packages/*",
+      "tooling/*"
+    ],
+    "catalog": {
+      "effect": "3.16.0",
+      "typescript": "5.8.3"
+    }
+  }
 }

@@ -1,4 +1,4 @@
-import { Array, Option, SchemaAST, pipe } from 'effect'
+import { Array, Option, pipe, SchemaAST } from 'effect'
 
 export const OFFieldName = Symbol.for('ofFieldName')
 export const OFCustomField = Symbol.for('ofCustomField')

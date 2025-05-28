@@ -1,6 +1,5 @@
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BasePhoneNumber, OFSkipField } from '@openfaith/schema'
-import { OFCustomField, OFFieldName } from '@openfaith/schema'
+import { BasePhoneNumber, OFCustomField, OFFieldName, OFSkipField } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PCOPhoneNumberAttributes = Schema.Struct({

@@ -1,12 +1,12 @@
 import {
   type CustomFieldSchema,
+  getUnderlyingType,
+  mkCustomField,
   OFCustomField,
   OFFieldName,
   OFSkipField,
-  getUnderlyingType,
-  mkCustomField,
 } from '@openfaith/schema'
-import { Array, Boolean, Option, Record, Schema, SchemaAST, String, pipe } from 'effect'
+import { Array, Boolean, Option, pipe, Record, Schema, SchemaAST, String } from 'effect'
 
 type MergeShape = Record<string, unknown> & {
   customFields: Array<CustomFieldSchema>
