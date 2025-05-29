@@ -5,7 +5,7 @@ export default defineConfig({
   vite: {
     plugins: [
       tsConfigPaths({
-        projects: ['./apps/openfaith/tsconfig.json'],
+        projects: ['./tsconfig.json'],
       }),
     ],
   },
