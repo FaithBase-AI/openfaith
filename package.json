@@ -23,9 +23,9 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.0-beta.5",
-    "@turbo/gen": "^2.5.1",
+    "@turbo/gen": "2.5.3",
     "@types/bun": "latest",
-    "turbo": "^2.5.1",
+    "turbo": "2.5.3",
     "typescript": "5.8.3"
   },
   "packageManager": "bun@1.2.13",
@@ -38,7 +38,12 @@
       "tooling/*"
     ],
     "catalog": {
+      "@types/react-dom": "19.1.5",
+      "@types/react": "19.1.6",
       "effect": "3.16.0",
+      "react-dom": "19.1.0",
+      "react": "19.1.0",
+      "tailwindcss": "4.1.8",
       "typescript": "5.8.3"
     }
   }

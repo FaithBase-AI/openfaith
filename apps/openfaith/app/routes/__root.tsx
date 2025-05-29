@@ -1,5 +1,5 @@
-import appCss from '@/styles/app.css?url'
-import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
+import appCss from '@openfaith/ui/app.css?url'
+import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
 export const Route = createRootRoute({
