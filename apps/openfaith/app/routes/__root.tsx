@@ -1,5 +1,5 @@
 import type { TrpcRouter } from '@openfaith/api'
-import { NotFound } from '@openfaith/openfaith/components/NotFound'
+import { NotFound } from '@openfaith/openfaith/components/notFound'
 import { Providers } from '@openfaith/openfaith/shared/providers'
 import appCss from '@openfaith/openfaith/styles/app.css?url'
 import type { QueryClient } from '@tanstack/react-query'
