@@ -4,7 +4,7 @@ import { DefaultCatchBoundary } from '@openfaith/openfaith/components/DefaultCat
 import { NotFound } from '@openfaith/openfaith/components/NotFound'
 import { TRPCProvider } from '@openfaith/openfaith/utils/trpc'
 import { Loader2Icon } from '@openfaith/ui/icons/loader2Icon'
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'
 import { createTRPCClient, httpBatchStreamLink } from '@trpc/client'
 import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query'
@@ -50,9 +50,11 @@ export function createRouter() {
     ),
     Wrap: function WrapComponent({ children }) {
       return (
-        <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
-          {children}
-        </TRPCProvider>
+        <QueryClientProvider client={queryClient}>
+          <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
+            {children}
+          </TRPCProvider>
+        </QueryClientProvider>
       )
     },
   })
