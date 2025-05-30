@@ -1,6 +1,6 @@
 // https://github.com/XD2Sketch/react-oauth-popup/tree/master
 import { noOp } from '@openfaith/shared'
-import { useStableEffect } from '@openfaith/ui/shared/hooks/effect'
+import { useStableEffect } from '@openfaith/ui'
 import { Array, Equivalence, Option, pipe, String } from 'effect'
 import { useEffect, useRef, useState } from 'react'
 

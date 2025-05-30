@@ -21,6 +21,8 @@
       "name": "@openfaith/adapter-core",
       "version": "0.1.0",
       "dependencies": {
+        "@openfaith/shared": "workspace:*",
+        "@openfaith/ui": "workspace:*",
         "effect": "catalog:",
         "jotai": "catalog:",
       },
@@ -34,6 +36,7 @@
       "dependencies": {
         "@openfaith/adapter-core": "workspace:*",
         "@openfaith/schema": "workspace:*",
+        "@openfaith/shared": "workspace:*",
         "effect": "catalog:",
         "jotai": "catalog:",
         "qs": "catalog:",

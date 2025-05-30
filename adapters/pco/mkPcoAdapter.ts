@@ -1,20 +1,20 @@
 import { ChMSConnectResult, mkAdapter } from '@openfaith/adapter-core'
+import type { Resolve } from '@openfaith/shared'
 import { Array, pipe } from 'effect'
 import { atom } from 'jotai'
 import qs from 'qs'
 
 export const planningCenterConnectResultAtom = atom<ChMSConnectResult>(ChMSConnectResult.noResult())
 
-export const mkPcoAdapter = (
-  params: Omit<
-    Parameters<typeof mkAdapter>[0],
-    'chmsName' | 'chmsOauthUrl' | 'connectResultAtom'
-  > & {
+type MkPcoAdapterParams = Resolve<
+  Omit<Parameters<typeof mkAdapter>[0], 'chmsName' | 'chmsOauthUrl' | 'connectResultAtom'> & {
     clientId: string
     redirectUri: string
-  },
-) => {
-  const { clientId, redirectUri, onConnect, rootDomain, port } = params
+  }
+>
+
+export const mkPcoAdapter = (params: MkPcoAdapterParams) => {
+  const { clientId, redirectUri, rootDomain, port } = params
 
   const { useChMSConnect } = mkAdapter({
     chmsName: 'Planning Center',
@@ -28,7 +28,6 @@ export const mkPcoAdapter = (
       response_type: 'code',
     })}`,
     connectResultAtom: planningCenterConnectResultAtom,
-    onConnect,
     rootDomain,
     port,
   })

@@ -14,6 +14,7 @@
   "dependencies": {
     "@openfaith/adapter-core": "workspace:*",
     "@openfaith/schema": "workspace:*",
+    "@openfaith/shared": "workspace:*",
     "effect": "catalog:",
     "jotai": "catalog:",
     "qs": "catalog:"

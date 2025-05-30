@@ -2,23 +2,24 @@
 import { useOauthPopup } from '@openfaith/adapter-core/hooks/useOauthPopup'
 import { ChMSConnectResult } from '@openfaith/adapter-core/types'
 import { noOp } from '@openfaith/shared'
-import { useStableEffect } from '@openfaith/ui/shared/hooks/effect'
+import { useStableEffect } from '@openfaith/ui'
 import { Equivalence, Option, pipe, String } from 'effect'
 import { type PrimitiveAtom, useAtom } from 'jotai'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 
 export const getUseChMSConnect =
-  (params: {
+  (init: {
     chmsOauthUrl: string
     connectResultAtom: PrimitiveAtom<ChMSConnectResult>
-    onConnect: (params: { code: string }) => Promise<void>
+
     rootDomain: string
     chmsName: string
     port?: number | undefined
   }) =>
-  () => {
-    const { chmsOauthUrl, connectResultAtom, onConnect, rootDomain, port, chmsName } = params
+  (params: { onConnect: (params: { code: string }) => Promise<void> }) => {
+    const { chmsOauthUrl, connectResultAtom, rootDomain, port, chmsName } = init
+    const { onConnect } = params
     const [connectResult, setConnectResult] = useAtom(connectResultAtom)
 
     const { onContainerClick, codeOpt } = useOauthPopup({

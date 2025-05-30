@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@openfaith/shared": "workspace:*",
+    "@openfaith/ui": "workspace:*",
     "effect": "catalog:",
     "jotai": "catalog:"
   },
