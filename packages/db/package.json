@@ -5,12 +5,19 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
+    "dev": "drizzle-kit studio",
+    "dev:db-up": "docker compose --env-file .env -f ./docker-compose.yml up",
+    "dev:db-down": "docker compose --env-file .env -f ./docker-compose.yml down",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "format": "biome lint .",
     "lint:biome": "biome lint .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@effect/sql-drizzle": "0.36.2",
+    "@effect/sql-pg": "0.38.2",
+    "drizzle-kit": "0.31.1",
+    "drizzle-orm": "0.44.0",
     "effect": "catalog:"
   },
   "devDependencies": {

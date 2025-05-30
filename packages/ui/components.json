@@ -11,11 +11,11 @@
     "prefix": ""
   },
   "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils",
-    "ui": "@/registry/new-york-v4/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
+    "components": "@openfaith/ui/components",
+    "utils": "@openfaith/ui/utils",
+    "ui": "@openfaith/ui/components/ui",
+    "lib": "@openfaith/ui/lib",
+    "hooks": "@openfaith/ui/hooks"
   },
   "iconLibrary": "lucide"
 }

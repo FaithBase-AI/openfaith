@@ -15,6 +15,7 @@
     "lint:biome:fix": "turbo run lint:biome --continue -- --unsafe --fix",
     "lint:eslint": "turbo run lint:eslint --continue -- --cache --cache-location .cache/.eslintcache",
     "lint:eslint:fix": "turbo run lint:eslint --continue -- --fix --cache --cache-location .cache/.eslintcache",
+    "lint:fix": "turbo run lint:biome lint:eslint --continue -- --unsafe --fix",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck --ui=stream",
     "check": "turbo run format lint:biome lint:eslint typecheck test --ui=stream",

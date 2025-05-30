@@ -1,0 +1,12 @@
+{
+  "name": "@openfaith/infra-db",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "docker compose --env-file .env -f ./docker-compose.yml up",
+    "dev-down": "docker compose --env-file .env -f ./docker-compose.yml down"
+  },
+  "dependencies": {}
+}
