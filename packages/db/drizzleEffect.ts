@@ -148,8 +148,8 @@ type Json =
   | {
       [key: string]: Json
     }
-  | Json[]
-  | readonly Json[]
+  | Array<Json>
+  | ReadonlyArray<Json>
   | null
 
 export const Json = Schema.suspend(
@@ -167,18 +167,17 @@ type GetSchemaForType<TColumn extends Drizzle.Column> =
       ? Schema.Schema<any>
       : TDataType extends 'json'
         ? Schema.Schema<Json>
-        : TColumn extends { enumValues: [string, ...string[]] }
-          ? Drizzle.Equal<TColumn['enumValues'], [string, ...string[]]> extends true
+        : TColumn extends { enumValues: [string, ...Array<string>] }
+          ? Drizzle.Equal<TColumn['enumValues'], [string, ...Array<string>]> extends true
             ? Schema.Schema<string>
             : Schema.Schema<TColumn['enumValues'][number]>
           : TDataType extends 'array'
-            ? Schema.Schema<
-                | null
-                | readonly Drizzle.Assume<
-                    TColumn['_'],
-                    { baseColumn: Drizzle.Column }
-                  >['baseColumn']['_']['data'][]
-              >
+            ? Schema.Schema<null | ReadonlyArray<
+                Drizzle.Assume<
+                  TColumn['_'],
+                  { baseColumn: Drizzle.Column }
+                >['baseColumn']['_']['data']
+              >>
             : TDataType extends 'bigint'
               ? Schema.Schema<bigint>
               : TDataType extends 'number'
@@ -266,7 +265,7 @@ type BuildInsertSchema<
               Schema.Schema.Type<TRefine[K]>
             >
           >
-        : TRefine[K] extends (...a: any[]) => any
+        : TRefine[K] extends (...a: Array<any>) => any
           ? PropertySignatureReplaceType<
               InsertColumnPropertySignatures<TTable>[K],
               CarryOverOptionality<
@@ -302,7 +301,7 @@ type BuildSelectSchema<
               Schema.Schema.Type<TRefine[K]>
             >
           >
-        : TRefine[K] extends (...a: any[]) => any
+        : TRefine[K] extends (...a: Array<any>) => any
           ? PropertySignatureReplaceType<
               SelectColumnPropertySignatures<TTable>[K],
               CarryOverOptionality<
@@ -467,6 +466,6 @@ function mapColumnToSchema(column: Drizzle.Column): Schema.Schema<any, any> {
 
 function isWithEnum(
   column: Drizzle.Column,
-): column is typeof column & { enumValues: [string, ...string[]] } {
+): column is typeof column & { enumValues: [string, ...Array<string>] } {
   return 'enumValues' in column && Array.isArray(column.enumValues) && column.enumValues.length > 0
 }
