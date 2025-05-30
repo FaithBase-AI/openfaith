@@ -5,8 +5,8 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "docker compose --env-file .env -f ./docker-compose.yml up",
-    "dev-down": "docker compose --env-file .env -f ./docker-compose.yml down"
+    "dev": "docker compose -f ./docker-compose.yml up",
+    "dev-down": "docker compose -f ./docker-compose.yml down"
   },
   "dependencies": {}
 }

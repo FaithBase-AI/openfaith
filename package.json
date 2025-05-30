@@ -34,6 +34,7 @@
       "adapters/*",
       "apps/*",
       "backend/*",
+      "infra/*",
       "packages/*",
       "tooling/*"
     ],
