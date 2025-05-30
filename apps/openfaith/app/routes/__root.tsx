@@ -1,4 +1,4 @@
-import appCss from '@openfaith/ui/app.css?url'
+import appCss from '@openfaith/openfaith/styles/app.css?url'
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
@@ -13,7 +13,7 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'OpenFaith',
       },
     ],
     links: [
@@ -21,9 +21,13 @@ export const Route = createRootRoute({
         rel: 'stylesheet',
         href: appCss,
       },
+      { rel: 'icon', href: '/favicon.ico' },
     ],
   }),
   component: RootComponent,
+  notFoundComponent: () => {
+    return <div>Not Found</div>
+  },
 })
 
 function RootComponent() {

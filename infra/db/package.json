@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "docker compose -f ./docker-compose.yml up",
-    "dev-down": "docker compose -f ./docker-compose.yml down"
+    "infra:dev": "docker compose -f ./docker-compose.yml up",
+    "infra:dev-down": "docker compose -f ./docker-compose.yml down"
   },
   "dependencies": {}
 }

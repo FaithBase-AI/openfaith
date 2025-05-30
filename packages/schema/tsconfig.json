@@ -6,5 +6,5 @@
       "@openfaith/schema/*": ["./*"]
     }
   },
-  "include": [".", "../ui"]
+  "include": ["."]
 }
