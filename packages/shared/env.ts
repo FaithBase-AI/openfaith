@@ -24,7 +24,6 @@ export const env = createEnv({
     RESEND_API_KEY: z.string(),
 
     // Planning Center
-    PLANNING_CENTER_APPLICATION_ID: z.string(),
     PLANNING_CENTER_SECRET: z.string(),
   },
 
