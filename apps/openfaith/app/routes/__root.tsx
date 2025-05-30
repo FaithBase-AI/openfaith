@@ -1,6 +1,7 @@
+import { Providers } from '@openfaith/openfaith/shared/providers'
 import appCss from '@openfaith/openfaith/styles/app.css?url'
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
-import type { ReactNode } from 'react'
+import type { PropsWithChildren } from 'react'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -38,14 +39,14 @@ function RootComponent() {
   )
 }
 
-function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+function RootDocument({ children }: PropsWithChildren) {
   return (
-    <html lang='en'>
+    <html lang='en' suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body>
-        {children}
+      <body className='font-regular tracking-wide antialiased'>
+        <Providers>{children}</Providers>
         <Scripts />
       </body>
     </html>

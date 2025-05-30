@@ -3,11 +3,16 @@ import { z } from 'zod'
 
 export const env = createEnv({
   server: {
+    // DB
     DB_HOST_PRIMARY: z.string(),
     DB_NAME: z.string(),
     DB_PASSWORD: z.string(),
     DB_PORT: z.string().transform((x) => Number.parseInt(x)),
     DB_USERNAME: z.string(),
+
+    // Planning Center
+    PLANNING_CENTER_APPLICATION_ID: z.string(),
+    PLANNING_CENTER_SECRET: z.string(),
   },
 
   /**
@@ -16,13 +21,19 @@ export const env = createEnv({
    */
   clientPrefix: 'VITE_',
 
-  client: {},
+  client: {
+    // Planning Center
+    VITE_PLANNING_CENTER_CLIENT_ID: z.string(),
+  },
 
   /**
    * What object holds the environment variables at runtime. This is usually
    * `process.env` or `import.meta.env`.
    */
-  runtimeEnv: process.env,
+  runtimeEnv: {
+    ...process.env,
+    ...import.meta.env,
+  },
 
   /**
    * By default, this library will feed the environment variables directly to

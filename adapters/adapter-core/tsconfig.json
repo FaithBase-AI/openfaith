@@ -3,8 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@openfaith/openfaith/*": ["./*"]
+      "@openfaith/adapter-core/*": ["./*"]
     }
   },
-  "include": [".", "../../packages/ui/shared/hooks/useOauthPopup.ts"]
+  "include": ["."]
 }

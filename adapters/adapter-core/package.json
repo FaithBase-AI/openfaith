@@ -1,5 +1,5 @@
 {
-  "name": "@openfaith/ui",
+  "name": "@openfaith/adapter-core",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -11,12 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@radix-ui/react-slot": "1.2.3",
-    "class-variance-authority": "0.7.1",
-    "clsx": "2.1.1",
     "effect": "catalog:",
-    "next-themes": "catalog:",
-    "sonner": "2.0.3"
+    "jotai": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:"
