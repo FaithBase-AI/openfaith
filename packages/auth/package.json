@@ -1,5 +1,5 @@
 {
-  "name": "@openfaith/shared",
+  "name": "@openfaith/auth",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -11,9 +11,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@t3-oss/env-core": "0.13.6",
+    "@openfaith/db": "workspace:*",
+    "@openfaith/email": "workspace:*",
+    "better-auth": "catalog:",
     "effect": "catalog:",
-    "zod": "3.25.42"
+    "resend": "catalog:",
+    "typeid-js": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:"

@@ -1,11 +1,10 @@
 'use client'
 import { useOauthPopup } from '@openfaith/adapter-core/hooks/useOauthPopup'
 import { ChMSConnectResult } from '@openfaith/adapter-core/types'
-import { env, noOp } from '@openfaith/shared'
+import { noOp } from '@openfaith/shared'
 import { useStableEffect } from '@openfaith/ui/shared/hooks/effect'
-import { Array, Equivalence, Option, pipe, String } from 'effect'
+import { Equivalence, Option, pipe, String } from 'effect'
 import { type PrimitiveAtom, useAtom } from 'jotai'
-import qs from 'qs'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 
@@ -13,27 +12,20 @@ export const getUseChMSConnect =
   (params: {
     chmsOauthUrl: string
     connectResultAtom: PrimitiveAtom<ChMSConnectResult>
-    redirectUri: string
-    scopes: Array<string>
     onConnect: (params: { code: string }) => Promise<void>
     rootDomain: string
+    chmsName: string
     port?: number | undefined
   }) =>
   () => {
-    const { chmsOauthUrl, connectResultAtom, redirectUri, scopes, onConnect, rootDomain, port } =
-      params
+    const { chmsOauthUrl, connectResultAtom, onConnect, rootDomain, port, chmsName } = params
     const [connectResult, setConnectResult] = useAtom(connectResultAtom)
 
     const { onContainerClick, codeOpt } = useOauthPopup({
-      title: 'Connect to Planning Center',
+      title: `Connect to ${chmsName}`,
       height: 900,
       width: 650,
-      url: `${chmsOauthUrl}?${qs.stringify({
-        client_id: env.VITE_PLANNING_CENTER_CLIENT_ID,
-        redirect_uri: redirectUri,
-        scope: pipe(scopes, Array.join(' ')),
-        response_type: 'code',
-      })}`,
+      url: chmsOauthUrl,
       onCancel: () => {
         console.log('closed without signing in')
         setConnectResult(ChMSConnectResult.canceled())
@@ -67,35 +59,31 @@ export const getUseChMSConnect =
       pipe(
         connectResult,
         ChMSConnectResult.$match({
-          'no-result': noOp,
+          noResult: noOp,
           canceled: () => {
-            toast('Planning Center sign in canceled.', {
-              description:
-                "Looks like the sign in process for Planning Center was canceled. When you're ready to sign in again, just hit the Connect Button.",
+            toast(`${chmsName} sign in canceled.`, {
+              description: `Looks like the sign in process for ${chmsName} was canceled. When you're ready to sign in again, just hit the Connect Button.`,
             })
           },
           loading: noOp,
           success: noOp,
           failed: () => {
-            toast('Planning Center sign in error.', {
-              description:
-                'Looks like we ran into an issue with logging into Planning Center. Please reach out to Steeple support to get it sorted.',
+            toast(`${chmsName} sign in error.`, {
+              description: `Looks like we ran into an issue with logging into ${chmsName}. Please reach out to Steeple support to get it sorted.`,
               // variant: 'destructive',
             })
           },
           error: (x) => {
             switch (x.message) {
               case 'no-people-permissions':
-                toast('Missing Planning Center People permissions.', {
-                  description:
-                    "Looks like you don't have at least Viewer permissions for Planning Center People. Please reach out to your Planning Center admin to resolve the issue.",
+                toast(`Missing ${chmsName} People permissions.`, {
+                  description: `Looks like you don't have at least Viewer permissions for ${chmsName} People. Please reach out to your ${chmsName} admin to resolve the issue.`,
                   // variant: 'destructive',
                 })
                 break
               default:
-                toast('Planning Center sign in error.', {
-                  description:
-                    'Looks like we ran into an issue with logging into Planning Center. Please reach out to Steeple support to get it sorted.',
+                toast(`${chmsName} sign in error.`, {
+                  description: `Looks like we ran into an issue with logging into ${chmsName}. Please reach out to Steeple support to get it sorted.`,
                   // variant: 'destructive',
                 })
                 break
@@ -103,7 +91,7 @@ export const getUseChMSConnect =
           },
         }),
       )
-    }, [connectResult])
+    }, [chmsName, connectResult])
 
     return {
       onClick: () => {

@@ -1,7 +1,16 @@
+import type { TrpcRouter } from '@openfaith/api'
+import { NotFound } from '@openfaith/openfaith/components/NotFound'
 import { Providers } from '@openfaith/openfaith/shared/providers'
 import appCss from '@openfaith/openfaith/styles/app.css?url'
+import type { QueryClient } from '@tanstack/react-query'
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
+import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query'
 import type { PropsWithChildren } from 'react'
+
+export interface RouterAppContext {
+  trpc: TRPCOptionsProxy<TrpcRouter>
+  queryClient: QueryClient
+}
 
 export const Route = createRootRoute({
   head: () => ({
@@ -26,9 +35,7 @@ export const Route = createRootRoute({
     ],
   }),
   component: RootComponent,
-  notFoundComponent: () => {
-    return <div>Not Found</div>
-  },
+  notFoundComponent: () => <NotFound />,
 })
 
 function RootComponent() {

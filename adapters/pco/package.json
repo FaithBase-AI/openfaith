@@ -12,10 +12,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@openfaith/adapter-core": "workspace:*",
     "@openfaith/schema": "workspace:*",
-    "effect": "catalog:"
+    "effect": "catalog:",
+    "jotai": "catalog:",
+    "qs": "catalog:"
   },
   "devDependencies": {
+    "@types/qs": "catalog:",
     "typescript": "catalog:"
   }
 }

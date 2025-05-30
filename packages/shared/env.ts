@@ -10,6 +10,19 @@ export const env = createEnv({
     DB_PORT: z.string().transform((x) => Number.parseInt(x)),
     DB_USERNAME: z.string(),
 
+    // Redis
+    REDIS_URL: z.string(),
+    UPSTASH_REDIS_REST_TOKEN: z.string(),
+    UPSTASH_REDIS_REST_URL: z.string(),
+
+    // Config
+
+    // Auth
+    BETTER_AUTH_SECRET: z.string(),
+
+    // Email
+    RESEND_API_KEY: z.string(),
+
     // Planning Center
     PLANNING_CENTER_APPLICATION_ID: z.string(),
     PLANNING_CENTER_SECRET: z.string(),
@@ -22,6 +35,11 @@ export const env = createEnv({
   clientPrefix: 'VITE_',
 
   client: {
+    // Config
+    VITE_APP_NAME: z.string(),
+    VITE_BASE_URL: z.string(),
+    VITE_PROD_ROOT_DOMAIN: z.string(),
+
     // Planning Center
     VITE_PLANNING_CENTER_CLIENT_ID: z.string(),
   },

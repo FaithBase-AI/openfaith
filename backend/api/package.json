@@ -11,9 +11,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@openfaith/shared": "workspace:*",
+    "@openfaith/auth": "workspace:*",
     "@openfaith/schema": "workspace:*",
-    "effect": "catalog:"
+    "@openfaith/shared": "workspace:*",
+    "@trpc/server": "catalog:",
+    "effect": "catalog:",
+    "superjson": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:"

@@ -1,7 +1,7 @@
 import { Data } from 'effect'
 
 export type ChMSConnectResult = Data.TaggedEnum<{
-  'no-result': {}
+  noResult: {}
   canceled: {}
   loading: {}
   success: {}

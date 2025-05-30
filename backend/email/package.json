@@ -1,21 +1,28 @@
 {
-  "name": "@openfaith/shared",
+  "name": "@openfaith/email",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "license": "MIT",
   "scripts": {
+    "dev": "email dev",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "format": "biome lint .",
     "lint:biome": "biome lint .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@t3-oss/env-core": "0.13.6",
+    "@openfaith/schema": "workspace:*",
+    "@openfaith/shared": "workspace:*",
+    "@react-email/components": "0.0.41",
     "effect": "catalog:",
-    "zod": "3.25.42"
+    "react": "catalog:",
+    "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "react-email": "4.0.15",
     "typescript": "catalog:"
   }
 }
