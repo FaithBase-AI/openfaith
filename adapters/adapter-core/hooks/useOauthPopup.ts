@@ -1,8 +1,7 @@
-// https://github.com/XD2Sketch/react-oauth-popup/tree/master
 import { noOp } from '@openfaith/shared'
-import { useStableEffect } from '@openfaith/ui'
-import { Array, Equivalence, Option, pipe, String } from 'effect'
-import { useEffect, useRef, useState } from 'react'
+import { useStable, useStableEffect } from '@openfaith/ui'
+import { Array, Equivalence, Option, pipe } from 'effect'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 type IWindowProps = {
   url: string
@@ -40,7 +39,10 @@ export function useOauthPopup({
 }) {
   const [externalWindow, setExternalWindow] = useState<Window | null>()
   const intervalRef = useRef<number>(null)
-  const [codeOpt, setCodeOpt] = useState<Option.Option<string>>(Option.none())
+  const [codeOpt, setCodeOpt] = useStable<Option.Option<string>>(
+    Option.none(),
+    Option.getEquivalence(Equivalence.string),
+  )
 
   const clearTimer = () => {
     pipe(
@@ -50,7 +52,7 @@ export function useOauthPopup({
     )
   }
 
-  const onContainerClick = () => {
+  const onContainerClick = useCallback(() => {
     setCodeOpt(Option.none())
 
     setExternalWindow(
@@ -61,7 +63,7 @@ export function useOauthPopup({
         height,
       }),
     )
-  }
+  }, [url, title, width, height, setCodeOpt])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Pure
   useEffect(() => {
@@ -122,7 +124,7 @@ export function useOauthPopup({
     [externalWindow, codeOpt, onCancel],
     Equivalence.tuple(
       Equivalence.strict<typeof externalWindow>(),
-      Option.getEquivalence(String.Equivalence),
+      Option.getEquivalence(Equivalence.string),
       Equivalence.strict<typeof onCancel>(),
     ),
   )
