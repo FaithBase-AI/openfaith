@@ -169,12 +169,6 @@ export const auth = betterAuth({
             organizationId: 'orgId',
           },
         },
-        team: {
-          modelName: getTableName('teams'),
-          fields: {
-            organizationId: 'orgId',
-          },
-        },
       },
       async sendInvitationEmail(data) {
         await resend.emails.send({
