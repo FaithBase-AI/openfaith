@@ -1,6 +1,6 @@
 import { createEnv } from '@t3-oss/env-core'
+import { Option, pipe } from 'effect'
 import { z } from 'zod'
-
 export const env = createEnv({
   server: {
     // DB
@@ -49,7 +49,15 @@ export const env = createEnv({
    */
   runtimeEnv: {
     ...process.env,
-    ...import.meta.env,
+    ...pipe(
+      process.env.npm_lifecycle_script,
+      Option.fromNullable,
+      Option.filter((x) => x === 'drizzle-kit studio'),
+      Option.match({
+        onNone: () => import.meta.env,
+        onSome: () => ({}),
+      }),
+    ),
   },
 
   /**
