@@ -1,0 +1,10 @@
+{
+  "extends": "@openfaith/tsconfig/base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@openfaith/zero/*": ["./*"]
+    }
+  },
+  "include": ["."]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@openfaith/zero",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "zero-cache-dev -p zeroSchema.mts",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "format": "biome lint .",
+    "lint:biome": "biome lint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@openfaith/shared": "workspace:*",
+    "@rocicorp/zero": "catalog:",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

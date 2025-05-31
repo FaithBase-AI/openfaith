@@ -15,6 +15,18 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_TOKEN: z.string(),
     UPSTASH_REDIS_REST_URL: z.string(),
 
+    // Zero
+    ZERO_UPSTREAM_DB: z.string(),
+    ZERO_CVR_DB: z.string(),
+    ZERO_CHANGE_DB: z.string(),
+    ZERO_REPLICA_FILE: z.string(),
+    ZERO_AUTH_JWKS_URL: z.string(),
+    ZERO_APP_ID: z.string(),
+    ZERO_NUM_SYNC_WORKERS: z.string().transform((x) => Number.parseInt(x)),
+    ZERO_LOG_LEVEL: z.string(),
+    ZERO_TARGET_CLIENT_ROW_COUNT: z.string().transform((x) => Number.parseInt(x)),
+    ZERO_ADMIN_PASSWORD: z.string(),
+
     // Config
 
     // Auth

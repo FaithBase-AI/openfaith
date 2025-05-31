@@ -23,9 +23,9 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.0-beta.5",
-    "@turbo/gen": "2.5.3",
+    "@turbo/gen": "2.5.4",
     "@types/bun": "latest",
-    "turbo": "2.5.3",
+    "turbo": "2.5.4",
     "typescript": "5.8.3"
   },
   "packageManager": "bun@1.2.13",
@@ -45,6 +45,7 @@
       "@types/qs": "6.14.0",
       "@types/react-dom": "19.1.5",
       "@types/react": "19.1.6",
+      "@rocicorp/zero": "0.20.2025052100",
       "better-auth": "1.2.8",
       "effect": "3.16.0",
       "jotai": "2.12.5",
@@ -59,6 +60,9 @@
       "typescript": "5.8.3"
     }
   },
+  "trustedDependencies": [
+    "@rocicorp/zero-sqlite3"
+  ],
   "dependencies": {
     "@emnapi/core": "^1.4.3",
     "@emnapi/runtime": "^1.4.3",
