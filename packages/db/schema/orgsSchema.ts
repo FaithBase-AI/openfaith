@@ -7,6 +7,10 @@ import { index } from 'drizzle-orm/pg-core'
 export const orgsTable = pgTable(
   'orgs',
   (d) => ({
+    _tag: d
+      .char({ enum: ['org'], length: 3 })
+      .default('org')
+      .notNull(),
     id: d.text().primaryKey(),
     name: d.text().notNull(),
     slug: d.text().unique(),
@@ -27,6 +31,10 @@ export type NewOrg = typeof NewOrg.Type
 export const orgUsersTable = pgTable(
   'orgUsers',
   (d) => ({
+    _tag: d
+      .char({ enum: ['orgUser'], length: 7 })
+      .default('orgUser')
+      .notNull(),
     id: d.text().primaryKey(),
     orgId: d
       .text()
@@ -53,6 +61,10 @@ export type NewOrgUser = typeof NewOrgUser.Type
 export const invitationsTable = pgTable(
   'invitations',
   (d) => ({
+    _tag: d
+      .char({ enum: ['invitation'], length: 10 })
+      .default('invitation')
+      .notNull(),
     id: d.text().primaryKey(),
     orgId: d
       .text()
@@ -78,6 +90,10 @@ export const NewInvitation = createInsertSchema(invitationsTable)
 export type NewInvitation = typeof NewInvitation.Type
 
 export const orgSettingsTable = pgTable('orgSettings', (d) => ({
+  _tag: d
+    .char({ enum: ['orgSettings'], length: 11 })
+    .default('orgSettings')
+    .notNull(),
   orgId: d.varchar({ length: 128 }).primaryKey(),
 }))
 export const OrgSettings = createSelectSchema(orgSettingsTable)

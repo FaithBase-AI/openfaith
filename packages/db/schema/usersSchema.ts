@@ -6,6 +6,10 @@ import { index } from 'drizzle-orm/pg-core'
 export const usersTable = pgTable(
   'users',
   (d) => ({
+    _tag: d
+      .char({ enum: ['user'], length: 4 })
+      .default('user')
+      .notNull(),
     id: d.text().primaryKey(),
     name: d.text().notNull(),
     email: d.text().notNull().unique(),

@@ -5,6 +5,7 @@
     "enabled": true,
     "includes": [
       "**",
+      "!**/.cache",
       "!**/.expo",
       "!**/.turbo",
       "!**/expo-env.d.ts",
@@ -17,7 +18,8 @@
         "useExhaustiveDependencies": "error",
         "noInnerDeclarations": "off",
         "noConstructorReturn": "off",
-        "noUnusedImports": "error"
+        "noUnusedImports": "error",
+        "noChildrenProp": "off"
       },
       "suspicious": {
         "noImplicitAnyLet": "off",
@@ -93,6 +95,7 @@
     "lineWidth": 100,
     "includes": [
       "**",
+      "!**/.cache",
       "!**/.expo",
       "!**/.turbo",
       "!**/expo-env.d.ts",

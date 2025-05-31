@@ -11,14 +11,37 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@radix-ui/react-slot": "1.2.3",
+    "@dnd-kit/core": "6.3.1",
+    "@dnd-kit/modifiers": "9.0.0",
+    "@dnd-kit/sortable": "10.0.0",
+    "@dnd-kit/utilities": "3.2.2",
+    "@openfaith/schema": "workspace:*",
+    "@openfaith/shared": "workspace:*",
+    "@openfaith/zero": "workspace:*",
+    "boring-avatars": "1.11.2",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
+    "date-fns": "catalog:",
+    "downshift": "9.0.9",
     "effect": "catalog:",
+    "initials": "3.1.2",
+    "input-otp": "catalog:",
+    "jotai": "catalog:",
+    "match-sorter": "8.0.2",
+    "motion": "12.15.0",
     "next-themes": "catalog:",
-    "sonner": "2.0.3"
+    "nuqs": "catalog:",
+    "radix-ui": "catalog:",
+    "react": "catalog:",
+    "react-day-picker": "8.10.1",
+    "react-dom": "catalog:",
+    "react-imask": "7.6.1",
+    "sonner": "2.0.4",
+    "vaul": "1.1.2"
   },
   "devDependencies": {
+    "@types/react-dom": "catalog:",
+    "@types/react": "catalog:",
     "typescript": "catalog:"
   }
 }

@@ -4,6 +4,7 @@ import {
   createSchema,
   definePermissions,
   type ExpressionBuilder,
+  enumeration,
   NOBODY_CAN,
   number,
   relationships,
@@ -15,6 +16,7 @@ import {
 export const usersSchema = table('users')
   .from('openfaith_users')
   .columns({
+    _tag: enumeration<'user'>(),
     id: string(),
     name: string(),
     email: string(),
@@ -34,6 +36,7 @@ export const usersSchema = table('users')
 export const orgsSchema = table('orgs')
   .from('openfaith_orgs')
   .columns({
+    _tag: enumeration<'org'>(),
     id: string(),
     name: string(),
     slug: string(),
@@ -46,6 +49,7 @@ export const orgsSchema = table('orgs')
 export const orgUsersSchema = table('orgUsers')
   .from('openfaith_orgUsers')
   .columns({
+    _tag: enumeration<'orgUser'>(),
     id: string(),
     orgId: string(),
     userId: string(),
@@ -57,6 +61,7 @@ export const orgUsersSchema = table('orgUsers')
 export const invitationsSchema = table('invitations')
   .from('openfaith_invitations')
   .columns({
+    _tag: enumeration<'invitation'>(),
     id: string(),
     orgId: string(),
     email: string(),
@@ -70,6 +75,7 @@ export const invitationsSchema = table('invitations')
 export const orgSettingsSchema = table('orgSettings')
   .from('openfaith_orgSettings')
   .columns({
+    _tag: enumeration<'orgSettings'>(),
     orgId: string(),
   })
   .primaryKey('orgId')

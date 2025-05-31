@@ -1,6 +1,7 @@
 import { createEnv } from '@t3-oss/env-core'
 import { Option, pipe } from 'effect'
 import { z } from 'zod'
+
 export const env = createEnv({
   server: {
     // DB
@@ -86,4 +87,6 @@ export const env = createEnv({
    * explicitly specify this option as true.
    */
   emptyStringAsUndefined: true,
+
+  skipValidation: process.env.NODE_ENV === 'test',
 })
