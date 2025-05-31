@@ -6,6 +6,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "drizzle-kit studio",
+    "db:generate": "npx drizzle-kit generate && bun run format --write",
+    "db:migrate": "npx drizzle-kit migrate",
     "dev:db-up": "docker compose --env-file .env -f ./docker-compose.yml up",
     "dev:db-down": "docker compose --env-file .env -f ./docker-compose.yml down",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
