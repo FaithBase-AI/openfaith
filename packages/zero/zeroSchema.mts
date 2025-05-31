@@ -4,6 +4,7 @@ import {
   createSchema,
   definePermissions,
   type ExpressionBuilder,
+  NOBODY_CAN,
   number,
   relationships,
   string,
@@ -241,7 +242,7 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     },
     orgs: {
       row: {
-        insert: ANYONE_CAN,
+        insert: NOBODY_CAN,
         select: [allowIfOrgMember, allowIfAdmin],
         update: {
           preMutation: [allowIfOrgAdmin, allowIfAdmin],
@@ -252,6 +253,7 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     orgUsers: {
       row: {
         select: ANYONE_CAN,
+        insert: NOBODY_CAN,
       },
     },
     orgSettings: {
