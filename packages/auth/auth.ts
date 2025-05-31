@@ -43,9 +43,6 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     schema: {
       ['openfaith_users']: schema.usersTable,
-      ['openfaith_accounts']: schema.accountsTable,
-      ['openfaith_verifications']: schema.verificationsTable,
-      ['openfaith_jwks']: schema.jwksTable,
       ['openfaith_orgs']: schema.orgsTable,
       ['openfaith_orgUsers']: schema.orgUsersTable,
       ['openfaith_invitations']: schema.invitationsTable,

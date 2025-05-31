@@ -10,13 +10,8 @@ import {
   orgsTable,
   orgUsersTable,
 } from '@openfaith/db/schema/orgsSchema'
-import { accountsRelations, usersRelations } from '@openfaith/db/schema/usersRelations'
-import {
-  accountsTable,
-  jwksTable,
-  usersTable,
-  verificationsTable,
-} from '@openfaith/db/schema/usersSchema'
+import { usersRelations } from '@openfaith/db/schema/usersRelations'
+import { usersTable } from '@openfaith/db/schema/usersSchema'
 
 export const schema = {
   orgsRelations,
@@ -24,11 +19,7 @@ export const schema = {
   invitationsRelations,
   orgSettingsRelations,
   usersRelations,
-  accountsRelations,
   usersTable,
-  accountsTable,
-  verificationsTable,
-  jwksTable,
   orgsTable,
   orgUsersTable,
   invitationsTable,
