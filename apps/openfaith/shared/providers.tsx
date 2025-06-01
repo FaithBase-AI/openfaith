@@ -5,6 +5,7 @@ import { Toaster } from '@openfaith/ui'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { ThemeProvider } from 'next-themes'
+import { NuqsAdapter } from 'nuqs/adapters/react'
 import type { FC, ReactNode } from 'react'
 
 type ProvidersProps = {
@@ -17,14 +18,16 @@ export const Providers: FC<ProvidersProps> = (props) => {
   const { children, userId, token } = props
 
   return (
-    <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
-      <ZeroProvider userId={userId} token={token}>
-        {children}
+    <NuqsAdapter>
+      <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
+        <ZeroProvider userId={userId} token={token}>
+          {children}
 
-        <TanStackRouterDevtools position='bottom-right' />
-        <ReactQueryDevtools buttonPosition='bottom-left' />
-        <Toaster />
-      </ZeroProvider>
-    </ThemeProvider>
+          <TanStackRouterDevtools position='bottom-right' />
+          <ReactQueryDevtools buttonPosition='bottom-left' />
+          <Toaster />
+        </ZeroProvider>
+      </ThemeProvider>
+    </NuqsAdapter>
   )
 }

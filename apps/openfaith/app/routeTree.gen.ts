@@ -8,14 +8,26 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createFileRoute } from '@tanstack/react-router'
+
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as IndexImport } from './routes/index'
-import { Route as SignInIndexImport } from './routes/sign-in/index'
 import { Route as OauthProviderImport } from './routes/oauth/$provider'
+import { Route as authAuthLayoutImport } from './routes/(auth)/_authLayout'
+import { Route as authAuthLayoutSignInImport } from './routes/(auth)/_authLayout.sign-in'
+
+// Create Virtual Routes
+
+const authImport = createFileRoute('/(auth)')()
 
 // Create/Update Routes
+
+const authRoute = authImport.update({
+  id: '/(auth)',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const IndexRoute = IndexImport.update({
   id: '/',
@@ -23,16 +35,21 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const SignInIndexRoute = SignInIndexImport.update({
-  id: '/sign-in/',
-  path: '/sign-in/',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const OauthProviderRoute = OauthProviderImport.update({
   id: '/oauth/$provider',
   path: '/oauth/$provider',
   getParentRoute: () => rootRoute,
+} as any)
+
+const authAuthLayoutRoute = authAuthLayoutImport.update({
+  id: '/_authLayout',
+  getParentRoute: () => authRoute,
+} as any)
+
+const authAuthLayoutSignInRoute = authAuthLayoutSignInImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => authAuthLayoutRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -46,6 +63,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/(auth)': {
+      id: '/(auth)'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof authImport
+      parentRoute: typeof rootRoute
+    }
+    '/(auth)/_authLayout': {
+      id: '/(auth)/_authLayout'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof authAuthLayoutImport
+      parentRoute: typeof authRoute
+    }
     '/oauth/$provider': {
       id: '/oauth/$provider'
       path: '/oauth/$provider'
@@ -53,35 +84,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OauthProviderImport
       parentRoute: typeof rootRoute
     }
-    '/sign-in/': {
-      id: '/sign-in/'
+    '/(auth)/_authLayout/sign-in': {
+      id: '/(auth)/_authLayout/sign-in'
       path: '/sign-in'
       fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInIndexImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof authAuthLayoutSignInImport
+      parentRoute: typeof authAuthLayoutImport
     }
   }
 }
 
 // Create and export the route tree
 
+interface authAuthLayoutRouteChildren {
+  authAuthLayoutSignInRoute: typeof authAuthLayoutSignInRoute
+}
+
+const authAuthLayoutRouteChildren: authAuthLayoutRouteChildren = {
+  authAuthLayoutSignInRoute: authAuthLayoutSignInRoute,
+}
+
+const authAuthLayoutRouteWithChildren = authAuthLayoutRoute._addFileChildren(
+  authAuthLayoutRouteChildren,
+)
+
+interface authRouteChildren {
+  authAuthLayoutRoute: typeof authAuthLayoutRouteWithChildren
+}
+
+const authRouteChildren: authRouteChildren = {
+  authAuthLayoutRoute: authAuthLayoutRouteWithChildren,
+}
+
+const authRouteWithChildren = authRoute._addFileChildren(authRouteChildren)
+
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof authAuthLayoutRouteWithChildren
   '/oauth/$provider': typeof OauthProviderRoute
-  '/sign-in': typeof SignInIndexRoute
+  '/sign-in': typeof authAuthLayoutSignInRoute
 }
 
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/': typeof authAuthLayoutRouteWithChildren
   '/oauth/$provider': typeof OauthProviderRoute
-  '/sign-in': typeof SignInIndexRoute
+  '/sign-in': typeof authAuthLayoutSignInRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/(auth)': typeof authRouteWithChildren
+  '/(auth)/_authLayout': typeof authAuthLayoutRouteWithChildren
   '/oauth/$provider': typeof OauthProviderRoute
-  '/sign-in/': typeof SignInIndexRoute
+  '/(auth)/_authLayout/sign-in': typeof authAuthLayoutSignInRoute
 }
 
 export interface FileRouteTypes {
@@ -89,20 +144,26 @@ export interface FileRouteTypes {
   fullPaths: '/' | '/oauth/$provider' | '/sign-in'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/oauth/$provider' | '/sign-in'
-  id: '__root__' | '/' | '/oauth/$provider' | '/sign-in/'
+  id:
+    | '__root__'
+    | '/'
+    | '/(auth)'
+    | '/(auth)/_authLayout'
+    | '/oauth/$provider'
+    | '/(auth)/_authLayout/sign-in'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  authRoute: typeof authRouteWithChildren
   OauthProviderRoute: typeof OauthProviderRoute
-  SignInIndexRoute: typeof SignInIndexRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  authRoute: authRouteWithChildren,
   OauthProviderRoute: OauthProviderRoute,
-  SignInIndexRoute: SignInIndexRoute,
 }
 
 export const routeTree = rootRoute
@@ -116,18 +177,32 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/oauth/$provider",
-        "/sign-in/"
+        "/(auth)",
+        "/oauth/$provider"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
+    "/(auth)": {
+      "filePath": "(auth)",
+      "children": [
+        "/(auth)/_authLayout"
+      ]
+    },
+    "/(auth)/_authLayout": {
+      "filePath": "(auth)/_authLayout.tsx",
+      "parent": "/(auth)",
+      "children": [
+        "/(auth)/_authLayout/sign-in"
+      ]
+    },
     "/oauth/$provider": {
       "filePath": "oauth/$provider.tsx"
     },
-    "/sign-in/": {
-      "filePath": "sign-in/index.tsx"
+    "/(auth)/_authLayout/sign-in": {
+      "filePath": "(auth)/_authLayout.sign-in.tsx",
+      "parent": "/(auth)/_authLayout"
     }
   }
 }

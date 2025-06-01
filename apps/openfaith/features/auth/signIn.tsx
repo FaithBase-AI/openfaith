@@ -13,10 +13,10 @@ import {
   useAppForm,
   usePasteDetect,
 } from '@openfaith/ui'
+import { useNavigate } from '@tanstack/react-router'
 import { useStore } from '@tanstack/react-store'
 import { Boolean, Option, pipe, Schema, String } from 'effect'
 import { REGEXP_ONLY_DIGITS } from 'input-otp'
-import { useRouter } from 'next/navigation'
 import { useQueryState } from 'nuqs'
 import { type FC, useEffect } from 'react'
 
@@ -40,12 +40,12 @@ type SignInProps = {
 const SignIn: FC<SignInProps> = (props) => {
   const { redirect = '/gentube' } = props
 
+  const navigate = useNavigate()
+
   const [invitationId] = useQueryState('invitation-id')
   const [passedOtpEmail] = useQueryState('email')
 
   const { data: session } = authClient.useSession()
-
-  const router = useRouter()
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: no update
   useEffect(() => {
@@ -55,17 +55,16 @@ const SignIn: FC<SignInProps> = (props) => {
       Option.match({
         onNone: nullOp,
         onSome: () => {
-          router.refresh()
           setTimeout(() => {
             pipe(
               invitationId,
               Option.fromNullable,
               Option.match({
                 onNone: () => {
-                  router.push(redirect)
+                  navigate({ to: redirect })
                 },
                 onSome: (x) => {
-                  router.push(`/accept-invitation/${x}`)
+                  navigate({ to: `/accept-invitation/${x}` })
                 },
               }),
             )
