@@ -1,7 +1,7 @@
 'use client'
 
 import { getFieldErrors } from '@openfaith/ui/components/formFields/fieldHelpers'
-import { useFieldContext } from '@openfaith/ui/components/formFields/tsForm'
+import { useFieldContext } from '@openfaith/ui/components/formFields/tsField'
 import { InputLabel, InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
 import { Switch } from '@openfaith/ui/components/ui/switch'
 import { cn } from '@openfaith/ui/shared/utils'

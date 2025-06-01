@@ -8,11 +8,8 @@ import { SingleComboboxField } from '@openfaith/ui/components/formFields/singleC
 import { SwitchField } from '@openfaith/ui/components/formFields/switchField'
 import { TagInputField } from '@openfaith/ui/components/formFields/tagInputField'
 import { TextareaField } from '@openfaith/ui/components/formFields/textareaField'
-import { createFormHook, createFormHookContexts } from '@tanstack/react-form'
-
-// Create and export contexts for use in custom components
-export const { fieldContext, formContext, useFieldContext, useFormContext } =
-  createFormHookContexts()
+import { fieldContext, formContext } from '@openfaith/ui/components/formFields/tsField'
+import { createFormHook } from '@tanstack/react-form'
 
 // Create and export the form hook with base configuration
 export const { useAppForm, withForm } = createFormHook({

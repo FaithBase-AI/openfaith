@@ -1,7 +1,7 @@
 'use client'
 
 import { getFieldErrors } from '@openfaith/ui/components/formFields/fieldHelpers'
-import { useFieldContext } from '@openfaith/ui/components/formFields/tsForm'
+import { useFieldContext } from '@openfaith/ui/components/formFields/tsField'
 import { Button } from '@openfaith/ui/components/ui/button'
 import { Calendar } from '@openfaith/ui/components/ui/calendar'
 import { InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'

@@ -1,7 +1,7 @@
 'use client'
 
 import { getFieldErrors } from '@openfaith/ui/components/formFields/fieldHelpers'
-import { useFieldContext } from '@openfaith/ui/components/formFields/tsForm'
+import { useFieldContext } from '@openfaith/ui/components/formFields/tsField'
 import {
   ResponsiveMenu,
   ResponsiveMenuContent,

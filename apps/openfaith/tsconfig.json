@@ -6,5 +6,5 @@
       "@openfaith/openfaith/*": ["./*"]
     }
   },
-  "include": [".", "../../packages/ui/shared/hooks/useOauthPopup.ts"]
+  "include": ["."]
 }
