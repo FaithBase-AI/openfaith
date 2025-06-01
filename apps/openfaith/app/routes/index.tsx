@@ -1,23 +1,24 @@
-import { usePlanningCenterConnect } from '@openfaith/openfaith/adapters/pco'
 import { Button, ThemeToggle } from '@openfaith/ui'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
   component: Home,
 })
 
 function Home() {
-  const { onClick } = usePlanningCenterConnect({
-    onConnect: async ({ code }) => {
-      console.log(code)
-    },
-  })
-
   return (
-    <div className='flex min-h-screen items-center justify-center'>
+    <div className='flex flex-col items-start gap-4 p-16'>
       <ThemeToggle variant={'ghost'} className={'absolute top-4 right-4'} />
 
-      <Button onClick={() => onClick()}>Planning Center Connect</Button>
+      <h1 className='font-bold text-4xl'>OpenFaith</h1>
+
+      <p className='text-gray-600 text-lg dark:text-gray-400'>
+        The platform for churches to connect their software and data.
+      </p>
+
+      <Button asChild>
+        <Link to='/sign-in'>Login</Link>
+      </Button>
     </div>
   )
 }

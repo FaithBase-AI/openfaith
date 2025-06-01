@@ -19,7 +19,7 @@
     "moduleResolution": "Bundler",
     "noEmit": true,
     "forceConsistentCasingInFileNames": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "downlevelIteration": true,
     "strictNullChecks": true,
     "noImplicitReturns": true,

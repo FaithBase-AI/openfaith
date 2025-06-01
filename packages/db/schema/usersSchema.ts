@@ -32,3 +32,34 @@ export const User = createSelectSchema(usersTable)
 export type User = typeof User.Type
 export const NewUser = createInsertSchema(usersTable)
 export type NewUser = typeof NewUser.Type
+
+// Auth table. Changes here need to be synced with /shared/auth.ts
+export const verificationsTable = pgTable(
+  'verifications',
+  (d) => ({
+    id: d.text().primaryKey(),
+    identifier: d.text().notNull(),
+    value: d.text().notNull(),
+    expiresAt: d.timestamp().notNull(),
+    createdAt: d.timestamp(),
+    updatedAt: d.timestamp(),
+  }),
+  (x) => ({
+    identifierIdx: index('verificationIdentifierIdx').on(x.identifier),
+  }),
+)
+export const Verification = createSelectSchema(verificationsTable)
+export type Verification = typeof Verification.Type
+export const NewVerification = createInsertSchema(verificationsTable)
+export type NewVerification = typeof NewVerification.Type
+
+export const jwksTable = pgTable('jwks', (d) => ({
+  id: d.text().primaryKey(),
+  publicKey: d.text().notNull(),
+  privateKey: d.text().notNull(),
+  createdAt: d.timestamp().notNull(),
+}))
+export const Jwk = createSelectSchema(jwksTable)
+export type Jwk = typeof Jwk.Type
+export const NewJwk = createInsertSchema(jwksTable)
+export type NewJwk = typeof NewJwk.Type

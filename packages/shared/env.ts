@@ -54,6 +54,7 @@ export const env = createEnv({
     VITE_APP_NAME: z.string(),
     VITE_BASE_URL: z.string(),
     VITE_PROD_ROOT_DOMAIN: z.string(),
+    VITE_PROD_EMAIL_DOMAIN: z.string(),
 
     // Planning Center
     VITE_PLANNING_CENTER_CLIENT_ID: z.string(),

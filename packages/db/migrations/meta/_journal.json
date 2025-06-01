@@ -15,6 +15,27 @@
       "when": 1748686620564,
       "tag": "0001_windy_hemingway",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1748802492756,
+      "tag": "0002_curious_nemesis",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1748803148439,
+      "tag": "0003_minor_venus",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1748805196097,
+      "tag": "0004_wet_winter_soldier",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 'use client'
 import { authClient } from '@openfaith/auth/authClient'
-import { nullOp } from '@openfaith/shared'
+import { env, nullOp } from '@openfaith/shared'
 import {
   ArrowRightIcon,
   Button,
@@ -38,7 +38,7 @@ type SignInProps = {
 }
 
 const SignIn: FC<SignInProps> = (props) => {
-  const { redirect = '/gentube' } = props
+  const { redirect = '/dashboard' } = props
 
   const navigate = useNavigate()
 
@@ -151,7 +151,7 @@ const SignIn: FC<SignInProps> = (props) => {
           {pipe(
             emailFormHasSubmitted,
             Boolean.match({
-              onFalse: () => 'Sign in to FaithBase',
+              onFalse: () => `Sign in to ${env.VITE_APP_NAME}`,
               onTrue: () => 'Check your email',
             }),
           )}

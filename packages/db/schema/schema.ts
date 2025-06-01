@@ -11,18 +11,20 @@ import {
   orgUsersTable,
 } from '@openfaith/db/schema/orgsSchema'
 import { usersRelations } from '@openfaith/db/schema/usersRelations'
-import { usersTable } from '@openfaith/db/schema/usersSchema'
+import { jwksTable, usersTable, verificationsTable } from '@openfaith/db/schema/usersSchema'
 
 export const schema = {
-  orgsRelations,
-  orgUsersRelations,
   invitationsRelations,
+  invitationsTable,
+  jwksTable,
   orgSettingsRelations,
+  orgSettingsTable,
+  orgsRelations,
+  orgsTable,
+  orgUsersRelations,
+  orgUsersTable,
   usersRelations,
   usersTable,
-  orgsTable,
-  orgUsersTable,
-  invitationsTable,
-  orgSettingsTable,
+  verificationsTable,
 }
 export type Schema = typeof schema

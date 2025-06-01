@@ -4,12 +4,14 @@ import { getHeaders } from '@tanstack/react-start/server'
 
 export const getToken = createServerFn().handler(async () => {
   try {
-    const token = auth.api.getToken({
+    const token = await auth.api.getToken({
       headers: getHeaders() as HeadersInit,
     })
 
-    return (await token).token
-  } catch (_error) {
+    return token.token
+  } catch (error) {
+    console.log('error', error)
+
     return undefined
   }
 })

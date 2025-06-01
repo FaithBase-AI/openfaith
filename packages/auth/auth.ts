@@ -17,7 +17,7 @@ import { eq } from 'drizzle-orm'
 import { Boolean, Option, pipe, Record, String } from 'effect'
 import { typeid } from 'typeid-js'
 
-const from = `${env.VITE_APP_NAME} <auth@${env.VITE_PROD_ROOT_DOMAIN}>`
+const from = `${env.VITE_APP_NAME} <auth@${env.VITE_PROD_EMAIL_DOMAIN}>`
 
 export const auth = betterAuth({
   appName: env.VITE_APP_NAME,
@@ -46,6 +46,8 @@ export const auth = betterAuth({
       ['openfaith_orgs']: schema.orgsTable,
       ['openfaith_orgUsers']: schema.orgUsersTable,
       ['openfaith_invitations']: schema.invitationsTable,
+      ['openfaith_verifications']: schema.verificationsTable,
+      ['openfaith_jwks']: schema.jwksTable,
     },
     provider: 'pg',
   }),
@@ -126,7 +128,8 @@ export const auth = betterAuth({
         }),
       },
       jwks: {
-        keyPairConfig: { alg: 'EdDSA', crv: 'Ed25519' },
+        // @ts-expect-error - extractable is a valid option for keyPairConfig
+        keyPairConfig: { alg: 'EdDSA', crv: 'Ed25519', extractable: true },
       },
       schema: {
         jwks: {
@@ -136,6 +139,8 @@ export const auth = betterAuth({
       },
     }),
     emailOTP({
+      // There is a timezone bug with bun sql driver. https://discord.com/channels/1288403910284935179/1296058482289676320/1333041827854684240
+      expiresIn: 50000,
       async sendVerificationOTP({ email, otp }) {
         await resend.emails.send({
           from,
