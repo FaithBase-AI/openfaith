@@ -47,6 +47,9 @@ export const env = createEnv({
   clientPrefix: 'VITE_',
 
   client: {
+    // Zero
+    VITE_ZERO_SERVER: z.string(),
+
     // Config
     VITE_APP_NAME: z.string(),
     VITE_BASE_URL: z.string(),

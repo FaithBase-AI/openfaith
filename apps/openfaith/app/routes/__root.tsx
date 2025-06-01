@@ -1,11 +1,13 @@
 import type { TrpcRouter } from '@openfaith/api'
+import { getSession } from '@openfaith/openfaith/app/server/getSession'
+import { getToken } from '@openfaith/openfaith/app/server/getToken'
 import { NotFound } from '@openfaith/openfaith/components/notFound'
-import { Providers } from '@openfaith/openfaith/shared/providers'
+import { RootComponent } from '@openfaith/openfaith/components/rootComponent'
 import appCss from '@openfaith/openfaith/styles/app.css?url'
 import type { QueryClient } from '@tanstack/react-query'
-import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
+import { createRootRoute, Outlet } from '@tanstack/react-router'
 import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query'
-import type { PropsWithChildren } from 'react'
+import { Option, pipe } from 'effect'
 
 export interface RouterAppContext {
   trpc: TRPCOptionsProxy<TrpcRouter>
@@ -34,28 +36,31 @@ export const Route = createRootRoute({
       { rel: 'icon', href: '/favicon.ico' },
     ],
   }),
-  component: RootComponent,
+  component: RootDocument,
+  loader: async () => {
+    const [session, token] = await Promise.all([getSession(), getToken()])
+
+    return { session, token }
+  },
   notFoundComponent: () => <NotFound />,
 })
 
-function RootComponent() {
-  return (
-    <RootDocument>
-      <Outlet />
-    </RootDocument>
-  )
-}
+function RootDocument() {
+  const { session, token } = Route.useLoaderData()
 
-function RootDocument({ children }: PropsWithChildren) {
   return (
-    <html lang='en' suppressHydrationWarning>
-      <head>
-        <HeadContent />
-      </head>
-      <body className='font-regular tracking-wide antialiased'>
-        <Providers>{children}</Providers>
-        <Scripts />
-      </body>
-    </html>
+    <RootComponent
+      token={token}
+      userId={pipe(
+        session,
+        Option.fromNullable,
+        Option.match({
+          onNone: () => 'anon',
+          onSome: (x) => x.user.id,
+        }),
+      )}
+    >
+      <Outlet />
+    </RootComponent>
   )
 }

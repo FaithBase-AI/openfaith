@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as IndexImport } from './routes/index'
+import { Route as SignInIndexImport } from './routes/sign-in/index'
 import { Route as OauthProviderImport } from './routes/oauth/$provider'
 
 // Create/Update Routes
@@ -19,6 +20,12 @@ import { Route as OauthProviderImport } from './routes/oauth/$provider'
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const SignInIndexRoute = SignInIndexImport.update({
+  id: '/sign-in/',
+  path: '/sign-in/',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -46,6 +53,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OauthProviderImport
       parentRoute: typeof rootRoute
     }
+    '/sign-in/': {
+      id: '/sign-in/'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInIndexImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -54,36 +68,41 @@ declare module '@tanstack/react-router' {
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/sign-in': typeof SignInIndexRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/sign-in': typeof SignInIndexRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/sign-in/': typeof SignInIndexRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/oauth/$provider'
+  fullPaths: '/' | '/oauth/$provider' | '/sign-in'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/oauth/$provider'
-  id: '__root__' | '/' | '/oauth/$provider'
+  to: '/' | '/oauth/$provider' | '/sign-in'
+  id: '__root__' | '/' | '/oauth/$provider' | '/sign-in/'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OauthProviderRoute: typeof OauthProviderRoute
+  SignInIndexRoute: typeof SignInIndexRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OauthProviderRoute: OauthProviderRoute,
+  SignInIndexRoute: SignInIndexRoute,
 }
 
 export const routeTree = rootRoute
@@ -97,7 +116,8 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/oauth/$provider"
+        "/oauth/$provider",
+        "/sign-in/"
       ]
     },
     "/": {
@@ -105,6 +125,9 @@ export const routeTree = rootRoute
     },
     "/oauth/$provider": {
       "filePath": "oauth/$provider.tsx"
+    },
+    "/sign-in/": {
+      "filePath": "sign-in/index.tsx"
     }
   }
 }

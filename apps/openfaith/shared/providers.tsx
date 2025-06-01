@@ -1,5 +1,6 @@
 'use client'
 
+import { ZeroProvider } from '@openfaith/openfaith/components/zeroProvider'
 import { Toaster } from '@openfaith/ui'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
@@ -8,18 +9,22 @@ import type { FC, ReactNode } from 'react'
 
 type ProvidersProps = {
   children: ReactNode
+  userId: string
+  token: string | undefined
 }
 
 export const Providers: FC<ProvidersProps> = (props) => {
-  const { children } = props
+  const { children, userId, token } = props
 
   return (
     <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
-      {children}
+      <ZeroProvider userId={userId} token={token}>
+        {children}
 
-      <TanStackRouterDevtools position='bottom-right' />
-      <ReactQueryDevtools buttonPosition='bottom-left' />
-      <Toaster />
+        <TanStackRouterDevtools position='bottom-right' />
+        <ReactQueryDevtools buttonPosition='bottom-left' />
+        <Toaster />
+      </ZeroProvider>
     </ThemeProvider>
   )
 }
