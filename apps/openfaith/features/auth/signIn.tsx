@@ -13,7 +13,7 @@ import {
   useAppForm,
   usePasteDetect,
 } from '@openfaith/ui'
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from '@tanstack/react-router'
 import { useStore } from '@tanstack/react-store'
 import { Boolean, Option, pipe, Schema, String } from 'effect'
 import { REGEXP_ONLY_DIGITS } from 'input-otp'
@@ -40,7 +40,7 @@ type SignInProps = {
 const SignIn: FC<SignInProps> = (props) => {
   const { redirect = '/dashboard' } = props
 
-  const navigate = useNavigate()
+  const router = useRouter()
 
   const [invitationId] = useQueryState('invitation-id')
   const [passedOtpEmail] = useQueryState('email')
@@ -61,10 +61,10 @@ const SignIn: FC<SignInProps> = (props) => {
               Option.fromNullable,
               Option.match({
                 onNone: () => {
-                  navigate({ to: redirect })
+                  router.history.push(redirect)
                 },
                 onSome: (x) => {
-                  navigate({ to: `/accept-invitation/${x}` })
+                  router.history.push(`/accept-invitation/${x}`)
                 },
               }),
             )

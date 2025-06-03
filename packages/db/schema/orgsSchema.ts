@@ -1,6 +1,5 @@
 import { pgTable } from '@openfaith/db/_table'
 import { createInsertSchema, createSelectSchema } from '@openfaith/db/drizzleEffect'
-import { usersTable } from '@openfaith/db/schema/usersSchema'
 import { index } from 'drizzle-orm/pg-core'
 
 // Auth table. Changes here need to be synced with /shared/auth.ts
@@ -36,14 +35,8 @@ export const orgUsersTable = pgTable(
       .default('orgUser')
       .notNull(),
     id: d.text().primaryKey(),
-    orgId: d
-      .text()
-      .notNull()
-      .references(() => orgsTable.id),
-    userId: d
-      .text()
-      .notNull()
-      .references(() => usersTable.id),
+    orgId: d.text().notNull(),
+    userId: d.text().notNull(),
     role: d.text().notNull(),
     createdAt: d.timestamp().notNull(),
   }),
@@ -66,18 +59,12 @@ export const invitationsTable = pgTable(
       .default('invitation')
       .notNull(),
     id: d.text().primaryKey(),
-    orgId: d
-      .text()
-      .notNull()
-      .references(() => orgsTable.id),
+    orgId: d.text().notNull(),
     email: d.text().notNull(),
     role: d.text(),
     status: d.text().notNull(),
     expiresAt: d.timestamp().notNull(),
-    inviterId: d
-      .text()
-      .notNull()
-      .references(() => usersTable.id),
+    inviterId: d.text().notNull(),
   }),
   (x) => ({
     userIdx: index('invitationUserIdx').on(x.inviterId),

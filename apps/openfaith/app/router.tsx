@@ -1,7 +1,7 @@
 import type { TrpcRouter } from '@openfaith/api'
+import { TRPCProvider } from '@openfaith/openfaith/app/api'
 import { DefaultCatchBoundary } from '@openfaith/openfaith/components/defaultCatchBoundary'
 import { NotFound } from '@openfaith/openfaith/components/notFound'
-import { TRPCProvider } from '@openfaith/openfaith/utils/trpc'
 import { getApiUrl } from '@openfaith/shared'
 import { Loader2Icon } from '@openfaith/ui/icons/loader2Icon'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -38,6 +38,8 @@ export function createRouter() {
     context: {
       trpc: serverHelpers,
       queryClient,
+      userId: null,
+      orgId: null,
     },
     defaultPreload: 'intent',
     defaultErrorComponent: DefaultCatchBoundary,

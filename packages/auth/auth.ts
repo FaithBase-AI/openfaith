@@ -107,6 +107,8 @@ export const auth = betterAuth({
             where: (x, d) => d.eq(x.userId, session.userId),
           })
 
+          console.log('org', org)
+
           return {
             data: {
               ...session,
