@@ -16,17 +16,24 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as IndexImport } from './routes/index'
 import { Route as OauthProviderImport } from './routes/oauth/$provider'
 import { Route as authAuthLayoutImport } from './routes/(auth)/_authLayout'
-import { Route as appDashboardImport } from './routes/(app)/dashboard'
+import { Route as appAppLayoutImport } from './routes/(app)/_appLayout'
 import { Route as authAuthLayoutSignInImport } from './routes/(auth)/_authLayout.sign-in'
+import { Route as appAppLayoutDashboardImport } from './routes/(app)/_appLayout.dashboard'
 
 // Create Virtual Routes
 
 const authImport = createFileRoute('/(auth)')()
+const appImport = createFileRoute('/(app)')()
 
 // Create/Update Routes
 
 const authRoute = authImport.update({
   id: '/(auth)',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const appRoute = appImport.update({
+  id: '/(app)',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -47,16 +54,21 @@ const authAuthLayoutRoute = authAuthLayoutImport.update({
   getParentRoute: () => authRoute,
 } as any)
 
-const appDashboardRoute = appDashboardImport.update({
-  id: '/(app)/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRoute,
+const appAppLayoutRoute = appAppLayoutImport.update({
+  id: '/_appLayout',
+  getParentRoute: () => appRoute,
 } as any)
 
 const authAuthLayoutSignInRoute = authAuthLayoutSignInImport.update({
   id: '/sign-in',
   path: '/sign-in',
   getParentRoute: () => authAuthLayoutRoute,
+} as any)
+
+const appAppLayoutDashboardRoute = appAppLayoutDashboardImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => appAppLayoutRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -70,12 +82,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/(app)/dashboard': {
-      id: '/(app)/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof appDashboardImport
+    '/(app)': {
+      id: '/(app)'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof appImport
       parentRoute: typeof rootRoute
+    }
+    '/(app)/_appLayout': {
+      id: '/(app)/_appLayout'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof appAppLayoutImport
+      parentRoute: typeof appRoute
     }
     '/(auth)': {
       id: '/(auth)'
@@ -98,6 +117,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OauthProviderImport
       parentRoute: typeof rootRoute
     }
+    '/(app)/_appLayout/dashboard': {
+      id: '/(app)/_appLayout/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof appAppLayoutDashboardImport
+      parentRoute: typeof appAppLayoutImport
+    }
     '/(auth)/_authLayout/sign-in': {
       id: '/(auth)/_authLayout/sign-in'
       path: '/sign-in'
@@ -109,6 +135,28 @@ declare module '@tanstack/react-router' {
 }
 
 // Create and export the route tree
+
+interface appAppLayoutRouteChildren {
+  appAppLayoutDashboardRoute: typeof appAppLayoutDashboardRoute
+}
+
+const appAppLayoutRouteChildren: appAppLayoutRouteChildren = {
+  appAppLayoutDashboardRoute: appAppLayoutDashboardRoute,
+}
+
+const appAppLayoutRouteWithChildren = appAppLayoutRoute._addFileChildren(
+  appAppLayoutRouteChildren,
+)
+
+interface appRouteChildren {
+  appAppLayoutRoute: typeof appAppLayoutRouteWithChildren
+}
+
+const appRouteChildren: appRouteChildren = {
+  appAppLayoutRoute: appAppLayoutRouteWithChildren,
+}
+
+const appRouteWithChildren = appRoute._addFileChildren(appRouteChildren)
 
 interface authAuthLayoutRouteChildren {
   authAuthLayoutSignInRoute: typeof authAuthLayoutSignInRoute
@@ -134,54 +182,58 @@ const authRouteWithChildren = authRoute._addFileChildren(authRouteChildren)
 
 export interface FileRoutesByFullPath {
   '/': typeof authAuthLayoutRouteWithChildren
-  '/dashboard': typeof appDashboardRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/dashboard': typeof appAppLayoutDashboardRoute
   '/sign-in': typeof authAuthLayoutSignInRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof authAuthLayoutRouteWithChildren
-  '/dashboard': typeof appDashboardRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/dashboard': typeof appAppLayoutDashboardRoute
   '/sign-in': typeof authAuthLayoutSignInRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/(app)/dashboard': typeof appDashboardRoute
+  '/(app)': typeof appRouteWithChildren
+  '/(app)/_appLayout': typeof appAppLayoutRouteWithChildren
   '/(auth)': typeof authRouteWithChildren
   '/(auth)/_authLayout': typeof authAuthLayoutRouteWithChildren
   '/oauth/$provider': typeof OauthProviderRoute
+  '/(app)/_appLayout/dashboard': typeof appAppLayoutDashboardRoute
   '/(auth)/_authLayout/sign-in': typeof authAuthLayoutSignInRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/oauth/$provider' | '/sign-in'
+  fullPaths: '/' | '/oauth/$provider' | '/dashboard' | '/sign-in'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/oauth/$provider' | '/sign-in'
+  to: '/' | '/oauth/$provider' | '/dashboard' | '/sign-in'
   id:
     | '__root__'
     | '/'
-    | '/(app)/dashboard'
+    | '/(app)'
+    | '/(app)/_appLayout'
     | '/(auth)'
     | '/(auth)/_authLayout'
     | '/oauth/$provider'
+    | '/(app)/_appLayout/dashboard'
     | '/(auth)/_authLayout/sign-in'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  appDashboardRoute: typeof appDashboardRoute
+  appRoute: typeof appRouteWithChildren
   authRoute: typeof authRouteWithChildren
   OauthProviderRoute: typeof OauthProviderRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  appDashboardRoute: appDashboardRoute,
+  appRoute: appRouteWithChildren,
   authRoute: authRouteWithChildren,
   OauthProviderRoute: OauthProviderRoute,
 }
@@ -197,7 +249,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/(app)/dashboard",
+        "/(app)",
         "/(auth)",
         "/oauth/$provider"
       ]
@@ -205,8 +257,18 @@ export const routeTree = rootRoute
     "/": {
       "filePath": "index.tsx"
     },
-    "/(app)/dashboard": {
-      "filePath": "(app)/dashboard.tsx"
+    "/(app)": {
+      "filePath": "(app)",
+      "children": [
+        "/(app)/_appLayout"
+      ]
+    },
+    "/(app)/_appLayout": {
+      "filePath": "(app)/_appLayout.tsx",
+      "parent": "/(app)",
+      "children": [
+        "/(app)/_appLayout/dashboard"
+      ]
     },
     "/(auth)": {
       "filePath": "(auth)",
@@ -223,6 +285,10 @@ export const routeTree = rootRoute
     },
     "/oauth/$provider": {
       "filePath": "oauth/$provider.tsx"
+    },
+    "/(app)/_appLayout/dashboard": {
+      "filePath": "(app)/_appLayout.dashboard.tsx",
+      "parent": "/(app)/_appLayout"
     },
     "/(auth)/_authLayout/sign-in": {
       "filePath": "(auth)/_authLayout.sign-in.tsx",
