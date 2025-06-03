@@ -1,7 +1,7 @@
 import { getSession } from '@openfaith/openfaith/app/server/getSession'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/(app)/_appLayout')({
+export const Route = createFileRoute('/(app)')({
   component: RouteComponent,
   beforeLoad: async (ctx) => {
     const session = await getSession()

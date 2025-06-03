@@ -2,7 +2,7 @@ import { useSignOut } from '@openfaith/openfaith/shared/auth/useSignOut'
 import { Button } from '@openfaith/ui'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/(app)/_appLayout/dashboard')({
+export const Route = createFileRoute('/(app)/dashboard')({
   component: RouteComponent,
 })
 
