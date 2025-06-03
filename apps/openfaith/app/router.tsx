@@ -40,6 +40,7 @@ export function createRouter() {
       queryClient,
       userId: null,
       orgId: null,
+      token: null,
     },
     defaultPreload: 'intent',
     defaultErrorComponent: DefaultCatchBoundary,

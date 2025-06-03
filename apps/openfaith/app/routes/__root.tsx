@@ -5,16 +5,19 @@ import { NotFound } from '@openfaith/openfaith/components/notFound'
 import { RootComponent } from '@openfaith/openfaith/components/rootComponent'
 import appCss from '@openfaith/openfaith/styles/app.css?url'
 import type { QueryClient } from '@tanstack/react-query'
-import { createRootRoute, Outlet } from '@tanstack/react-router'
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
 import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query'
 import { Option, pipe } from 'effect'
 
 export interface RouterAppContext {
   trpc: TRPCOptionsProxy<TrpcRouter>
   queryClient: QueryClient
+  userId: string | null
+  orgId: string | null
+  token: string | null
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
     meta: [
       {

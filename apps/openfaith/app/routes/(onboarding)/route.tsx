@@ -1,6 +1,7 @@
 import { getSession } from '@openfaith/openfaith/app/server/getSession'
 import { Logo } from '@openfaith/openfaith/components/logo'
 import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router'
+import { Option, pipe } from 'effect'
 
 export const Route = createFileRoute('/(onboarding)')({
   component: RouteComponent,
@@ -17,14 +18,11 @@ export const Route = createFileRoute('/(onboarding)')({
       })
     }
 
-    if (session.session.activeOrganizationId) {
-      console.log('(onboarding) - have org, send to dashboard')
-      throw redirect({
-        to: '/dashboard',
-      })
+    return {
+      ...ctx.context,
+      userId: session.session.userId,
+      orgId: pipe(session.session.activeOrganizationId, Option.fromNullable, Option.getOrNull),
     }
-
-    console.log('(onboarding) - have session, render', session.session)
   },
 })
 

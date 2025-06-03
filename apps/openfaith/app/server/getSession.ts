@@ -1,4 +1,5 @@
 import { auth } from '@openfaith/auth/auth'
+import { QueryKeys } from '@openfaith/openfaith/shared/queryKeys'
 import { createServerFn } from '@tanstack/react-start'
 import { getHeaders } from '@tanstack/react-start/server'
 
@@ -7,13 +8,12 @@ export const getSession = createServerFn().handler(async () => {
     headers: getHeaders() as unknown as Headers,
   })
 
-  if (session?.session) {
-    console.log('getSession, has session', session.session)
-
-    if (session.session.activeOrganizationId) {
-      console.log('getSession, has org', session.session.activeOrganizationId)
-    }
-  }
+  console.log('getSession called', session)
 
   return session
+})
+
+export const getUserSessionQueryOptions = () => ({
+  queryKey: [QueryKeys.Session],
+  queryFn: getSession,
 })
