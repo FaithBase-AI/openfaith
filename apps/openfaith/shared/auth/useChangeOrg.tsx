@@ -14,14 +14,18 @@ export function useChangeOrg() {
     // TODO
   }
 
-  const changeOrg = (params: { orgId: string; skipRefresh?: boolean; refetch?: () => void }) => {
+  const changeOrg = async (params: {
+    orgId: string
+    skipRefresh?: boolean
+    refetch?: () => void
+  }) => {
     const { orgId, skipRefresh = false, refetch } = params
 
     setActiveOrgId(orgId)
 
     preloadOrg(orgId)
 
-    authClient.organization
+    await authClient.organization
       .setActive({
         organizationId: orgId,
       })

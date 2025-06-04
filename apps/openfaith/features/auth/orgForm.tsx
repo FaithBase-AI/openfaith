@@ -5,7 +5,7 @@ import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
 import { QuickActionForm } from '@openfaith/openfaith/features/quickActions/quickActionsComponents'
 import { createOrgIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import { useChangeOrg } from '@openfaith/openfaith/shared/auth/useChangeOrg'
-import { noOp } from '@openfaith/shared'
+import { asyncNoOp } from '@openfaith/shared'
 import { ArrowRightIcon, Button, useAppForm } from '@openfaith/ui'
 import type { OrgClientShape } from '@openfaith/zero'
 import { useRouter } from '@tanstack/react-router'
@@ -65,12 +65,12 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
             userId,
           })
 
-          pipe(
+          await pipe(
             data,
             Option.fromNullable,
             Option.match({
-              onNone: noOp,
-              onSome: (x) => changeOrg({ orgId: x.id }),
+              onNone: asyncNoOp,
+              onSome: async (x) => changeOrg({ orgId: x.id }),
             }),
           )
 
@@ -85,12 +85,12 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
             userId: userId,
           })
 
-          pipe(
+          await pipe(
             data,
             Option.fromNullable,
             Option.match({
-              onNone: noOp,
-              onSome: (x) => changeOrg({ orgId: x.id }),
+              onNone: asyncNoOp,
+              onSome: async (x) => changeOrg({ orgId: x.id }),
             }),
           )
 

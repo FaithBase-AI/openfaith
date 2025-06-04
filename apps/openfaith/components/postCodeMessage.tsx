@@ -11,7 +11,6 @@ type PostCodeMessageProps = {
 export const PostCodeMessage: FC<PostCodeMessageProps> = (props) => {
   const { code } = props
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: no updates
   useEffect(() => {
     if (typeof window === 'undefined') {
       return
@@ -26,7 +25,7 @@ export const PostCodeMessage: FC<PostCodeMessageProps> = (props) => {
     )
 
     window.close()
-  }, [])
+  }, [code])
 
   return null
 }

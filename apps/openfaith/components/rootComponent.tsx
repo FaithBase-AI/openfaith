@@ -4,7 +4,7 @@ import type { FC, ReactNode } from 'react'
 
 type RootComponentProps = {
   children: ReactNode
-  token: string | undefined
+  token: string | null
   userId: string
 }
 

@@ -6,10 +6,14 @@ import { Option, pipe } from 'effect'
 export const Route = createFileRoute('/_onboarding')({
   component: RouteComponent,
   beforeLoad: async (ctx) => {
+    // If we have a user, keep going.
+    if (ctx.context.userId) {
+      return
+    }
+
     const session = await getSession()
 
     if (!session) {
-      console.log('(onboarding) - no session, send to sign-in')
       throw redirect({
         to: '/sign-in',
         search: {
@@ -19,7 +23,6 @@ export const Route = createFileRoute('/_onboarding')({
     }
 
     return {
-      ...ctx.context,
       userId: session.session.userId,
       orgId: pipe(session.session.activeOrganizationId, Option.fromNullable, Option.getOrNull),
     }
@@ -59,7 +62,6 @@ function RouteComponent() {
           </div>
         </div>
       </div>
-
       <div
         className={
           'm-4 flex h-full w-auto flex-col rounded-3xl bg-background p-4 md:my-4 md:mr-4 md:h-auto md:flex-1 md:p-8'

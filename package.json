@@ -1,25 +1,10 @@
 {
-  "name": "openfaith",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "build": "turbo run build",
-    "clean": "git clean -xdf node_modules",
-    "clean:workspaces": "turbo run clean",
-    "db:generate": "bun run --filter '@openfaith/db' db:generate",
-    "db:migrate": "bun run --filter '@openfaith/db' db:migrate",
-    "dev": "turbo run dev --continue",
-    "format": "turbo run format --continue",
-    "format:fix": "turbo run format --continue -- --write",
-    "lint:biome": "turbo run lint:biome --continue",
-    "lint:biome:fix": "turbo run lint:biome --continue -- --unsafe --fix",
-    "lint:eslint": "turbo run lint:eslint --continue -- --cache --cache-location .cache/.eslintcache",
-    "lint:eslint:fix": "turbo run lint:eslint --continue -- --fix --cache --cache-location .cache/.eslintcache",
-    "lint:fix": "turbo run lint:biome lint:eslint --continue -- --unsafe --fix",
-    "test": "turbo run test",
-    "typecheck": "turbo run typecheck --ui=stream",
-    "check": "turbo run format lint:biome lint:eslint typecheck test --ui=stream",
-    "ui-add": "turbo run ui-add"
+  "dependencies": {
+    "@emnapi/core": "^1.4.3",
+    "@emnapi/runtime": "^1.4.3",
+    "@emnapi/wasi-threads": "^1.0.2",
+    "@tybys/wasm-util": "^0.9.0",
+    "tailwind-merge": "3.3.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.0-beta.5",
@@ -28,24 +13,41 @@
     "turbo": "2.5.4",
     "typescript": "5.8.3"
   },
+  "name": "openfaith",
   "packageManager": "bun@1.2.13",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "check": "turbo run format lint:biome lint:eslint typecheck test --ui=stream",
+    "clean": "git clean -xdf node_modules",
+    "clean:workspaces": "turbo run clean",
+    "db:generate": "bun run --filter '@openfaith/db' db:generate",
+    "db:migrate": "bun run --filter '@openfaith/db' db:migrate",
+    "dev": "turbo run dev --continue",
+    "format": "turbo run format --continue",
+    "format:fix": "turbo run format --continue -- --write",
+    "lint:biome": "turbo run lint:biome --continue",
+    "lint:biome:fix": "turbo run lint:biome --continue -- --unsafe",
+    "lint:eslint": "turbo run lint:eslint --continue -- --cache --cache-location .cache/.eslintcache",
+    "lint:eslint:fix": "turbo run lint:eslint --continue -- --fix --cache --cache-location .cache/.eslintcache",
+    "lint:fix": "turbo run lint:biome lint:eslint --continue -- --unsafe --fix",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck --ui=stream",
+    "ui-add": "turbo run ui-add"
+  },
+  "trustedDependencies": [
+    "@rocicorp/zero-sqlite3"
+  ],
+  "type": "module",
   "workspaces": {
-    "packages": [
-      "adapters/*",
-      "apps/*",
-      "backend/*",
-      "infra/*",
-      "packages/*",
-      "tooling/*"
-    ],
     "catalog": {
       "@rocicorp/zero": "0.20.2025052100",
       "@trpc/client": "11.1.4",
       "@trpc/server": "11.1.4",
       "@trpc/tanstack-react-query": "11.1.4",
       "@types/qs": "6.14.0",
-      "@types/react-dom": "19.1.5",
       "@types/react": "19.1.6",
+      "@types/react-dom": "19.1.5",
       "better-auth": "1.2.8",
       "date-fns": "4.1.0",
       "effect": "3.16.0",
@@ -55,23 +57,22 @@
       "nuqs": "2.4.3",
       "qs": "6.14.0",
       "radix-ui": "1.4.2",
-      "react-dom": "19.1.0",
       "react": "19.1.0",
+      "react-dom": "19.1.0",
       "resend": "4.5.1",
       "superjson": "2.2.2",
       "tailwindcss": "4.1.8",
       "typeid-js": "1.2.0",
       "typescript": "5.8.3"
-    }
-  },
-  "trustedDependencies": [
-    "@rocicorp/zero-sqlite3"
-  ],
-  "dependencies": {
-    "@emnapi/core": "^1.4.3",
-    "@emnapi/runtime": "^1.4.3",
-    "@emnapi/wasi-threads": "^1.0.2",
-    "@tybys/wasm-util": "^0.9.0",
-    "tailwind-merge": "3.3.0"
+    },
+    "packages": [
+      "adapters/*",
+      "apps/*",
+      "backend/*",
+
+      "infra/*",
+      "packages/*",
+      "tooling/*"
+    ]
   }
 }

@@ -1,8 +1,13 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.0.0-beta.5/schema.json",
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
-  "linter": {
+  "assist": {
+    "actions": {
+      "source": { "organizeImports": "on", "useSortedAttributes": "on", "useSortedKeys": "on" }
+    }
+  },
+  "formatter": {
     "enabled": true,
+    "formatWithErrors": false,
     "includes": [
       "**",
       "!**/.cache",
@@ -13,103 +18,109 @@
       "!**/android",
       "!**/shared/a5"
     ],
-    "rules": {
-      "correctness": {
-        "useExhaustiveDependencies": "error",
-        "noInnerDeclarations": "off",
-        "noConstructorReturn": "off",
-        "noUnusedImports": "error",
-        "noChildrenProp": "off"
-      },
-      "suspicious": {
-        "noImplicitAnyLet": "off",
-        "noConfusingVoidType": "off",
-        "noEmptyInterface": "off",
-        "noExplicitAny": "off",
-        "noArrayIndexKey": "off",
-        "noDoubleEquals": "off",
-        "noAssignInExpressions": "off",
-        "noRedeclare": "off",
-        "noShadowRestrictedNames": "off"
-      },
-      "style": {
-        "noParameterAssign": "off",
-        "noNonNullAssertion": "off",
-        "noArguments": "off",
-        "noUnusedTemplateLiteral": "off",
-        "useDefaultParameterLast": "off",
-        "useConst": "off",
-        "useEnumInitializers": "off",
-        "useTemplate": "off",
-        "useSelfClosingElements": "off",
-        "useConsistentArrayType": {
-          "level": "warn",
-          "options": {
-            "syntax": "generic"
-          }
-        },
-        "useAsConstAssertion": "error",
-        "useSingleVarDeclarator": "error",
-        "useNumberNamespace": "error",
-        "noInferrableTypes": "error",
-        "noUselessElse": "error"
-      },
-      "security": {
-        "noDangerouslySetInnerHtml": "off",
-        "noDangerouslySetInnerHtmlWithChildren": "off"
-      },
-      "performance": {
-        "noDelete": "off",
-        "noAccumulatingSpread": "off"
-      },
-      "complexity": {
-        "noForEach": "off",
-        "noBannedTypes": "off",
-        "useLiteralKeys": "off",
-        "useSimplifiedLogicExpression": "off",
-        "useOptionalChain": "off",
-        "noUselessContinue": "off"
-      },
-      "a11y": {
-        "noSvgWithoutTitle": "off",
-        "useMediaCaption": "off",
-        "noHeaderScope": "off",
-        "useAltText": "off",
-        "useButtonType": "off"
-      },
-      "nursery": {
-        "useSortedClasses": {
-          "level": "error",
-          "options": {
-            "functions": ["cn", "cva"]
-          }
-        }
-      }
-    }
-  },
-  "formatter": {
-    "enabled": true,
-    "formatWithErrors": false,
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineWidth": 100,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "jsxQuoteStyle": "single",
+      "quoteStyle": "single",
+      "semicolons": "asNeeded",
+      "trailingCommas": "all"
+    }
+  },
+  "linter": {
+    "domains": {
+      "project": "recommended",
+      "react": "recommended"
+    },
+    "enabled": true,
     "includes": [
       "**",
       "!**/.cache",
       "!**/.expo",
       "!**/.turbo",
       "!**/expo-env.d.ts",
+
       "!**/ios",
       "!**/android",
       "!**/shared/a5"
-    ]
-  },
-  "javascript": {
-    "formatter": {
-      "trailingCommas": "all",
-      "jsxQuoteStyle": "single",
-      "semicolons": "asNeeded",
-      "quoteStyle": "single"
+    ],
+    "rules": {
+      "a11y": {
+        "noHeaderScope": "off",
+        "noSvgWithoutTitle": "off",
+        "useAltText": "off",
+        "useButtonType": "off",
+        "useMediaCaption": "off"
+      },
+      "complexity": {
+        "noBannedTypes": "off",
+        "noForEach": "off",
+        "noUselessContinue": "off",
+        "useLiteralKeys": "off",
+        "useOptionalChain": "off",
+        "useSimplifiedLogicExpression": "off"
+      },
+      "correctness": {
+        "noChildrenProp": "off",
+        "noConstructorReturn": "off",
+        "noInnerDeclarations": "off",
+        "noUnusedImports": "error",
+        "useExhaustiveDependencies": "error"
+      },
+      "nursery": {
+        "useSortedClasses": {
+          "fix": "safe",
+          "level": "error",
+          "options": {
+            "functions": ["cn", "cva"]
+          }
+        }
+      },
+      "performance": {
+        "noAccumulatingSpread": "off",
+        "noDelete": "off"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "off",
+        "noDangerouslySetInnerHtmlWithChildren": "off"
+      },
+      "style": {
+        "noArguments": "off",
+        "noInferrableTypes": "error",
+        "noNonNullAssertion": "off",
+        "noParameterAssign": "off",
+        "noUnusedTemplateLiteral": "off",
+        "noUselessElse": "error",
+        "useAsConstAssertion": "error",
+        "useConsistentArrayType": {
+          "level": "warn",
+          "options": {
+            "syntax": "generic"
+          }
+        },
+        "useConst": "off",
+        "useDefaultParameterLast": "off",
+        "useEnumInitializers": "off",
+        "useNumberNamespace": "error",
+        "useSelfClosingElements": "off",
+        "useSingleVarDeclarator": "error",
+        "useTemplate": "off"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "off",
+        "noAssignInExpressions": "off",
+        "noConfusingVoidType": "off",
+        "noDoubleEquals": "off",
+        "noEmptyInterface": "off",
+        "noExplicitAny": "off",
+        "noImplicitAnyLet": "off",
+        "noRedeclare": "off",
+        "noShadowRestrictedNames": "off",
+        "useAwait": "error"
+      }
     }
   }
 }

@@ -11,7 +11,7 @@ import type { FC, ReactNode } from 'react'
 type ProvidersProps = {
   children: ReactNode
   userId: string
-  token: string | undefined
+  token: string | null
 }
 
 export const Providers: FC<ProvidersProps> = (props) => {

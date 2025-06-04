@@ -78,14 +78,14 @@ const SignIn: FC<SignInProps> = (props) => {
     defaultValues: {
       email: passedOtpEmail || '',
     },
-    validators: {
-      onChange: Schema.standardSchemaV1(SignInSchema),
-    },
     onSubmit: async ({ value }) => {
       await authClient.emailOtp.sendVerificationOtp({
         email: value.email,
         type: 'sign-in',
       })
+    },
+    validators: {
+      onChange: Schema.standardSchemaV1(SignInSchema),
     },
   })
 
@@ -173,19 +173,19 @@ const SignIn: FC<SignInProps> = (props) => {
             onFalse: () => (
               <Form form={emailForm}>
                 <emailForm.AppField
-                  name='email'
                   children={(field) => (
                     <field.InputField
                       autoCapitalize='none'
-                      placeholder='you@gmail.com'
                       autoComplete='email'
-                      required
                       label='Email address'
+                      placeholder='you@gmail.com'
+                      required
                     />
                   )}
+                  name='email'
                 />
 
-                <Button type='submit' className='w-full gap-2' loading={emailFormSubmitting}>
+                <Button className='w-full gap-2' loading={emailFormSubmitting} type='submit'>
                   Continue
                   <ArrowRightIcon />
                 </Button>
@@ -194,13 +194,13 @@ const SignIn: FC<SignInProps> = (props) => {
             onTrue: () => (
               <Form form={otpForm}>
                 <otpForm.AppField
+                  children={(field) => <field.OTPField autoFocus label='OTP' required />}
                   name='otp'
-                  children={(field) => <field.OTPField required label='OTP' autoFocus />}
                 />
 
                 <otpForm.Subscribe selector={(x) => x.isSubmitting}>
                   {(x) => (
-                    <Button type='submit' className='w-full gap-2' loading={x}>
+                    <Button className='w-full gap-2' loading={x} type='submit'>
                       Sign In
                       <ArrowRightIcon />
                     </Button>

@@ -20,10 +20,7 @@ function createZero({ auth, userID = 'anon' }: { auth?: string; userID?: string 
         currentAuth = auth
 
         currentInstance = new Zero({
-          userID,
           auth,
-          server: env.VITE_ZERO_SERVER,
-          schema,
           kvStore: pipe(
             typeof window === 'undefined',
             Boolean.match({
@@ -31,6 +28,9 @@ function createZero({ auth, userID = 'anon' }: { auth?: string; userID?: string 
               onTrue: () => 'mem',
             }),
           ),
+          schema,
+          server: env.VITE_ZERO_SERVER,
+          userID,
         })
 
         return currentInstance
@@ -40,11 +40,11 @@ function createZero({ auth, userID = 'anon' }: { auth?: string; userID?: string 
           currentAuth = auth
 
           currentInstance = new Zero({
-            userID,
             auth,
-            server: env.VITE_ZERO_SERVER,
-            schema,
             kvStore: 'idb',
+            schema,
+            server: env.VITE_ZERO_SERVER,
+            userID,
           })
 
           return currentInstance
@@ -58,7 +58,7 @@ function createZero({ auth, userID = 'anon' }: { auth?: string; userID?: string 
 export type ZeroProviderProps = {
   children: ReactNode
   userId: string
-  token?: string
+  token: string | null
 }
 
 const LocalZeroProvider: FC<ZeroProviderProps> = (props) => {
@@ -66,7 +66,7 @@ const LocalZeroProvider: FC<ZeroProviderProps> = (props) => {
 
   const instance = useRef(
     createZero({
-      auth: serverToken,
+      auth: pipe(serverToken, Option.fromNullable, Option.getOrUndefined),
       userID: serverUserId,
     }),
   )

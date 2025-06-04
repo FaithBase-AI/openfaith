@@ -16,7 +16,7 @@ export const idToRecordsTag = (id: string): RecordData['_tag'] => {
   switch (getIdType(id)) {
     case 'org':
       return 'org'
-    case 'user':
+    // case 'user':
     default:
       return 'user'
   }
