@@ -3,7 +3,7 @@ import { Logo } from '@openfaith/openfaith/components/logo'
 import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router'
 import { Option, pipe } from 'effect'
 
-export const Route = createFileRoute('/(onboarding)')({
+export const Route = createFileRoute('/_onboarding')({
   component: RouteComponent,
   beforeLoad: async (ctx) => {
     const session = await getSession()

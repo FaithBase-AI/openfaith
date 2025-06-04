@@ -11,29 +11,29 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as onboardingRouteImport } from './routes/(onboarding)/route'
-import { Route as authRouteImport } from './routes/(auth)/route'
-import { Route as appRouteImport } from './routes/(app)/route'
+import { Route as OnboardingRouteImport } from './routes/_onboarding/route'
+import { Route as AuthRouteImport } from './routes/_auth/route'
+import { Route as AppRouteImport } from './routes/_app/route'
 import { Route as IndexImport } from './routes/index'
 import { Route as OauthProviderImport } from './routes/oauth/$provider'
-import { Route as onboardingCreateOrgImport } from './routes/(onboarding)/create-org'
-import { Route as authSignInImport } from './routes/(auth)/sign-in'
-import { Route as appDashboardImport } from './routes/(app)/dashboard'
+import { Route as OnboardingCreateOrgImport } from './routes/_onboarding/create-org'
+import { Route as AuthSignInImport } from './routes/_auth/sign-in'
+import { Route as AppDashboardImport } from './routes/_app/dashboard'
 
 // Create/Update Routes
 
-const onboardingRouteRoute = onboardingRouteImport.update({
-  id: '/(onboarding)',
+const OnboardingRouteRoute = OnboardingRouteImport.update({
+  id: '/_onboarding',
   getParentRoute: () => rootRoute,
 } as any)
 
-const authRouteRoute = authRouteImport.update({
-  id: '/(auth)',
+const AuthRouteRoute = AuthRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRoute,
 } as any)
 
-const appRouteRoute = appRouteImport.update({
-  id: '/(app)',
+const AppRouteRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -49,22 +49,22 @@ const OauthProviderRoute = OauthProviderImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const onboardingCreateOrgRoute = onboardingCreateOrgImport.update({
+const OnboardingCreateOrgRoute = OnboardingCreateOrgImport.update({
   id: '/create-org',
   path: '/create-org',
-  getParentRoute: () => onboardingRouteRoute,
+  getParentRoute: () => OnboardingRouteRoute,
 } as any)
 
-const authSignInRoute = authSignInImport.update({
+const AuthSignInRoute = AuthSignInImport.update({
   id: '/sign-in',
   path: '/sign-in',
-  getParentRoute: () => authRouteRoute,
+  getParentRoute: () => AuthRouteRoute,
 } as any)
 
-const appDashboardRoute = appDashboardImport.update({
+const AppDashboardRoute = AppDashboardImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => appRouteRoute,
+  getParentRoute: () => AppRouteRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -78,47 +78,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/(app)': {
-      id: '/(app)'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof appRouteImport
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRoute
     }
-    '/(auth)': {
-      id: '/(auth)'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof authRouteImport
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRoute
     }
-    '/(onboarding)': {
-      id: '/(onboarding)'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof onboardingRouteImport
+    '/_onboarding': {
+      id: '/_onboarding'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRoute
     }
-    '/(app)/dashboard': {
-      id: '/(app)/dashboard'
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
-      preLoaderRoute: typeof appDashboardImport
-      parentRoute: typeof appRouteImport
+      preLoaderRoute: typeof AppDashboardImport
+      parentRoute: typeof AppRouteImport
     }
-    '/(auth)/sign-in': {
-      id: '/(auth)/sign-in'
+    '/_auth/sign-in': {
+      id: '/_auth/sign-in'
       path: '/sign-in'
       fullPath: '/sign-in'
-      preLoaderRoute: typeof authSignInImport
-      parentRoute: typeof authRouteImport
+      preLoaderRoute: typeof AuthSignInImport
+      parentRoute: typeof AuthRouteImport
     }
-    '/(onboarding)/create-org': {
-      id: '/(onboarding)/create-org'
+    '/_onboarding/create-org': {
+      id: '/_onboarding/create-org'
       path: '/create-org'
       fullPath: '/create-org'
-      preLoaderRoute: typeof onboardingCreateOrgImport
-      parentRoute: typeof onboardingRouteImport
+      preLoaderRoute: typeof OnboardingCreateOrgImport
+      parentRoute: typeof OnboardingRouteImport
     }
     '/oauth/$provider': {
       id: '/oauth/$provider'
@@ -132,67 +132,69 @@ declare module '@tanstack/react-router' {
 
 // Create and export the route tree
 
-interface appRouteRouteChildren {
-  appDashboardRoute: typeof appDashboardRoute
+interface AppRouteRouteChildren {
+  AppDashboardRoute: typeof AppDashboardRoute
 }
 
-const appRouteRouteChildren: appRouteRouteChildren = {
-  appDashboardRoute: appDashboardRoute,
+const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppDashboardRoute: AppDashboardRoute,
 }
 
-const appRouteRouteWithChildren = appRouteRoute._addFileChildren(
-  appRouteRouteChildren,
+const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
+  AppRouteRouteChildren,
 )
 
-interface authRouteRouteChildren {
-  authSignInRoute: typeof authSignInRoute
+interface AuthRouteRouteChildren {
+  AuthSignInRoute: typeof AuthSignInRoute
 }
 
-const authRouteRouteChildren: authRouteRouteChildren = {
-  authSignInRoute: authSignInRoute,
+const AuthRouteRouteChildren: AuthRouteRouteChildren = {
+  AuthSignInRoute: AuthSignInRoute,
 }
 
-const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
-  authRouteRouteChildren,
+const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
+  AuthRouteRouteChildren,
 )
 
-interface onboardingRouteRouteChildren {
-  onboardingCreateOrgRoute: typeof onboardingCreateOrgRoute
+interface OnboardingRouteRouteChildren {
+  OnboardingCreateOrgRoute: typeof OnboardingCreateOrgRoute
 }
 
-const onboardingRouteRouteChildren: onboardingRouteRouteChildren = {
-  onboardingCreateOrgRoute: onboardingCreateOrgRoute,
+const OnboardingRouteRouteChildren: OnboardingRouteRouteChildren = {
+  OnboardingCreateOrgRoute: OnboardingCreateOrgRoute,
 }
 
-const onboardingRouteRouteWithChildren = onboardingRouteRoute._addFileChildren(
-  onboardingRouteRouteChildren,
+const OnboardingRouteRouteWithChildren = OnboardingRouteRoute._addFileChildren(
+  OnboardingRouteRouteChildren,
 )
 
 export interface FileRoutesByFullPath {
-  '/': typeof onboardingRouteRouteWithChildren
-  '/dashboard': typeof appDashboardRoute
-  '/sign-in': typeof authSignInRoute
-  '/create-org': typeof onboardingCreateOrgRoute
+  '/': typeof IndexRoute
+  '': typeof OnboardingRouteRouteWithChildren
+  '/dashboard': typeof AppDashboardRoute
+  '/sign-in': typeof AuthSignInRoute
+  '/create-org': typeof OnboardingCreateOrgRoute
   '/oauth/$provider': typeof OauthProviderRoute
 }
 
 export interface FileRoutesByTo {
-  '/': typeof onboardingRouteRouteWithChildren
-  '/dashboard': typeof appDashboardRoute
-  '/sign-in': typeof authSignInRoute
-  '/create-org': typeof onboardingCreateOrgRoute
+  '/': typeof IndexRoute
+  '': typeof OnboardingRouteRouteWithChildren
+  '/dashboard': typeof AppDashboardRoute
+  '/sign-in': typeof AuthSignInRoute
+  '/create-org': typeof OnboardingCreateOrgRoute
   '/oauth/$provider': typeof OauthProviderRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/(app)': typeof appRouteRouteWithChildren
-  '/(auth)': typeof authRouteRouteWithChildren
-  '/(onboarding)': typeof onboardingRouteRouteWithChildren
-  '/(app)/dashboard': typeof appDashboardRoute
-  '/(auth)/sign-in': typeof authSignInRoute
-  '/(onboarding)/create-org': typeof onboardingCreateOrgRoute
+  '/_app': typeof AppRouteRouteWithChildren
+  '/_auth': typeof AuthRouteRouteWithChildren
+  '/_onboarding': typeof OnboardingRouteRouteWithChildren
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/_auth/sign-in': typeof AuthSignInRoute
+  '/_onboarding/create-org': typeof OnboardingCreateOrgRoute
   '/oauth/$provider': typeof OauthProviderRoute
 }
 
@@ -200,38 +202,39 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | ''
     | '/dashboard'
     | '/sign-in'
     | '/create-org'
     | '/oauth/$provider'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/sign-in' | '/create-org' | '/oauth/$provider'
+  to: '/' | '' | '/dashboard' | '/sign-in' | '/create-org' | '/oauth/$provider'
   id:
     | '__root__'
     | '/'
-    | '/(app)'
-    | '/(auth)'
-    | '/(onboarding)'
-    | '/(app)/dashboard'
-    | '/(auth)/sign-in'
-    | '/(onboarding)/create-org'
+    | '/_app'
+    | '/_auth'
+    | '/_onboarding'
+    | '/_app/dashboard'
+    | '/_auth/sign-in'
+    | '/_onboarding/create-org'
     | '/oauth/$provider'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  appRouteRoute: typeof appRouteRouteWithChildren
-  authRouteRoute: typeof authRouteRouteWithChildren
-  onboardingRouteRoute: typeof onboardingRouteRouteWithChildren
+  AppRouteRoute: typeof AppRouteRouteWithChildren
+  AuthRouteRoute: typeof AuthRouteRouteWithChildren
+  OnboardingRouteRoute: typeof OnboardingRouteRouteWithChildren
   OauthProviderRoute: typeof OauthProviderRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  appRouteRoute: appRouteRouteWithChildren,
-  authRouteRoute: authRouteRouteWithChildren,
-  onboardingRouteRoute: onboardingRouteRouteWithChildren,
+  AppRouteRoute: AppRouteRouteWithChildren,
+  AuthRouteRoute: AuthRouteRouteWithChildren,
+  OnboardingRouteRoute: OnboardingRouteRouteWithChildren,
   OauthProviderRoute: OauthProviderRoute,
 }
 
@@ -246,44 +249,44 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/(app)",
-        "/(auth)",
-        "/(onboarding)",
+        "/_app",
+        "/_auth",
+        "/_onboarding",
         "/oauth/$provider"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
-    "/(app)": {
-      "filePath": "(app)/route.tsx",
+    "/_app": {
+      "filePath": "_app/route.tsx",
       "children": [
-        "/(app)/dashboard"
+        "/_app/dashboard"
       ]
     },
-    "/(auth)": {
-      "filePath": "(auth)/route.tsx",
+    "/_auth": {
+      "filePath": "_auth/route.tsx",
       "children": [
-        "/(auth)/sign-in"
+        "/_auth/sign-in"
       ]
     },
-    "/(onboarding)": {
-      "filePath": "(onboarding)/route.tsx",
+    "/_onboarding": {
+      "filePath": "_onboarding/route.tsx",
       "children": [
-        "/(onboarding)/create-org"
+        "/_onboarding/create-org"
       ]
     },
-    "/(app)/dashboard": {
-      "filePath": "(app)/dashboard.tsx",
-      "parent": "/(app)"
+    "/_app/dashboard": {
+      "filePath": "_app/dashboard.tsx",
+      "parent": "/_app"
     },
-    "/(auth)/sign-in": {
-      "filePath": "(auth)/sign-in.tsx",
-      "parent": "/(auth)"
+    "/_auth/sign-in": {
+      "filePath": "_auth/sign-in.tsx",
+      "parent": "/_auth"
     },
-    "/(onboarding)/create-org": {
-      "filePath": "(onboarding)/create-org.tsx",
-      "parent": "/(onboarding)"
+    "/_onboarding/create-org": {
+      "filePath": "_onboarding/create-org.tsx",
+      "parent": "/_onboarding"
     },
     "/oauth/$provider": {
       "filePath": "oauth/$provider.tsx"

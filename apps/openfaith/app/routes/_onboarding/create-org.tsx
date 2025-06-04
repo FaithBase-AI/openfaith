@@ -7,7 +7,7 @@ const CreateOrgSearch = Schema.Struct({
   redirect: Schema.String.pipe(Schema.optional),
 })
 
-export const Route = createFileRoute('/(onboarding)/create-org')({
+export const Route = createFileRoute('/_onboarding/create-org')({
   component: RouteComponent,
   validateSearch: Schema.decodeUnknownSync(CreateOrgSearch),
 })

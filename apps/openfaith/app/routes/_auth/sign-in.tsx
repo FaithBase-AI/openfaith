@@ -6,7 +6,7 @@ const SignInSearch = Schema.Struct({
   redirect: Schema.String.pipe(Schema.optional),
 })
 
-export const Route = createFileRoute('/(auth)/sign-in')({
+export const Route = createFileRoute('/_auth/sign-in')({
   component: RouteComponent,
   validateSearch: Schema.decodeUnknownSync(SignInSearch),
 })
