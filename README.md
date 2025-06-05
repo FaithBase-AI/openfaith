@@ -16,6 +16,12 @@ Our vision is to empower churches and developers by:
 
 Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, foster innovation by allowing different church software solutions to work together seamlessly, and unlock new ways to gain insights and manage ministry through AI.
 
+## Sponsors
+
+We're grateful for the financial partners who believe in OpenFaith's mission to serve the global Church. Sponsor information will be displayed here as partnerships are established.
+
+*Interested in becoming a sponsor? Contact us via the information above or reach out to Izak Filmalter on X - [@izakfilmalter](https://x.com/IzakFilmalter).*
+
 ## Key Docs
 
 - [**Church Leader's Guide to OpenFaith (Start Here for Non-Technical Overview)**](/docs/BetterChurchSoftware.md)
@@ -37,6 +43,7 @@ Ultimately, OpenFaith aims to break down data silos, reduce manual data entry, f
 - [Data Storage (PostgreSQL & Drizzle ORM)](/docs/DataStorage.md)
 - [Contributing to OpenFaith](/docs/Contributors.md)
 - [Project Overview & Entry Point (This Document)](README.md)
+- [Funding Documentation](/docs/Funding.md)
 
 ## The Problem We're Solving
 
@@ -130,6 +137,26 @@ A core goal of OpenFaith is to enable users to interact with their data through 
 OpenFaith is an ambitious project, and community contributions are not just welcome, they are vital to its success and ethos. We believe in building this platform together, as a service to the wider Church. Whether you're a developer, designer, writer, or tester, your skills and passion can make a significant impact.
 
 Please see our [Contributor Guidelines](/docs/Contributors.md) for detailed information on how to get started, our guiding principles, and the different ways you can help. All contributors are expected to adhere to our [Code of Conduct](/docs/CodeOfConduct.md) to ensure a respectful and collaborative environment.
+
+## Supporting OpenFaith
+
+OpenFaith operates on a **donation and sponsorship-based funding model** that aligns with our Kingdom-first principles. We believe in offering these foundational tools as a gift to the Body of Christ while ensuring the project's long-term sustainability.
+
+**How Your Support Helps:**
+- **Dedicated Development:** Enables focused time on building and maintaining the platform
+- **Infrastructure Costs:** Covers servers, databases, CI/CD pipelines, and operational necessities
+- **Community Support:** Provides excellent documentation, tutorials, and developer support
+- **Long-Term Sustainability:** Ensures OpenFaith continues to evolve and serve the Church effectively
+
+**Ways to Support:**
+- **Individual Donations:** One-time or recurring donations via GitHub Sponsors, Give Send Go, or our website
+- **Church & Ministry Sponsorships:** Official sponsorship opportunities for organizations that benefit from OpenFaith
+- **Corporate Sponsorships:** Partnerships with companies serving the church tech space
+- **Grants & Foundations:** Support from organizations backing open-source initiatives
+
+For donation and sponsorship inquiries, reach out to Izak Filmalter on X - [@izakfilmalter](https://x.com/IzakFilmalter).
+
+For more details, see our [Funding Documentation](/docs/Funding.md).
 
 ## License
 
