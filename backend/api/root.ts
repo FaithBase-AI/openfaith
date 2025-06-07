@@ -1,7 +1,9 @@
-import { coreRouter } from '@openfaith/api/router/core'
+import { adapterRouter } from '@openfaith/api/router/adapterRouter'
+import { coreRouter } from '@openfaith/api/router/coreRouter'
 import { createTRPCRouter } from '@openfaith/api/trpc'
 
 export const trpcRouter = createTRPCRouter({
+  adapter: adapterRouter,
   core: coreRouter,
 })
 

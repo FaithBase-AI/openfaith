@@ -41,6 +41,7 @@
   "type": "module",
   "workspaces": {
     "catalog": {
+      "@effect/platform": "0.84.8",
       "@rocicorp/zero": "0.20.2025052100",
       "@trpc/client": "11.1.4",
       "@trpc/server": "11.1.4",
@@ -50,7 +51,7 @@
       "@types/react-dom": "19.1.5",
       "better-auth": "1.2.8",
       "date-fns": "4.1.0",
-      "effect": "3.16.0",
+      "effect": "3.16.4",
       "input-otp": "1.4.2",
       "jotai": "2.12.5",
       "next-themes": "0.4.6",

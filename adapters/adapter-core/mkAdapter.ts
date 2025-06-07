@@ -5,11 +5,11 @@ export const mkAdapter = (params: Parameters<typeof getUseChMSConnect>[0] & {}) 
 
   return {
     useChMSConnect: getUseChMSConnect({
+      chmsName,
       chmsOauthUrl,
       connectResultAtom,
-      rootDomain,
       port,
-      chmsName,
+      rootDomain,
     }),
   }
 }

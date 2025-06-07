@@ -7,7 +7,7 @@ import { Equivalence, Option, pipe } from 'effect'
 import { type PrimitiveAtom, useAtom } from 'jotai'
 import { useCallback, useEffect } from 'react'
 
-function useChMSConnect(params: { onConnect: (params: { code: string }) => Promise<void> }) {
+function useChMSConnect(params: { onConnect: (params: { code: string }) => Promise<void> | void }) {
   // @ts-expect-error
   const { chmsOauthUrl, connectResultAtom, rootDomain, port, chmsName } = this as Parameters<
     typeof getUseChMSConnect
@@ -21,13 +21,13 @@ function useChMSConnect(params: { onConnect: (params: { code: string }) => Promi
   }, [setConnectResult])
 
   const { onContainerClick, codeOpt } = useOauthPopup({
-    title: `Connect to ${chmsName}`,
     height: 900,
-    width: 650,
-    url: chmsOauthUrl,
     onCancel,
-    rootDomain,
     port,
+    rootDomain,
+    title: `Connect to ${chmsName}`,
+    url: chmsOauthUrl,
+    width: 650,
   })
 
   useStableEffect(
@@ -55,18 +55,9 @@ function useChMSConnect(params: { onConnect: (params: { code: string }) => Promi
     pipe(
       connectResult,
       ChMSConnectResult.$match({
-        noResult: noOp,
         canceled: () => {
           toast(`${chmsName} sign in canceled.`, {
             description: `Looks like the sign in process for ${chmsName} was canceled. When you're ready to sign in again, just hit the Connect Button.`,
-          })
-        },
-        loading: noOp,
-        success: noOp,
-        failed: () => {
-          toast(`${chmsName} sign in error.`, {
-            description: `Looks like we ran into an issue with logging into ${chmsName}. Please reach out to Steeple support to get it sorted.`,
-            // variant: 'destructive',
           })
         },
         error: (x) => {
@@ -85,16 +76,26 @@ function useChMSConnect(params: { onConnect: (params: { code: string }) => Promi
               break
           }
         },
+        failed: () => {
+          toast(`${chmsName} sign in error.`, {
+            description: `Looks like we ran into an issue with logging into ${chmsName}. Please reach out to Steeple support to get it sorted.`,
+            // variant: 'destructive',
+          })
+        },
+        loading: noOp,
+        noResult: noOp,
+        success: noOp,
       }),
     )
   }, [chmsName, connectResult])
 
   return {
+    connectResult,
+    loading: false,
     onClick: () => {
       setConnectResult(ChMSConnectResult.loading())
       onContainerClick()
     },
-    loading: false,
   }
 }
 

@@ -1,16 +1,6 @@
 {
-  "name": "@openfaith/api",
-  "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "license": "MIT",
-  "scripts": {
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "format": "biome lint .",
-    "lint:biome": "biome lint .",
-    "typecheck": "tsc --noEmit"
-  },
   "dependencies": {
+    "@effect/platform": "catalog:",
     "@openfaith/auth": "workspace:*",
     "@openfaith/schema": "workspace:*",
     "@openfaith/shared": "workspace:*",
@@ -20,5 +10,16 @@
   },
   "devDependencies": {
     "typescript": "catalog:"
-  }
+  },
+  "license": "MIT",
+  "name": "@openfaith/api",
+  "private": true,
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "format": "biome lint .",
+    "lint:biome": "biome lint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "type": "module",
+  "version": "0.1.0"
 }

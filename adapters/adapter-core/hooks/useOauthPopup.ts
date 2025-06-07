@@ -57,10 +57,10 @@ export function useOauthPopup({
 
     setExternalWindow(
       createPopup({
-        url,
-        title,
-        width,
         height,
+        title,
+        url,
+        width,
       }),
     )
   }, [url, title, width, height, setCodeOpt])
@@ -68,8 +68,6 @@ export function useOauthPopup({
   // biome-ignore lint/correctness/useExhaustiveDependencies: Pure
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      console.log(event.data, typeof event.data, event.origin)
-
       if (
         typeof event.data === 'string' &&
         pipe(
@@ -147,5 +145,5 @@ export function useOauthPopup({
     [],
   )
 
-  return { onContainerClick, codeOpt }
+  return { codeOpt, onContainerClick }
 }
