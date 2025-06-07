@@ -52,9 +52,6 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
         slug: '',
       })),
     )(props),
-    validators: {
-      onChange: Schema.standardSchemaV1(OrgSchema),
-    },
     onSubmit: async ({ value }) => {
       await pipe(
         Match.type<typeof props>(),
@@ -100,11 +97,11 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
         }),
         Match.tag('edit', async (x) => {
           await authClient.organization.update({
-            organizationId: x.org.id,
             data: {
               name: pipe(value.name, String.trim),
               slug: pipe(value.slug, String.trim),
             },
+            organizationId: x.org.id,
           })
         }),
         Match.exhaustive,
@@ -112,45 +109,17 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
 
       setCreateOrgIsOpen(false)
     },
+    validators: {
+      onChange: Schema.standardSchemaV1(OrgSchema),
+    },
   })
 
   return (
     <QuickActionForm
-      form={form}
-      Primary={
-        <>
-          <form.AppField
-            name='name'
-            children={(field) => (
-              <field.InputField
-                autoCapitalize='none'
-                placeholder='My Org'
-                autoComplete='name'
-                required
-                label='Name'
-              />
-            )}
-          />
-
-          <form.AppField
-            name='slug'
-            children={(field) => (
-              <field.SlugInputField
-                autoCapitalize='none'
-                placeholder='my-org'
-                autoComplete='slug'
-                required
-                label='Slug'
-              />
-            )}
-          />
-        </>
-      }
       Actions={
         <form.Subscribe selector={(x) => x.isSubmitting}>
           {(x) => (
             <Button
-              type='submit'
               className={pipe(
                 Match.type<typeof props>(),
                 Match.tag('create', () => 'ml-auto'),
@@ -159,6 +128,7 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
                 Match.exhaustive,
               )(props)}
               loading={x}
+              type='submit'
             >
               {pipe(
                 Match.type<typeof props>(),
@@ -172,6 +142,36 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
             </Button>
           )}
         </form.Subscribe>
+      }
+      form={form}
+      Primary={
+        <>
+          <form.AppField
+            children={(field) => (
+              <field.InputField
+                autoCapitalize='none'
+                autoComplete='name'
+                label='Name'
+                placeholder='My Org'
+                required
+              />
+            )}
+            name='name'
+          />
+
+          <form.AppField
+            children={(field) => (
+              <field.SlugInputField
+                autoCapitalize='none'
+                autoComplete='slug'
+                label='Slug'
+                placeholder='my-org'
+                required
+              />
+            )}
+            name='slug'
+          />
+        </>
       }
     />
   )

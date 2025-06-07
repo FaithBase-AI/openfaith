@@ -1,3 +1,4 @@
+import { adapterTokenTable } from '@openfaith/db/schema/adaptersSchema'
 import {
   invitationsTable,
   orgSettingsTable,
@@ -8,8 +9,9 @@ import { usersTable } from '@openfaith/db/schema/usersSchema'
 import { relations } from 'drizzle-orm'
 
 export const orgsRelations = relations(orgsTable, ({ many, one }) => ({
-  orgUsers: many(orgUsersTable),
+  adapterTokens: many(adapterTokenTable),
   invitations: many(invitationsTable),
+  orgUsers: many(orgUsersTable),
   settings: one(orgSettingsTable, {
     fields: [orgsTable.id],
     references: [orgSettingsTable.orgId],
@@ -21,18 +23,14 @@ export const orgUsersRelations = relations(orgUsersTable, ({ one, many }) => ({
     fields: [orgUsersTable.orgId],
     references: [orgsTable.id],
   }),
+  sentInvitations: many(invitationsTable),
   user: one(usersTable, {
     fields: [orgUsersTable.userId],
     references: [usersTable.id],
   }),
-  sentInvitations: many(invitationsTable),
 }))
 
 export const invitationsRelations = relations(invitationsTable, ({ one }) => ({
-  org: one(orgsTable, {
-    fields: [invitationsTable.orgId],
-    references: [orgsTable.id],
-  }),
   inviter: one(usersTable, {
     fields: [invitationsTable.inviterId],
     references: [usersTable.id],
@@ -40,6 +38,10 @@ export const invitationsRelations = relations(invitationsTable, ({ one }) => ({
   inviterOrgUser: one(orgUsersTable, {
     fields: [invitationsTable.inviterId],
     references: [orgUsersTable.userId],
+  }),
+  org: one(orgsTable, {
+    fields: [invitationsTable.orgId],
+    references: [orgsTable.id],
   }),
 }))
 

@@ -27,7 +27,6 @@ const localGetOrgId = async (orgId: string | null) => {
 }
 
 export const Route = createFileRoute('/_app')({
-  component: RouteComponent,
   beforeLoad: async (ctx) => {
     // If we have a user, keep going.
     if (ctx.context.userId) {
@@ -37,8 +36,8 @@ export const Route = createFileRoute('/_app')({
       ])
 
       return {
-        token,
         orgId,
+        token,
       }
     }
 
@@ -46,25 +45,26 @@ export const Route = createFileRoute('/_app')({
 
     if (!session) {
       throw redirect({
-        to: '/sign-in',
         search: {
           redirect: ctx.location.href,
         },
+        to: '/sign-in',
       })
     }
 
     return {
-      userId: session.session.userId,
       orgId: pipe(session.session.activeOrganizationId, Option.fromNullable, Option.getOrNull),
+      userId: session.session.userId,
     }
   },
+  component: RouteComponent,
   loader: (ctx) => {
     if (!ctx.context.orgId) {
       throw redirect({
-        to: '/create-org',
         search: {
           redirect: ctx.location.href,
         },
+        to: '/create-org',
       })
     }
   },

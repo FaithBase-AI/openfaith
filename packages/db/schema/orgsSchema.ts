@@ -10,13 +10,14 @@ export const orgsTable = pgTable(
       .char({ enum: ['org'], length: 3 })
       .default('org')
       .notNull(),
+    createdAt: d.timestamp().notNull(),
     id: d.text().primaryKey(),
+    logo: d.text(),
+    metadata: d.text(),
     name: d.text().notNull(),
     slug: d.text().unique(),
-    logo: d.text(),
-    createdAt: d.timestamp().notNull(),
-    metadata: d.text(),
   }),
+
   (x) => ({
     slugIdx: index('orgSlugIdx').on(x.slug),
   }),
@@ -34,15 +35,15 @@ export const orgUsersTable = pgTable(
       .char({ enum: ['orgUser'], length: 7 })
       .default('orgUser')
       .notNull(),
+    createdAt: d.timestamp().notNull(),
     id: d.text().primaryKey(),
     orgId: d.text().notNull(),
-    userId: d.text().notNull(),
     role: d.text().notNull(),
-    createdAt: d.timestamp().notNull(),
+    userId: d.text().notNull(),
   }),
   (x) => ({
-    userIdx: index('orgUserUserIdx').on(x.userId),
     orgIdx: index('orgUserOrgIdx').on(x.orgId),
+    userIdx: index('orgUserUserIdx').on(x.userId),
   }),
 )
 export const OrgUser = createSelectSchema(orgUsersTable)
@@ -58,17 +59,17 @@ export const invitationsTable = pgTable(
       .char({ enum: ['invitation'], length: 10 })
       .default('invitation')
       .notNull(),
-    id: d.text().primaryKey(),
-    orgId: d.text().notNull(),
     email: d.text().notNull(),
+    expiresAt: d.timestamp().notNull(),
+    id: d.text().primaryKey(),
+    inviterId: d.text().notNull(),
+    orgId: d.text().notNull(),
     role: d.text(),
     status: d.text().notNull(),
-    expiresAt: d.timestamp().notNull(),
-    inviterId: d.text().notNull(),
   }),
   (x) => ({
-    userIdx: index('invitationUserIdx').on(x.inviterId),
     orgIdx: index('invitationOrgIdx').on(x.orgId),
+    userIdx: index('invitationUserIdx').on(x.inviterId),
   }),
 )
 export const Invitation = createSelectSchema(invitationsTable)

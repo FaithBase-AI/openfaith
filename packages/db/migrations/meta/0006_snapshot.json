@@ -6,13 +6,84 @@
   },
   "dialect": "postgresql",
   "enums": {},
-  "id": "d9b84d8f-2ad4-479b-8056-bb848b29bbf8",
+  "id": "708f846a-99f1-431f-a766-14bc69a5ec2e",
   "policies": {},
-  "prevId": "2aa4bdab-3b5d-4d19-8f83-f46645c45cbb",
+  "prevId": "6d5a4e2f-ec3b-465f-91bd-934dd079dda7",
   "roles": {},
   "schemas": {},
   "sequences": {},
   "tables": {
+    "public.openfaith_adapterTokens": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'adapterToken'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(12)"
+        },
+        "accessToken": {
+          "name": "accessToken",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "adapter": {
+          "name": "adapter",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp"
+        },
+        "expiresIn": {
+          "name": "expiresIn",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "integer"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "varchar(128)"
+        },
+        "refreshToken": {
+          "name": "refreshToken",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "userId": {
+          "name": "userId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "varchar(128)"
+        }
+      },
+      "compositePrimaryKeys": {
+        "adapterTokensId": {
+          "columns": [
+            "userId",
+            "orgId",
+            "adapter"
+          ],
+          "name": "adapterTokensId"
+        }
+      },
+      "foreignKeys": {},
+      "indexes": {},
+      "isRLSEnabled": false,
+      "name": "openfaith_adapterTokens",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
     "public.openfaith_invitations": {
       "checkConstraints": {},
       "columns": {
@@ -67,34 +138,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "foreignKeys": {
-        "openfaith_invitations_inviterId_openfaith_users_id_fk": {
-          "columnsFrom": [
-            "inviterId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "name": "openfaith_invitations_inviterId_openfaith_users_id_fk",
-          "onDelete": "no action",
-          "onUpdate": "no action",
-          "tableFrom": "openfaith_invitations",
-          "tableTo": "openfaith_users"
-        },
-        "openfaith_invitations_orgId_openfaith_orgs_id_fk": {
-          "columnsFrom": [
-            "orgId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "name": "openfaith_invitations_orgId_openfaith_orgs_id_fk",
-          "onDelete": "no action",
-          "onUpdate": "no action",
-          "tableFrom": "openfaith_invitations",
-          "tableTo": "openfaith_orgs"
-        }
-      },
+      "foreignKeys": {},
       "indexes": {
         "invitationOrgIdx": {
           "columns": [
@@ -318,34 +362,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "foreignKeys": {
-        "openfaith_orgUsers_orgId_openfaith_orgs_id_fk": {
-          "columnsFrom": [
-            "orgId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "name": "openfaith_orgUsers_orgId_openfaith_orgs_id_fk",
-          "onDelete": "no action",
-          "onUpdate": "no action",
-          "tableFrom": "openfaith_orgUsers",
-          "tableTo": "openfaith_orgs"
-        },
-        "openfaith_orgUsers_userId_openfaith_users_id_fk": {
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "name": "openfaith_orgUsers_userId_openfaith_users_id_fk",
-          "onDelete": "no action",
-          "onUpdate": "no action",
-          "tableFrom": "openfaith_orgUsers",
-          "tableTo": "openfaith_users"
-        }
-      },
+      "foreignKeys": {},
       "indexes": {
         "orgUserOrgIdx": {
           "columns": [
