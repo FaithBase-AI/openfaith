@@ -83,27 +83,23 @@ const BaseCustomFieldSchema = Schema.Struct({
 })
 
 // Specific field type schemas
-const StringFieldSchema = Schema.Struct({
+const StringFieldSchema = Schema.TaggedStruct('string', {
   ...BaseCustomFieldSchema.fields,
-  _tag: Schema.Literal('string'),
   value: Schema.String.pipe(Schema.NullishOr),
 })
 
-const NumberFieldSchema = Schema.Struct({
+const NumberFieldSchema = Schema.TaggedStruct('number', {
   ...BaseCustomFieldSchema.fields,
-  _tag: Schema.Literal('number'),
   value: Schema.Number.pipe(Schema.NullishOr),
 })
 
-const BooleanFieldSchema = Schema.Struct({
+const BooleanFieldSchema = Schema.TaggedStruct('boolean', {
   ...BaseCustomFieldSchema.fields,
-  _tag: Schema.Literal('boolean'),
   value: Schema.Boolean.pipe(Schema.NullishOr),
 })
 
-const DateFieldSchema = Schema.Struct({
+const DateFieldSchema = Schema.TaggedStruct('date', {
   ...BaseCustomFieldSchema.fields,
-  _tag: Schema.Literal('date'),
   value: Schema.String.pipe(Schema.optional), // ISO date string
 })
 

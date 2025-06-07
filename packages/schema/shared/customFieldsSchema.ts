@@ -10,44 +10,32 @@ const BaseCustomFieldSchema = Schema.Struct({
 })
 type BaseCustomFieldSchema = typeof BaseCustomFieldSchema.Type
 
-export const StringFieldSchema = Schema.Struct({
+export const StringFieldSchema = Schema.TaggedStruct('string', {
   ...BaseCustomFieldSchema.fields,
-  _tag: Schema.Literal('string').annotations({
-    description: 'The type of the custom field',
-  }),
   value: Schema.String.annotations({
     description: 'The value of the custom field',
   }).pipe(Schema.NullishOr),
 })
 export type StringFieldSchema = typeof StringFieldSchema.Type
 
-export const NumberFieldSchema = Schema.Struct({
+export const NumberFieldSchema = Schema.TaggedStruct('number', {
   ...BaseCustomFieldSchema.fields,
-  _tag: Schema.Literal('number').annotations({
-    description: 'The type of the custom field',
-  }),
   value: Schema.Number.annotations({
     description: 'The value of the custom field',
   }).pipe(Schema.NullishOr),
 })
 export type NumberFieldSchema = typeof NumberFieldSchema.Type
 
-export const BooleanFieldSchema = Schema.Struct({
+export const BooleanFieldSchema = Schema.TaggedStruct('boolean', {
   ...BaseCustomFieldSchema.fields,
-  _tag: Schema.Literal('boolean').annotations({
-    description: 'The type of the custom field',
-  }),
   value: Schema.Boolean.annotations({
     description: 'The value of the custom field',
   }).pipe(Schema.NullishOr),
 })
 export type BooleanFieldSchema = typeof BooleanFieldSchema.Type
 
-export const DateFieldSchema = Schema.Struct({
+export const DateFieldSchema = Schema.TaggedStruct('date', {
   ...BaseCustomFieldSchema.fields,
-  _tag: Schema.Literal('date').annotations({
-    description: 'The type of the custom field',
-  }),
   value: Schema.String.annotations({
     description: 'The value of the custom field as an ISO date string',
   }).pipe(Schema.optional),

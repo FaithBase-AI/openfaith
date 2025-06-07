@@ -1,4 +1,4 @@
-import { ChMSConnectResult, mkAdapter } from '@openfaith/adapter-core'
+import { ChMSConnectResult, mkClientAdapter } from '@openfaith/adapter-core/client'
 import type { Resolve } from '@openfaith/shared'
 import { Array, pipe } from 'effect'
 import { atom } from 'jotai'
@@ -7,16 +7,16 @@ import qs from 'qs'
 const planningCenterConnectResultAtom = atom<ChMSConnectResult>(ChMSConnectResult.noResult())
 
 type MkPcoAdapterParams = Resolve<
-  Omit<Parameters<typeof mkAdapter>[0], 'chmsName' | 'chmsOauthUrl' | 'connectResultAtom'> & {
+  Omit<Parameters<typeof mkClientAdapter>[0], 'chmsName' | 'chmsOauthUrl' | 'connectResultAtom'> & {
     clientId: string
     redirectUri: string
   }
 >
 
-export const mkPcoAdapter = (params: MkPcoAdapterParams) => {
+export const mkPcoClientAdapter = (params: MkPcoAdapterParams) => {
   const { clientId, redirectUri, rootDomain, port } = params
 
-  const { useChMSConnect } = mkAdapter({
+  const { useChMSConnect } = mkClientAdapter({
     chmsName: 'Planning Center',
     chmsOauthUrl: `https://api.planningcenteronline.com/oauth/authorize?${qs.stringify({
       client_id: clientId,

@@ -1,6 +1,6 @@
 import { getUseChMSConnect } from '@openfaith/adapter-core/hooks/useChMSConnect'
 
-export const mkAdapter = (params: Parameters<typeof getUseChMSConnect>[0] & {}) => {
+export const mkClientAdapter = (params: Parameters<typeof getUseChMSConnect>[0] & {}) => {
   const { chmsOauthUrl, connectResultAtom, rootDomain, port, chmsName } = params
 
   return {
