@@ -102,23 +102,9 @@ export type PCOPersonAttributes = typeof PCOPersonAttributes.Type
 export const pcoPersonTransformer = pcoToOf(PCOPersonAttributes, BasePerson)
 
 export const PCOPerson = Schema.Struct({
-  type: Schema.Literal('Person'),
-  id: Schema.String,
   attributes: PCOPersonAttributes,
-  relationships: Schema.Struct({
-    primary_campus: Schema.Struct({
-      data: Schema.NullOr(
-        Schema.Struct({
-          type: Schema.Literal('PrimaryCampus'),
-          id: Schema.String,
-        }),
-      ),
-    }),
-  }),
+  id: Schema.String,
   links: Schema.Struct({
-    self: Schema.String,
-    html: Schema.String,
-
     addresses: Schema.optional(Schema.NullOr(Schema.String)),
     apps: Schema.optional(Schema.NullOr(Schema.String)),
     connected_people: Schema.optional(Schema.NullOr(Schema.String)),
@@ -126,19 +112,32 @@ export const PCOPerson = Schema.Struct({
     field_data: Schema.optional(Schema.NullOr(Schema.String)),
     household_memberships: Schema.optional(Schema.NullOr(Schema.String)),
     households: Schema.optional(Schema.NullOr(Schema.String)),
+    html: Schema.String,
+    inactive_reason: Schema.optional(Schema.NullOr(Schema.String)),
+    marital_status: Schema.optional(Schema.NullOr(Schema.String)),
     message_groups: Schema.optional(Schema.NullOr(Schema.String)),
     messages: Schema.optional(Schema.NullOr(Schema.String)),
+    name_prefix: Schema.optional(Schema.NullOr(Schema.String)),
+    name_suffix: Schema.optional(Schema.NullOr(Schema.String)),
     notes: Schema.optional(Schema.NullOr(Schema.String)),
     organization: Schema.optional(Schema.NullOr(Schema.String)),
     person_apps: Schema.optional(Schema.NullOr(Schema.String)),
     phone_numbers: Schema.optional(Schema.NullOr(Schema.String)),
     platform_notifications: Schema.optional(Schema.NullOr(Schema.String)),
+    self: Schema.String,
     social_profiles: Schema.optional(Schema.NullOr(Schema.String)),
     workflow_cards: Schema.optional(Schema.NullOr(Schema.String)),
-    inactive_reason: Schema.optional(Schema.NullOr(Schema.String)),
-    marital_status: Schema.optional(Schema.NullOr(Schema.String)),
-    name_prefix: Schema.optional(Schema.NullOr(Schema.String)),
-    name_suffix: Schema.optional(Schema.NullOr(Schema.String)),
   }),
+  relationships: Schema.Struct({
+    primary_campus: Schema.Struct({
+      data: Schema.NullOr(
+        Schema.Struct({
+          id: Schema.String,
+          type: Schema.Literal('PrimaryCampus'),
+        }),
+      ),
+    }),
+  }),
+  type: Schema.Literal('Person'),
 })
 export type PCOPerson = typeof PCOPerson.Type
