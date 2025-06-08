@@ -1,4 +1,4 @@
-import { usePlanningCenterConnect } from '@openfaith/openfaith/adapters/pco'
+import { usePlanningCenterConnect } from '@openfaith/openfaith/adapters/pcoClient'
 import { useTRPC } from '@openfaith/openfaith/app/api'
 import {
   BoxOption,

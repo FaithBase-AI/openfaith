@@ -1,7 +1,7 @@
 import { FetchHttpClient } from '@effect/platform'
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { createTRPCRouter, orgProcedure } from '@openfaith/api/trpc'
-import { adapterTokenTable, DBLive } from '@openfaith/db'
+import { adapterDetailsTable, adapterTokenTable, DBLive } from '@openfaith/db'
 import { fetchPcoTokenE } from '@openfaith/pco/server'
 import { env } from '@openfaith/shared'
 import { Effect, Option, pipe, Schema } from 'effect'
@@ -45,15 +45,26 @@ export const adapterRouter = createTRPCRouter({
                 redirectUri: input.redirectUri,
               })
 
-              yield* db.insert(adapterTokenTable).values({
-                accessToken: token.accessToken,
-                adapter: 'pco',
-                createdAt: new Date(),
-                expiresIn: token.expiresIn,
-                orgId,
-                refreshToken: token.refreshToken,
-                userId,
-              })
+              const createdAt = new Date()
+
+              yield* Effect.all([
+                db.insert(adapterTokenTable).values({
+                  accessToken: token.accessToken,
+                  adapter: 'pco',
+                  createdAt,
+                  expiresIn: token.expiresIn,
+                  orgId,
+                  refreshToken: token.refreshToken,
+                  userId,
+                }),
+                db.insert(adapterDetailsTable).values({
+                  adapter: 'pco',
+                  createdAt,
+                  enabled: true,
+                  orgId,
+                  syncStatus: [],
+                }),
+              ])
             }).pipe(
               Effect.provide(FetchHttpClient.layer),
               Effect.provide(DBLive),

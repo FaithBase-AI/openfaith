@@ -1,3 +1,4 @@
+import type { AdapterSyncItem } from '@openfaith/shared'
 import {
   ANYONE_CAN,
   boolean,
@@ -5,6 +6,7 @@ import {
   definePermissions,
   type ExpressionBuilder,
   enumeration,
+  json,
   NOBODY_CAN,
   number,
   relationships,
@@ -17,19 +19,19 @@ export const usersSchema = table('users')
   .from('openfaith_users')
   .columns({
     _tag: enumeration<'user'>(),
-    id: string(),
-    name: string(),
-    email: string(),
-    emailVerified: boolean(),
-    image: string().optional(),
-    updatedAt: number(),
-    createdAt: number(),
-    isAnonymous: boolean().optional(),
-    stripeCustomerId: string().optional(),
-    role: string().optional(),
+    banExpires: number().optional(),
     banned: boolean().optional(),
     banReason: string().optional(),
-    banExpires: number().optional(),
+    createdAt: number(),
+    email: string(),
+    emailVerified: boolean(),
+    id: string(),
+    image: string().optional(),
+    isAnonymous: boolean().optional(),
+    name: string(),
+    role: string().optional(),
+    stripeCustomerId: string().optional(),
+    updatedAt: number(),
   })
   .primaryKey('id')
 
@@ -37,12 +39,12 @@ export const orgsSchema = table('orgs')
   .from('openfaith_orgs')
   .columns({
     _tag: enumeration<'org'>(),
+    createdAt: number(),
     id: string(),
+    logo: string().optional(),
+    metadata: string().optional(),
     name: string(),
     slug: string(),
-    logo: string().optional(),
-    createdAt: number(),
-    metadata: string().optional(),
   })
   .primaryKey('id')
 
@@ -50,11 +52,11 @@ export const orgUsersSchema = table('orgUsers')
   .from('openfaith_orgUsers')
   .columns({
     _tag: enumeration<'orgUser'>(),
+    createdAt: number(),
     id: string(),
     orgId: string(),
-    userId: string(),
     role: string(),
-    createdAt: number(),
+    userId: string(),
   })
   .primaryKey('id')
 
@@ -62,13 +64,13 @@ export const invitationsSchema = table('invitations')
   .from('openfaith_invitations')
   .columns({
     _tag: enumeration<'invitation'>(),
-    id: string(),
-    orgId: string(),
     email: string(),
+    expiresAt: number(),
+    id: string(),
+    inviterId: string(),
+    orgId: string(),
     role: string(),
     status: string(),
-    expiresAt: number(),
-    inviterId: string(),
   })
   .primaryKey('id')
 
@@ -80,114 +82,147 @@ export const orgSettingsSchema = table('orgSettings')
   })
   .primaryKey('orgId')
 
+export const adapterDetailsSchema = table('adapterDetails')
+  .from('openfaith_adapterDetails')
+  .columns({
+    _tag: enumeration<'adapterDetails'>(),
+    adapter: string(),
+    createdAt: number(),
+    enabled: boolean(),
+    orgId: string(),
+    syncStatus: json<Array<AdapterSyncItem>>(),
+  })
+  .primaryKey('orgId', 'adapter')
+
 // Relations
 export const usersRelationships = relationships(usersSchema, ({ many }) => ({
-  orgUsers: many({
+  createdInvitations: many({
+    destField: ['inviterId'],
+    destSchema: invitationsSchema,
     sourceField: ['id'],
-    destSchema: orgUsersSchema,
-    destField: ['userId'],
   }),
   orgs: many(
     {
-      sourceField: ['id'],
-      destSchema: orgUsersSchema,
       destField: ['userId'],
+      destSchema: orgUsersSchema,
+      sourceField: ['id'],
     },
     {
-      sourceField: ['orgId'],
-      destSchema: orgsSchema,
       destField: ['id'],
+      destSchema: orgsSchema,
+      sourceField: ['orgId'],
     },
   ),
-  createdInvitations: many({
+  orgUsers: many({
+    destField: ['userId'],
+    destSchema: orgUsersSchema,
     sourceField: ['id'],
-    destSchema: invitationsSchema,
-    destField: ['inviterId'],
   }),
 }))
 
 export const orgsRelationships = relationships(orgsSchema, ({ one, many }) => ({
-  orgUsers: many({
-    sourceField: ['id'],
-    destSchema: orgUsersSchema,
+  adapterDetails: many({
     destField: ['orgId'],
+    destSchema: adapterDetailsSchema,
+    sourceField: ['id'],
+  }),
+  invitations: many({
+    destField: ['orgId'],
+    destSchema: invitationsSchema,
+    sourceField: ['id'],
+  }),
+  orgSettings: one({
+    destField: ['orgId'],
+    destSchema: orgSettingsSchema,
+    sourceField: ['id'],
+  }),
+  orgUsers: many({
+    destField: ['orgId'],
+    destSchema: orgUsersSchema,
+    sourceField: ['id'],
   }),
   users: many(
     {
-      sourceField: ['id'],
-      destSchema: orgUsersSchema,
       destField: ['orgId'],
+      destSchema: orgUsersSchema,
+      sourceField: ['id'],
     },
     {
-      sourceField: ['userId'],
-      destSchema: usersSchema,
       destField: ['id'],
+      destSchema: usersSchema,
+      sourceField: ['userId'],
     },
   ),
-  orgSettings: one({
-    sourceField: ['id'],
-    destSchema: orgSettingsSchema,
-    destField: ['orgId'],
-  }),
-  invitations: many({
-    sourceField: ['id'],
-    destSchema: invitationsSchema,
-    destField: ['orgId'],
-  }),
 }))
 
 export const orgUsersRelationships = relationships(orgUsersSchema, ({ one, many }) => ({
+  createdInvitations: many({
+    destField: ['orgId'],
+    destSchema: invitationsSchema,
+    sourceField: ['id'],
+  }),
   org: one({
-    sourceField: ['orgId'],
-    destSchema: orgsSchema,
     destField: ['id'],
+    destSchema: orgsSchema,
+    sourceField: ['orgId'],
   }),
   user: one({
-    sourceField: ['userId'],
-    destSchema: usersSchema,
     destField: ['id'],
-  }),
-  createdInvitations: many({
-    sourceField: ['id'],
-    destSchema: invitationsSchema,
-    destField: ['orgId'],
+    destSchema: usersSchema,
+    sourceField: ['userId'],
   }),
 }))
 
 export const orgSettingsRelationships = relationships(orgSettingsSchema, ({ one, many }) => ({
   org: one({
-    sourceField: ['orgId'],
-    destSchema: orgsSchema,
     destField: ['id'],
+    destSchema: orgsSchema,
+    sourceField: ['orgId'],
   }),
   orgUsers: many({
-    sourceField: ['orgId'],
-    destSchema: orgUsersSchema,
     destField: ['orgId'],
+    destSchema: orgUsersSchema,
+    sourceField: ['orgId'],
   }),
 }))
 
 export const invitationsRelationships = relationships(invitationsSchema, ({ one }) => ({
-  org: one({
-    sourceField: ['orgId'],
-    destSchema: orgsSchema,
-    destField: ['id'],
-  }),
   inviter: one({
-    sourceField: ['inviterId'],
-    destSchema: usersSchema,
     destField: ['id'],
+    destSchema: usersSchema,
+    sourceField: ['inviterId'],
+  }),
+  org: one({
+    destField: ['id'],
+    destSchema: orgsSchema,
+    sourceField: ['orgId'],
+  }),
+}))
+
+export const adapterDetailsRelationships = relationships(adapterDetailsSchema, ({ one }) => ({
+  org: one({
+    destField: ['id'],
+    destSchema: orgsSchema,
+    sourceField: ['orgId'],
   }),
 }))
 
 export const schema = createSchema({
-  tables: [invitationsSchema, orgSettingsSchema, orgsSchema, orgUsersSchema, usersSchema],
   relationships: [
+    adapterDetailsRelationships,
     invitationsRelationships,
     orgSettingsRelationships,
     orgsRelationships,
     orgUsersRelationships,
     usersRelationships,
+  ],
+  tables: [
+    adapterDetailsSchema,
+    invitationsSchema,
+    orgSettingsSchema,
+    orgsSchema,
+    orgUsersSchema,
+    usersSchema,
   ],
 })
 
@@ -236,13 +271,13 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     )
 
   return {
-    users: {
+    orgSettings: {
       row: {
-        select: ANYONE_CAN,
         insert: [allowIfAdmin],
+        select: ANYONE_CAN,
         update: {
-          preMutation: [allowIfUserIsSelf, allowIfAdmin],
-          postMutation: [allowIfUserIsSelf, allowIfAdmin],
+          postMutation: [allowIfOrgAdmin, allowIfAdmin],
+          preMutation: [allowIfOrgAdmin, allowIfAdmin],
         },
       },
     },
@@ -251,24 +286,24 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
         insert: NOBODY_CAN,
         select: [allowIfOrgMember, allowIfAdmin],
         update: {
-          preMutation: [allowIfOrgAdmin, allowIfAdmin],
           postMutation: [allowIfOrgAdmin, allowIfAdmin],
+          preMutation: [allowIfOrgAdmin, allowIfAdmin],
         },
       },
     },
     orgUsers: {
       row: {
-        select: ANYONE_CAN,
         insert: NOBODY_CAN,
+        select: ANYONE_CAN,
       },
     },
-    orgSettings: {
+    users: {
       row: {
         insert: [allowIfAdmin],
         select: ANYONE_CAN,
         update: {
-          preMutation: [allowIfOrgAdmin, allowIfAdmin],
-          postMutation: [allowIfOrgAdmin, allowIfAdmin],
+          postMutation: [allowIfUserIsSelf, allowIfAdmin],
+          preMutation: [allowIfUserIsSelf, allowIfAdmin],
         },
       },
     },

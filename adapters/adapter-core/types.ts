@@ -12,6 +12,6 @@ export type ChMSConnectResult = Data.TaggedEnum<{
 }>
 export const ChMSConnectResult = Data.taggedEnum<ChMSConnectResult>()
 
-export type Adapter = {
+export type ServerAdapter = {
   name: string
 }

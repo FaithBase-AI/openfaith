@@ -1,4 +1,4 @@
-import { adapterTokenTable } from '@openfaith/db/schema/adaptersSchema'
+import { adapterDetailsTable, adapterTokenTable } from '@openfaith/db/schema/adaptersSchema'
 import {
   invitationsTable,
   orgSettingsTable,
@@ -9,6 +9,7 @@ import { usersTable } from '@openfaith/db/schema/usersSchema'
 import { relations } from 'drizzle-orm'
 
 export const orgsRelations = relations(orgsTable, ({ many, one }) => ({
+  adapterDetails: many(adapterDetailsTable),
   adapterTokens: many(adapterTokenTable),
   invitations: many(invitationsTable),
   orgUsers: many(orgUsersTable),
