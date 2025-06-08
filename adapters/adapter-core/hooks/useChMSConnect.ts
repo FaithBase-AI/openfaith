@@ -7,11 +7,12 @@ import { Equivalence, Option, pipe } from 'effect'
 import { type PrimitiveAtom, useAtom } from 'jotai'
 import { useCallback, useEffect } from 'react'
 
-function useChMSConnect(params: { onConnect: (params: { code: string }) => Promise<void> | void }) {
-  // @ts-expect-error
-  const { chmsOauthUrl, connectResultAtom, rootDomain, port, chmsName } = this as Parameters<
-    typeof getUseChMSConnect
-  >[0]
+function useChMSConnect(params: {
+  onConnect: (params: { code: string; redirectUri: string }) => Promise<void> | void
+}) {
+  const { chmsOauthUrl, connectResultAtom, rootDomain, port, chmsName, redirectUri } =
+    // @ts-expect-error
+    this as Parameters<typeof getUseChMSConnect>[0]
   const { onConnect } = params
   const [connectResult, setConnectResult] = useAtom(connectResultAtom)
 
@@ -40,6 +41,7 @@ function useChMSConnect(params: { onConnect: (params: { code: string }) => Promi
             void (async () => {
               const response = await onConnect({
                 code: x,
+                redirectUri,
               })
 
               setConnectResult(ChMSConnectResult.success(response))
@@ -105,6 +107,7 @@ export function getUseChMSConnect(init: {
   rootDomain: string
   chmsName: string
   port?: number | undefined
+  redirectUri: string
 }) {
   return useChMSConnect.bind(init)
 }

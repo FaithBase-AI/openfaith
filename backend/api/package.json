@@ -1,10 +1,13 @@
 {
   "dependencies": {
     "@effect/platform": "catalog:",
+    "@effect/sql-drizzle": "catalog:",
     "@openfaith/auth": "workspace:*",
+    "@openfaith/pco": "workspace:*",
     "@openfaith/schema": "workspace:*",
     "@openfaith/shared": "workspace:*",
     "@trpc/server": "catalog:",
+    "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "superjson": "catalog:"
   },

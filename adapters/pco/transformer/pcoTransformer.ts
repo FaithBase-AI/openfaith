@@ -18,7 +18,6 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
   to: Schema.Struct<To>,
 ) => {
   return Schema.transform(from, to, {
-    strict: false,
     decode: (fromItem) =>
       pipe(
         from.fields,
@@ -139,5 +138,6 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
         ...customFieldsDecoded,
       }
     },
+    strict: false,
   })
 }

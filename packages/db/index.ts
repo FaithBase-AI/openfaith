@@ -1,5 +1,6 @@
 export * from '@openfaith/db/_table'
 export * from '@openfaith/db/db'
+export * from '@openfaith/db/schema/adaptersSchema'
 export * from '@openfaith/db/schema/orgsSchema'
 export * from '@openfaith/db/schema/schema'
 export * from '@openfaith/db/schema/usersSchema'

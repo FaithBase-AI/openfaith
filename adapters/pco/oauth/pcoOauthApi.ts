@@ -4,7 +4,7 @@ import { PcoTokenRequestParams, PcoTokenResponse } from '@openfaith/pco/oauth/pc
 const PCO_TOKEN_URL = 'https://api.planningcenteronline.com/oauth/token'
 
 // 2. Use the factory to create our specific function
-export const fetchPcoToken = createUrlEncodedPost(
+export const fetchPcoTokenE = createUrlEncodedPost(
   PcoTokenRequestParams,
   PcoTokenResponse,
   PCO_TOKEN_URL,

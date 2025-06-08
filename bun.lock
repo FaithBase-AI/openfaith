@@ -106,6 +106,7 @@
       "dependencies": {
         "@effect/platform": "catalog:",
         "@openfaith/auth": "workspace:*",
+        "@openfaith/pco": "workspace:*",
         "@openfaith/schema": "workspace:*",
         "@openfaith/shared": "workspace:*",
         "@trpc/server": "catalog:",

@@ -1,4 +1,5 @@
 import { usePlanningCenterConnect } from '@openfaith/openfaith/adapters/pco'
+import { useTRPC } from '@openfaith/openfaith/app/api'
 import {
   BoxOption,
   Label,
@@ -9,6 +10,7 @@ import {
   SubsplashIcon,
   TithelyIcon,
 } from '@openfaith/ui'
+import { useMutation } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { Array, pipe } from 'effect'
 
@@ -72,9 +74,19 @@ export const Route = createFileRoute('/_app/dashboard')({
 })
 
 function RouteComponent() {
+  const trpc = useTRPC()
+
+  const { mutate: adapterConnect } = useMutation({
+    ...trpc.adapter.adapterConnect.mutationOptions(),
+  })
+
   const { onClick, loading, connectResult } = usePlanningCenterConnect({
     onConnect: (params) => {
-      console.log(params)
+      adapterConnect({
+        adapter: 'pco',
+        code: params.code,
+        redirectUri: params.redirectUri,
+      })
     },
   })
   console.log(connectResult)

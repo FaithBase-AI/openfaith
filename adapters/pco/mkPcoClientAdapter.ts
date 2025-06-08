@@ -9,7 +9,6 @@ const planningCenterConnectResultAtom = atom<ChMSConnectResult>(ChMSConnectResul
 type MkPcoAdapterParams = Resolve<
   Omit<Parameters<typeof mkClientAdapter>[0], 'chmsName' | 'chmsOauthUrl' | 'connectResultAtom'> & {
     clientId: string
-    redirectUri: string
   }
 >
 
@@ -29,6 +28,7 @@ export const mkPcoClientAdapter = (params: MkPcoAdapterParams) => {
     })}`,
     connectResultAtom: planningCenterConnectResultAtom,
     port,
+    redirectUri,
     rootDomain,
   })
 

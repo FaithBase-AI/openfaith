@@ -1,9 +1,9 @@
 {
   "dependencies": {
-    "@effect/sql-drizzle": "0.36.2",
-    "@effect/sql-pg": "0.38.2",
-    "drizzle-kit": "0.31.1",
-    "drizzle-orm": "0.44.0",
+    "@effect/sql-drizzle": "catalog:",
+    "@effect/sql-pg": "catalog:",
+    "drizzle-kit": "catalog:",
+    "drizzle-orm": "catalog:",
     "effect": "catalog:"
   },
   "devDependencies": {

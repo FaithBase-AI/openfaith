@@ -1,3 +1,4 @@
+export * from '@openfaith/pco/oauth/pcoOauthApi'
 export * from '@openfaith/pco/oauth/pcoOauthSchema'
 export * from '@openfaith/pco/people/pcoAddressSchema'
 export * from '@openfaith/pco/people/pcoPersonSchema'
