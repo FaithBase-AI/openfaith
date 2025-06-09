@@ -3,7 +3,7 @@ import { Schema } from 'effect'
 export const PCOHeaders = Schema.Struct({
   ['Authorization']: Schema.String,
 })
-export type PCOHeaders = Schema.Schema.Type<typeof PCOHeaders>
+export type PCOHeaders = typeof PCOHeaders.Type
 
 export const PCOResponseHeaders = Schema.Struct({
   'access-control-allow-credentials': Schema.String,
@@ -30,14 +30,14 @@ export const PCOResponseHeaders = Schema.Struct({
   'x-request-id': Schema.String,
   'x-runtime': Schema.String,
 })
-export type PCOResponseHeaders = Schema.Schema.Type<typeof PCOResponseHeaders>
+export type PCOResponseHeaders = typeof PCOResponseHeaders.Type
 
 export const PCOItem = Schema.Struct({
   data: Schema.Unknown,
   included: Schema.Array(Schema.Unknown),
   meta: Schema.Unknown,
 })
-export type PCOItem = Schema.Schema.Type<typeof PCOItem>
+export type PCOItem = typeof PCOItem.Type
 
 export const PCOCollection = Schema.Struct({
   data: Schema.Array(
@@ -67,4 +67,4 @@ export const PCOCollection = Schema.Struct({
     total_count: Schema.Number,
   }),
 })
-export type PCOCollection = Schema.Schema.Type<typeof PCOCollection>
+export type PCOCollection = typeof PCOCollection.Type

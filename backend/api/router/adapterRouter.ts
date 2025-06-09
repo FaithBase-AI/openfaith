@@ -4,6 +4,7 @@ import { adaptersApi } from '@openfaith/api/adapters/adaptersApi'
 import { createTRPCRouter, orgProcedure } from '@openfaith/api/trpc'
 import { adapterDetailsTable, adapterTokenTable, DBLive } from '@openfaith/db'
 import { asyncNoOp } from '@openfaith/shared'
+import { fromUnixTime } from 'date-fns/fp'
 import { Effect, Option, pipe, Record, Schema } from 'effect'
 
 export const AdapterConnectRequest = Schema.Struct({
@@ -46,25 +47,48 @@ export const adapterRouter = createTRPCRouter({
                   redirectUri: input.redirectUri,
                 })
 
-                const createdAt = new Date()
+                const createdAt = pipe(token.createdAt, fromUnixTime)
 
                 yield* Effect.all([
-                  db.insert(adapterTokenTable).values({
-                    accessToken: token.accessToken,
-                    adapter: adapter._tag,
-                    createdAt,
-                    expiresIn: token.expiresIn,
-                    orgId,
-                    refreshToken: token.refreshToken,
-                    userId,
-                  }),
-                  db.insert(adapterDetailsTable).values({
-                    adapter: adapter._tag,
-                    createdAt,
-                    enabled: true,
-                    orgId,
-                    syncStatus: [],
-                  }),
+                  db
+                    .insert(adapterTokenTable)
+                    .values({
+                      accessToken: token.accessToken,
+                      adapter: adapter._tag,
+                      createdAt,
+                      expiresIn: token.expiresIn,
+                      orgId,
+                      refreshToken: token.refreshToken,
+                      userId,
+                    })
+                    .onConflictDoUpdate({
+                      set: {
+                        accessToken: token.accessToken,
+                        createdAt,
+                        expiresIn: token.expiresIn,
+                        refreshToken: token.refreshToken,
+                      },
+                      target: [
+                        adapterTokenTable.adapter,
+                        adapterTokenTable.orgId,
+                        adapterTokenTable.userId,
+                      ],
+                    }),
+                  db
+                    .insert(adapterDetailsTable)
+                    .values({
+                      adapter: adapter._tag,
+                      createdAt,
+                      enabled: true,
+                      orgId,
+                      syncStatus: [],
+                    })
+                    .onConflictDoUpdate({
+                      set: {
+                        enabled: true,
+                      },
+                      target: [adapterDetailsTable.adapter, adapterDetailsTable.orgId],
+                    }),
                 ])
               }).pipe(
                 Effect.provide(FetchHttpClient.layer),

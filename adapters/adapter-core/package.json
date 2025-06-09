@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@effect/platform": "catalog:",
     "@openfaith/shared": "workspace:*",
     "@openfaith/ui": "workspace:*",
     "effect": "catalog:",

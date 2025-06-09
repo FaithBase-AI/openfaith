@@ -22,6 +22,7 @@
       "name": "@openfaith/adapter-core",
       "version": "0.1.0",
       "dependencies": {
+        "@effect/platform": "catalog:",
         "@openfaith/shared": "workspace:*",
         "@openfaith/ui": "workspace:*",
         "effect": "catalog:",
@@ -111,6 +112,7 @@
         "@openfaith/schema": "workspace:*",
         "@openfaith/shared": "workspace:*",
         "@trpc/server": "catalog:",
+        "date-fns": "catalog:",
         "drizzle-orm": "catalog:",
         "effect": "catalog:",
         "superjson": "catalog:",
@@ -261,7 +263,6 @@
       "name": "@openfaith/zero",
       "version": "0.1.0",
       "dependencies": {
-        "@openfaith/adapter-core": "workspace:*",
         "@openfaith/shared": "workspace:*",
         "@rocicorp/zero": "catalog:",
         "effect": "catalog:",

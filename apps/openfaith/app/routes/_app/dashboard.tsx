@@ -2,6 +2,7 @@ import { usePlanningCenterConnect } from '@openfaith/openfaith/adapters/pcoClien
 import { useTRPC } from '@openfaith/openfaith/app/api'
 import {
   BoxOption,
+  Button,
   Label,
   OverflowIcon,
   PlanningCenterIcon,
@@ -76,6 +77,13 @@ export const Route = createFileRoute('/_app/dashboard')({
 function RouteComponent() {
   const trpc = useTRPC()
 
+  const { mutate: testFunction } = useMutation({
+    ...trpc.core.testFunction.mutationOptions(),
+    onSuccess: (data) => {
+      console.log(data)
+    },
+  })
+
   const { mutate: adapterConnect } = useMutation({
     ...trpc.adapter.adapterConnect.mutationOptions(),
   })
@@ -93,6 +101,7 @@ function RouteComponent() {
 
   return (
     <div className={'mx-auto flex max-w-3xl flex-col gap-4 p-4'}>
+      <Button onClick={() => testFunction()}>Test Function</Button>
       <Label className={'font-semibold'}>ChMS</Label>
 
       <div className={'flew-row mt-2 mb-4 flex flex-wrap gap-4'}>
