@@ -45,6 +45,19 @@ We're grateful for the financial partners who believe in OpenFaith's mission to 
 - [Project Overview & Entry Point (This Document)](README.md)
 - [Funding Documentation](/docs/Funding.md)
 
+### Sync Engine Overview
+- [01 Vision and Principles](/docs/syncEngine/01-vision-and-principles.md)
+- [02 System Architecture](/docs/syncEngine/02-system-architecture.md)
+- [03 API Client Configuration](/docs/syncEngine/03-api-client-configuration.md)
+- [04 Defining Endpoints](/docs/syncEngine/04-defining-endpoints.md)
+- [05 Using the Client](/docs/syncEngine/05-using-the-client.md)
+- [06 Sync Engine Architecture](/docs/syncEngine/06-sync-engine-architecture.md)
+- [07 Durable Workflows in Practice](/docs/syncEngine/07-durable-workflows-in-practice.md)
+- [08 Implementing a New Sync](/docs/syncEngine/08-implementing-a-new-sync.md)
+- [09 Sync Strategies and Reconciliation](/docs/syncEngine/09-sync-strategies-and-reconciliation.md)
+- [10 Operations and Monitoring](/docs/syncEngine/10-operations-and-monitoring.md)
+
+
 ## The Problem We're Solving
 
 Many churches today juggle multiple software tools—one for member management, another for online giving, separate tools for volunteer scheduling, websites, and communications. **The challenge? These tools rarely talk to each other.** This leads to:

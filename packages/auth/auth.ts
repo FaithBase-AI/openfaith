@@ -20,50 +20,74 @@ import { typeid } from 'typeid-js'
 const from = `${env.VITE_APP_NAME} <auth@${env.VITE_PROD_EMAIL_DOMAIN}>`
 
 export const auth = betterAuth({
-  appName: env.VITE_APP_NAME,
-  rateLimit: {
-    window: 10, // time window in seconds
-    max: 100, // max requests in the window
-  },
-  session: {
-    cookieCache: {
-      enabled: true,
-      maxAge: 5 * 60, // Cache duration in seconds
-    },
-  },
-  user: {
-    modelName: getTableName('users'),
-  },
   account: {
     modelName: getTableName('accounts'),
   },
-  verification: {
-    modelName: getTableName('verifications'),
+  advanced: {
+    crossSubDomainCookies: {
+      domain: pipe(
+        process.env.NODE_ENV === 'development',
+        Boolean.match({
+          onFalse: () => `.${env.VITE_PROD_ROOT_DOMAIN}`,
+          onTrue: () => '.localhost',
+        }),
+      ),
+      enabled: true,
+    },
+    database: {
+      generateId: ({ model }) =>
+        typeid(
+          pipe(
+            modelToType,
+            Record.get(model as unknown as Models),
+            Option.match({
+              onNone: () => pipe(model, String.replace('-', '')),
+              onSome: (x) => x,
+            }),
+          ),
+        ).toString(),
+    },
+    defaultCookieAttributes: {
+      httpOnly: true,
+      partitioned: true,
+      sameSite: 'none',
+      secure: true,
+    },
   },
+
+  appName: env.VITE_APP_NAME,
   database: drizzleAdapter(db, {
+    provider: 'pg',
     schema: {
-      ['openfaith_users']: schema.usersTable,
+      ['openfaith_invitations']: schema.invitationsTable,
+      ['openfaith_jwks']: schema.jwksTable,
       ['openfaith_orgs']: schema.orgsTable,
       ['openfaith_orgUsers']: schema.orgUsersTable,
-      ['openfaith_invitations']: schema.invitationsTable,
+      ['openfaith_users']: schema.usersTable,
       ['openfaith_verifications']: schema.verificationsTable,
-      ['openfaith_jwks']: schema.jwksTable,
     },
-    provider: 'pg',
   }),
-  secondaryStorage: {
-    get: async (key) => {
-      const value = await redis.get<string>(key)
-      return value ? JSON.stringify(value) : null
-    },
-    set: async (key, value, ttl) => {
-      if (ttl) await redis.set(key, value, { ex: ttl })
-      // or for ioredis:
-      // if (ttl) await redis.set(key, value, 'EX', ttl)
-      else await redis.set(key, value)
-    },
-    delete: async (key) => {
-      await redis.del(key)
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session) => {
+          const org = await db.query.orgUsersTable.findFirst({
+            columns: {
+              orgId: true,
+            },
+            where: (x, d) => d.eq(x.userId, session.userId),
+          })
+
+          console.log('org', org)
+
+          return {
+            data: {
+              ...session,
+              activeOrganizationId: org?.orgId,
+            },
+          }
+        },
+      },
     },
   },
   hooks: {
@@ -96,47 +120,24 @@ export const auth = betterAuth({
       }
     }),
   },
-  databaseHooks: {
-    session: {
-      create: {
-        before: async (session) => {
-          const org = await db.query.orgUsersTable.findFirst({
-            columns: {
-              orgId: true,
-            },
-            where: (x, d) => d.eq(x.userId, session.userId),
-          })
-
-          console.log('org', org)
-
-          return {
-            data: {
-              ...session,
-              activeOrganizationId: org?.orgId,
-            },
-          }
-        },
-      },
-    },
-  },
   plugins: [
     bearer(),
     jwt({
-      jwt: {
-        expirationTime: '3y',
-        definePayload: ({ user, session }) => ({
-          ...user,
-          activeOrganizationId: session.activeOrganizationId,
-        }),
-      },
       jwks: {
         // @ts-expect-error - extractable is a valid option for keyPairConfig
         keyPairConfig: { alg: 'EdDSA', crv: 'Ed25519', extractable: true },
       },
+      jwt: {
+        definePayload: ({ user, session }) => ({
+          ...user,
+          activeOrganizationId: session.activeOrganizationId,
+        }),
+        expirationTime: '3y',
+      },
       schema: {
         jwks: {
-          modelName: getTableName('jwks'),
           fields: {},
+          modelName: getTableName('jwks'),
         },
       },
     }),
@@ -146,47 +147,47 @@ export const auth = betterAuth({
       async sendVerificationOTP({ email, otp }) {
         await resend.emails.send({
           from,
-          to: email,
-          subject: `Sign in to ${env.VITE_APP_NAME}`,
           react: reactOTPEmail({
-            otp,
             appName: env.VITE_APP_NAME,
+            otp,
           }),
+          subject: `Sign in to ${env.VITE_APP_NAME}`,
+          to: email,
         })
       },
     }),
     organization({
       schema: {
-        organization: {
-          modelName: getTableName('orgs'),
-          fields: {},
+        invitation: {
+          fields: {
+            organizationId: 'orgId',
+          },
+          modelName: getTableName('invitations'),
         },
         member: {
+          fields: {
+            organizationId: 'orgId',
+          },
           modelName: getTableName('orgUsers'),
-          fields: {
-            organizationId: 'orgId',
-          },
         },
-        invitation: {
-          modelName: getTableName('invitations'),
-          fields: {
-            organizationId: 'orgId',
-          },
+        organization: {
+          fields: {},
+          modelName: getTableName('orgs'),
         },
       },
       async sendInvitationEmail(data) {
         await resend.emails.send({
           from,
-          to: data.email,
-          subject: `You've been invited to join ${data.organization.name} on ${env.VITE_APP_NAME}`,
           react: reactInvitationEmail({
-            username: data.email,
-            invitedByUsername: data.inviter.user.name,
-            invitedByEmail: data.inviter.user.email,
-            teamName: data.organization.name,
-            inviteLink: `${env.VITE_PROD_ROOT_DOMAIN}/accept-invitation/${data.id}`,
             appName: env.VITE_APP_NAME,
+            invitedByEmail: data.inviter.user.email,
+            invitedByUsername: data.inviter.user.name,
+            inviteLink: `${env.VITE_PROD_ROOT_DOMAIN}/accept-invitation/${data.id}`,
+            teamName: data.organization.name,
+            username: data.email,
           }),
+          subject: `You've been invited to join ${data.organization.name} on ${env.VITE_APP_NAME}`,
+          to: data.email,
         })
       },
     }),
@@ -194,50 +195,50 @@ export const auth = betterAuth({
     // reactStartCookies must be the last plugin in the array.
     reactStartCookies(),
   ],
-  advanced: {
-    database: {
-      generateId: ({ model }) =>
-        typeid(
-          pipe(
-            modelToType,
-            Record.get(model as unknown as Models),
-            Option.match({
-              onNone: () => pipe(model, String.replace('-', '')),
-              onSome: (x) => x,
-            }),
-          ),
-        ).toString(),
+  rateLimit: {
+    max: 100, // time window in seconds
+    window: 10, // max requests in the window
+  },
+  secondaryStorage: {
+    delete: async (key) => {
+      await redis.del(key)
     },
-    crossSubDomainCookies: {
+    get: async (key) => {
+      const value = await redis.get<string>(key)
+      return value ? JSON.stringify(value) : null
+    },
+    set: async (key, value, ttl) => {
+      if (ttl) await redis.set(key, value, { ex: ttl })
+      // or for ioredis:
+      // if (ttl) await redis.set(key, value, 'EX', ttl)
+      else await redis.set(key, value)
+    },
+  },
+  session: {
+    cookieCache: {
       enabled: true,
-      domain: pipe(
-        process.env.NODE_ENV === 'development',
-        Boolean.match({
-          onFalse: () => `.${env.VITE_PROD_ROOT_DOMAIN}`,
-          onTrue: () => '.localhost',
-        }),
-      ),
-    },
-    defaultCookieAttributes: {
-      secure: true,
-      httpOnly: true,
-      sameSite: 'none',
-      partitioned: true,
+      maxAge: 5 * 60, // Cache duration in seconds
     },
   },
   trustedOrigins: [`https://${env.VITE_PROD_ROOT_DOMAIN}`],
+  user: {
+    modelName: getTableName('users'),
+  },
+  verification: {
+    modelName: getTableName('verifications'),
+  },
 })
 
 export const modelToType: Record<Models, string> = {
-  user: 'user',
   account: 'account',
-  session: 'session',
-  verification: 'verification',
-  ['rate-limit']: 'ratelimit',
-  organization: 'org',
-  member: 'orguser',
   invitation: 'invitation',
   jwks: 'jwks',
+  member: 'orguser',
+  organization: 'org',
   passkey: 'passkey',
+  ['rate-limit']: 'ratelimit',
+  session: 'session',
   ['two-factor']: 'twofactor',
+  user: 'user',
+  verification: 'verification',
 }
