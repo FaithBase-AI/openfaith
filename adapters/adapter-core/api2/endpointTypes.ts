@@ -28,7 +28,6 @@ export interface RelationshipDefinition<TEntityName extends string> {
 export interface BaseEndpointDefinition<
   Api extends Schema.Schema.Any,
   Canonical extends Schema.Schema.Any,
-  TEntityName extends string,
 > {
   /** The API module this endpoint belongs to (e.g., 'people', 'groups'). */
   readonly module: string
@@ -55,12 +54,6 @@ export interface BaseEndpointDefinition<
 
   /** Metadata for the Sync Engine: The timestamp attribute name used for delta syncing. */
   readonly deltaSyncField?: string
-
-  /**
-   * A map of includable relationship keys to their entity definitions.
-   * This is the metadata that powers dynamic return types.
-   */
-  readonly relationships?: Record<string, RelationshipDefinition<TEntityName>>
 }
 
 /**
@@ -70,11 +63,10 @@ export interface BaseEndpointDefinition<
 export interface GetEndpointDefinition<
   Api extends Schema.Schema.Any,
   Canonical extends Schema.Schema.Any,
-  TEntityName extends string,
-> extends BaseEndpointDefinition<Api, Canonical, TEntityName> {
+> extends BaseEndpointDefinition<Api, Canonical> {
   readonly method: 'GET'
 
-  /** A list of valid values for the 'include' query parameter. This can be derived from the `relationships` map. */
+  /** A list of valid values for the 'include' query parameter. This can be derived from the `includes` map. */
   readonly includes: ReadonlyArray<string>
 
   /** A list of attributes the API allows for sorting. */
@@ -94,8 +86,7 @@ export interface GetEndpointDefinition<
 export interface PostEndpointDefinition<
   Api extends Schema.Schema.Any,
   Canonical extends Schema.Schema.Any,
-  TEntityName extends string,
-> extends BaseEndpointDefinition<Api, Canonical, TEntityName> {
+> extends BaseEndpointDefinition<Api, Canonical> {
   readonly method: 'POST'
 
   /** A list of attribute keys from the apiSchema that are allowed in the request body. */
@@ -109,8 +100,7 @@ export interface PostEndpointDefinition<
 export interface PatchEndpointDefinition<
   Api extends Schema.Schema.Any,
   Canonical extends Schema.Schema.Any,
-  TEntityName extends string,
-> extends BaseEndpointDefinition<Api, Canonical, TEntityName> {
+> extends BaseEndpointDefinition<Api, Canonical> {
   readonly method: 'PATCH'
 
   /** A list of attribute keys from the apiSchema that are allowed in the request body. */
@@ -124,8 +114,7 @@ export interface PatchEndpointDefinition<
 export interface DeleteEndpointDefinition<
   Api extends Schema.Schema.Any,
   Canonical extends Schema.Schema.Any,
-  TEntityName extends string,
-> extends BaseEndpointDefinition<Api, Canonical, TEntityName> {
+> extends BaseEndpointDefinition<Api, Canonical> {
   readonly method: 'DELETE'
 }
 
@@ -136,12 +125,11 @@ export interface DeleteEndpointDefinition<
 export type EndpointDefinition<
   Api extends Schema.Schema.Any = Schema.Schema.Any,
   Canonical extends Schema.Schema.Any = Schema.Schema.Any,
-  TEntityName extends string = string,
 > =
-  | GetEndpointDefinition<Api, Canonical, TEntityName>
-  | PostEndpointDefinition<Api, Canonical, TEntityName>
-  | PatchEndpointDefinition<Api, Canonical, TEntityName>
-  | DeleteEndpointDefinition<Api, Canonical, TEntityName>
+  | GetEndpointDefinition<Api, Canonical>
+  | PostEndpointDefinition<Api, Canonical>
+  | PatchEndpointDefinition<Api, Canonical>
+  | DeleteEndpointDefinition<Api, Canonical>
 
 // =============================================================================
 // `defineEndpoint` Function (The Developer-Facing Helper)
@@ -151,68 +139,46 @@ export type EndpointDefinition<
  * A type-safe helper for creating a GET endpoint definition.
  * Optional capability fields are defaulted to empty arrays/objects.
  */
-export function defineEndpoint<
-  Api extends Schema.Schema.Any,
-  Canonical extends Schema.Schema.Any,
-  TEntityName extends string,
->(
+export function defineEndpoint<Api extends Schema.Schema.Any, Canonical extends Schema.Schema.Any>(
   definition: { method: 'GET' } & Omit<
-    GetEndpointDefinition<Api, Canonical, TEntityName>,
+    GetEndpointDefinition<Api, Canonical>,
     'method' | 'includes' | 'orderableBy' | 'queryableBy'
   > &
     Partial<
-      Pick<
-        GetEndpointDefinition<Api, Canonical, TEntityName>,
-        'includes' | 'orderableBy' | 'queryableBy'
-      >
+      Pick<GetEndpointDefinition<Api, Canonical>, 'includes' | 'orderableBy' | 'queryableBy'>
     >,
-): GetEndpointDefinition<Api, Canonical, TEntityName>
+): GetEndpointDefinition<Api, Canonical>
 
 /**
  * A type-safe helper for creating a POST endpoint definition.
  * Optional capability fields are defaulted to empty arrays.
  */
-export function defineEndpoint<
-  Api extends Schema.Schema.Any,
-  Canonical extends Schema.Schema.Any,
-  TEntityName extends string,
->(
+export function defineEndpoint<Api extends Schema.Schema.Any, Canonical extends Schema.Schema.Any>(
   definition: { method: 'POST' } & Omit<
-    PostEndpointDefinition<Api, Canonical, TEntityName>,
+    PostEndpointDefinition<Api, Canonical>,
     'method' | 'creatableFields'
   > &
-    Partial<Pick<PostEndpointDefinition<Api, Canonical, TEntityName>, 'creatableFields'>>,
-): PostEndpointDefinition<Api, Canonical, TEntityName>
+    Partial<Pick<PostEndpointDefinition<Api, Canonical>, 'creatableFields'>>,
+): PostEndpointDefinition<Api, Canonical>
 
 /**
  * A type-safe helper for creating a PATCH endpoint definition.
  * Optional capability fields are defaulted to empty arrays.
  */
-export function defineEndpoint<
-  Api extends Schema.Schema.Any,
-  Canonical extends Schema.Schema.Any,
-  TEntityName extends string,
->(
+export function defineEndpoint<Api extends Schema.Schema.Any, Canonical extends Schema.Schema.Any>(
   definition: { method: 'PATCH' } & Omit<
-    PatchEndpointDefinition<Api, Canonical, TEntityName>,
+    PatchEndpointDefinition<Api, Canonical>,
     'method' | 'updatableFields'
   > &
-    Partial<Pick<PatchEndpointDefinition<Api, Canonical, TEntityName>, 'updatableFields'>>,
-): PatchEndpointDefinition<Api, Canonical, TEntityName>
+    Partial<Pick<PatchEndpointDefinition<Api, Canonical>, 'updatableFields'>>,
+): PatchEndpointDefinition<Api, Canonical>
 
 /**
  * A type-safe helper for creating a DELETE endpoint definition.
  */
-export function defineEndpoint<
-  Api extends Schema.Schema.Any,
-  Canonical extends Schema.Schema.Any,
-  TEntityName extends string,
->(
-  definition: { method: 'DELETE' } & Omit<
-    DeleteEndpointDefinition<Api, Canonical, TEntityName>,
-    'method'
-  >,
-): DeleteEndpointDefinition<Api, Canonical, TEntityName>
+export function defineEndpoint<Api extends Schema.Schema.Any, Canonical extends Schema.Schema.Any>(
+  definition: { method: 'DELETE' } & Omit<DeleteEndpointDefinition<Api, Canonical>, 'method'>,
+): DeleteEndpointDefinition<Api, Canonical>
 
 /**
  * The single implementation for the `defineEndpoint` function. It takes the
@@ -222,8 +188,8 @@ export function defineEndpoint<
 export function defineEndpoint(definition: { method: string } & Partial<EndpointDefinition>) {
   return Match.value(definition).pipe(
     Match.when({ method: 'GET' }, (def) => ({
-      // Automatically derive `includes` from `relationships` if not provided
-      includes: def.relationships ? Object.keys(def.relationships) : [],
+      // Automatically derive `includes` from `includes` if not provided
+      includes: def.includes ? Object.keys(def.includes) : [],
       orderableBy: [],
       queryableBy: { fields: [], special: [] },
       ...def,

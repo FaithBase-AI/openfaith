@@ -49,13 +49,13 @@ export interface EntityManifestEntry<
    * entity type.
    */
   readonly endpoints: {
-    readonly getAll?: EndpointDefinition<Api, Canonical, TEntityName>
-    readonly getById?: EndpointDefinition<Api, Canonical, TEntityName>
-    readonly create?: EndpointDefinition<Api, Canonical, TEntityName>
-    readonly update?: EndpointDefinition<Api, Canonical, TEntityName>
-    readonly delete?: EndpointDefinition<Api, Canonical, TEntityName>
+    readonly getAll?: EndpointDefinition<Api, Canonical>
+    readonly getById?: EndpointDefinition<Api, Canonical>
+    readonly create?: EndpointDefinition<Api, Canonical>
+    readonly update?: EndpointDefinition<Api, Canonical>
+    readonly delete?: EndpointDefinition<Api, Canonical>
     // Other custom, non-CRUD operations can be added here.
-    readonly [operation: string]: EndpointDefinition<any, any, TEntityName> | undefined
+    readonly [operation: string]: EndpointDefinition<any, any> | undefined
   }
 
   /**

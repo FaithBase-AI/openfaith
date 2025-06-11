@@ -9,6 +9,47 @@ export const arrayToCommaSeparatedString = <A extends string | number | boolean>
     strict: true,
   })
 
+export const structToWhereParams = <A extends Schema.Struct.Fields>(
+  structSchema: Schema.Struct<A>,
+) =>
+  Schema.transform(Schema.String, structSchema, {
+    decode: (queryString) => {
+      if (!queryString.trim()) {
+        return {} as Schema.Schema.Encoded<Schema.Struct<A>>
+      }
+
+      const result: Record<string, any> = {}
+      const params = queryString.split('&')
+
+      for (const param of params) {
+        const match = param.match(/^where\[([^\]]+)\]=(.*)$/)
+        if (match) {
+          const [, key, value] = match
+          if (key && value !== undefined) {
+            // URL decode the value
+            result[key] = decodeURIComponent(value)
+          }
+        }
+      }
+
+      return result as Schema.Schema.Encoded<Schema.Struct<A>>
+    },
+    encode: (obj) => {
+      const params: Array<string> = []
+
+      for (const [key, value] of Object.entries(obj)) {
+        // Only include defined values (skip undefined/null)
+        if (value !== undefined && value !== null) {
+          const encodedValue = encodeURIComponent(String(value))
+          params.push(`where[${key}]=${encodedValue}`)
+        }
+      }
+
+      return params.join('&')
+    },
+    strict: true,
+  })
+
 // =============================================================================
 // Type Definitions
 // =============================================================================

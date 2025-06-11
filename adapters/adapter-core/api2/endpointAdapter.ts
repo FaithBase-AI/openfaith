@@ -40,7 +40,7 @@ function getQueryParamSchema(apiSchema: Schema.Struct<any>, field: string) {
  * Builds the comprehensive URL parameter schema for a GET endpoint
  * from our high-level, declarative definition.
  */
-function buildUrlParamsSchema(definition: GetEndpointDefinition<any, any, any>): Schema.Schema.Any {
+function buildUrlParamsSchema(definition: GetEndpointDefinition<any, any>): Schema.Schema.Any {
   const { queryableBy, orderableBy, includes, apiSchema } = definition
 
   const fields = queryableBy.fields.reduce(
@@ -129,7 +129,7 @@ function buildPayloadSchema(
  * @returns A function that performs the transformation for a single endpoint.
  */
 export function createEndpointTransformer(adapter: ResponseAdapter) {
-  return (definition: EndpointDefinition<any, any, any>) => {
+  return (definition: EndpointDefinition<any, any>) => {
     // Extract the final part of the name (e.g., 'getAll' from 'people.getAll')
     // This becomes the local name for the HttpApiEndpoint within its group.
     const nameSegments = pipe(definition.name, String.split('.'))
