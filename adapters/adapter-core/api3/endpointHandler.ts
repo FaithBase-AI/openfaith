@@ -12,34 +12,39 @@ import { Array, Effect, pipe, Record, Schema } from 'effect'
 /**
  * Builds a schema for the user-facing input object for a GET request.
  * This schema is used to validate the developer's input before processing.
+ *
+ * @param definition The definition for the GET endpoint.
+ * @returns A `Schema` for the input parameters object.
  */
 function buildGetInputSchema<Api extends Schema.Schema.Any, Canonical extends Schema.Schema.Any>(
   definition: GetEndpointDefinition<Api, Canonical>,
 ) {
-  // ... (This function remains exactly the same)
-  const whereSchema = Schema.Struct(
-    pipe(
-      definition.queryableBy.fields,
-      Array.map((field) => [field, Schema.optional(Schema.String)] as const),
-      Record.fromEntries,
-    ),
+  // 1. Define the schema for the nested `where` clause.
+  const whereFields = pipe(
+    definition.queryableBy.fields,
+    Array.map((field) => [field, Schema.optional(Schema.String)] as const),
+    Record.fromEntries,
   )
-  const specialParamsSchema = Schema.Struct(
-    pipe(
-      definition.queryableBy.special,
-      Array.map((field) => [field, Schema.optional(Schema.String)] as const),
-      Record.fromEntries,
-    ),
+  const whereSchema = Schema.Struct(whereFields)
+
+  // 2. Define schemas for all other top-level parameters.
+  const specialParamsFields = pipe(
+    definition.queryableBy.special,
+    Array.map((field) => [field, Schema.optional(Schema.String)] as const),
+    Record.fromEntries,
   )
-  return Schema.extend(
-    specialParamsSchema,
-    Schema.Struct({
-      include: Schema.optional(Schema.Array(Schema.Literal(...(definition.includes ?? [])))),
-      order: Schema.optional(Schema.String),
-      per_page: Schema.optional(Schema.NumberFromString),
-      where: Schema.optional(whereSchema),
-    }),
-  )
+
+  const otherParamsFields = {
+    include: Schema.optional(Schema.Array(Schema.Literal(...(definition.includes ?? [])))),
+    order: Schema.optional(Schema.String),
+    per_page: Schema.optional(Schema.NumberFromString),
+    where: Schema.optional(whereSchema),
+  }
+
+  return Schema.Struct({
+    ...specialParamsFields,
+    ...otherParamsFields,
+  })
 }
 
 /**

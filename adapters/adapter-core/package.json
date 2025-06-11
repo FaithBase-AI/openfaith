@@ -16,6 +16,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "format": "biome lint .",
     "lint:biome": "biome lint .",
+    "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
   "type": "module",
