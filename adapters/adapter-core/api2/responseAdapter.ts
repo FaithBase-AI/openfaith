@@ -17,42 +17,47 @@ export interface ResponseAdapter {
    * Creates a schema that represents the full response envelope for a single resource.
    *
    * This method takes the schema for the core resource (e.g., `PCOPerson`) and wraps
-   * it in another schema that matches the API's structure for single-item responses.
+   * it in another schema that matches the API's structure for single-item responses,
+   * preserving the type information.
    *
    * @param resourceSchema The schema for the individual resource object.
    * @returns A new schema representing the complete response body for a single item.
    *
    * @example
    * // For a JSON:API response like `{ "data": { ... } }`
-   * adaptSingle: (resourceSchema) => Schema.Struct({ data: resourceSchema });
+   * adaptSingle: <A, I>(rs: Schema.Schema<A, I>) => Schema.Struct({ data: rs });
    *
    * @example
    * // For a simple REST API that returns the object directly
-   * adaptSingle: (resourceSchema) => resourceSchema;
+   * adaptSingle: <A, I>(rs: Schema.Schema<A, I>) => rs;
    */
-  readonly adaptSingle: (resourceSchema: Schema.Schema.Any) => Schema.Schema.Any
+  readonly adaptSingle: <A, I, R>(
+    resourceSchema: Schema.Schema<A, I, R>,
+  ) => Schema.Schema<any, any, R>
 
   /**
    * Creates a schema that represents the full response envelope for a collection of resources.
    *
    * This method takes the schema for a single resource and wraps it in a schema that
-   * matches the API's structure for list/collection responses. This often includes
-   * metadata for pagination.
+   * matches the API's structure for list/collection responses, preserving the type information.
+   * This often includes metadata for pagination.
    *
    * @param resourceSchema The schema for an individual resource object.
    * @returns A new schema representing the complete response body for a collection.
    *
    * @example
    * // For a JSON:API response like `{ "data": [...], "links": ... }`
-   * adaptCollection: (resourceSchema) => Schema.Struct({
-   *   data: Schema.Array(resourceSchema),
+   * adaptCollection: <A, I>(rs: Schema.Schema<A, I>) => Schema.Struct({
+   *   data: Schema.Array(rs),
    *   links: LinksSchema,
    *   meta: MetaSchema
    * });
    *
    * @example
    * // For a simple REST API that returns a raw array
-   * adaptCollection: (resourceSchema) => Schema.Array(resourceSchema);
+   * adaptCollection: <A, I>(rs: Schema.Schema<A, I>) => Schema.Array(rs);
    */
-  readonly adaptCollection: (resourceSchema: Schema.Schema.Any) => Schema.Schema.Any
+  readonly adaptCollection: <A, I, R>(
+    resourceSchema: Schema.Schema<A, I, R>,
+  ) => Schema.Schema<any, any, R>
 }

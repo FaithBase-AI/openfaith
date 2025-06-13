@@ -32,7 +32,7 @@ export const getAllPeopleDefinition = defineEndpoint({
   ],
   method: 'GET',
   module: 'people',
-  name: 'people.getAll',
+  name: 'getAll',
   orderableBy: [
     'accounting_administrator',
     'anniversary',

@@ -26,8 +26,9 @@ export interface RelationshipDefinition<TEntityName extends string> {
  * @template TEntityName A union of all possible entity names from the manifest.
  */
 export interface BaseEndpointDefinition<
-  Api extends Schema.Schema.Any,
-  Canonical extends Schema.Schema.Any,
+  TName extends string,
+  Api extends Schema.Struct<any>,
+  Canonical extends Schema.Struct<any>,
 > {
   /** The API module this endpoint belongs to (e.g., 'people', 'groups'). */
   readonly module: string
@@ -38,7 +39,7 @@ export interface BaseEndpointDefinition<
    * @example 'people.getAll' -> client.people.getAll()
    * @example 'phoneNumbers.getAll' (in 'people' module) -> client.people.phoneNumbers.getAll()
    */
-  readonly name: `${string}.${string}`
+  readonly name: TName
 
   /** The URL path, with placeholders like :paramName for path parameters. */
   readonly path: `/${string}`
@@ -61,13 +62,15 @@ export interface BaseEndpointDefinition<
  * @extends BaseEndpointDefinition
  */
 export interface GetEndpointDefinition<
-  Api extends Schema.Schema.Any,
-  Canonical extends Schema.Schema.Any,
-> extends BaseEndpointDefinition<Api, Canonical> {
+  TName extends string,
+  Api extends Schema.Struct<any>,
+  Canonical extends Schema.Struct<any>,
+  Includes extends ReadonlyArray<string> | undefined,
+> extends BaseEndpointDefinition<TName, Api, Canonical> {
   readonly method: 'GET'
 
   /** A list of valid values for the 'include' query parameter. This can be derived from the `includes` map. */
-  readonly includes: ReadonlyArray<string>
+  readonly includes: Includes
 
   /** A list of attributes the API allows for sorting. */
   readonly orderableBy: ReadonlyArray<string>
@@ -84,9 +87,10 @@ export interface GetEndpointDefinition<
  * @extends BaseEndpointDefinition
  */
 export interface PostEndpointDefinition<
-  Api extends Schema.Schema.Any,
-  Canonical extends Schema.Schema.Any,
-> extends BaseEndpointDefinition<Api, Canonical> {
+  TName extends string,
+  Api extends Schema.Struct<any>,
+  Canonical extends Schema.Struct<any>,
+> extends BaseEndpointDefinition<TName, Api, Canonical> {
   readonly method: 'POST'
 
   /** A list of attribute keys from the apiSchema that are allowed in the request body. */
@@ -98,9 +102,10 @@ export interface PostEndpointDefinition<
  * @extends BaseEndpointDefinition
  */
 export interface PatchEndpointDefinition<
-  Api extends Schema.Schema.Any,
-  Canonical extends Schema.Schema.Any,
-> extends BaseEndpointDefinition<Api, Canonical> {
+  TName extends string,
+  Api extends Schema.Struct<any>,
+  Canonical extends Schema.Struct<any>,
+> extends BaseEndpointDefinition<TName, Api, Canonical> {
   readonly method: 'PATCH'
 
   /** A list of attribute keys from the apiSchema that are allowed in the request body. */
@@ -112,9 +117,10 @@ export interface PatchEndpointDefinition<
  * @extends BaseEndpointDefinition
  */
 export interface DeleteEndpointDefinition<
-  Api extends Schema.Schema.Any,
-  Canonical extends Schema.Schema.Any,
-> extends BaseEndpointDefinition<Api, Canonical> {
+  TName extends string,
+  Api extends Schema.Struct<any>,
+  Canonical extends Schema.Struct<any>,
+> extends BaseEndpointDefinition<TName, Api, Canonical> {
   readonly method: 'DELETE'
 }
 
@@ -123,13 +129,15 @@ export interface DeleteEndpointDefinition<
  * This is the output of our `defineEndpoint` helper and the input to our `EndpointAdapter`.
  */
 export type EndpointDefinition<
-  Api extends Schema.Schema.Any = Schema.Schema.Any,
-  Canonical extends Schema.Schema.Any = Schema.Schema.Any,
+  TName extends string = string,
+  Api extends Schema.Struct<any> = Schema.Struct<any>,
+  Canonical extends Schema.Struct<any> = Schema.Struct<any>,
+  Includes extends ReadonlyArray<string> | undefined | never = never,
 > =
-  | GetEndpointDefinition<Api, Canonical>
-  | PostEndpointDefinition<Api, Canonical>
-  | PatchEndpointDefinition<Api, Canonical>
-  | DeleteEndpointDefinition<Api, Canonical>
+  | GetEndpointDefinition<TName, Api, Canonical, Includes>
+  | PostEndpointDefinition<TName, Api, Canonical>
+  | PatchEndpointDefinition<TName, Api, Canonical>
+  | DeleteEndpointDefinition<TName, Api, Canonical>
 
 // =============================================================================
 // `defineEndpoint` Function (The Developer-Facing Helper)
@@ -139,46 +147,69 @@ export type EndpointDefinition<
  * A type-safe helper for creating a GET endpoint definition.
  * Optional capability fields are defaulted to empty arrays/objects.
  */
-export function defineEndpoint<Api extends Schema.Schema.Any, Canonical extends Schema.Schema.Any>(
+export function defineEndpoint<
+  TName extends string,
+  Api extends Schema.Struct<any>,
+  Canonical extends Schema.Struct<any>,
+  Includes extends ReadonlyArray<string> | undefined = undefined,
+>(
   definition: { method: 'GET' } & Omit<
-    GetEndpointDefinition<Api, Canonical>,
+    GetEndpointDefinition<TName, Api, Canonical, Includes>,
     'method' | 'includes' | 'orderableBy' | 'queryableBy'
   > &
     Partial<
-      Pick<GetEndpointDefinition<Api, Canonical>, 'includes' | 'orderableBy' | 'queryableBy'>
+      Pick<
+        GetEndpointDefinition<TName, Api, Canonical, Includes>,
+        'includes' | 'orderableBy' | 'queryableBy'
+      >
     >,
-): GetEndpointDefinition<Api, Canonical>
+): GetEndpointDefinition<TName, Api, Canonical, Includes>
 
 /**
  * A type-safe helper for creating a POST endpoint definition.
  * Optional capability fields are defaulted to empty arrays.
  */
-export function defineEndpoint<Api extends Schema.Schema.Any, Canonical extends Schema.Schema.Any>(
+export function defineEndpoint<
+  TName extends string,
+  Api extends Schema.Struct<any>,
+  Canonical extends Schema.Struct<any>,
+>(
   definition: { method: 'POST' } & Omit<
-    PostEndpointDefinition<Api, Canonical>,
+    PostEndpointDefinition<TName, Api, Canonical>,
     'method' | 'creatableFields'
   > &
-    Partial<Pick<PostEndpointDefinition<Api, Canonical>, 'creatableFields'>>,
-): PostEndpointDefinition<Api, Canonical>
+    Partial<Pick<PostEndpointDefinition<TName, Api, Canonical>, 'creatableFields'>>,
+): PostEndpointDefinition<TName, Api, Canonical>
 
 /**
  * A type-safe helper for creating a PATCH endpoint definition.
  * Optional capability fields are defaulted to empty arrays.
  */
-export function defineEndpoint<Api extends Schema.Schema.Any, Canonical extends Schema.Schema.Any>(
+export function defineEndpoint<
+  TName extends string,
+  Api extends Schema.Struct<any>,
+  Canonical extends Schema.Struct<any>,
+>(
   definition: { method: 'PATCH' } & Omit<
-    PatchEndpointDefinition<Api, Canonical>,
+    PatchEndpointDefinition<TName, Api, Canonical>,
     'method' | 'updatableFields'
   > &
-    Partial<Pick<PatchEndpointDefinition<Api, Canonical>, 'updatableFields'>>,
-): PatchEndpointDefinition<Api, Canonical>
+    Partial<Pick<PatchEndpointDefinition<TName, Api, Canonical>, 'updatableFields'>>,
+): PatchEndpointDefinition<TName, Api, Canonical>
 
 /**
  * A type-safe helper for creating a DELETE endpoint definition.
  */
-export function defineEndpoint<Api extends Schema.Schema.Any, Canonical extends Schema.Schema.Any>(
-  definition: { method: 'DELETE' } & Omit<DeleteEndpointDefinition<Api, Canonical>, 'method'>,
-): DeleteEndpointDefinition<Api, Canonical>
+export function defineEndpoint<
+  TName extends string,
+  Api extends Schema.Struct<any>,
+  Canonical extends Schema.Struct<any>,
+>(
+  definition: { method: 'DELETE' } & Omit<
+    DeleteEndpointDefinition<TName, Api, Canonical>,
+    'method'
+  >,
+): DeleteEndpointDefinition<TName, Api, Canonical>
 
 /**
  * The single implementation for the `defineEndpoint` function. It takes the

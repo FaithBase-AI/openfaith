@@ -19,10 +19,12 @@ import type { Schema } from 'effect'
  * @template TEntityName A union of all possible entity names from the manifest.
  */
 export interface EntityManifestEntry<
-  Api extends Schema.Schema.Any,
-  Canonical extends Schema.Schema.Any,
+  TName extends string,
+  Api extends Schema.Struct<any>,
+  Canonical extends Schema.Struct<any>,
   TEntityName extends string,
   TModule extends string,
+  Includes extends ReadonlyArray<string> | undefined | never,
 > {
   /**
    * The canonical, singular name of the entity.
@@ -49,13 +51,13 @@ export interface EntityManifestEntry<
    * entity type.
    */
   readonly endpoints: {
-    readonly getAll?: EndpointDefinition<Api, Canonical>
-    readonly getById?: EndpointDefinition<Api, Canonical>
-    readonly create?: EndpointDefinition<Api, Canonical>
-    readonly update?: EndpointDefinition<Api, Canonical>
-    readonly delete?: EndpointDefinition<Api, Canonical>
+    readonly getAll?: EndpointDefinition<TName, Api, Canonical, Includes>
+    readonly getById?: EndpointDefinition<TName, Api, Canonical, Includes>
+    readonly create?: EndpointDefinition<TName, Api, Canonical, Includes>
+    readonly update?: EndpointDefinition<TName, Api, Canonical, Includes>
+    readonly delete?: EndpointDefinition<TName, Api, Canonical, Includes>
     // Other custom, non-CRUD operations can be added here.
-    readonly [operation: string]: EndpointDefinition<any, any> | undefined
+    readonly [operation: string]: EndpointDefinition<TName, any, any, any> | undefined
   }
 
   /**
@@ -78,7 +80,9 @@ export interface EntityManifestEntry<
  * }
  * ```
  */
-export type EntityManifest = Readonly<Record<string, EntityManifestEntry<any, any, string, string>>>
+export type EntityManifest = Readonly<
+  Record<string, EntityManifestEntry<string, any, any, string, string, any>>
+>
 
 /**
  * A utility type that extracts all valid entity names from a manifest type.

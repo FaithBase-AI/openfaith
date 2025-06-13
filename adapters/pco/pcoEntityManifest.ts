@@ -1,7 +1,4 @@
-import type {
-  EntityManifest,
-  EntityManifestEntry,
-} from '@openfaith/adapter-core/api2/entityManifest'
+import { PCOAddress } from '@openfaith/pco/people/pcoAddressSchema'
 import { PCOPerson } from '@openfaith/pco/people/pcoPersonSchema'
 import {
   createPersonDefinition,
@@ -10,29 +7,19 @@ import {
   getPersonByIdDefinition,
   updatePersonDefinition,
 } from '@openfaith/pco/people/peopleEndpoints'
-import { BasePerson } from '@openfaith/schema'
-import type { Schema } from 'effect'
-
-/**
- * A utility type that exports all valid entity names from our manifest.
- * This is used throughout the library to provide type-safe references to entities
- * in relationship definitions.
- *
- * @example
- * let entity: PcoEntityName = "Person"; // OK
- * let entity: PcoEntityName = "Invalid"; // Type Error
- */
-export type PcoEntityName = 'Person' | 'Email' | 'Address' | 'Campus'
+import { BaseAddress, BasePerson } from '@openfaith/schema'
+import { Array, Option, pipe, Record, String } from 'effect'
 
 /**
  * A type alias for a PCO-specific manifest entry, providing stronger
  * type inference by pre-filling the PcoEntityName generic.
  */
-type PcoEntityManifestEntry<
-  Api extends Schema.Schema.Any,
-  Canonical extends Schema.Schema.Any,
-  Module extends string,
-> = EntityManifestEntry<Api, Canonical, PcoEntityName, Module>
+// type PcoEntityManifestEntry<
+//   TName extends string,
+//   Api extends Schema.Schema.Any,
+//   Canonical extends Schema.Schema.Any,
+//   Module extends string,
+// > = EntityManifestEntry<TName, Api, Canonical, PcoEntityName, Module>
 
 /**
  * The PCO Entity Manifest is the central registry for all entities available
@@ -44,6 +31,16 @@ type PcoEntityManifestEntry<
  * engine, and any other tooling.
  */
 export const pcoEntityManifest = {
+  Address: {
+    apiSchema: PCOAddress,
+    canonicalSchema: BaseAddress,
+    endpoints: {
+      // Emails might only be get-all, not directly creatable via their own endpoint
+      // getAll: getAllEmailsDefinition,
+    },
+    entity: 'Address',
+    module: 'people',
+  },
   /**
    * The manifest entry for the 'Person' entity.
    */
@@ -59,21 +56,23 @@ export const pcoEntityManifest = {
     },
     entity: 'Person',
     module: 'people',
-  } satisfies PcoEntityManifestEntry<typeof PCOPerson, typeof BasePerson, 'people'>,
+  },
+} as const
 
-  /**
-   * A placeholder for the 'Email' entity manifest entry.
-   * This shows how the manifest would be expanded.
-   */
-  /*
-  Email: {
-    entity: 'Email',
-    apiSchema: PCOEmail,
-    canonicalSchema: BaseEmail,
-    endpoints: {
-      // Emails might only be get-all, not directly creatable via their own endpoint
-      getAll: getAllEmailsDefinition,
-    }
-  } as PcoEntityManifestEntry<typeof PCOEmail, typeof BaseEmail>,
-  */
-} as const satisfies EntityManifest
+export const PcoEntities = pipe(
+  pcoEntityManifest,
+  Record.values,
+  Array.map((x) => x.apiSchema),
+)
+
+export const getPcoIncludes = <T extends ReadonlyArray<string>>(includes: T) =>
+  pipe(
+    PcoEntities,
+    Array.filter((x) =>
+      pipe(
+        includes,
+        Array.findFirst((y) => pipe(y, String.snakeToPascal) === x.fields.type.literals[0]),
+        Option.isSome,
+      ),
+    ),
+  )

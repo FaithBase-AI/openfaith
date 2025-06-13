@@ -3,6 +3,7 @@
     "@effect/platform": "catalog:",
     "@openfaith/shared": "workspace:*",
     "@openfaith/ui": "workspace:*",
+    "deepmerge-ts": "7.1.5",
     "effect": "catalog:",
     "jotai": "catalog:"
   },

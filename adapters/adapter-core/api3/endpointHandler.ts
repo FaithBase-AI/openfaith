@@ -16,9 +16,12 @@ import { Array, Effect, pipe, Record, Schema } from 'effect'
  * @param definition The definition for the GET endpoint.
  * @returns A `Schema` for the input parameters object.
  */
-function buildGetInputSchema<Api extends Schema.Schema.Any, Canonical extends Schema.Schema.Any>(
-  definition: GetEndpointDefinition<Api, Canonical>,
-) {
+export function buildGetInputSchema<
+  TName extends string,
+  Api extends Schema.Struct<any>,
+  Canonical extends Schema.Struct<any>,
+  Includes extends ReadonlyArray<string> | undefined | never = never,
+>(definition: GetEndpointDefinition<TName, Api, Canonical, Includes>) {
   // 1. Define the schema for the nested `where` clause.
   const whereFields = pipe(
     definition.queryableBy.fields,
@@ -51,7 +54,7 @@ function buildGetInputSchema<Api extends Schema.Schema.Any, Canonical extends Sc
  * Transforms the validated, user-friendly input object into a flat record
  * of query parameters suitable for an HTTP request to the PCO API.
  */
-function transformPcoParams(params: Record<string, unknown>): Record<string, string> {
+export function transformPcoParams(params: Record<string, unknown>): Record<string, string> {
   // ... (This function remains exactly the same)
   return pipe(
     params,

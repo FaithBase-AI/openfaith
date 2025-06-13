@@ -1,11 +1,6 @@
-import { HttpApiEndpoint } from '@effect/platform'
-import type {
-  EndpointDefinition,
-  GetEndpointDefinition,
-} from '@openfaith/adapter-core/api2/endpointTypes'
-import type { ResponseAdapter } from '@openfaith/adapter-core/api2/responseAdapter'
+import type { GetEndpointDefinition } from '@openfaith/adapter-core/api2/endpointTypes'
 import { arrayToCommaSeparatedString } from '@openfaith/adapter-core/server'
-import { Array, Match, pipe, Schema, String } from 'effect'
+import { Array, pipe, Schema } from 'effect'
 
 /**
  * @internal
@@ -40,8 +35,13 @@ function getQueryParamSchema(apiSchema: Schema.Struct<any>, field: string) {
  * Builds the comprehensive URL parameter schema for a GET endpoint
  * from our high-level, declarative definition.
  */
-function buildUrlParamsSchema(definition: GetEndpointDefinition<any, any>): Schema.Schema.Any {
-  const { queryableBy, orderableBy, includes, apiSchema } = definition
+export function buildUrlParamsSchema<
+  TName extends string,
+  Api extends Schema.Struct<any>,
+  Canonical extends Schema.Struct<any>,
+  Includes extends ReadonlyArray<string> | undefined | never = never,
+>(definition: GetEndpointDefinition<TName, Api, Canonical, Includes>) {
+  const { queryableBy, orderableBy, includes = [], apiSchema } = definition
 
   const fields = queryableBy.fields.reduce(
     (acc, field) => ({
@@ -76,7 +76,10 @@ function buildUrlParamsSchema(definition: GetEndpointDefinition<any, any>): Sche
       onEmpty: () => ({}),
       onNonEmpty: () => ({
         include: Schema.optional(
-          Schema.Union(arrayToCommaSeparatedString(Schema.String), Schema.String),
+          Schema.Union(
+            arrayToCommaSeparatedString(Schema.Literal(...includes)),
+            Schema.Literal(...includes),
+          ),
         ),
       }),
     }),
@@ -84,13 +87,16 @@ function buildUrlParamsSchema(definition: GetEndpointDefinition<any, any>): Sche
 
   // Add standard pagination params that most APIs use
   return Schema.Struct({
+    include: Schema.optional(
+      Schema.Union(arrayToCommaSeparatedString(Schema.String), Schema.String),
+    ),
+    offset: Schema.optional(Schema.NumberFromString),
+    page: Schema.optional(Schema.NumberFromString),
+    per_page: Schema.optional(Schema.NumberFromString),
     ...fields,
     ...special,
     ...order,
     ...include,
-    offset: Schema.optional(Schema.NumberFromString),
-    page: Schema.optional(Schema.NumberFromString),
-    per_page: Schema.optional(Schema.NumberFromString),
   })
 }
 
@@ -99,81 +105,87 @@ function buildUrlParamsSchema(definition: GetEndpointDefinition<any, any>): Sche
  * Builds the request body (payload) schema for a POST or PATCH endpoint
  * by picking the specified fields from the main API schema's attributes.
  */
-function buildPayloadSchema(
-  apiSchema: Schema.Struct<any>,
-  keys: ReadonlyArray<string>,
-): Schema.Schema.Any {
-  console.log(apiSchema.fields)
+// function buildPayloadSchema(
+//   apiSchema: Schema.Struct<any>,
+//   keys: ReadonlyArray<string>,
+// ): Schema.Schema.Any {
+//   console.log(apiSchema.fields)
 
-  // @ts-ignore - This relies on the convention that our API schemas have an 'attributes' struct.
-  const attributeSchema = apiSchema.fields?.attributes
-  if (!attributeSchema || !Schema.isSchema(attributeSchema)) {
-    throw new Error(
-      `apiSchema for endpoint does not have a valid 'attributes' property needed to build a payload.`,
-    )
-  }
-  return Schema.Struct({
-    // The payload is expected to be nested under `attributes` as per many JSON:API-like standards.
-    attributes: (attributeSchema as Schema.Struct<any>).pick(...keys),
-  })
-}
+//   // @ts-ignore - This relies on the convention that our API schemas have an 'attributes' struct.
+//   const attributeSchema = apiSchema.fields?.attributes
+//   if (!attributeSchema || !Schema.isSchema(attributeSchema)) {
+//     throw new Error(
+//       `apiSchema for endpoint does not have a valid 'attributes' property needed to build a payload.`,
+//     )
+//   }
+//   return Schema.Struct({
+//     // The payload is expected to be nested under `attributes` as per many JSON:API-like standards.
+//     attributes: (attributeSchema as Schema.Struct<any>).pick(...keys),
+//   })
+// }
 
-/**
- * Creates a function that transforms our custom, high-level EndpointDefinition into an
- * official HttpApiEndpoint, using a strategy provided by the ResponseAdapter.
- *
- * This factory pattern allows us to support different API structures (e.g., PCO vs. CCB)
- * by simply plugging in a different adapter.
- *
- * @param adapter The API-specific response adapter.
- * @returns A function that performs the transformation for a single endpoint.
- */
-export function createEndpointTransformer(adapter: ResponseAdapter) {
-  return (definition: EndpointDefinition<any, any>) => {
-    // Extract the final part of the name (e.g., 'getAll' from 'people.getAll')
-    // This becomes the local name for the HttpApiEndpoint within its group.
-    const nameSegments = pipe(definition.name, String.split('.'))
-    const localName = pipe(nameSegments, Array.lastNonEmpty)
+// /**
+//  * Creates a function that transforms our custom, high-level EndpointDefinition into an
+//  * official HttpApiEndpoint, using a strategy provided by the ResponseAdapter.
+//  *
+//  * This factory pattern allows us to support different API structures (e.g., PCO vs. CCB)
+//  * by simply plugging in a different adapter.
+//  *
+//  * @param adapter The API-specific response adapter.
+//  * @returns A function that performs the transformation for a single endpoint.
+//  */
+// export function createEndpointTransformer(adapter: ResponseAdapter) {
+//   return <
+//     Api extends Schema.Struct<any> = Schema.Struct<any>,
+//     Canonical extends Schema.Struct<any> = Schema.Struct<any>,
+//   >(
+//     definition: EndpointDefinition<TName, Api, Canonical, Includes>,
+//   ) => {
+//     // Extract the final part of the name (e.g., 'getAll' from 'people.getAll')
+//     // This becomes the local name for the HttpApiEndpoint within its group.
+//     // const nameSegments = pipe(definition.name, String.split('.'))
+//     // const localName = pipe(nameSegments, Array.lastNonEmpty)
 
-    return pipe(
-      Match.value(definition),
-      Match.when({ method: 'GET' }, (x) => {
-        // A simple heuristic to determine if an endpoint returns a collection or a single item.
-        // If the path contains a parameter placeholder, it's likely a get-by-id request.
-        const isCollection = !x.path.includes(':')
+//     switch (definition.method) {
+//       case 'GET': {
+//         // A simple heuristic to determine if an endpoint returns a collection or a single item.
+//         // If the path contains a parameter placeholder, it's likely a get-by-id request.
+//         const isCollection = !definition.path.includes(':')
 
-        const successSchema = isCollection
-          ? adapter.adaptCollection(x.apiSchema)
-          : adapter.adaptSingle(x.apiSchema)
+//         const successSchema = isCollection
+//           ? adapter.adaptCollection(definition.apiSchema)
+//           : adapter.adaptSingle(definition.apiSchema)
 
-        const urlParamsSchema = buildUrlParamsSchema(x)
+//         const urlParamsSchema = buildUrlParamsSchema(definition)
 
-        return HttpApiEndpoint.get(localName, x.path)
-          .addSuccess(successSchema)
-          .setUrlParams(urlParamsSchema)
-      }),
-      Match.when({ method: 'POST' }, (x) => {
-        const payloadSchema = buildPayloadSchema(x.apiSchema, x.creatableFields)
-        const successSchema = adapter.adaptSingle(x.apiSchema)
+//         return HttpApiEndpoint.get(definition.name, definition.path)
+//           .addSuccess(successSchema)
+//           .addSuccess(
+//             HttpApiSchema.dynamic(successSchema, urlParamsSchema, createPcoResponseResolver),
+//           )
+//           .setUrlParams(urlParamsSchema)
+//       }
+//       case 'POST': {
+//         const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.creatableFields)
+//         const successSchema = adapter.adaptSingle(definition.apiSchema)
 
-        return HttpApiEndpoint.post(localName, x.path)
-          .setPayload(payloadSchema)
-          .addSuccess(successSchema, { status: 201 }) // Default to 201 Created for POST
-      }),
-      Match.when({ method: 'PATCH' }, (x) => {
-        const payloadSchema = buildPayloadSchema(x.apiSchema, x.updatableFields)
-        const successSchema = adapter.adaptSingle(x.apiSchema)
+//         return HttpApiEndpoint.post(definition.name, definition.path)
+//           .setPayload(payloadSchema)
+//           .addSuccess(successSchema, { status: 201 }) // Default to 201 Created for POST
+//       }
+//       case 'PATCH': {
+//         const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.updatableFields)
+//         const successSchema = adapter.adaptSingle(definition.apiSchema)
 
-        return HttpApiEndpoint.patch(localName, x.path)
-          .setPayload(payloadSchema)
-          .addSuccess(successSchema)
-      }),
-      Match.when({ method: 'DELETE' }, (x) => {
-        return HttpApiEndpoint.del(localName, x.path).addSuccess(Schema.Void, {
-          status: 204,
-        }) // DELETE typically returns 204 No Content
-      }),
-      Match.exhaustive,
-    )
-  }
-}
+//         return HttpApiEndpoint.patch(definition.name, definition.path)
+//           .setPayload(payloadSchema)
+//           .addSuccess(successSchema)
+//       }
+//       case 'DELETE': {
+//         return HttpApiEndpoint.del(definition.name, definition.path).addSuccess(Schema.Void, {
+//           status: 204,
+//         }) // DELETE typically returns 204 No Content
+//       }
+//     }
+//   }
+// }

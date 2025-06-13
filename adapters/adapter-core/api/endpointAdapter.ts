@@ -1,9 +1,10 @@
-import { HttpApiEndpoint } from '@effect/platform'
+import { HttpApiEndpoint, HttpApiSchema } from '@effect/platform'
 import {
   arrayToCommaSeparatedString,
   type EndpointDefinition,
   type GetEndpointDefinition,
 } from '@openfaith/adapter-core/api/endpointTypes' // Assuming EndpointTypes.ts is in the same directory or accessible
+import { createPcoResponseResolver } from '@openfaith/pco/base/pcoResponseAdapter'
 import { Array, Match, pipe, Schema, String } from 'effect'
 
 /**
@@ -120,16 +121,9 @@ export function toHttpApiEndpoint(definition: EndpointDefinition<any, any>) {
 
       // For collection GETs, the success schema is an array of the apiSchema.
       // A more advanced version could distinguish between get-one and get-all.
-      const successSchema = Schema.Array(x.apiSchema)
-
-      console.log(
-        HttpApiEndpoint.get(localName, x.path)
-          .addSuccess(successSchema)
-          .setUrlParams(urlParamsSchema),
-      )
 
       return HttpApiEndpoint.get(localName, x.path)
-        .addSuccess(successSchema)
+        .addSuccess(HttpApiSchema.dynamic(x.apiSchema, urlParamsSchema, createPcoResponseResolver))
         .setUrlParams(urlParamsSchema)
         .setHeaders(Schema.Struct({ Authorization: Schema.String }))
     }),

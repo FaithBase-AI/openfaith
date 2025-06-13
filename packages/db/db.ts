@@ -7,11 +7,10 @@ import { drizzle } from 'drizzle-orm/bun-sql'
 import { Boolean, Layer, pipe, Redacted } from 'effect'
 
 const connection = new SQL({
+  database: env.DB_NAME,
   host: env.DB_HOST_PRIMARY,
-  user: env.DB_USERNAME,
   password: env.DB_PASSWORD,
   port: env.DB_PORT,
-  database: env.DB_NAME,
   ssl: pipe(
     env.DB_HOST_PRIMARY === '127.0.0.1',
     Boolean.match({
@@ -19,14 +18,14 @@ const connection = new SQL({
       onTrue: () => false,
     }),
   ),
+  user: env.DB_USERNAME,
 })
 
 export const PgLive = PgClient.layer({
+  database: env.DB_NAME,
   host: env.DB_HOST_PRIMARY,
-  username: env.DB_USERNAME,
   password: Redacted.make(env.DB_PASSWORD),
   port: env.DB_PORT,
-  database: env.DB_NAME,
   ssl: pipe(
     env.DB_HOST_PRIMARY === '127.0.0.1',
     Boolean.match({
@@ -34,6 +33,7 @@ export const PgLive = PgClient.layer({
       onTrue: () => false,
     }),
   ),
+  username: env.DB_USERNAME,
 })
 
 export const DrizzleLive = PgDrizzle.layer.pipe(Layer.provide(PgLive))

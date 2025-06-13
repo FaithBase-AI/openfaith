@@ -1,4 +1,4 @@
-import type { ResponseAdapter } from '@openfaith/adapter-core/api2/responseAdapter'
+import { getPcoIncludes } from '@openfaith/pco/pcoEntityManifest'
 import { Schema } from 'effect'
 
 /**
@@ -8,7 +8,7 @@ import { Schema } from 'effect'
  * where single resources are nested under a `data` key, and collection
  * responses include `data`, `included`, `links`, and `meta` top-level keys.
  */
-export const pcoResponseAdapter: ResponseAdapter = {
+export const pcoResponseAdapter = {
   /**
    * Adapts the schema for a PCO collection response.
    *
@@ -19,13 +19,16 @@ export const pcoResponseAdapter: ResponseAdapter = {
    * @param resourceSchema The schema for an individual resource in the collection.
    * @returns A new schema representing the complete collection response envelope.
    */
-  adaptCollection: (resourceSchema) =>
+  adaptCollection: <A, I, R, Includes extends ReadonlyArray<string>>(
+    resourceSchema: Schema.Schema<A, I, R>,
+    includes: Includes,
+  ) =>
     Schema.Struct({
       /** The 'data' key contains the array of primary resource objects. */
       data: Schema.Array(resourceSchema),
 
       /** The 'included' key contains side-loaded related resources. */
-      included: Schema.optional(Schema.Array(Schema.Any)),
+      included: Schema.Array(Schema.Union(...getPcoIncludes(includes))),
 
       /** The 'links' object contains pagination links. */
       links: Schema.Struct({
@@ -53,9 +56,117 @@ export const pcoResponseAdapter: ResponseAdapter = {
    * @param resourceSchema The schema for the core resource (e.g., PCOPerson).
    * @returns A new schema representing the `{ data: ..., included: [...] }` structure.
    */
-  adaptSingle: (resourceSchema) =>
+  adaptSingle: <A, I, R>(resourceSchema: Schema.Schema<A, I, R>) =>
     Schema.Struct({
       data: resourceSchema,
       included: Schema.optional(Schema.Array(Schema.Any)),
     }),
+}
+
+type BaseResponseSchema = Schema.Struct<{
+  included: Schema.Array$<
+    Schema.Union<
+      Array<
+        Schema.Struct<{
+          type: Schema.Literal<[string]>
+          [key: string]: Schema.Schema.Any
+        }>
+      >
+    >
+  >
+  [key: string]: Schema.Schema.Any
+}>
+
+// Use the runtime-based extraction that actually works
+type ExtractLiteralFromSchema<T> = T extends {
+  fields: {
+    type: {
+      literals: readonly [infer U, ...Array<any>]
+    }
+  }
+}
+  ? U
+  : never
+
+type MemberKeys = ExtractLiteralFromSchema<
+  BaseResponseSchema['fields']['included']['value']['members'][number]
+>
+// This should now be "Person" | "Address" | "Email"
+
+// Create the mapped type
+type ExtractedMembers = {
+  [K in MemberKeys]: Extract<
+    BaseResponseSchema['fields']['included']['value']['members'][number],
+    { fields: { type: { literals: readonly [K, ...Array<any>] } } }
+  >
+}
+
+// Runtime helper
+function extractMembersFromUnion(
+  unionMembers: BaseResponseSchema['fields']['included']['value']['members'],
+): ExtractedMembers {
+  const result = {} as any
+
+  unionMembers.forEach((member) => {
+    const typeValue = member.fields.type.literals[0] as MemberKeys
+    result[typeValue] = member
+  })
+
+  return result
+}
+
+/**
+ * A factory that creates a PCO-specific `reconcile` function for use with
+ * `HttpApiSchema.dynamic`.
+ *
+ * This resolver understands the JSON:API `include` parameter and filters the
+ * `included` array in the response schema to match what was requested.
+ *
+ * @param resourceMap A map where keys are the valid strings for the `include`
+ *   parameter (e.g., "emails", "addresses") and values are their corresponding
+ *   Effect Schemas.
+ * @returns A `reconcile` function that can be passed to `HttpApiSchema.dynamic`.
+ */
+export const createPcoResponseResolver = <
+  RequestSchema extends {
+    includes?: string | ReadonlyArray<string> | undefined
+    [key: string]: any
+  },
+  BRS extends BaseResponseSchema,
+>(
+  // Argument 1: The decoded request params, containing the `includes` array.
+  request: RequestSchema,
+  // Argument 2: The base response schema, containing all possible includes as optional.
+  baseResponseSchema: BRS,
+) => {
+  const members = extractMembersFromUnion(baseResponseSchema.fields.included.value.members)
+
+  // Now your pickMembers should work
+  function pickMembers<const T extends ReadonlyArray<MemberKeys>>(
+    ts: T,
+  ): T extends readonly []
+    ? Schema.Tuple<[]>
+    : Schema.Union<{ readonly [K in keyof T]: ExtractedMembers[T[K]] }> {
+    if (ts.length === 0) {
+      // Return a schema that will never match anything
+      return Schema.Never as any
+    }
+
+    // @ts-expect-error - this is a hack to get the types to work
+    return Schema.Union(...ts.map((t) => members[t])) as any
+  }
+
+  // Usage
+  const result = Schema.Struct({
+    included: Schema.Array(
+      pickMembers(
+        typeof request.includes === 'string' ? [request.includes] : (request.includes ?? []),
+      ),
+    ),
+  })
+
+  return Schema.Struct({
+    ...baseResponseSchema.fields,
+    ...result.fields,
+  })
 }
