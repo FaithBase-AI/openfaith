@@ -1,4 +1,8 @@
-import { getPcoIncludes } from '@openfaith/pco/pcoEntityManifest'
+import {
+  getPcoIncludes,
+  type PcoEntities,
+  type PcoEntityName,
+} from '@openfaith/pco/pcoEntityManifest'
 import { Schema } from 'effect'
 
 /**
@@ -22,13 +26,17 @@ export const pcoResponseAdapter = {
   adaptCollection: <A, I, R, Includes extends ReadonlyArray<string>>(
     resourceSchema: Schema.Schema<A, I, R>,
     includes: Includes,
-  ) =>
-    Schema.Struct({
+  ) => {
+    const entityIncludes = getPcoIncludes(includes)
+
+    return Schema.Struct({
       /** The 'data' key contains the array of primary resource objects. */
       data: Schema.Array(resourceSchema),
 
       /** The 'included' key contains side-loaded related resources. */
-      included: Schema.Array(Schema.Union(...getPcoIncludes(includes))),
+      included: Schema.Array(Schema.Union(...getPcoIncludes(includes))) as Schema.Array$<
+        Schema.Union<[(typeof entityIncludes)[number]]>
+      >,
 
       /** The 'links' object contains pagination links. */
       links: Schema.Struct({
@@ -45,7 +53,8 @@ export const pcoResponseAdapter = {
         parent: Schema.optional(Schema.Struct({ id: Schema.String, type: Schema.String })),
         total_count: Schema.Number,
       }),
-    }),
+    })
+  },
   /**
    * Adapts the schema for a single PCO resource response.
    *
@@ -56,24 +65,23 @@ export const pcoResponseAdapter = {
    * @param resourceSchema The schema for the core resource (e.g., PCOPerson).
    * @returns A new schema representing the `{ data: ..., included: [...] }` structure.
    */
-  adaptSingle: <A, I, R>(resourceSchema: Schema.Schema<A, I, R>) =>
-    Schema.Struct({
+  adaptSingle: <A, I, R, Includes extends ReadonlyArray<string>>(
+    resourceSchema: Schema.Schema<A, I, R>,
+    includes: Includes,
+  ) => {
+    const entityIncludes = getPcoIncludes(includes)
+
+    return Schema.Struct({
       data: resourceSchema,
-      included: Schema.optional(Schema.Array(Schema.Any)),
-    }),
+      included: Schema.Array(Schema.Union(...entityIncludes)) as Schema.Array$<
+        Schema.Union<[(typeof entityIncludes)[number]]>
+      >,
+    })
+  },
 }
 
 type BaseResponseSchema = Schema.Struct<{
-  included: Schema.Array$<
-    Schema.Union<
-      Array<
-        Schema.Struct<{
-          type: Schema.Literal<[string]>
-          [key: string]: Schema.Schema.Any
-        }>
-      >
-    >
-  >
+  included: Schema.Array$<Schema.Union<Array<(typeof PcoEntities)[number]>>>
   [key: string]: Schema.Schema.Any
 }>
 
@@ -129,7 +137,7 @@ function extractMembersFromUnion(
  */
 export const createPcoResponseResolver = <
   RequestSchema extends {
-    includes?: string | ReadonlyArray<string> | undefined
+    includes?: PcoEntityName | ReadonlyArray<PcoEntityName> | undefined
     [key: string]: any
   },
   BRS extends BaseResponseSchema,
@@ -152,21 +160,19 @@ export const createPcoResponseResolver = <
       return Schema.Never as any
     }
 
-    // @ts-expect-error - this is a hack to get the types to work
     return Schema.Union(...ts.map((t) => members[t])) as any
   }
 
   // Usage
-  const result = Schema.Struct({
+
+  const { included: _included, ...rest } = baseResponseSchema.fields
+
+  return Schema.Struct({
+    ...rest,
     included: Schema.Array(
       pickMembers(
         typeof request.includes === 'string' ? [request.includes] : (request.includes ?? []),
       ),
     ),
-  })
-
-  return Schema.Struct({
-    ...baseResponseSchema.fields,
-    ...result.fields,
   })
 }

@@ -65,6 +65,12 @@ export const PcoEntities = pipe(
   Array.map((x) => x.apiSchema),
 )
 
+export const PcoEntityNames = pipe(
+  PcoEntities,
+  Array.map((x) => x.fields.type.literals[0]),
+)
+export type PcoEntityName = (typeof PcoEntityNames)[number]
+
 export const getPcoIncludes = <T extends ReadonlyArray<string>>(includes: T) =>
   pipe(
     PcoEntities,
