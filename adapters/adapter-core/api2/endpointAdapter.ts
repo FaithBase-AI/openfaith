@@ -39,7 +39,7 @@ export function buildUrlParamsSchema<
   TName extends string,
   Api extends Schema.Struct<any>,
   Canonical extends Schema.Struct<any>,
-  Includes extends ReadonlyArray<string> | undefined | never = never,
+  Includes extends ReadonlyArray<any> | undefined | never = never,
 >(definition: GetEndpointDefinition<TName, Api, Canonical, Includes>) {
   const { queryableBy, orderableBy, includes = [], apiSchema } = definition
 
@@ -70,25 +70,14 @@ export function buildUrlParamsSchema<
       onNonEmpty: () => ({ order: Schema.optional(Schema.String) }),
     }),
   ) as typeof fields
-  const include = pipe(
-    includes,
-    Array.match({
-      onEmpty: () => ({}),
-      onNonEmpty: () => ({
-        include: Schema.optional(
-          Schema.Union(
-            arrayToCommaSeparatedString(Schema.Literal(...includes)),
-            Schema.Literal(...includes),
-          ),
-        ),
-      }),
-    }),
-  ) as typeof fields
 
   // Add standard pagination params that most APIs use
   return Schema.Struct({
     include: Schema.optional(
-      Schema.Union(arrayToCommaSeparatedString(Schema.String), Schema.String),
+      Schema.Union(
+        arrayToCommaSeparatedString(Schema.Literal(...includes)),
+        Schema.Literal(...includes),
+      ),
     ),
     offset: Schema.optional(Schema.NumberFromString),
     page: Schema.optional(Schema.NumberFromString),
@@ -96,7 +85,6 @@ export function buildUrlParamsSchema<
     ...fields,
     ...special,
     ...order,
-    ...include,
   })
 }
 

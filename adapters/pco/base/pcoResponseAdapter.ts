@@ -137,8 +137,7 @@ function extractMembersFromUnion(
  */
 export const createPcoResponseResolver = <
   RequestSchema extends {
-    includes?: PcoEntityName | ReadonlyArray<PcoEntityName> | undefined
-    [key: string]: any
+    include?: PcoEntityName | ReadonlyArray<PcoEntityName> | undefined
   },
   BRS extends BaseResponseSchema,
 >(
@@ -171,7 +170,7 @@ export const createPcoResponseResolver = <
     ...rest,
     included: Schema.Array(
       pickMembers(
-        typeof request.includes === 'string' ? [request.includes] : (request.includes ?? []),
+        typeof request.include === 'string' ? [request.include] : (request.include ?? []),
       ),
     ),
   })
