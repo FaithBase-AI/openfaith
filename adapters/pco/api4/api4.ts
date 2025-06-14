@@ -17,14 +17,18 @@ type ApiBase = {
 /**
  * Generic interface for response adapters that transform API resource schemas
  * into their respective API's response envelope formats.
- *
- * @template A - The API resource type that extends ApiBase
  */
-export interface ResponseAdapter<A> {
-  /** Schema for collection responses (e.g., GET /resources) */
-  collectionSchema: Schema.Schema<any>
-  /** Schema for single resource responses (e.g., GET /resources/123) */
-  singleSchema: Schema.Schema<any>
+export interface ResponseAdapter {
+  /**
+   * Transforms a resource schema into a collection response schema
+   * @param resourceSchema - The schema for individual resources
+   */
+  collectionSchema<A extends ApiBase>(resourceSchema: Schema.Schema<A>): Schema.Schema<any>
+  /**
+   * Transforms a resource schema into a single resource response schema
+   * @param resourceSchema - The schema for the resource
+   */
+  singleSchema<A extends ApiBase>(resourceSchema: Schema.Schema<A>): Schema.Schema<any>
 }
 
 /**
@@ -33,26 +37,18 @@ export interface ResponseAdapter<A> {
  * This implementation understands the JSON:API specification that PCO follows,
  * where single resources are nested under a `data` key, and collection
  * responses include `data`, `included`, `links`, and `meta` top-level keys.
- *
- * @template A - The API resource type that extends ApiBase
  */
-export class PCOResponseAdapter<A extends ApiBase> implements ResponseAdapter<A> {
-  private resourceSchema: Schema.Schema<A>
-
-  constructor(resourceSchema: Schema.Schema<A>) {
-    this.resourceSchema = resourceSchema
-  }
-
+export class PCOResponseAdapter implements ResponseAdapter {
   /**
-   * Gets the adapted schema for a PCO collection response.
+   * Transforms a resource schema into a PCO collection response schema.
    *
    * A GET request for a collection (e.g., `/people/v2/people`) returns a
    * comprehensive object with pagination and metadata following JSON:API spec.
    */
-  get collectionSchema() {
+  collectionSchema<A extends ApiBase>(resourceSchema: Schema.Schema<A>) {
     return Schema.Struct({
       /** The 'data' key contains the array of primary resource objects. */
-      data: Schema.Array(this.resourceSchema),
+      data: Schema.Array(resourceSchema),
 
       /** The 'included' key contains side-loaded related resources. */
       included: Schema.Array(Schema.Unknown),
@@ -76,29 +72,23 @@ export class PCOResponseAdapter<A extends ApiBase> implements ResponseAdapter<A>
   }
 
   /**
-   * Gets the adapted schema for a single PCO resource response.
+   * Transforms a resource schema into a PCO single resource response schema.
    *
    * A GET request for a single item (e.g., `/people/v2/people/123`) returns an
    * object following JSON:API spec with data and included sections.
    */
-  get singleSchema() {
+  singleSchema<A extends ApiBase>(resourceSchema: Schema.Schema<A>) {
     return Schema.Struct({
-      data: this.resourceSchema,
+      data: resourceSchema,
       included: Schema.Array(Schema.Unknown),
     })
   }
 }
 
 /**
- * Factory function to create PCO response adapters with clean generic syntax.
- *
- * @template A - The API resource type that extends ApiBase
- * @param resourceSchema - The schema for the API resource
- * @returns A PCOResponseAdapter instance with collectionSchema and singleSchema
+ * Singleton instance of the PCO response adapter.
  */
-export const pcoResponseAdapter = <A extends ApiBase>(resourceSchema: Schema.Schema<A>) => {
-  return new PCOResponseAdapter(resourceSchema)
-}
+export const pcoResponseAdapter = new PCOResponseAdapter()
 
 /**
  * Supported HTTP methods for API endpoints.
@@ -131,8 +121,8 @@ type GetEndpointDefinition<
   apiSchema: Schema.Schema<Api>
   /** The response schema, either collection or single based on isCollection */
   responseSchema: IsCollection extends true
-    ? PCOResponseAdapter<Api>['collectionSchema']
-    : PCOResponseAdapter<Api>['singleSchema']
+    ? ReturnType<typeof pcoResponseAdapter.collectionSchema<Api>>
+    : ReturnType<typeof pcoResponseAdapter.singleSchema<Api>>
   /** Array of related resources that can be included via ?include= parameter */
   includes: Includes
   /** The API endpoint path (e.g., "/people/v2/people") */
@@ -341,12 +331,12 @@ function defineEndpoint<
     ? PostEndpointDefinition<Api, TModule, TEntity, TName>
     : never {
   if (params.method === 'GET') {
-    const adapter = new PCOResponseAdapter(params.apiSchema)
+    const adapter = new PCOResponseAdapter()
     return {
       ...params,
       responseSchema: (params as any).isCollection
-        ? adapter.collectionSchema
-        : adapter.singleSchema,
+        ? adapter.collectionSchema(params.apiSchema)
+        : adapter.singleSchema(params.apiSchema),
     } as any
   }
   return {
