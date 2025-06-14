@@ -102,6 +102,7 @@ type Method = 'GET' | 'POST' | 'PUT' | 'DELETE'
  * @template TModule - The PCO module name (e.g., "people", "events")
  * @template TEntity - The entity name (e.g., "Person", "Event")
  * @template TName - The endpoint operation name (e.g., "getAll", "getById")
+ * @template TResponseAdapter - The response adapter to use for this endpoint
  * @template Includes - Array of includable related resources
  * @template QueryableSpecial - Array of special query parameters
  * @template IsCollection - Whether this endpoint returns a collection or single resource
@@ -111,6 +112,7 @@ type GetEndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TResponseAdapter extends ResponseAdapter,
   Includes extends Array<string>,
   QueryableSpecial extends Array<string>,
   IsCollection extends boolean,
@@ -121,8 +123,8 @@ type GetEndpointDefinition<
   apiSchema: Schema.Schema<Api>
   /** The response schema, either collection or single based on isCollection */
   responseSchema: IsCollection extends true
-    ? ReturnType<typeof pcoResponseAdapter.collectionSchema<Api>>
-    : ReturnType<typeof pcoResponseAdapter.singleSchema<Api>>
+    ? ReturnType<TResponseAdapter['collectionSchema']>
+    : ReturnType<TResponseAdapter['singleSchema']>
   /** Array of related resources that can be included via ?include= parameter */
   includes: Includes
   /** The API endpoint path (e.g., "/people/v2/people") */
@@ -153,12 +155,14 @@ type GetEndpointDefinition<
  * @template TModule - The PCO module name (e.g., "people", "events")
  * @template TEntity - The entity name (e.g., "Person", "Event")
  * @template TName - The endpoint operation name (e.g., "create")
+ * @template TResponseAdapter - The response adapter to use for this endpoint
  */
 type PostEndpointDefinition<
   Api extends ApiBase,
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TResponseAdapter extends ResponseAdapter,
 > = {
   /** The Effect schema for the API resource */
   apiSchema: Schema.Schema<Api>
@@ -175,7 +179,7 @@ type PostEndpointDefinition<
   /** Array of fields that can be set when creating a new resource */
   creatableFields: Array<keyof Api['attributes']>
   /** The response schema for successful creation */
-  responseSchema: Schema.Schema<Api>
+  responseSchema: ReturnType<TResponseAdapter['singleSchema']>
 }
 
 /**
@@ -186,9 +190,10 @@ type PostEndpointDefinition<
  * @template TModule - The PCO module name
  * @template TEntity - The entity name
  * @template TName - The endpoint operation name
+ * @template TResponseAdapter - The response adapter to use for this endpoint
  * @template Includes - Array of includable related resources
  * @template QueryableSpecial - Array of special query parameters
- * * @template IsCollection - Whether this endpoint returns a collection
+ * @template IsCollection - Whether this endpoint returns a collection
  */
 type EndpointDefinition<
   TMethod extends Method,
@@ -196,13 +201,23 @@ type EndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TResponseAdapter extends ResponseAdapter,
   Includes extends Array<string>,
   QueryableSpecial extends Array<string>,
   IsCollection extends boolean,
 > = TMethod extends 'GET'
-  ? GetEndpointDefinition<Api, TModule, TEntity, TName, Includes, QueryableSpecial, IsCollection>
+  ? GetEndpointDefinition<
+      Api,
+      TModule,
+      TEntity,
+      TName,
+      TResponseAdapter,
+      Includes,
+      QueryableSpecial,
+      IsCollection
+    >
   : TMethod extends 'POST'
-    ? PostEndpointDefinition<Api, TModule, TEntity, TName>
+    ? PostEndpointDefinition<Api, TModule, TEntity, TName, TResponseAdapter>
     : never
 
 /**
@@ -213,6 +228,7 @@ type EndpointDefinition<
  * @template TModule - The PCO module name
  * @template TEntity - The entity name
  * @template TName - The endpoint operation name
+ * @template TResponseAdapter - The response adapter to use for this endpoint
  * @template Includes - Array of includable related resources
  * @template QueryableSpecial - Array of special query parameters
  * @template IsCollection - Whether this endpoint returns a collection
@@ -223,16 +239,26 @@ type DefineEndpointParams<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TResponseAdapter extends ResponseAdapter,
   Includes extends Array<string>,
   QueryableSpecial extends Array<string>,
   IsCollection extends boolean,
 > = TMethod extends 'GET'
   ? Omit<
-      GetEndpointDefinition<Api, TModule, TEntity, TName, Includes, QueryableSpecial, IsCollection>,
+      GetEndpointDefinition<
+        Api,
+        TModule,
+        TEntity,
+        TName,
+        TResponseAdapter,
+        Includes,
+        QueryableSpecial,
+        IsCollection
+      >,
       'responseSchema'
     >
   : TMethod extends 'POST'
-    ? Omit<PostEndpointDefinition<Api, TModule, TEntity, TName>, 'responseSchema'>
+    ? Omit<PostEndpointDefinition<Api, TModule, TEntity, TName, TResponseAdapter>, 'responseSchema'>
     : never
 
 /**
@@ -242,6 +268,7 @@ type DefineEndpointParams<
  * @template TModule - The PCO module name
  * @template TEntity - The entity name
  * @template TName - The endpoint operation name
+ * @template TResponseAdapter - The response adapter to use for this endpoint
  * @template Includes - Array of includable related resources
  * @template QueryableSpecial - Array of special query parameters
  * @template IsCollection - Whether this endpoint returns a collection
@@ -253,6 +280,7 @@ function defineEndpoint<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TResponseAdapter extends ResponseAdapter,
   Includes extends Array<string>,
   QueryableSpecial extends Array<string>,
   IsCollection extends boolean,
@@ -263,11 +291,21 @@ function defineEndpoint<
     TModule,
     TEntity,
     TName,
+    TResponseAdapter,
     Includes,
     QueryableSpecial,
     IsCollection
   >,
-): GetEndpointDefinition<Api, TModule, TEntity, TName, Includes, QueryableSpecial, IsCollection>
+): GetEndpointDefinition<
+  Api,
+  TModule,
+  TEntity,
+  TName,
+  TResponseAdapter,
+  Includes,
+  QueryableSpecial,
+  IsCollection
+>
 
 /**
  * Function overload for defining POST endpoints.
@@ -276,6 +314,7 @@ function defineEndpoint<
  * @template TModule - The PCO module name
  * @template TEntity - The entity name
  * @template TName - The endpoint operation name
+ * @template TResponseAdapter - The response adapter to use for this endpoint
  * @param params - The endpoint configuration parameters
  * @returns A complete POST endpoint definition with generated response schema
  */
@@ -284,9 +323,20 @@ function defineEndpoint<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TResponseAdapter extends ResponseAdapter,
 >(
-  params: DefineEndpointParams<'POST', Api, TModule, TEntity, TName, never, never, never>,
-): PostEndpointDefinition<Api, TModule, TEntity, TName>
+  params: DefineEndpointParams<
+    'POST',
+    Api,
+    TModule,
+    TEntity,
+    TName,
+    TResponseAdapter,
+    never,
+    never,
+    never
+  >,
+): PostEndpointDefinition<Api, TModule, TEntity, TName, TResponseAdapter>
 
 /**
  * General function signature for defining API endpoints with proper type narrowing.
@@ -299,6 +349,7 @@ function defineEndpoint<
  * @template TModule - The PCO module name
  * @template TEntity - The entity name
  * @template TName - The endpoint operation name
+ * @template TResponseAdapter - The response adapter to use for this endpoint
  * @template Includes - Array of includable related resources
  * @template QueryableSpecial - Array of special query parameters
  * @template IsCollection - Whether this endpoint returns a collection
@@ -311,6 +362,7 @@ function defineEndpoint<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TResponseAdapter extends ResponseAdapter,
   Includes extends Array<string>,
   QueryableSpecial extends Array<string>,
   IsCollection extends boolean,
@@ -321,14 +373,24 @@ function defineEndpoint<
     TModule,
     TEntity,
     TName,
+    TResponseAdapter,
     Includes,
     QueryableSpecial,
     IsCollection
   >,
 ): TMethod extends 'GET'
-  ? GetEndpointDefinition<Api, TModule, TEntity, TName, Includes, QueryableSpecial, IsCollection>
+  ? GetEndpointDefinition<
+      Api,
+      TModule,
+      TEntity,
+      TName,
+      TResponseAdapter,
+      Includes,
+      QueryableSpecial,
+      IsCollection
+    >
   : TMethod extends 'POST'
-    ? PostEndpointDefinition<Api, TModule, TEntity, TName>
+    ? PostEndpointDefinition<Api, TModule, TEntity, TName, TResponseAdapter>
     : never {
   if (params.method === 'GET') {
     const adapter = new PCOResponseAdapter()
@@ -449,7 +511,7 @@ export const getAllPeopleDefinition = defineEndpoint({
  *          apiSchema, endpoints, entity name, and module information
  */
 const mkPcoEntityManifest = <
-  Endpoints extends Array<EndpointDefinition<Method, any, any, any, any, any, any, any>>,
+  Endpoints extends Array<EndpointDefinition<Method, any, any, any, any, any, any, any, any>>,
 >(
   endpoints: Endpoints,
 ): Record<
