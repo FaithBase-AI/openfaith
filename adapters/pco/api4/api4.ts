@@ -109,20 +109,20 @@ type Method = 'GET' | 'POST' | 'PUT' | 'DELETE'
  * Type definition for a GET endpoint configuration.
  *
  * @template Api - The API resource type that extends ApiBase
- * @template Includes - Array of includable related resources
- * @template QueryableSpecial - Array of special query parameters
  * @template TModule - The PCO module name (e.g., "people", "events")
  * @template TEntity - The entity name (e.g., "Person", "Event")
  * @template TName - The endpoint operation name (e.g., "getAll", "getById")
+ * @template Includes - Array of includable related resources
+ * @template QueryableSpecial - Array of special query parameters
  * @template IsCollection - Whether this endpoint returns a collection or single resource
  */
 type GetEndpointDefinition<
   Api extends ApiBase,
-  Includes extends Array<string>,
-  QueryableSpecial extends Array<string>,
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  Includes extends Array<string>,
+  QueryableSpecial extends Array<string>,
   IsCollection extends boolean,
 > = {
   /** Whether this endpoint returns a collection (true) or single resource (false) */
@@ -193,24 +193,24 @@ type PostEndpointDefinition<
  *
  * @template TMethod - The HTTP method type
  * @template Api - The API resource type
- * @template Includes - Array of includable related resources
- * @template QueryableSpecial - Array of special query parameters
  * @template TModule - The PCO module name
  * @template TEntity - The entity name
  * @template TName - The endpoint operation name
- * @template IsCollection - Whether this endpoint returns a collection
+ * @template Includes - Array of includable related resources
+ * @template QueryableSpecial - Array of special query parameters
+ * * @template IsCollection - Whether this endpoint returns a collection
  */
 type EndpointDefinition<
   TMethod extends Method,
   Api extends ApiBase,
-  Includes extends Array<string>,
-  QueryableSpecial extends Array<string>,
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  Includes extends Array<string>,
+  QueryableSpecial extends Array<string>,
   IsCollection extends boolean,
 > = TMethod extends 'GET'
-  ? GetEndpointDefinition<Api, Includes, QueryableSpecial, TModule, TEntity, TName, IsCollection>
+  ? GetEndpointDefinition<Api, TModule, TEntity, TName, Includes, QueryableSpecial, IsCollection>
   : TMethod extends 'POST'
     ? PostEndpointDefinition<Api, TModule, TEntity, TName>
     : never
@@ -220,25 +220,25 @@ type EndpointDefinition<
  *
  * @template TMethod - The HTTP method type
  * @template Api - The API resource type
- * @template Includes - Array of includable related resources
- * @template QueryableSpecial - Array of special query parameters
  * @template TModule - The PCO module name
  * @template TEntity - The entity name
  * @template TName - The endpoint operation name
+ * @template Includes - Array of includable related resources
+ * @template QueryableSpecial - Array of special query parameters
  * @template IsCollection - Whether this endpoint returns a collection
  */
 type DefineEndpointParams<
   TMethod extends Method,
   Api extends ApiBase,
-  Includes extends Array<string>,
-  QueryableSpecial extends Array<string>,
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  Includes extends Array<string>,
+  QueryableSpecial extends Array<string>,
   IsCollection extends boolean,
 > = TMethod extends 'GET'
   ? Omit<
-      GetEndpointDefinition<Api, Includes, QueryableSpecial, TModule, TEntity, TName, IsCollection>,
+      GetEndpointDefinition<Api, TModule, TEntity, TName, Includes, QueryableSpecial, IsCollection>,
       'responseSchema'
     >
   : TMethod extends 'POST'
@@ -249,35 +249,35 @@ type DefineEndpointParams<
  * Function overload for defining GET endpoints.
  *
  * @template Api - The API resource type that extends ApiBase
- * @template Includes - Array of includable related resources
- * @template QueryableSpecial - Array of special query parameters
  * @template TModule - The PCO module name
  * @template TEntity - The entity name
  * @template TName - The endpoint operation name
+ * @template Includes - Array of includable related resources
+ * @template QueryableSpecial - Array of special query parameters
  * @template IsCollection - Whether this endpoint returns a collection
  * @param params - The endpoint configuration parameters
  * @returns A complete GET endpoint definition with generated response schema
  */
 function defineEndpoint<
   Api extends ApiBase,
-  Includes extends Array<string>,
-  QueryableSpecial extends Array<string>,
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  Includes extends Array<string>,
+  QueryableSpecial extends Array<string>,
   IsCollection extends boolean,
 >(
   params: DefineEndpointParams<
     'GET',
     Api,
-    Includes,
-    QueryableSpecial,
     TModule,
     TEntity,
     TName,
+    Includes,
+    QueryableSpecial,
     IsCollection
   >,
-): GetEndpointDefinition<Api, Includes, QueryableSpecial, TModule, TEntity, TName, IsCollection>
+): GetEndpointDefinition<Api, TModule, TEntity, TName, Includes, QueryableSpecial, IsCollection>
 
 /**
  * Function overload for defining POST endpoints.
@@ -295,7 +295,7 @@ function defineEndpoint<
   TEntity extends string,
   TName extends string,
 >(
-  params: DefineEndpointParams<'POST', Api, never, never, TModule, TEntity, TName, never>,
+  params: DefineEndpointParams<'POST', Api, TModule, TEntity, TName, never, never, never>,
 ): PostEndpointDefinition<Api, TModule, TEntity, TName>
 
 /**
@@ -306,11 +306,11 @@ function defineEndpoint<
  *
  * @template TMethod - The HTTP method type
  * @template Api - The API resource type
- * @template Includes - Array of includable related resources
- * @template QueryableSpecial - Array of special query parameters
  * @template TModule - The PCO module name
  * @template TEntity - The entity name
  * @template TName - The endpoint operation name
+ * @template Includes - Array of includable related resources
+ * @template QueryableSpecial - Array of special query parameters
  * @template IsCollection - Whether this endpoint returns a collection
  * @param params - The endpoint configuration parameters
  * @returns A complete endpoint definition with generated response schema
@@ -318,25 +318,25 @@ function defineEndpoint<
 function defineEndpoint<
   TMethod extends Method,
   Api extends ApiBase,
-  Includes extends Array<string>,
-  QueryableSpecial extends Array<string>,
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  Includes extends Array<string>,
+  QueryableSpecial extends Array<string>,
   IsCollection extends boolean,
 >(
   params: DefineEndpointParams<
     TMethod,
     Api,
-    Includes,
-    QueryableSpecial,
     TModule,
     TEntity,
     TName,
+    Includes,
+    QueryableSpecial,
     IsCollection
   >,
 ): TMethod extends 'GET'
-  ? GetEndpointDefinition<Api, Includes, QueryableSpecial, TModule, TEntity, TName, IsCollection>
+  ? GetEndpointDefinition<Api, TModule, TEntity, TName, Includes, QueryableSpecial, IsCollection>
   : TMethod extends 'POST'
     ? PostEndpointDefinition<Api, TModule, TEntity, TName>
     : never {
