@@ -2,27 +2,57 @@ import { PCOPerson } from '@openfaith/pco/people/pcoPersonSchema'
 import { Array, pipe, Schema } from 'effect'
 
 /**
- * A `ResponseAdapter` tailored for the Planning Center Online (PCO) API.
+ * Base type for all PCO API resources.
+ *
+ * All PCO API resources must have at minimum a `type` field and an `attributes` object.
+ * This follows the JSON:API specification structure.
+ */
+type ApiBase = {
+  /** The type identifier for the resource (e.g., "Person", "Event", etc.) */
+  type: string
+  /** The attributes object containing the resource's data fields */
+  attributes: Record<string, any>
+}
+
+/**
+ * Generic interface for response adapters that transform API resource schemas
+ * into their respective API's response envelope formats.
+ *
+ * @template A - The API resource type that extends ApiBase
+ */
+export interface ResponseAdapter<A> {
+  /** Schema for collection responses (e.g., GET /resources) */
+  collectionSchema: Schema.Schema<any>
+  /** Schema for single resource responses (e.g., GET /resources/123) */
+  singleSchema: Schema.Schema<any>
+}
+
+/**
+ * A ResponseAdapter implementation tailored for the Planning Center Online (PCO) API.
  *
  * This implementation understands the JSON:API specification that PCO follows,
  * where single resources are nested under a `data` key, and collection
  * responses include `data`, `included`, `links`, and `meta` top-level keys.
+ *
+ * @template A - The API resource type that extends ApiBase
  */
-export const pcoResponseAdapter = {
+export class PCOResponseAdapter<A extends ApiBase> implements ResponseAdapter<A> {
+  private resourceSchema: Schema.Schema<A>
+
+  constructor(resourceSchema: Schema.Schema<A>) {
+    this.resourceSchema = resourceSchema
+  }
+
   /**
-   * Adapts the schema for a PCO collection response.
+   * Gets the adapted schema for a PCO collection response.
    *
    * A GET request for a collection (e.g., `/people/v2/people`) returns a
-   * comprehensive object with pagination and metadata. This method wraps the
-   * resource schema to match this full JSON:API collection structure.
-   *
-   * @param resourceSchema The schema for an individual resource in the collection.
-   * @returns A new schema representing the complete collection response envelope.
+   * comprehensive object with pagination and metadata following JSON:API spec.
    */
-  adaptCollection: <A extends ApiBase>(resourceSchema: Schema.Schema<A>) => {
+  get collectionSchema() {
     return Schema.Struct({
       /** The 'data' key contains the array of primary resource objects. */
-      data: Schema.Array(resourceSchema),
+      data: Schema.Array(this.resourceSchema),
 
       /** The 'included' key contains side-loaded related resources. */
       included: Schema.Array(Schema.Unknown),
@@ -43,36 +73,31 @@ export const pcoResponseAdapter = {
         total_count: Schema.Number,
       }),
     })
-  },
+  }
+
   /**
-   * Adapts the schema for a single PCO resource response.
+   * Gets the adapted schema for a single PCO resource response.
    *
    * A GET request for a single item (e.g., `/people/v2/people/123`) returns an
-   * object like: `{ "data": { ... PCOPerson ... }, "included": [...] }`.
-   * This method wraps the provided resource schema to match this envelope.
-   *
-   * @param resourceSchema The schema for the core resource (e.g., PCOPerson).
-   * @returns A new schema representing the `{ data: ..., included: [...] }` structure.
+   * object following JSON:API spec with data and included sections.
    */
-  adaptSingle: <A extends ApiBase>(resourceSchema: Schema.Schema<A>) => {
+  get singleSchema() {
     return Schema.Struct({
-      data: resourceSchema,
+      data: this.resourceSchema,
       included: Schema.Array(Schema.Unknown),
     })
-  },
+  }
 }
 
 /**
- * Base type for all PCO API resources.
+ * Factory function to create PCO response adapters with clean generic syntax.
  *
- * All PCO API resources must have at minimum a `type` field and an `attributes` object.
- * This follows the JSON:API specification structure.
+ * @template A - The API resource type that extends ApiBase
+ * @param resourceSchema - The schema for the API resource
+ * @returns A PCOResponseAdapter instance with collectionSchema and singleSchema
  */
-type ApiBase = {
-  /** The type identifier for the resource (e.g., "Person", "Event", etc.) */
-  type: string
-  /** The attributes object containing the resource's data fields */
-  attributes: Record<string, any>
+export const pcoResponseAdapter = <A extends ApiBase>(resourceSchema: Schema.Schema<A>) => {
+  return new PCOResponseAdapter(resourceSchema)
 }
 
 /**
@@ -106,8 +131,8 @@ type GetEndpointDefinition<
   apiSchema: Schema.Schema<Api>
   /** The response schema, either collection or single based on isCollection */
   responseSchema: IsCollection extends true
-    ? ReturnType<typeof pcoResponseAdapter.adaptCollection<Api>>
-    : ReturnType<typeof pcoResponseAdapter.adaptSingle<Api>>
+    ? PCOResponseAdapter<Api>['collectionSchema']
+    : PCOResponseAdapter<Api>['singleSchema']
   /** Array of related resources that can be included via ?include= parameter */
   includes: Includes
   /** The API endpoint path (e.g., "/people/v2/people") */
@@ -316,11 +341,12 @@ function defineEndpoint<
     ? PostEndpointDefinition<Api, TModule, TEntity, TName>
     : never {
   if (params.method === 'GET') {
+    const adapter = new PCOResponseAdapter(params.apiSchema)
     return {
       ...params,
       responseSchema: (params as any).isCollection
-        ? pcoResponseAdapter.adaptCollection(params.apiSchema)
-        : pcoResponseAdapter.adaptSingle(params.apiSchema),
+        ? adapter.collectionSchema
+        : adapter.singleSchema,
     } as any
   }
   return {
@@ -480,4 +506,5 @@ const mkPcoEntityManifest = <
  * This provides a structured way to access endpoint definitions, schemas,
  * and metadata organized by entity type (e.g., Person, Event, etc.).
  */
-const pcoEntityManifest = mkPcoEntityManifest([getAllPeopleDefinition])
+const pcoEntityManifest = mkPcoEntityManifest([getAllPeopleDefinition]).Person.endpoints.getAll
+  .responseSchema
