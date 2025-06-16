@@ -62,7 +62,6 @@ type BaseGetEndpointDefinition<
  * Full endpoint definition including response schema transformation
  * @template Api - The API schema type
  * @template Fields - Record of available fields for the entity
- * @template Response - The response type after transformation
  * @template TModule - The API module name
  * @template TEntity - The entity name
  * @template TName - The endpoint name
@@ -75,7 +74,6 @@ type BaseGetEndpointDefinition<
 type FullGetEndpointDefinition<
   Api,
   Fields extends Record<string, any>,
-  Response,
   TModule extends string,
   TEntity extends string,
   TName extends string,
@@ -95,20 +93,14 @@ type FullGetEndpointDefinition<
   Includes,
   QueryableSpecial,
   IsCollection
-> & {
-  /** Schema for transforming the response */
-  responseSchema: Schema.Schema<Response>
-}
+>
 
 /**
  * Creates a reusable `defineEndpoint` adapter for APIs with flat structure (no nested fields key)
  * @template TApiBase - The base shape that all resources must have
  * @returns A function to define endpoints for this API family
  */
-function createApiAdapter<TApiBase extends Record<string, any>>(config: {
-  collection: <Api extends TApiBase>(schema: Schema.Schema<Api>) => Schema.Schema<any>
-  single: <Api extends TApiBase>(schema: Schema.Schema<Api>) => Schema.Schema<any>
-}): <
+function createApiAdapter<TApiBase extends Record<string, any>>(): <
   Api extends TApiBase,
   TModule extends string,
   TEntity extends string,
@@ -134,9 +126,6 @@ function createApiAdapter<TApiBase extends Record<string, any>>(config: {
 ) => FullGetEndpointDefinition<
   Api,
   Api,
-  IsCollection extends true
-    ? ReturnType<typeof config.collection<Api>>
-    : ReturnType<typeof config.single<Api>>,
   TModule,
   TEntity,
   TName,
@@ -156,10 +145,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>(config: {
 function createApiAdapter<
   TFieldsKey extends string,
   TApiBase extends Record<TFieldsKey, Record<string, any>>,
->(config: {
-  collection: <Api extends TApiBase>(schema: Schema.Schema<Api>) => Schema.Schema<any>
-  single: <Api extends TApiBase>(schema: Schema.Schema<Api>) => Schema.Schema<any>
-}): <
+>(): <
   Api extends TApiBase,
   TModule extends string,
   TEntity extends string,
@@ -185,9 +171,6 @@ function createApiAdapter<
 ) => FullGetEndpointDefinition<
   Api,
   Api[TFieldsKey],
-  IsCollection extends true
-    ? ReturnType<typeof config.collection<Api>>
-    : ReturnType<typeof config.single<Api>>,
   TModule,
   TEntity,
   TName,
@@ -197,21 +180,6 @@ function createApiAdapter<
   QueryableSpecial,
   IsCollection
 >
-// ) => <Response>(
-//   responseTransformer: (resourceSchema: Schema.Schema<Api>) => Schema.Schema<Response>,
-// ) => FullGetEndpointDefinition<
-//   Api,
-//   Api[TFieldsKey],
-//   Response,
-//   TModule,
-//   TEntity,
-//   TName,
-//   OrderableFields,
-//   QueryableFields,
-//   Includes,
-//   QueryableSpecial,
-//   IsCollection
-// >
 
 /**
  * Creates a reusable `defineEndpoint` adapter for a specific family of APIs
@@ -225,10 +193,7 @@ function createApiAdapter<
 function createApiAdapter<
   TFieldsKey extends string,
   TApiBase extends Record<TFieldsKey, Record<string, any>>,
->(config: {
-  collection: <Api extends TApiBase>(schema: Schema.Schema<Api>) => Schema.Schema<any>
-  single: <Api extends TApiBase>(schema: Schema.Schema<Api>) => Schema.Schema<any>
-}) {
+>() {
   /**
    * Defines an endpoint configuration for the API family
    * @template Api - The API schema type, must conform to the family's base shape
@@ -267,37 +232,7 @@ function createApiAdapter<
       IsCollection
     >,
   ) {
-    return {
-      ...params,
-      responseSchema: params.isCollection
-        ? config.collection(params.apiSchema)
-        : config.single(params.apiSchema),
-    }
-
-    // /**
-    //  * Transforms the endpoint definition with a response schema
-    //  * @template Response - The response type after transformation
-    //  * @param responseTransformer - Function that transforms the resource schema into the response schema
-    //  * @returns The complete endpoint definition with response schema
-    //  */
-    // return <Response>(
-    //   responseTransformer: (resourceSchema: Schema.Schema<Api>) => Schema.Schema<Response>,
-    // ): FullGetEndpointDefinition<
-    //   Api,
-    //   Api[TFieldsKey],
-    //   Response,
-    //   TModule,
-    //   TEntity,
-    //   TName,
-    //   OrderableFields,
-    //   QueryableFields,
-    //   Includes,
-    //   QueryableSpecial,
-    //   IsCollection
-    // > => ({
-    //   ...params,
-    //   responseSchema: responseTransformer(params.apiSchema),
-    // })
+    return params
   }
 }
 
@@ -344,10 +279,7 @@ const mkPcoSingleSchema = <A>(resourceSchema: Schema.Schema<A>) =>
 /**
  * PCO API adapter configured for resources with attributes field
  */
-const pcoApiAdapter = createApiAdapter<'attributes', PCOApiBase>({
-  collection: mkPcoCollectionSchema,
-  single: mkPcoSingleSchema,
-})
+const pcoApiAdapter = createApiAdapter<'attributes', PCOApiBase>()
 
 /**
  * Endpoint definition for retrieving all people from PCO
@@ -437,8 +369,6 @@ const getAllPeopleDefinition = pcoApiAdapter({
   },
 })
 
-const test = getAllPeopleDefinition.responseSchema
-
 /**
  * Base shape for all CCB API resources
  */
@@ -449,10 +379,7 @@ type CCBApiBase = {
 /**
  * CCB API adapter configured for resources with flat structure
  */
-const ccbApiAdapter = createApiAdapter<CCBApiBase>({
-  collection: (x) => Schema.Array(x),
-  single: (x) => x,
-})
+const ccbApiAdapter = createApiAdapter<CCBApiBase>()
 
 export const CCBIndividual = Schema.Struct({
   active: Schema.Boolean,
