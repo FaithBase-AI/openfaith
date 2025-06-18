@@ -1,17 +1,16 @@
-import { HttpApiEndpoint, HttpApiSchema } from '@effect/platform'
-import {
-  arrayToCommaSeparatedString,
-  type EndpointDefinition,
-  type GetEndpointDefinition,
-} from '@openfaith/adapter-core/api/endpointTypes' // Assuming EndpointTypes.ts is in the same directory or accessible
-import { createPcoResponseResolver } from '@openfaith/pco/base/pcoResponseAdapter'
-import { Array, Match, pipe, Schema, String } from 'effect'
+import { HttpApiEndpoint } from '@effect/platform'
+import { arrayToCommaSeparatedString } from '@openfaith/adapter-core/api/endpointTypes' // Assuming EndpointTypes.ts is in the same directory or accessible
+import type {
+  EndpointDefinition,
+  GetEndpointDefinition,
+} from '@openfaith/adapter-core/api6/endpointTypes'
+import { Array, pipe, Schema } from 'effect'
 
 /**
  * A utility to intelligently determine the schema type for a query parameter
  * based on the corresponding attribute in the main API schema.
  */
-function getQueryParamSchema(apiSchema: Schema.Struct<any>, field: string) {
+export function getQueryParamSchema(apiSchema: Schema.Struct<any>, field: string) {
   // @ts-ignore - We assume the schema has `properties.attributes.properties`
   const attributeType = apiSchema.properties?.attributes?.properties[field]?.ast._tag
 
@@ -29,50 +28,86 @@ function getQueryParamSchema(apiSchema: Schema.Struct<any>, field: string) {
  * Builds the comprehensive URL parameter schema for a GET endpoint
  * from our high-level, declarative definition.
  */
-function buildUrlParamsSchema(
-  definition: GetEndpointDefinition<any, any>,
-): Schema.Schema.Any & HttpApiEndpoint.HttpApiEndpoint.ValidateUrlParams<Schema.Schema.Any> {
-  const { queryableBy, orderableBy, includes, apiSchema } = definition
+export function buildUrlParamsSchema<
+  Api,
+  Response extends Schema.Schema<any>,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends boolean,
+>(
+  definition: GetEndpointDefinition<
+    Api,
+    Response,
+    Fields,
+    TModule,
+    TEntity,
+    TName,
+    OrderableFields,
+    QueryableFields,
+    Includes,
+    QueryableSpecial,
+    IsCollection
+  >,
+) {
+  const { includes } = definition
 
-  const fields = pipe(
-    queryableBy.fields,
-    Array.reduce({}, (acc, field) => ({
-      ...acc,
-      [`where[${field}]`]: getQueryParamSchema(apiSchema, field),
-    })),
-  )
-
-  const special = pipe(
-    queryableBy.special,
-    Array.reduce({}, (acc, field) => ({
-      ...acc,
-      [field]: Schema.optional(Schema.String), // Special fields are assumed to be strings
-    })),
-  )
-
-  const order = pipe(
-    orderableBy,
-    Array.match({
-      onEmpty: () => ({}),
-      onNonEmpty: () => ({ order: Schema.optional(Schema.String) }),
-    }),
-  ) as typeof fields
   const include = pipe(
     includes,
     Array.match({
-      onEmpty: () => ({}),
+      onEmpty: () => ({
+        include: Schema.optional(Schema.String),
+      }),
       onNonEmpty: () => ({
         include: Schema.optional(
           Schema.Union(arrayToCommaSeparatedString(Schema.String), Schema.String),
         ),
       }),
     }),
-  ) as typeof fields
+  )
+  if (definition.isCollection) {
+    const { queryableBy, orderableBy } = definition
+
+    const fields = pipe(
+      queryableBy.fields,
+      Array.reduce({}, (acc, _field) => ({
+        ...acc,
+        // [`where[${field}]`]: getQueryParamSchema(apiSchema, field),
+      })),
+    )
+
+    const special = pipe(
+      queryableBy.special,
+      Array.reduce({}, (acc, field) => ({
+        ...acc,
+        [field]: Schema.optional(Schema.String), // Special fields are assumed to be strings
+      })),
+    )
+
+    const order = pipe(
+      orderableBy,
+      Array.match({
+        onEmpty: () => ({}),
+        onNonEmpty: () => ({ order: Schema.optional(Schema.String) }),
+      }),
+    ) as typeof fields
+
+    return Schema.Struct({
+      ...fields,
+      ...special,
+      ...order,
+      ...include,
+      offset: Schema.optional(Schema.NumberFromString),
+      per_page: Schema.optional(Schema.NumberFromString),
+    })
+  }
 
   return Schema.Struct({
-    ...fields,
-    ...special,
-    ...order,
     ...include,
     offset: Schema.optional(Schema.NumberFromString),
     per_page: Schema.optional(Schema.NumberFromString),
@@ -83,9 +118,9 @@ function buildUrlParamsSchema(
  * Builds the request body (payload) schema for a POST or PATCH endpoint
  * by picking the specified fields from the main API schema's attributes.
  */
-function buildPayloadSchema(
-  apiSchema: Schema.Struct<any>,
-  keys: ReadonlyArray<string>,
+function buildPayloadSchema<Api, Keys extends ReadonlyArray<string>>(
+  apiSchema: Schema.Schema<Api>,
+  keys: Keys,
 ): Schema.Struct<any> {
   // @ts-ignore - This relies on the convention that our API schemas have an 'attributes' struct.
   const attributeSchema = apiSchema.properties.attributes
@@ -106,46 +141,222 @@ function buildPayloadSchema(
  *
  * This function acts as an adapter, allowing us to maintain a clean, declarative
  * configuration while leveraging the power of the platform's built-in tools.
- *
- * @param definition Our custom endpoint definition object.
- * @returns A fully-formed HttpApiEndpoint instance ready to be added to an HttpApiGroup.
  */
-export function toHttpApiEndpoint(definition: EndpointDefinition<any, any>) {
-  const nameSegments = pipe(definition.name, String.split('.'))
-  const localName = pipe(nameSegments, Array.lastNonEmpty)
 
-  return pipe(
-    Match.value(definition),
-    Match.when({ method: 'GET' }, (x) => {
-      const urlParamsSchema = buildUrlParamsSchema(x)
+// GET overload
+export function toHttpApiEndpoint<
+  Api,
+  Response extends Schema.Schema<any>,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends boolean,
+>(
+  definition: EndpointDefinition<
+    'GET',
+    Api,
+    Response,
+    Fields,
+    TModule,
+    TEntity,
+    TName,
+    OrderableFields,
+    QueryableFields,
+    Includes,
+    QueryableSpecial,
+    IsCollection,
+    never,
+    never
+  >,
+): HttpApiEndpoint.HttpApiEndpoint<
+  TName,
+  'GET',
+  never,
+  any,
+  never,
+  { readonly Authorization: string },
+  Schema.Schema.Type<Response>,
+  never,
+  Schema.Schema.Context<Response>,
+  never
+>
+
+// POST overload
+export function toHttpApiEndpoint<
+  Api,
+  Response extends Schema.Schema<any>,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+>(
+  definition: EndpointDefinition<
+    'POST',
+    Api,
+    Response,
+    Fields,
+    TModule,
+    TEntity,
+    TName,
+    never,
+    never,
+    never,
+    never,
+    false,
+    CreatableFields,
+    never
+  >,
+): HttpApiEndpoint.HttpApiEndpoint<
+  TName,
+  'POST',
+  never,
+  never,
+  {
+    readonly [x: string]: unknown
+  },
+  {
+    readonly Authorization: string
+  },
+  Schema.Schema.Type<Response>,
+  never,
+  unknown,
+  never
+>
+
+// PATCH overload
+export function toHttpApiEndpoint<
+  Api,
+  Response extends Schema.Schema<any>,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+>(
+  definition: EndpointDefinition<
+    'PATCH',
+    Api,
+    Response,
+    Fields,
+    TModule,
+    TEntity,
+    TName,
+    never,
+    never,
+    never,
+    never,
+    false,
+    never,
+    UpdatableFields
+  >,
+): HttpApiEndpoint.HttpApiEndpoint<
+  TName,
+  'PATCH',
+  never,
+  never,
+  {
+    readonly [x: string]: unknown
+  },
+  {
+    readonly Authorization: string
+  },
+  Schema.Schema.Type<Response>,
+  never,
+  unknown,
+  never
+>
+
+// DELETE overload
+export function toHttpApiEndpoint<
+  Api,
+  Response extends Schema.Schema<any>,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+>(
+  definition: EndpointDefinition<
+    'DELETE',
+    Api,
+    Response,
+    Fields,
+    TModule,
+    TEntity,
+    TName,
+    never,
+    never,
+    never,
+    never,
+    false,
+    never,
+    never
+  >,
+): HttpApiEndpoint.HttpApiEndpoint<
+  TName,
+  'DELETE',
+  never,
+  never,
+  never,
+  {
+    readonly Authorization: string
+  },
+  void,
+  never,
+  never,
+  never
+>
+
+// Implementation
+// @ts-expect-error
+export function toHttpApiEndpoint(definition: any) {
+  switch (definition.method) {
+    case 'GET': {
+      const urlParamsSchema = buildUrlParamsSchema(definition)
 
       // For collection GETs, the success schema is an array of the apiSchema.
       // A more advanced version could distinguish between get-one and get-all.
 
-      return HttpApiEndpoint.get(localName, x.path)
-        .addSuccess(HttpApiSchema.dynamic(x.apiSchema, urlParamsSchema, createPcoResponseResolver))
+      const foo = HttpApiEndpoint.get(definition.name, definition.path)
+        .addSuccess(definition.response)
         .setUrlParams(urlParamsSchema)
         .setHeaders(Schema.Struct({ Authorization: Schema.String }))
-    }),
-    Match.when({ method: 'POST' }, (x) => {
-      const payloadSchema = buildPayloadSchema(x.apiSchema, x.creatableFields)
 
-      return HttpApiEndpoint.post(localName, x.path)
-        .setPayload(payloadSchema)
-        .addSuccess(x.apiSchema) // A successful POST often returns the created object
-    }),
-    Match.when({ method: 'PATCH' }, (x) => {
-      const payloadSchema = buildPayloadSchema(x.apiSchema, x.updatableFields)
+      return foo
+    }
+    case 'POST': {
+      const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.creatableFields)
 
-      return HttpApiEndpoint.patch(localName, x.path)
+      const foo = HttpApiEndpoint.post(definition.name, definition.path)
         .setPayload(payloadSchema)
-        .addSuccess(x.apiSchema) // A successful PATCH often returns the updated object
-    }),
-    Match.when({ method: 'DELETE' }, (x) => {
-      return HttpApiEndpoint.del(localName, x.path).addSuccess(Schema.Void, {
-        status: 204,
-      }) // DELETE typically returns 204 No Content
-    }),
-    Match.exhaustive,
-  )
+        .addSuccess(definition.response)
+        .setHeaders(Schema.Struct({ Authorization: Schema.String }))
+
+      return foo
+    }
+    case 'PATCH': {
+      const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.updatableFields)
+
+      const foo = HttpApiEndpoint.patch(definition.name, definition.path)
+        .setPayload(payloadSchema)
+        .addSuccess(definition.response)
+        .setHeaders(Schema.Struct({ Authorization: Schema.String }))
+
+      return foo
+    }
+    case 'DELETE': {
+      const foo = HttpApiEndpoint.del(definition.name, definition.path)
+        .addSuccess(Schema.Void, {
+          status: 204,
+        })
+        .setHeaders(Schema.Struct({ Authorization: Schema.String })) // DELETE typically returns 204 No Content
+
+      return foo
+    }
+  }
 }

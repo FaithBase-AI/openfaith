@@ -42,19 +42,19 @@ export type PCOAddressAttributes = typeof PCOAddressAttributes.Type
 export const pcoAddressTransformer = pcoToOf(PCOAddressAttributes, BaseAddress)
 
 export const PCOAddress = Schema.Struct({
-  type: Schema.Literal('Address'),
-  id: Schema.String,
   attributes: PCOAddressAttributes,
-  relationships: Schema.Struct({
-    person: Schema.Struct({
-      data: Schema.Struct({
-        type: Schema.Literal('Person'),
-        id: Schema.String,
-      }),
-    }),
-  }),
+  id: Schema.String,
   links: Schema.Struct({
     self: Schema.String,
   }),
+  relationships: Schema.Struct({
+    person: Schema.Struct({
+      data: Schema.Struct({
+        id: Schema.String,
+        type: Schema.Literal('Person'),
+      }),
+    }),
+  }),
+  type: Schema.Literal('Address'),
 })
 export type PCOAddress = typeof PCOAddress.Type

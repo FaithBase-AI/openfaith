@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@openfaith/ccb/*": ["./*"]
+    }
+  },
+  "extends": "@openfaith/tsconfig/base.json",
+  "include": ["."]
+}

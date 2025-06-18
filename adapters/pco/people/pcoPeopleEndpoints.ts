@@ -1,28 +1,16 @@
-import { defineEndpoint } from '@openfaith/adapter-core/server'
-import { PCOCollection } from '@openfaith/pco/base/pcoApiTypes'
-import { PCOPerson } from '@openfaith/pco/client'
-import { BasePerson } from '@openfaith/schema'
-import { Schema } from 'effect'
+import { pcoApiAdapter } from '@openfaith/pco/api6/pcoApiAdapter'
+import { PCOPerson } from '@openfaith/pco/people/pcoPersonSchema'
 
 /**
- * Defines the endpoint for listing all 'Person' records.
- *
- * This configuration is derived from the Planning Center 'People' API documentation.
- * It specifies all queryable parameters, includable relationships, and sortable fields,
- * providing the necessary metadata for both the API client and the Sync Engine.
- *
- * @see https://developer.planning.center/docs/#/apps/people/2025-03-20/vertices/person
+ * Endpoint definition for retrieving all people from PCO
  */
-export const getAllPeople = defineEndpoint({
-  apiSchema: Schema.Struct({
-    ...PCOCollection.fields,
-    data: Schema.Array(PCOPerson),
-  }),
-  canonicalSchema: BasePerson,
-  deltaSyncField: 'updated_at',
+const getAllPeopleDefinition = pcoApiAdapter({
+  apiSchema: PCOPerson,
+  entity: 'Person',
   includes: [
     'addresses',
     'emails',
+    'primary_campus',
     'field_data',
     'households',
     'inactive_reason',
@@ -37,9 +25,10 @@ export const getAllPeople = defineEndpoint({
     'school',
     'social_profiles',
   ],
+  isCollection: true,
   method: 'GET',
   module: 'people',
-  name: 'people.getAll',
+  name: 'getAll',
   orderableBy: [
     'accounting_administrator',
     'anniversary',
@@ -74,21 +63,23 @@ export const getAllPeople = defineEndpoint({
       'given_name',
       'grade',
       'graduation_year',
-      'id',
       'inactivated_at',
+      'last_name',
       'medical_notes',
       'membership',
-      'mfa_configured',
       'middle_name',
       'nickname',
       'people_permissions',
-      'primary_campus_id',
       'remote_id',
       'site_administrator',
       'status',
       'updated_at',
     ],
     special: [
+      'id',
+      'date_time',
+      'mfa_configured',
+      'primary_campus_id',
       'search_name',
       'search_name_or_email',
       'search_name_or_email_or_phone_number',
@@ -96,5 +87,64 @@ export const getAllPeople = defineEndpoint({
       'search_phone_number_e164',
     ],
   },
-  supportsWebhooks: true,
-})
+} as const)
+
+export const getPersonByIdDefinition = pcoApiAdapter({
+  apiSchema: PCOPerson,
+  entity: 'Person',
+  includes: getAllPeopleDefinition.includes,
+  isCollection: false,
+  method: 'GET',
+  module: 'people',
+  name: 'getById',
+  path: '/people/v2/people/:personId',
+} as const)
+
+export const createPersonDefinition = pcoApiAdapter({
+  apiSchema: PCOPerson,
+  creatableFields: [
+    'first_name',
+    'last_name',
+    'anniversary',
+    'birthdate',
+    'gender',
+    'grade',
+    'graduation_year',
+    'child',
+    'status',
+    'inactivated_at',
+    'remote_id',
+    'medical_notes',
+    'membership',
+    'middle_name',
+    'nickname',
+    'people_permissions',
+    'accounting_administrator',
+    'site_administrator',
+    'avatar',
+  ],
+  entity: 'Person',
+  method: 'POST',
+  module: 'people',
+  name: 'create',
+  path: '/people/v2/people',
+} as const)
+
+export const updatePersonDefinition = pcoApiAdapter({
+  apiSchema: PCOPerson,
+  entity: 'Person',
+  method: 'PATCH',
+  module: 'people',
+  name: 'update',
+  path: '/people/v2/people/:personId',
+  updatableFields: createPersonDefinition.creatableFields,
+} as const)
+
+export const deletePersonDefinition = pcoApiAdapter({
+  apiSchema: PCOPerson,
+  entity: 'Person',
+  method: 'DELETE',
+  module: 'people',
+  name: 'people.delete',
+  path: '/people/v2/people/:personId',
+} as const)

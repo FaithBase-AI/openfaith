@@ -1,17 +1,12 @@
-import { defineEndpoint } from '@openfaith/adapter-core/api2/endpointTypes'
+import { pcoApiAdapter } from '@openfaith/pco/api6/pcoApiAdapter'
 import { PCOPerson } from '@openfaith/pco/people/pcoPersonSchema'
-import { BasePerson } from '@openfaith/schema'
 
 /**
- * Defines the endpoint for listing all 'Person' records.
- *
- * This configuration is derived from the Planning Center 'People' API documentation.
- * @see https://developer.planning.center/docs/#/apps/people/2025-03-20/vertices/person
+ * Endpoint definition for retrieving all people from PCO
  */
-export const getAllPeopleDefinition = defineEndpoint({
+export const getAllPeopleDefinition = pcoApiAdapter({
   apiSchema: PCOPerson,
-  canonicalSchema: BasePerson,
-  deltaSyncField: 'updated_at',
+  entity: 'Person',
   includes: [
     'addresses',
     'emails',
@@ -30,6 +25,7 @@ export const getAllPeopleDefinition = defineEndpoint({
     'school',
     'social_profiles',
   ],
+  isCollection: true,
   method: 'GET',
   module: 'people',
   name: 'getAll',
@@ -55,7 +51,6 @@ export const getAllPeopleDefinition = defineEndpoint({
     'updated_at',
   ],
   path: '/people/v2/people',
-
   queryableBy: {
     fields: [
       'accounting_administrator',
@@ -68,21 +63,23 @@ export const getAllPeopleDefinition = defineEndpoint({
       'given_name',
       'grade',
       'graduation_year',
-      'id',
       'inactivated_at',
+      'last_name',
       'medical_notes',
       'membership',
-      'mfa_configured',
       'middle_name',
       'nickname',
       'people_permissions',
-      'primary_campus_id',
       'remote_id',
       'site_administrator',
       'status',
       'updated_at',
     ],
     special: [
+      'id',
+      'date_time',
+      'mfa_configured',
+      'primary_campus_id',
       'search_name',
       'search_name_or_email',
       'search_name_or_email_or_phone_number',
@@ -90,30 +87,21 @@ export const getAllPeopleDefinition = defineEndpoint({
       'search_phone_number_e164',
     ],
   },
-  supportsWebhooks: true,
-})
+} as const)
 
-/**
- * Defines the endpoint for retrieving a single 'Person' by their ID.
- */
-export const getPersonByIdDefinition = defineEndpoint({
+export const getPersonByIdDefinition = pcoApiAdapter({
   apiSchema: PCOPerson,
-  canonicalSchema: BasePerson,
-  deltaSyncField: 'updated_at',
+  entity: 'Person',
   includes: getAllPeopleDefinition.includes,
+  isCollection: false,
   method: 'GET',
   module: 'people',
-  name: 'people.getById',
+  name: 'getById',
   path: '/people/v2/people/:personId',
-  supportsWebhooks: true,
-})
+} as const)
 
-/**
- * Defines the endpoint for creating a new 'Person'.
- */
-export const createPersonDefinition = defineEndpoint({
+export const createPersonDefinition = pcoApiAdapter({
   apiSchema: PCOPerson,
-  canonicalSchema: BasePerson,
   creatableFields: [
     'first_name',
     'last_name',
@@ -135,39 +123,28 @@ export const createPersonDefinition = defineEndpoint({
     'site_administrator',
     'avatar',
   ],
-  deltaSyncField: 'updated_at',
+  entity: 'Person',
   method: 'POST',
   module: 'people',
-  name: 'people.create',
+  name: 'create',
   path: '/people/v2/people',
-  supportsWebhooks: true,
-})
+} as const)
 
-/**
- * Defines the endpoint for updating an existing 'Person'.
- */
-export const updatePersonDefinition = defineEndpoint({
+export const updatePersonDefinition = pcoApiAdapter({
   apiSchema: PCOPerson,
-  canonicalSchema: BasePerson,
-  deltaSyncField: 'updated_at',
+  entity: 'Person',
   method: 'PATCH',
   module: 'people',
-  name: 'people.update',
+  name: 'update',
   path: '/people/v2/people/:personId',
-  supportsWebhooks: true,
   updatableFields: createPersonDefinition.creatableFields,
-})
+} as const)
 
-/**
- * Defines the endpoint for deleting a 'Person'.
- */
-export const deletePersonDefinition = defineEndpoint({
+export const deletePersonDefinition = pcoApiAdapter({
   apiSchema: PCOPerson,
-  canonicalSchema: BasePerson,
-  deltaSyncField: 'updated_at',
+  entity: 'Person',
   method: 'DELETE',
   module: 'people',
-  name: 'people.delete',
+  name: 'delete',
   path: '/people/v2/people/:personId',
-  supportsWebhooks: true,
-})
+} as const)

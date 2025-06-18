@@ -33,6 +33,22 @@
         "typescript": "catalog:",
       },
     },
+    "adapters/ccb": {
+      "name": "@openfaith/ccb",
+      "version": "0.1.0",
+      "dependencies": {
+        "@openfaith/adapter-core": "workspace:*",
+        "@openfaith/schema": "workspace:*",
+        "@openfaith/shared": "workspace:*",
+        "effect": "catalog:",
+        "jotai": "catalog:",
+        "qs": "catalog:",
+      },
+      "devDependencies": {
+        "@types/qs": "catalog:",
+        "typescript": "catalog:",
+      },
+    },
     "adapters/pco": {
       "name": "@openfaith/pco",
       "version": "0.1.0",
@@ -729,6 +745,8 @@
     "@openfaith/auth": ["@openfaith/auth@workspace:packages/auth"],
 
     "@openfaith/be-shared": ["@openfaith/be-shared@workspace:packages/be-shared"],
+
+    "@openfaith/ccb": ["@openfaith/ccb@workspace:adapters/ccb"],
 
     "@openfaith/db": ["@openfaith/db@workspace:packages/db"],
 
