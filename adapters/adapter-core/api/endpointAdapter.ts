@@ -145,6 +145,7 @@ function buildPayloadSchema<Api, Keys extends ReadonlyArray<string>>(
 
 // GET overload
 export function toHttpApiEndpoint<
+  TMethod extends 'GET',
   Api,
   Response extends Schema.Schema<any>,
   Fields extends Record<string, any>,
@@ -158,7 +159,7 @@ export function toHttpApiEndpoint<
   IsCollection extends boolean,
 >(
   definition: EndpointDefinition<
-    'GET',
+    TMethod,
     Api,
     Response,
     Fields,
@@ -175,7 +176,7 @@ export function toHttpApiEndpoint<
   >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
-  'GET',
+  TMethod,
   never,
   any,
   never,
@@ -188,6 +189,7 @@ export function toHttpApiEndpoint<
 
 // POST overload
 export function toHttpApiEndpoint<
+  TMethod extends 'POST',
   Api,
   Response extends Schema.Schema<any>,
   Fields extends Record<string, any>,
@@ -197,7 +199,7 @@ export function toHttpApiEndpoint<
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
 >(
   definition: EndpointDefinition<
-    'POST',
+    TMethod,
     Api,
     Response,
     Fields,
@@ -214,7 +216,7 @@ export function toHttpApiEndpoint<
   >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
-  'POST',
+  TMethod,
   never,
   never,
   {
@@ -231,6 +233,7 @@ export function toHttpApiEndpoint<
 
 // PATCH overload
 export function toHttpApiEndpoint<
+  TMethod extends 'PATCH',
   Api,
   Response extends Schema.Schema<any>,
   Fields extends Record<string, any>,
@@ -240,7 +243,7 @@ export function toHttpApiEndpoint<
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
 >(
   definition: EndpointDefinition<
-    'PATCH',
+    TMethod,
     Api,
     Response,
     Fields,
@@ -257,7 +260,7 @@ export function toHttpApiEndpoint<
   >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
-  'PATCH',
+  TMethod,
   never,
   never,
   {
@@ -274,6 +277,7 @@ export function toHttpApiEndpoint<
 
 // DELETE overload
 export function toHttpApiEndpoint<
+  TMethod extends 'DELETE',
   Api,
   Response extends Schema.Schema<any>,
   Fields extends Record<string, any>,
@@ -282,7 +286,7 @@ export function toHttpApiEndpoint<
   TName extends string,
 >(
   definition: EndpointDefinition<
-    'DELETE',
+    TMethod,
     Api,
     Response,
     Fields,
@@ -299,7 +303,7 @@ export function toHttpApiEndpoint<
   >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
-  'DELETE',
+  TMethod,
   never,
   never,
   never,
@@ -313,7 +317,6 @@ export function toHttpApiEndpoint<
 >
 
 // Implementation
-// @ts-expect-error
 export function toHttpApiEndpoint(definition: any) {
   switch (definition.method) {
     case 'GET': {
@@ -324,10 +327,10 @@ export function toHttpApiEndpoint(definition: any) {
 
       const foo = HttpApiEndpoint.get(definition.name, definition.path)
         .addSuccess(definition.response)
-        .setUrlParams(urlParamsSchema)
+        // .setUrlParams(urlParamsSchema)
         .setHeaders(Schema.Struct({ Authorization: Schema.String }))
 
-      return foo
+      return foo as any
     }
     case 'POST': {
       const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.creatableFields)
@@ -337,7 +340,7 @@ export function toHttpApiEndpoint(definition: any) {
         .addSuccess(definition.response)
         .setHeaders(Schema.Struct({ Authorization: Schema.String }))
 
-      return foo
+      return foo as any
     }
     case 'PATCH': {
       const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.updatableFields)
@@ -347,7 +350,7 @@ export function toHttpApiEndpoint(definition: any) {
         .addSuccess(definition.response)
         .setHeaders(Schema.Struct({ Authorization: Schema.String }))
 
-      return foo
+      return foo as any
     }
     case 'DELETE': {
       const foo = HttpApiEndpoint.del(definition.name, definition.path)
@@ -356,7 +359,7 @@ export function toHttpApiEndpoint(definition: any) {
         })
         .setHeaders(Schema.Struct({ Authorization: Schema.String })) // DELETE typically returns 204 No Content
 
-      return foo
+      return foo as any
     }
   }
 }
