@@ -1,121 +1,216 @@
-# 05: Using the API Client
+# 05: Using the API Adapter (Current Implementation)
 
-Once the client has been configured and created with `createApi`, you can use it to interact with the third-party API. The client is designed to be **Effect-native first**, providing a powerful and composable interface out of the box.
+**⚠️ Note: This document describes the current implementation using HttpApiClient. The planned streaming interfaces and convenience methods are not yet implemented.**
 
-For convenience, every method also includes a `.run()` helper to easily execute the operation and get a `Promise` back, making it accessible to any JavaScript/TypeScript application.
+Once the API adapter has been configured and the HttpApiClient has been created, you can use it to interact with the third-party API. The client is built on top of **Effect's HttpApiClient**, providing a type-safe interface.
 
-This guide assumes you have a configured client instance:
-```typescript
-import { pcoClient } from './your-client-setup'; // Your configured client instance
-```
+This guide assumes you have a configured client instance available in your Effect context.
 
-## 1. The Default Path: Composable Effects
+## 1. Current Implementation: HttpApiClient Effects
 
-By default, calling an endpoint method returns a high-level `Effect`. This `Effect` describes the entire operation—including authentication, rate limiting, retries, and error parsing—but does not execute it. This allows you to compose it with other Effects before running the final, combined program.
+The current implementation provides HttpApiClient-based methods that return Effects. All operations must be run within an Effect context with the proper services available.
 
-### Example: Fetching a Single Record
+### Example: Setting Up the Client Context
 
-Calling `pcoClient.people.getById(...)` returns an `Effect` that, when run, will fetch the person.
+First, you need to set up the Effect context with the required services:
 
 ```typescript
-import { Effect } from 'effect';
+import { Effect, Layer } from 'effect'
+import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
+import { TokenManagerLive } from '@openfaith/adapter-core/api/tokenManager'
+import { PcoAuthLive } from '@openfaith/pco/api/pcoAuthLayer'
 
-function getAndEnrichPerson(personId: string) {
-  // Calling the method directly returns the raw Effect.
-  const getPersonEffect = pcoClient.people.getById({
-    path: { personId },
-    query: { include: ['addresses'] }
-  });
+// The live services layer
+const ServicesLive = Layer.mergeAll(
+  TokenManagerLive,
+  PcoAuthLive,
+  // ... other required services
+)
 
-  // You can now compose it with other Effects.
-  return getPersonEffect.pipe(
-    Effect.flatMap(person => enrichWithLocalData(person)),
-    Effect.tap((enrichedPerson) => Effect.log(`Enriched ${enrichedPerson.name}`)),
-    // Add custom error handling for this specific workflow.
-    Effect.catchTag('ApiError', (e) => {
-      if (e.tag === 'NotFoundError') {
-        return Effect.log('Person not in PCO, creating a new local record.');
-      }
-      // Re-raise other API errors
-      return Effect.fail(e);
-    })
-  );
-}
-
-// The returned value is an Effect that can be composed further or run.
-const program = getAndEnrichPerson('54321');
-Effect.runPromise(program);
-```
-
-### Example: Streaming Large Collections
-
-For endpoints that return collections, the primary method (e.g., `streamPages`) returns a `Stream`. This is the most memory-efficient and powerful way to handle large datasets.
-
-```typescript
-import { Stream, Effect } from 'effect';
-import { db, kvStore } from './services'; // Your database/KV services
-
-// Get a stream of pages by calling the method directly.
-const personPageStream = pcoClient.people.streamPages({
-  query: { order: 'created_at' }
-});
-
-const syncEffect = Stream.runForEach(
-  personPageStream,
-  (page) => Effect.gen(function* () {
-    // This effect runs for each page of results.
-    yield* Effect.log(`Processing page with ${page.items.length} people...`);
-    yield* db.insertPeople(page.items);
-    yield* kvStore.set('resume-url:people', page.nextPageUrl);
+// Your application effect
+const program = Effect.gen(function* () {
+  const pcoClient = yield* PcoHttpClient
+  
+  // Now you can use the client
+  const peopleResponse = yield* pcoClient.people.getAll({
+    // Query parameters go here
   })
-);
+  
+  return peopleResponse
+})
 
-// Run the entire stream processing as a single Effect.
-Effect.runPromise(syncEffect);
+// Run the program with services
+Effect.runPromise(program.pipe(Effect.provide(ServicesLive)))
 ```
-The client also provides a `streamAll()` method for convenience when page-level metadata is not needed.
 
-## 2. The Simple Path: Promises with `.run()`
-
-For developers who need a quick result or are working in a non-Effect codebase, every method provides a `.run()` helper function attached to it. This function executes the Effect and returns a standard `Promise`.
-
-### Example: Fetching a Single Record with `.run()`
+### Example: Fetching a Collection
 
 ```typescript
-async function fetchPerson(personId: string) {
-  try {
-    // The `.run()` method executes the Effect and returns a Promise.
-    const person = await pcoClient.people.getById.run({
-      path: { personId: personId }
-    });
+import { Effect } from 'effect'
+import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 
-    console.log(`Fetched person: ${person.name}`);
-    return person;
-  } catch (error) {
-    console.error('Failed to fetch person:', error);
-    // The rejected 'error' object will be a structured, typed ApiError.
+const fetchPeople = Effect.gen(function* () {
+  const client = yield* PcoHttpClient
+  
+  // Fetch all people with includes
+  const response = yield* client.people.getAll({
+    // Query parameters can be added here if the endpoint supports them
+    // Currently, query parameter support is limited in the implementation
+  })
+  
+  // The response follows PCO's JSON:API structure
+  console.log(`Found ${response.data.length} people`)
+  console.log(`Total count: ${response.meta.total_count}`)
+  
+  // Access individual person data
+  for (const person of response.data) {
+    console.log(`Person: ${person.attributes.first_name} ${person.attributes.last_name}`)
   }
-}
-
-fetchPerson('12345');
+  
+  return response
+})
 ```
 
-### Example: Fetching an Entire Collection with `.run()`
-
-For collection endpoints, you can use the convenience `getAll` method, which handles all pagination and returns a single array.
-
-**Warning:** Use `getAll` with caution. It loads the *entire* dataset into memory and is only suitable for collections you know will be small. For large datasets, always prefer the streaming interfaces.
+### Example: Fetching a Single Resource
 
 ```typescript
-async function findActiveAdmins() {
-  const admins = await pcoClient.people.getAll.run({
-    query: {
-      where: { status: 'active' }
-    }
-  });
-
-  console.log(`Found ${admins.length} active admins.`);
-}
+const fetchPersonById = (personId: string) => Effect.gen(function* () {
+  const client = yield* PcoHttpClient
+  
+  // Fetch a specific person
+  const response = yield* client.people.getById({
+    path: { personId }
+  })
+  
+  // Single resource response structure
+  const person = response.data
+  console.log(`Fetched: ${person.attributes.first_name} ${person.attributes.last_name}`)
+  
+  // Access included relationships if requested
+  if (response.included) {
+    console.log(`Included ${response.included.length} related resources`)
+  }
+  
+  return response
+})
 ```
 
-This "Effect-first" design provides a powerful, composable default experience while still offering a simple, promise-based escape hatch for straightforward use cases.
+### Example: Error Handling
+
+```typescript
+const safeFetchPerson = (personId: string) => Effect.gen(function* () {
+  const client = yield* PcoHttpClient
+  
+  const result = yield* client.people.getById({ path: { personId } }).pipe(
+    Effect.catchTag('HttpBodyError', (error) => {
+      console.error('Failed to parse response:', error)
+      return Effect.fail('ParseError')
+    }),
+    Effect.catchTag('RequestError', (error) => {
+      console.error('HTTP request failed:', error)
+      return Effect.fail('NetworkError')
+    }),
+    Effect.catchAll((error) => {
+      console.error('Unknown error:', error)
+      return Effect.fail('UnknownError')
+    })
+  )
+  
+  return result
+})
+```
+
+## 2. Current Limitations
+
+The current implementation has several limitations compared to the planned design:
+
+### ❌ **No Streaming Interfaces**
+```typescript
+// This does NOT work yet:
+// const pageStream = pcoClient.people.streamPages({ ... })
+// const allPeople = pcoClient.people.streamAll({ ... })
+```
+
+### ❌ **No .run() Helper Methods**
+```typescript
+// This does NOT work yet:
+// const person = await pcoClient.people.getById.run({ path: { personId: '123' } })
+```
+
+### ❌ **Limited Query Parameter Support**
+The current endpoint definitions include query metadata, but the HttpApiClient setup doesn't fully utilize them yet.
+
+### ❌ **No Built-in Pagination Handling**
+You need to manually handle pagination by checking the `links.next` property and making additional requests.
+
+### Example: Manual Pagination (Current Workaround)
+
+```typescript
+const fetchAllPeoplePaginated = Effect.gen(function* () {
+  const client = yield* PcoHttpClient
+  const allPeople: any[] = []
+  
+  let response = yield* client.people.getAll({})
+  allPeople.push(...response.data)
+  
+  // Manual pagination loop
+  while (response.links.next) {
+    // You would need to construct the next request manually
+    // This is cumbersome with the current implementation
+    console.log('Next page available, but manual implementation needed')
+    break
+  }
+  
+  return allPeople
+})
+```
+
+## 3. Token Management (Current Implementation)
+
+The current implementation handles authentication through the `TokenManager` service:
+
+```typescript
+import { TokenManager } from '@openfaith/adapter-core/api/tokenManager'
+
+const checkTokenStatus = Effect.gen(function* () {
+  const tokenManager = yield* TokenManager
+  
+  // Load token for a specific organization
+  const tokenState = yield* tokenManager.loadTokenState('org-123')
+  
+  console.log(`Token expires at: ${new Date(tokenState.createdAt.getTime() + tokenState.expiresIn * 1000)}`)
+  
+  return tokenState
+})
+```
+
+## 4. Planned vs. Current Implementation
+
+### What Works Today:
+- ✅ Type-safe HTTP client using Effect's HttpApiClient
+- ✅ Automatic authentication via TokenManager
+- ✅ JSON:API response parsing
+- ✅ Basic CRUD operations (GET, POST, PATCH, DELETE)
+- ✅ Database-backed token persistence and refresh
+
+### What's Coming (Planned):
+- 🚧 **Streaming Interfaces**: `streamPages()`, `streamAll()` for efficient pagination
+- 🚧 **Promise-based `.run()` Methods**: For easier integration with non-Effect codebases
+- 🚧 **Advanced Query Support**: Full utilization of query metadata from endpoint definitions
+- 🚧 **Automatic Pagination**: Built-in handling of paginated responses
+- 🚧 **Rate Limiting**: Distributed rate limit management
+- 🚧 **Comprehensive Error Mapping**: API-specific error handling with retry strategies
+
+### Migration Path:
+The current Effect-based approach provides a solid foundation. When the planned features are implemented, they will be built on top of the existing HttpApiClient infrastructure, ensuring backward compatibility while adding the convenience methods and streaming capabilities described in the original vision.
+
+## 5. Integration with Sync Engine (Future)
+
+Once the Sync Engine is implemented, it will consume this API adapter to perform durable, long-running sync operations. The sync engine will:
+
+- Use the streaming interfaces for efficient data processing
+- Leverage the error handling for retry logic
+- Utilize the pagination support for processing large datasets
+- Integrate with the token management for authentication
+
+The current implementation provides the foundation needed for these future capabilities.

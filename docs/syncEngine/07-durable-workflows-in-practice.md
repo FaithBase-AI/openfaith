@@ -1,128 +1,430 @@
-# 07: Durable Workflows in Practice
+# 07: Durable Workflows in Practice (Planned)
 
-In our Sync Engine, every synchronization task is modeled as a **durable workflow**. This isn't just an implementation detail; it's the core of how we achieve resilience and observability. This document explains the key patterns we use to build these workflows with `@effect/workflow`.
+**⚠️ Note: This document describes planned functionality. The sync engine's durable workflow system is not yet implemented. Current status: Foundation exists with entity manifest system.**
 
-## 1. Anatomy of a Sync Workflow
+This document provides concrete examples of how the durable workflows will work in practice. The Sync Engine will use two main types of workflows that work together to consume entity manifests and orchestrate data synchronization.
 
-At its heart, a workflow is a durable, resumable function. We define it with a clear interface and then provide its implementation.
+## 1. The Two-Workflow Architecture (Planned)
 
-### A. The Definition (`Workflow.make`)
+The sync engine will implement a **two-tiered workflow system** based on entity manifests:
 
-Every workflow starts with a definition that specifies its unique name, the data it requires (its payload), and its idempotency key.
+### Main Orchestrator Workflow
+- **Purpose**: Consumes entity manifests to build dependency graphs and coordinate sync execution
+- **Input**: Entity manifest (e.g., `pcoEntityManifest`) + sync configuration
+- **Output**: Fan-out to multiple Entity Sync Workflows in dependency order
 
-```typescript
-import { Workflow, Schema } from '@effect/workflow';
-import { pcoClient } from '@your-org/pco-client';
+### Entity Sync Workflow  
+- **Purpose**: Handles actual data synchronization for individual entities
+- **Input**: Entity name + sync type + organization context
+- **Output**: Synced entity data in database
 
-// The payload the workflow needs to start.
-const SyncEntityPayload = Schema.Struct({
-  orgId: Schema.String,
-  // Use the API client's parameter types for consistency.
-  clientParams: pcoClient.people.streamPages.Params,
-});
+## 2. Main Orchestrator Workflow Implementation (Planned)
 
-// The workflow definition.
-const SyncEntityWorkflow = Workflow.make({
-  /** A globally unique name for this type of workflow. */
-  name: "SyncEntityWorkflow",
-  
-  /** The schema for the payload. */
-  payload: SyncEntityPayload,
-
-  /**
-   * The idempotency key. The cluster uses this to prevent duplicate
-   * workflow executions. If a workflow with this key is already running
-   * or has completed, a new one will not be started.
-   */
-  idempotencyKey: (payload) => `sync-entity:${payload.orgId}:${payload.entityName}`
-});
-```
-The `idempotencyKey` is critical. It ensures that if we accidentally try to schedule the same sync job twice, only one will actually run.
-
-### B. The Implementation (`.toLayer`)
-
-The implementation contains the business logic. It's an `Effect` that uses special, durable primitives provided by `@effect/workflow`.
+This workflow will be the "conductor" that reads entity manifests and orchestrates the entire sync process:
 
 ```typescript
-const SyncEntityWorkflowLayer = SyncEntityWorkflow.toLayer(
-  // The implementation is an Effect function that receives the payload.
+// Planned implementation
+import { Workflow, Activity, Schema } from '@effect/workflow'
+import { Effect, Array, pipe } from 'effect'
+
+const MainSyncOrchestratorWorkflow = Workflow.make({
+  name: "MainSyncOrchestrator",
+  payload: Schema.Struct({
+    orgId: Schema.String,
+    adapterName: Schema.Literal("pco"), // Will expand to multiple adapters
+    syncType: Schema.Union(
+      Schema.Literal("full"),
+      Schema.Literal("delta"), 
+      Schema.Literal("reconciliation")
+    ),
+    triggeredBy: Schema.optional(Schema.String), // "webhook", "schedule", "manual"
+  }),
+  idempotencyKey: (payload) => 
+    `main-sync:${payload.orgId}:${payload.adapterName}:${payload.syncType}`,
+});
+
+const MainSyncOrchestratorWorkflowLayer = MainSyncOrchestratorWorkflow.toLayer(
   Effect.fn(function* (payload) {
-    // 1. Get the API client (this might be an activity itself).
-    const client = yield* getClientForOrg(payload.orgId);
+    yield* Effect.log(`Starting ${payload.syncType} sync for org ${payload.orgId}`);
     
-    // 2. Get the stream of data pages from the client.
-    const pageStream = client.people.streamPages(payload.clientParams);
+    // Step 1: Load the entity manifest for this adapter
+    const manifest = yield* LoadEntityManifestActivity.execute({
+      adapterName: payload.adapterName
+    });
     
-    // 3. Process each page within a durable Activity.
-    yield* Stream.run(pageStream, Sink.forEach(processPageActivity));
+    yield* Effect.log(`Loaded manifest with ${Object.keys(manifest).length} entities`);
     
-    // 4. Log completion.
-    yield* Effect.log("Sync completed successfully.");
+    // Step 2: Build dependency graph from manifest
+    const dependencyGraph = yield* BuildDependencyGraphActivity.execute({
+      manifest,
+      syncType: payload.syncType,
+    });
+    
+    yield* Effect.log(`Built dependency graph with ${dependencyGraph.syncOrder.length} entities`);
+    
+    // Step 3: Execute entities in dependency order
+    const results = yield* pipe(
+      dependencyGraph.syncOrder,
+      Array.map((entityName) => ({
+        entityName,
+        workflow: EntitySyncWorkflow.execute({
+          orgId: payload.orgId,
+          adapterName: payload.adapterName,
+          entityName,
+          syncType: payload.syncType,
+          dependencies: dependencyGraph.dependencies[entityName] || { hard: [], soft: [] },
+        })
+      })),
+      Array.reduce([], (acc, { entityName, workflow }) =>
+        Effect.gen(function* () {
+          // Wait for hard dependencies to complete
+          const hardDeps = dependencyGraph.dependencies[entityName]?.hard || [];
+          const completedHardDeps = hardDeps.filter(dep => 
+            acc.some(result => result.entityName === dep && result.status === "completed")
+          );
+          
+          if (completedHardDeps.length === hardDeps.length) {
+            yield* Effect.log(`Starting sync for ${entityName} (dependencies satisfied)`);
+            const result = yield* workflow;
+            return [...acc, { entityName, status: "completed", result }];
+          } else {
+            yield* Effect.log(`Waiting for dependencies for ${entityName}: ${hardDeps.join(", ")}`);
+            return [...acc, { entityName, status: "waiting", result: null }];
+          }
+        })
+      )
+    );
+    
+    yield* Effect.log(`Completed sync orchestration. Results: ${JSON.stringify(results)}`);
+    
+    return {
+      orgId: payload.orgId,
+      adapterName: payload.adapterName,
+      syncType: payload.syncType,
+      entitiesProcessed: results.length,
+      results
+    };
   })
 );
 ```
 
-## 2. The Activity: The Unit of Durable Work
+## 3. Entity Sync Workflow Implementation (Planned)
 
-A workflow is composed of **Activities**. An `Activity` is a wrapper around a piece of work that guarantees it will be executed **at-most-once**, even if the workflow restarts. This is our fundamental building block for durability.
-
-We create a new, uniquely named `Activity` for each page of data we process.
+This workflow will handle the actual data synchronization for individual entities:
 
 ```typescript
-function processPageActivity(page: PaginatedResponse<Person>) {
-  return Activity.make({
-    // The name MUST be unique for this specific unit of work.
-    // This prevents re-processing the same page after a restart.
-    name: `ProcessPersonPage-org:${page.orgId}-offset:${page.offset}`,
+// Planned implementation
+const EntitySyncWorkflow = Workflow.make({
+  name: "EntitySync",
+  payload: Schema.Struct({
+    orgId: Schema.String,
+    adapterName: Schema.String,
+    entityName: Schema.String,
+    syncType: Schema.Union(
+      Schema.Literal("full"),
+      Schema.Literal("delta"),
+      Schema.Literal("reconciliation")
+    ),
+    dependencies: Schema.Struct({
+      hard: Schema.Array(Schema.String),
+      soft: Schema.Array(Schema.String),
+    }),
+  }),
+  idempotencyKey: (payload) => 
+    `entity-sync:${payload.orgId}:${payload.adapterName}:${payload.entityName}:${payload.syncType}`,
+});
+
+const EntitySyncWorkflowLayer = EntitySyncWorkflow.toLayer(
+  Effect.fn(function* (payload) {
+    yield* Effect.log(`Starting ${payload.syncType} sync for entity: ${payload.entityName}`);
     
-    // The schema for the activity's result (can be Schema.Void)
-    success: Schema.Void,
+    // Step 1: Get entity definition from manifest
+    const entityDefinition = yield* GetEntityDefinitionActivity.execute({
+      adapterName: payload.adapterName,
+      entityName: payload.entityName,
+    });
     
-    // The actual work to be done.
-    execute: Effect.gen(function* () {
-      // 1. Transform data from API model to our DB model.
-      const dbPeople = yield* transformPeople(page.items);
+    // Step 2: Select appropriate endpoint based on sync type
+    const endpoint = yield* SelectEndpointActivity.execute({
+      entityDefinition,
+      syncType: payload.syncType,
+    });
+    
+    yield* Effect.log(`Selected endpoint: ${endpoint.name} for ${payload.entityName}`);
+    
+    // Step 3: Get API client for this organization
+    const apiClient = yield* GetApiClientActivity.execute({
+      orgId: payload.orgId,
+      adapterName: payload.adapterName,
+    });
+    
+    // Step 4: Determine sync parameters (e.g., last sync timestamp for delta)
+    const syncParams = yield* GetSyncParametersActivity.execute({
+      orgId: payload.orgId,
+      entityName: payload.entityName,
+      syncType: payload.syncType,
+    });
+    
+    // Step 5: Stream data from API in pages
+    let pageNumber = 0;
+    let hasMorePages = true;
+    let totalRecordsProcessed = 0;
+    
+    while (hasMorePages) {
+      const pageResult = yield* ProcessEntityPageActivity.execute({
+        orgId: payload.orgId,
+        entityName: payload.entityName,
+        apiClient,
+        endpoint,
+        pageNumber,
+        syncParams,
+      });
       
-      // 2. Save the batch to our database.
-      yield* db.insertPeople(dbPeople);
+      totalRecordsProcessed += pageResult.recordsProcessed;
+      hasMorePages = pageResult.hasMorePages;
+      pageNumber++;
       
-      // 3. Update the 'last processed' state in a KV store.
-      yield* kvStore.set('sync-progress:person', page.offset);
-    })
-  }).pipe(
-    // We can add retry logic specific to this activity.
-    Activity.retry({
-      schedule: Schedule.exponential("1 second").pipe(Schedule.upTo("5 minutes"))
-    })
-  );
-}
-```
-By wrapping the page processing in an `Activity`, we create a durable checkpoint. The workflow engine records the completion of `ProcessPersonPage-org:abc-offset:100` before moving on. If the system crashes, it knows not to re-run this activity on restart.
-
-## 3. The Fan-Out Pattern: For Dependent Syncs
-
-A common requirement is to sync a parent entity and then sync all of its children. For example, sync a `Group`, and then sync all `Event`s for that group. We achieve this by having one workflow spawn other workflows.
-
-This is the "fan-out" pattern. It's highly scalable because the cluster can distribute the child workflows across all available nodes.
-
-```typescript
-// Inside a 'SyncAllGroups' workflow...
-const groupStream = client.groups.streamAll({ /* ... */ });
-
-yield* Stream.runForEach(groupStream, (group) =>
-  // For each group, we execute a *different* workflow.
-  SyncEventsForGroupWorkflow.execute({
-    orgId: group.orgId,
-    groupId: group.id,
+      yield* Effect.log(
+        `Processed page ${pageNumber} for ${payload.entityName}: ` +
+        `${pageResult.recordsProcessed} records, hasMore: ${hasMorePages}`
+      );
+      
+      // Add durable delay between pages to respect rate limits
+      if (hasMorePages) {
+        yield* Workflow.sleep("1 second");
+      }
+    }
     
-    // The idempotency key is critical to prevent duplicate child syncs.
-    idempotencyKey: `sync-events-for-group:${group.id}`
-  }).pipe(
-    // We use forkDaemon so the parent workflow doesn't wait for all
-    // child workflows to complete. It just schedules them and moves on.
-    Effect.forkDaemon
-  )
+    // Step 6: Update sync completion status
+    yield* UpdateSyncStatusActivity.execute({
+      orgId: payload.orgId,
+      entityName: payload.entityName,
+      syncType: payload.syncType,
+      totalRecordsProcessed,
+      completedAt: new Date(),
+    });
+    
+    yield* Effect.log(`Completed sync for ${payload.entityName}: ${totalRecordsProcessed} records`);
+    
+    return {
+      entityName: payload.entityName,
+      syncType: payload.syncType,
+      totalRecordsProcessed,
+      pagesProcessed: pageNumber,
+    };
+  })
 );
 ```
 
-This pattern allows a single "master" sync job to safely and durably schedule tens of thousands of dependent jobs, creating a resilient and massively parallel system.
+## 4. Durable Activities (Planned)
+
+Activities are the building blocks that perform the actual work. They are durable and can be retried if they fail:
+
+### Manifest and Dependency Activities
+
+```typescript
+// Planned implementation
+const LoadEntityManifestActivity = Activity.make({
+  name: "LoadEntityManifest",
+  payload: Schema.Struct({
+    adapterName: Schema.String,
+  }),
+  handler: Effect.fn(function* (payload) {
+    // Load the entity manifest (e.g., pcoEntityManifest)
+    const manifest = yield* getManifestForAdapter(payload.adapterName);
+    
+    return {
+      manifest,
+      entityCount: Object.keys(manifest).length,
+    };
+  }),
+});
+
+const BuildDependencyGraphActivity = Activity.make({
+  name: "BuildDependencyGraph", 
+  payload: Schema.Struct({
+    manifest: Schema.Record(Schema.String, Schema.Any),
+    syncType: Schema.String,
+  }),
+  handler: Effect.fn(function* (payload) {
+    const entities = Object.keys(payload.manifest);
+    const dependencies: Record<string, { hard: string[], soft: string[] }> = {};
+    
+    // Analyze each entity for dependencies
+    for (const entityName of entities) {
+      const entityDef = payload.manifest[entityName];
+      
+      // Extract dependencies from schema analysis
+      const hardDeps = yield* extractHardDependencies(entityDef);
+      const softDeps = yield* extractSoftDependencies(entityDef);
+      
+      dependencies[entityName] = { hard: hardDeps, soft: softDeps };
+    }
+    
+    // Build topological sort order
+    const syncOrder = yield* topologicalSort(dependencies);
+    
+    return { dependencies, syncOrder };
+  }),
+});
+```
+
+### Data Processing Activities
+
+```typescript
+// Planned implementation
+const ProcessEntityPageActivity = Activity.make({
+  name: "ProcessEntityPage",
+  payload: Schema.Struct({
+    orgId: Schema.String,
+    entityName: Schema.String,
+    apiClient: Schema.Any,
+    endpoint: Schema.Any,
+    pageNumber: Schema.Number,
+    syncParams: Schema.Record(Schema.String, Schema.Any),
+  }),
+  handler: Effect.fn(function* (payload) {
+    // Call the API for this page
+    const apiResponse = yield* payload.apiClient.execute(
+      payload.endpoint,
+      {
+        ...payload.syncParams,
+        offset: payload.pageNumber * 25, // PCO page size
+        per_page: 25,
+      }
+    );
+    
+    // Transform API data to canonical format
+    const transformedData = yield* transformApiData(
+      apiResponse.data,
+      payload.entityName
+    );
+    
+    // Save to database
+    yield* saveToDatabase(
+      payload.orgId,
+      payload.entityName,
+      transformedData
+    );
+    
+    return {
+      recordsProcessed: transformedData.length,
+      hasMorePages: apiResponse.links?.next != null,
+      pageNumber: payload.pageNumber,
+    };
+  }),
+});
+```
+
+## 5. Workflow Execution Examples (Planned)
+
+### Example 1: Full Sync for New Organization
+
+```typescript
+// Planned usage
+const result = yield* MainSyncOrchestratorWorkflow.execute({
+  orgId: "org_123",
+  adapterName: "pco",
+  syncType: "full",
+  triggeredBy: "manual",
+});
+
+// This would:
+// 1. Load pcoEntityManifest
+// 2. Build dependency graph: Campus → Household → Person → Address
+// 3. Execute EntitySyncWorkflow for each entity in order
+// 4. Each EntitySyncWorkflow streams all pages for that entity
+```
+
+### Example 2: Delta Sync for Existing Organization
+
+```typescript
+// Planned usage - triggered by scheduler every 15 minutes
+const result = yield* MainSyncOrchestratorWorkflow.execute({
+  orgId: "org_123", 
+  adapterName: "pco",
+  syncType: "delta",
+  triggeredBy: "schedule",
+});
+
+// This would:
+// 1. Load pcoEntityManifest
+// 2. Filter to only entities that support delta sync
+// 3. Execute EntitySyncWorkflow with updated_at filters
+// 4. Only process records changed since last sync
+```
+
+### Example 3: Webhook-Triggered Single Entity Update
+
+```typescript
+// Planned usage - triggered by PCO webhook
+const result = yield* EntitySyncWorkflow.execute({
+  orgId: "org_123",
+  adapterName: "pco", 
+  entityName: "Person",
+  syncType: "full", // Full sync for this specific entity
+  dependencies: { hard: [], soft: [] }, // No deps for single entity
+});
+
+// This would:
+// 1. Get Person entity definition from manifest
+// 2. Select appropriate endpoint (getPersonById)
+// 3. Sync only the specific person mentioned in webhook
+```
+
+## 6. Durability Guarantees (Planned)
+
+### Workflow State Persistence
+- Every workflow step will be persisted to PostgreSQL
+- If server restarts, workflows resume from last completed step
+- No data loss even during deployments or crashes
+
+### Activity Retry Logic
+- Activities can be retried with exponential backoff
+- Configurable retry limits per activity type
+- Dead letter queues for failed activities
+
+### Exactly-Once Processing
+- Idempotent workflow keys prevent duplicate execution
+- Database transactions ensure atomic operations
+- API client includes request deduplication
+
+## 7. Current Implementation Status
+
+### What Exists Today:
+- ✅ **Entity Manifest System**: Foundation with `pcoEntityManifest` ready for consumption
+- ✅ **API Client Layer**: Complete HTTP client with authentication for workflow activities
+- ✅ **Database Layer**: PostgreSQL setup ready for workflow state persistence
+- ✅ **Type Safety**: Full TypeScript integration throughout
+
+### What's Planned (Not Yet Implemented):
+- 🚧 **@effect/workflow Setup**: Workflow runtime and persistence configuration
+- 🚧 **Main Orchestrator**: Entity manifest consumption and dependency resolution
+- 🚧 **Entity Sync Workflows**: Individual entity synchronization logic
+- 🚧 **Durable Activities**: Retry logic and failure handling
+- 🚧 **Workflow Scheduling**: Cron-based and webhook-triggered execution
+- 🚧 **Monitoring Dashboard**: Real-time workflow status and metrics
+
+## 8. Development Roadmap
+
+### Phase 1: Workflow Foundation
+- Set up `@effect/workflow` runtime
+- Implement basic workflow state persistence
+- Create simple test workflows
+
+### Phase 2: Manifest Integration
+- Build LoadEntityManifestActivity
+- Implement BuildDependencyGraphActivity  
+- Create entity dependency analysis logic
+
+### Phase 3: Core Sync Workflows
+- Implement MainSyncOrchestratorWorkflow
+- Build EntitySyncWorkflow with streaming
+- Add ProcessEntityPageActivity with database integration
+
+### Phase 4: Production Features
+- Add comprehensive error handling and retries
+- Implement workflow monitoring and alerting
+- Create admin dashboard for workflow management
+
+The entity manifest system provides the perfect foundation for this workflow architecture, ensuring that sync orchestration will be driven by actual API capabilities rather than hardcoded assumptions.

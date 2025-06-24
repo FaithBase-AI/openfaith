@@ -1,144 +1,196 @@
-# 03: API Client Configuration
+# 03: API Adapter Configuration (Current Implementation)
 
-The API Client library is designed around a clear, two-step process:
+**⚠️ Note: This document describes the current implementation. The original design with `createApi` and `RuntimeConfig` is planned for the future.**
 
-1.  **Define:** You first declare the "shape" of your API by creating a series of static endpoint definitions. These are simple, serializable JavaScript objects.
-2.  **Configure & Create:** You then provide runtime configuration (like API tokens and error handling logic) along with your definitions to the `createApi` function, which produces a live, executable client.
+The API Adapter library is currently designed around a simpler, direct approach using Effect's HttpApiClient:
 
-This architecture separates the *what* (what endpoints exist) from the *how* (how to authenticate, handle errors, and manage rate limits).
+1.  **Define:** You create endpoint definitions using the `pcoApiAdapter()` helper function.
+2.  **Create API Groups:** You organize endpoints into HttpApiGroup objects.
+3.  **Build HttpApi:** You combine groups into a complete HttpApi definition.
+4.  **Create Client:** You use HttpApiClient with authentication and other services.
+
+This architecture separates the *what* (what endpoints exist) from the *how* (how to authenticate and make requests).
 
 ---
 
-## Part 1: Defining Your API Endpoints
+## Part 1: Defining Your API Endpoints (Current)
 
-Before creating a client, you must describe the API surface you want to support. This is done by creating an `EndpointDefinition` for each API endpoint. We use a helper function, `defineEndpoint`, to ensure these definitions are type-safe.
+Before creating a client, you must describe the API surface you want to support. This is done by creating endpoint definitions using the `pcoApiAdapter()` helper function.
 
-These definitions should live in their own files, separate from any runtime code (e.g., in `src/pco/endpoints/people.ts`).
+These definitions should live in their own files, separate from any runtime code (e.g., in `adapters/pco/modules/people/pcoPeopleEndpoints.ts`).
 
-### The `defineEndpoint` Helper
+### The `pcoApiAdapter` Helper
 
-This is a standalone utility that you import from the library. It takes a single configuration object.
+This is the current utility function that you import from the PCO adapter library. It takes a single configuration object and automatically generates the appropriate response schemas for PCO's JSON:API format.
 
 ```typescript
-import { defineEndpoint } from '@your-org/api-client';
-import { PCOPerson, BasePerson } from '../schemas'; // Your pre-defined schemas
+import { pcoApiAdapter } from '@openfaith/pco/api/pcoApiAdapter'
+import { PcoPerson } from '@openfaith/pco/modules/people/pcoPersonSchema'
 
-export const getPersonById = defineEndpoint({
-  /** A unique, dot-notation name. This determines the path on the final client object. */
-  name: 'people.getById',
+export const getAllPeopleDefinition = pcoApiAdapter({
+  /** The API schema for the raw PCO resource */
+  apiSchema: PcoPerson,
   
-  /** The HTTP method for the endpoint. */
+  /** The entity name */
+  entity: 'Person',
+  
+  /** The HTTP method for the endpoint */
   method: 'GET',
   
-  /** The URL path, with placeholders like :entityId for path parameters. */
-  path: '/people/v2/people/:personId',
+  /** The API module this endpoint belongs to */
+  module: 'people',
   
-  /** The schema for the raw API response. */
-  apiSchema: PCOPerson,
+  /** The endpoint operation name */
+  name: 'getAll',
   
-  /** The schema for the final, canonical data model. */
-  canonicalSchema: BasePerson,
+  /** The URL path for the endpoint */
+  path: '/people/v2/people',
   
-  // --- Endpoint Capabilities ---
-  // These fields provide metadata for the sync engine and other consumers.
+  /** Whether this endpoint returns a collection */
+  isCollection: true,
   
-  /** A list of valid values for the 'include' query parameter. */
-  includes: ['addresses', 'emails', 'households'],
-
-  /** Does this entity's lifecycle emit webhook events? */
-  supportsWebhooks: true,
+  /** Available relationships that can be included */
+  includes: [
+    'addresses',
+    'emails',
+    'primary_campus',
+    'field_data',
+    'households',
+    // ... more includes
+  ],
   
-  /** The attribute name used for delta-syncing (e.g., 'updated_at'). */
-  deltaSyncField: 'updated_at'
-});
+  /** Fields that can be used for ordering responses */
+  orderableBy: [
+    'accounting_administrator',
+    'anniversary',
+    'birthdate',
+    'created_at',
+    'first_name',
+    // ... more orderable fields
+  ],
+  
+  /** Query configuration */
+  queryableBy: {
+    /** Fields that can be queried with where clauses */
+    fields: [
+      'accounting_administrator',
+      'anniversary',
+      'birthdate',
+      'created_at',
+      // ... more queryable fields
+    ],
+    /** Special query parameters */
+    special: [
+      'id',
+      'date_time',
+      'mfa_configured',
+      'primary_campus_id',
+      'search_name',
+      // ... more special params
+    ],
+  },
+} as const)
 ```
-You would create one such definition for every endpoint you intend to use (`getAllPeople`, `createPerson`, etc.) and export them.
 
-*(For a full guide on all available options in `defineEndpoint`, see `04-defining-endpoints.md`.)*
+You would create one such definition for every endpoint you intend to use (`getPersonById`, `createPerson`, etc.) and export them.
 
 ---
 
-## Part 2: Creating the Executable Client
+## Part 2: Creating HttpApi Groups and Client (Current)
 
-Once your endpoints are defined, you can create a live client. The `createApi` function is the factory that brings your static definitions to life by combining them with your runtime configuration.
-
-```typescript
-import { createApi } from '@your-org/api-client';
-import * as pcoEndpoints from './pco-endpoints'; // A file that exports all your definitions
-import { pcoRuntimeConfig } from './pco-runtime-config'; // The runtime config defined below
-
-// createApi consumes the definitions and the runtime config.
-const pcoClient = createApi({
-  runtimeConfig: pcoRuntimeConfig,
-  endpoints: Object.values(pcoEndpoints) // Pass all your defined endpoints
-});
-
-// The returned client is a deeply nested object based on the 'name' property.
-// `pcoClient.people.getById` is now an executable function.
-const person = await pcoClient.people.getById.run({ path: { personId: '123' } });
-```
-
-### The `RuntimeConfig` Object
-
-This object contains all the information that is required to actually *run* requests. It is not specific to any single endpoint.
-
-#### A. Authentication & Rate Limiting (`auth`)
-
-This section controls how the client authenticates and manages rate limits.
+Once your endpoints are defined, you create HttpApi groups and then build a client. This is currently done in the adapter's API definition file.
 
 ```typescript
-interface RuntimeConfig {
-  auth: {
-    tokens: string[];
-    rateLimit: { limit: number; duration: Duration.DurationInput; };
-    applyAuth: (token: string) => (request: HttpClientRequest) => HttpClientRequest;
-    keyValueStore?: SimpleKeyValueStore;
-  };
-  // ...
-}
+// adapters/pco/api/pcoApi.ts
+import { HttpApi, HttpApiGroup } from '@effect/platform'
+import { toHttpApiEndpoint } from '@openfaith/adapter-core/server'
+import { getAllPeopleDefinition } from '@openfaith/pco/modules/people/pcoPeopleEndpoints'
+
+// Create API groups by converting endpoint definitions
+const peopleApiGroup = HttpApiGroup.make('people')
+  .add(toHttpApiEndpoint(getAllPeopleDefinition))
+  // Add more endpoints as needed
+
+// Combine groups into a complete API
+export const PcoApi = HttpApi.make('PCO')
+  .add(peopleApiGroup)
+  .add(tokenApiGroup) // OAuth token endpoints
 ```
 
-*   **`tokens`**: An array of API tokens. The client will use these to distribute load and achieve a higher overall rate limit.
-*   **`rateLimit`**: The limit that applies to a *single token*.
-*   **`applyAuth`**: A function specifying how to add a token to a request (e.g., as a Bearer token).
-*   **`keyValueStore`**: An **optional** provider for a distributed key-value store (like Redis). If provided, rate limiting will be coordinated across all your servers. If omitted, an in-memory store is used, suitable for single-server deployments.
+### Creating the Executable Client
 
-#### B. Error Handling (`errorMap`)
-
-This section declaratively maps API error responses to the library's canonical, typed errors.
+The client is created using Effect's HttpApiClient with authentication and other services:
 
 ```typescript
-interface RuntimeConfig {
-  errorMap: {
-    [statusCode: number]: ErrorDefinition<any>;
-    'default': ErrorDefinition<any>;
-  };
-  // ...
-}
+// Current implementation in adapters/pco/api/pcoApi.ts
+export class PcoHttpClient extends Effect.Service<PcoHttpClient>()('PcoHttpClient', {
+  effect: Effect.gen(function* () {
+    const tokenService = yield* PcoAuth
 
-interface ErrorDefinition<T> {
-  tag: string;
-  schema: Schema.Schema<T>;
-  retryStrategy: 'none' | 'backoff' | 'refresh_auth';
-}
+    const client = (yield* HttpClient.HttpClient).pipe(
+      HttpClient.mapRequestEffect(
+        Effect.fn(function* (request) {
+          const token = yield* tokenService.getValidAccessToken
+          return HttpClientRequest.bearerToken(request, token)
+        }),
+      ),
+    )
+    
+    return yield* HttpApiClient.makeWith(PcoApi, {
+      baseUrl: 'https://api.planningcenteronline.com',
+      httpClient: client,
+    })
+  }),
+}) {}
 ```
 
-*   **`tag`**: A unique string identifier for the error (e.g., `'ValidationError'`).
-*   **`schema`**: An `effect/Schema` describing the error response body for structured error details.
-*   **`retryStrategy`**: Defines the behavior: `'none'` for permanent failures, `'backoff'` for transient server issues, and `'refresh_auth'` for expired tokens.
+### The `TokenManager` Service (Current Implementation)
 
-#### C. Pagination & Data Extraction (`paginationHelpers`)
-
-These functions tell the client how to interpret the specific structure of the API's paginated responses.
+Authentication is handled by the `TokenManager` service, which provides database-backed token storage and refresh:
 
 ```typescript
-interface RuntimeConfig {
-  paginationHelpers: {
-    getPaginationData: (response: HttpClientResponse) => /* ... */;
-    getResponseData: (response: HttpClientResponse) => /* ... */;
-  };
-  // ...
+// Current implementation in adapters/adapter-core/api/tokenManager.ts
+export interface TokenState {
+  readonly accessToken: string
+  readonly refreshToken: string
+  readonly createdAt: Date
+  readonly expiresIn: number
+  readonly tokenKey: string
+  readonly adapter: string
+  readonly orgId: string
+  readonly userId: string
 }
+
+export class TokenManager extends Context.Tag('OpenFaith/TokenManager')<
+  TokenManager,
+  {
+    readonly loadTokenState: (lookupKey: string) => Effect.Effect<TokenState, unknown>
+    readonly saveTokenState: (state: TokenState) => Effect.Effect<void, unknown>
+  }
+>() {}
 ```
 
-By separating the static `EndpointDefinition` from the dynamic `RuntimeConfig`, you create a clean, maintainable, and highly testable system for integrating with any API.
+The `TokenManagerLive` implementation provides:
+- Database persistence using Drizzle ORM
+- Token loading by organization ID
+- Token refresh and update logic
+
+## Part 3: Current vs. Planned Architecture
+
+### What Works Today:
+- ✅ Endpoint definitions with `pcoApiAdapter()`
+- ✅ HttpApi group creation with `toHttpApiEndpoint()`
+- ✅ Database-backed token management
+- ✅ Basic HTTP client with authentication
+- ✅ Type-safe schema validation
+
+### What's Planned (Future):
+- 🚧 **`createApi` Factory Function**: A higher-level API that simplifies client creation
+- 🚧 **RuntimeConfig Object**: Centralized configuration for auth, rate limiting, error handling
+- 🚧 **Rate Limiting**: Distributed rate limit management with Redis/KV store
+- 🚧 **Advanced Error Handling**: Mapping API errors to canonical, typed errors with retry strategies
+- 🚧 **Streaming Interfaces**: `streamPages`, `streamAll` methods for efficient data fetching
+- 🚧 **Pagination Helpers**: Generic helpers for extracting pagination data from responses
+
+### Migration Path:
+The current implementation provides a solid foundation that can be incrementally enhanced. The `pcoApiAdapter()` definitions can be consumed by the future `createApi` factory, and the current HttpApiClient approach can be wrapped with the planned higher-level abstractions while maintaining backward compatibility.

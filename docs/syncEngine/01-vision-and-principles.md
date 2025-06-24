@@ -1,5 +1,7 @@
 # Vision and Principles: The Sync Engine
 
+**⚠️ Implementation Status: The vision described in this document represents our long-term goals. Currently, we have implemented the foundational API adapter layer using `@openfaith/adapter-core` and `@openfaith/pco`. The full sync engine with durable workflows is planned but not yet implemented.**
+
 ## 1. Vision
 
 Our vision is to create a **robust, resilient, and developer-friendly sync engine** capable of integrating with any third-party API, starting with Planning Center Online (PCO).
@@ -52,6 +54,47 @@ The engine's power should not come at the cost of usability. We serve two kinds 
 
 The system will be composed of small, focused, and independent components.
 
-*   **Generic API Client:** The logic for interacting with a specific API (e.g., PCO) will be encapsulated in a standalone library. This library will be reusable and have no knowledge of our specific sync or database logic.
-*   **Separate Sync Engine:** The business logic for orchestration, durability, and data transformation will live in a separate sync engine. This engine consumes the API client as a dependency.
+*   **Generic API Adapter:** The logic for interacting with a specific API (e.g., PCO) will be encapsulated in a standalone library. This library will be reusable and have no knowledge of our specific sync or database logic.
+*   **Separate Sync Engine:** The business logic for orchestration, durability, and data transformation will live in a separate sync engine. This engine consumes the API adapter as a dependency.
 *   **Pluggable Backends:** Core services like rate limiting and state storage will be designed around generic interfaces, allowing us to swap out implementations (e.g., from in-memory to Redis) without changing business logic.
+
+## 4. Current Implementation Progress
+
+We are building this system incrementally, with a focus on getting the foundational pieces right before adding complexity.
+
+### ✅ **Phase 1: API Adapter Foundation (Completed)**
+- **Type-safe HTTP Client**: Using Effect's HttpApiClient with full schema validation
+- **Endpoint Definitions**: Declarative endpoint configuration with `pcoApiAdapter()`
+- **Token Management**: Database-backed authentication with automatic refresh
+- **PCO Integration**: Comprehensive coverage of PCO's People API
+- **Effect Integration**: Native Effect-based architecture throughout
+
+### 🚧 **Phase 2: Sync Engine Core (Planned)**
+- **Durable Workflows**: Implementation using `@effect/cluster` and `@effect/workflow`
+- **Generic Workflow Factory**: Automatic sync job generation from endpoint definitions
+- **Multiple Sync Strategies**: Full, delta, reconciliation, and webhook-triggered syncs
+- **Data Transformation**: Pipeline from API data to canonical internal models
+
+### 🚧 **Phase 3: Advanced Features (Planned)**
+- **Streaming Interfaces**: Efficient pagination with `streamPages()` and `streamAll()`
+- **Rate Limiting**: Distributed rate limit management across cluster nodes
+- **Advanced Error Handling**: Comprehensive retry strategies and error classification
+- **Dependency Management**: Automatic sync ordering based on entity relationships
+
+### 🚧 **Phase 4: Operations & Monitoring (Planned)**
+- **Admin Dashboard**: Web interface for monitoring and managing sync jobs
+- **Metrics & Alerting**: Comprehensive observability and operational tools
+- **Performance Optimization**: Auto-scaling and load balancing capabilities
+
+## 5. Why This Approach Works
+
+The incremental approach allows us to:
+
+1. **Validate Assumptions Early**: The API adapter layer lets us test our approach with real PCO data and real authentication challenges
+2. **Build on Solid Foundations**: By getting the type safety and Effect integration right first, the sync engine will inherit these benefits
+3. **Maintain Momentum**: Each phase delivers value independently, avoiding the "big bang" integration risk
+4. **Learn and Adapt**: Real-world usage of each phase informs the design of the next
+
+The current API adapter implementation already demonstrates several of our core principles in action: type safety through Effect Schema, declarative configuration through `pcoApiAdapter()`, and resilient authentication through the `TokenManager` service.
+
+When the full sync engine is implemented, it will build upon this proven foundation to deliver the complete vision of a robust, resilient, and developer-friendly data synchronization platform.
