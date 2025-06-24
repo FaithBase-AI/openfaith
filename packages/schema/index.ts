@@ -1,3 +1,4 @@
+export * from './adapter/adapterTokensSchema'
 export * from './directory/ofAddressSchema'
 export * from './directory/ofPersonSchema'
 export * from './directory/ofPhoneNumberSchema'

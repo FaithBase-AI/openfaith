@@ -4,8 +4,9 @@ import {
   HttpClientError,
   HttpClientRequest,
 } from '@effect/platform'
-import { RefreshApi } from '@openfaith/pco/api/refreshApi'
-import { TokenKey, TokenManager, type TokenState } from '@openfaith/pco/api/tokenManager'
+import { TokenKey, TokenManager, type TokenState } from '@openfaith/adapter-core/server'
+import { PcoApi } from '@openfaith/pco/api/pcoApi'
+import { env } from '@openfaith/shared'
 import { Clock, Context, Effect, HashMap, Layer, Option, Redacted, Ref } from 'effect'
 
 // Internal service tag
@@ -35,7 +36,7 @@ export const PcoAuthLive = Layer.scoped(
     // const tokenCache = yield* Ref.make(new Map<string, Ref.Ref<TokenState>>())
     const tokenCache = yield* Ref.make(HashMap.empty<string, Ref.Ref<TokenState>>())
 
-    const refreshClient = yield* HttpApiClient.make(RefreshApi, {
+    const pcoClient = yield* HttpApiClient.make(PcoApi, {
       baseUrl: 'https://api.planningcenteronline.com',
     })
 
@@ -89,8 +90,10 @@ export const PcoAuthLive = Layer.scoped(
         }
 
         console.log(`Token for key "${tokenKey}" expired. Refreshing now...`)
-        const newTokens = yield* refreshClient.auth.refreshToken({
-          payload: {
+        const newTokens = yield* pcoClient.token.refreshToken({
+          urlParams: {
+            client_id: env.VITE_PLANNING_CENTER_CLIENT_ID,
+            client_secret: env.PLANNING_CENTER_SECRET,
             grant_type: 'refresh_token',
             refresh_token: currentState.refreshToken,
           },

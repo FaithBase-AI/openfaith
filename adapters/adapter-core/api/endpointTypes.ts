@@ -183,7 +183,7 @@ export type PatchEndpointDefinition<
 
 export type BaseDeleteEndpointDefinition<
   Api,
-  Fields extends Record<string, any>,
+  _Fields extends Record<string, any>,
   TModule extends string,
   TEntity extends string,
   TName extends string,

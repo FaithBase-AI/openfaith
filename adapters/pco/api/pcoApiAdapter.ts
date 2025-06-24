@@ -257,11 +257,11 @@ function createApiAdapter<
 /**
  * Base shape for all PCO API resources
  */
-type PCOApiBase = {
+type PcoApiBase = {
   readonly attributes: Record<string, any>
 }
 
 /**
  * PCO API adapter configured for resources with attributes field
  */
-export const pcoApiAdapter = createApiAdapter<'attributes', PCOApiBase>()
+export const pcoApiAdapter = createApiAdapter<'attributes', PcoApiBase>()

@@ -1,25 +1,25 @@
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BasePhoneNumber, OFCustomField, OFFieldName, OFSkipField } from '@openfaith/schema'
+import { BasePhoneNumber, OFSkipField, OfCustomField, OfFieldName } from '@openfaith/schema'
 import { Schema } from 'effect'
 
-export const PCOPhoneNumberAttributes = Schema.Struct({
+export const PcoPhoneNumberAttributes = Schema.Struct({
   carrier: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'carrier',
-    [OFCustomField]: true,
+    [OfFieldName]: 'carrier',
+    [OfCustomField]: true,
   }),
   country_code: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'countryCode',
+    [OfFieldName]: 'countryCode',
   }),
   created_at: Schema.String.annotations({
-    [OFFieldName]: 'createdAt',
+    [OfFieldName]: 'createdAt',
   }),
   e164: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'number',
-    [OFCustomField]: true,
+    [OfFieldName]: 'number',
+    [OfCustomField]: true,
   }),
   international: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'international',
-    [OFCustomField]: true,
+    [OfFieldName]: 'international',
+    [OfCustomField]: true,
   }),
   location: Schema.NullOr(
     Schema.Union(
@@ -27,42 +27,42 @@ export const PCOPhoneNumberAttributes = Schema.Struct({
       Schema.String,
     ),
   ).annotations({
-    [OFFieldName]: 'location',
+    [OfFieldName]: 'location',
   }),
   national: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'national',
-    [OFCustomField]: true,
+    [OfFieldName]: 'national',
+    [OfCustomField]: true,
   }),
   number: Schema.String.annotations({
-    [OFFieldName]: 'number',
+    [OfFieldName]: 'number',
     // We skip because `e164` gives us the number in E.164 format.
     [OFSkipField]: true,
   }),
   primary: Schema.Boolean.annotations({
-    [OFFieldName]: 'primary',
+    [OfFieldName]: 'primary',
   }),
   updated_at: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'updatedAt',
+    [OfFieldName]: 'updatedAt',
   }),
 })
-export type PCOPhoneNumberAttributes = typeof PCOPhoneNumberAttributes.Type
+export type PcoPhoneNumberAttributes = typeof PcoPhoneNumberAttributes.Type
 
-export const pcoPhoneNumberTransformer = pcoToOf(PCOPhoneNumberAttributes, BasePhoneNumber)
+export const pcoPhoneNumberTransformer = pcoToOf(PcoPhoneNumberAttributes, BasePhoneNumber)
 
-export const PCOPhoneNumber = Schema.Struct({
-  type: Schema.Literal('PhoneNumber'),
+export const PcoPhoneNumber = Schema.Struct({
+  attributes: PcoPhoneNumberAttributes,
   id: Schema.String,
-  attributes: PCOPhoneNumberAttributes,
-  relationships: Schema.Struct({
-    person: Schema.Struct({
-      data: Schema.Struct({
-        type: Schema.Literal('Person'),
-        id: Schema.String,
-      }),
-    }),
-  }),
   links: Schema.Struct({
     self: Schema.String,
   }),
+  relationships: Schema.Struct({
+    person: Schema.Struct({
+      data: Schema.Struct({
+        id: Schema.String,
+        type: Schema.Literal('Person'),
+      }),
+    }),
+  }),
+  type: Schema.Literal('PhoneNumber'),
 })
-export type PCOPhoneNumber = typeof PCOPhoneNumber.Type
+export type PcoPhoneNumber = typeof PcoPhoneNumber.Type

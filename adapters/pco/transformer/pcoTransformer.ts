@@ -2,9 +2,9 @@ import {
   type CustomFieldSchema,
   getUnderlyingType,
   mkCustomField,
-  OFCustomField,
-  OFFieldName,
   OFSkipField,
+  OfCustomField,
+  OfFieldName,
 } from '@openfaith/schema'
 import { Array, Boolean, Option, pipe, Record, Schema, SchemaAST, String } from 'effect'
 
@@ -23,10 +23,10 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
         from.fields,
         Record.toEntries,
         Array.filterMap(([key, field]) => {
-          const fieldKeyOpt = SchemaAST.getAnnotation<string>(OFFieldName)(
+          const fieldKeyOpt = SchemaAST.getAnnotation<string>(OfFieldName)(
             field.ast as SchemaAST.Annotated,
           )
-          const customField = SchemaAST.getAnnotation<boolean>(OFCustomField)(
+          const customField = SchemaAST.getAnnotation<boolean>(OfCustomField)(
             field.ast as SchemaAST.Annotated,
           ).pipe(Option.getOrElse(() => false))
           const skipField = SchemaAST.getAnnotation<boolean>(OFSkipField)(
@@ -81,10 +81,10 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
         Record.toEntries,
         Array.filterMap(([pcoKey, field]) => {
           const fieldAst = 'ast' in field ? field.ast : field
-          const fieldKeyOpt = SchemaAST.getAnnotation<string>(OFFieldName)(
+          const fieldKeyOpt = SchemaAST.getAnnotation<string>(OfFieldName)(
             fieldAst as SchemaAST.Annotated,
           )
-          const customField = SchemaAST.getAnnotation<boolean>(OFCustomField)(
+          const customField = SchemaAST.getAnnotation<boolean>(OfCustomField)(
             fieldAst as SchemaAST.Annotated,
           ).pipe(Option.getOrElse(() => false))
           const skipField = SchemaAST.getAnnotation<boolean>(OFSkipField)(
@@ -99,10 +99,10 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
 
           return pipe(
             fieldKeyOpt,
-            Option.flatMap((ofFieldName) =>
+            Option.flatMap((OfFieldName) =>
               pipe(
                 rest,
-                Record.get(ofFieldName),
+                Record.get(OfFieldName),
                 Option.map((value) => [pcoKey, value] as const),
               ),
             ),

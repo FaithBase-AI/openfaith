@@ -1,48 +1,48 @@
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BaseAddress, OFFieldName } from '@openfaith/schema'
+import { BaseAddress, OfFieldName } from '@openfaith/schema'
 import { Schema } from 'effect'
 
-export const PCOAddressAttributes = Schema.Struct({
+export const PcoAddressAttributes = Schema.Struct({
   city: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'city',
+    [OfFieldName]: 'city',
   }),
   country_code: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'countryCode',
+    [OfFieldName]: 'countryCode',
   }),
   country_name: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'countryName',
+    [OfFieldName]: 'countryName',
   }),
   created_at: Schema.String.annotations({
-    [OFFieldName]: 'createdAt',
+    [OfFieldName]: 'createdAt',
   }),
   location: Schema.Literal('Home', 'Work', 'Other').annotations({
-    [OFFieldName]: 'location',
+    [OfFieldName]: 'location',
   }),
   primary: Schema.Boolean.annotations({
-    [OFFieldName]: 'primary',
+    [OfFieldName]: 'primary',
   }),
   state: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'state',
+    [OfFieldName]: 'state',
   }),
   street_line_1: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'streetLine1',
+    [OfFieldName]: 'streetLine1',
   }),
   street_line_2: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'streetLine2',
+    [OfFieldName]: 'streetLine2',
   }),
   updated_at: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'updatedAt',
+    [OfFieldName]: 'updatedAt',
   }),
   zip: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'zip',
+    [OfFieldName]: 'zip',
   }),
 })
-export type PCOAddressAttributes = typeof PCOAddressAttributes.Type
+export type PcoAddressAttributes = typeof PcoAddressAttributes.Type
 
-export const pcoAddressTransformer = pcoToOf(PCOAddressAttributes, BaseAddress)
+export const pcoAddressTransformer = pcoToOf(PcoAddressAttributes, BaseAddress)
 
-export const PCOAddress = Schema.Struct({
-  attributes: PCOAddressAttributes,
+export const PcoAddress = Schema.Struct({
+  attributes: PcoAddressAttributes,
   id: Schema.String,
   links: Schema.Struct({
     self: Schema.String,
@@ -57,4 +57,4 @@ export const PCOAddress = Schema.Struct({
   }),
   type: Schema.Literal('Address'),
 })
-export type PCOAddress = typeof PCOAddress.Type
+export type PcoAddress = typeof PcoAddress.Type

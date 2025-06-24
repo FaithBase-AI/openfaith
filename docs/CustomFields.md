@@ -174,11 +174,11 @@ When syncing from Planning Center Online (PCO), fields marked as custom are tran
 // PCO field annotation
 const PCOItem = Schema.Struct({
   first_name: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'firstName',
+    [OfFieldName]: 'firstName',
   }),
   middle_name: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'middleName',
-    [OFCustomField]: true,  // Marks this as a custom field
+    [OfFieldName]: 'middleName',
+    [OfCustomField]: true,  // Marks this as a custom field
   }),
 })
 

@@ -3,7 +3,7 @@ import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { adapterTokenTable } from '@openfaith/db/schema/adaptersSchema'
 import { and, eq } from 'drizzle-orm'
 import { Array, Context, Effect, Layer, pipe } from 'effect'
-export class TokenKey extends Context.Tag('Pco/TokenKey')<TokenKey, string>() {}
+export class TokenKey extends Context.Tag('OpenFaith/TokenKey')<TokenKey, string>() {}
 
 // The shape of the token data your library needs to manage.
 export interface TokenState {
@@ -57,10 +57,10 @@ export const TokenManagerLive = Layer.effect(
 
           return {
             accessToken: tokenOpt.value.accessToken,
-            adapter: 'pco',
+            adapter: tokenOpt.value.adapter,
             createdAt: tokenOpt.value.createdAt,
             expiresIn: tokenOpt.value.expiresIn,
-            orgId: lookupKey,
+            orgId: tokenOpt.value.orgId,
             refreshToken: tokenOpt.value.refreshToken,
             tokenKey: lookupKey,
             userId: tokenOpt.value.userId,

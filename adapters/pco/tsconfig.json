@@ -1,10 +1,10 @@
 {
-  "extends": "@openfaith/tsconfig/base.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
       "@openfaith/pco/*": ["./*"]
     }
   },
-  "include": ["."]
+  "extends": "@openfaith/tsconfig/base.json",
+  "include": [".", "../adapter-core/api/tokenManager.ts"]
 }

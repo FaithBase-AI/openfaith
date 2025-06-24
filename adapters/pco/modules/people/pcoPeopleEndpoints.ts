@@ -1,11 +1,11 @@
 import { pcoApiAdapter } from '@openfaith/pco/api/pcoApiAdapter'
-import { PCOPerson } from '@openfaith/pco/people/pcoPersonSchema'
+import { PcoPerson } from '@openfaith/pco/modules/people/pcoPersonSchema'
 
 /**
  * Endpoint definition for retrieving all people from PCO
  */
 export const getAllPeopleDefinition = pcoApiAdapter({
-  apiSchema: PCOPerson,
+  apiSchema: PcoPerson,
   entity: 'Person',
   includes: [
     'addresses',
@@ -90,7 +90,7 @@ export const getAllPeopleDefinition = pcoApiAdapter({
 } as const)
 
 export const getPersonByIdDefinition = pcoApiAdapter({
-  apiSchema: PCOPerson,
+  apiSchema: PcoPerson,
   entity: 'Person',
   includes: getAllPeopleDefinition.includes,
   isCollection: false,
@@ -101,7 +101,7 @@ export const getPersonByIdDefinition = pcoApiAdapter({
 } as const)
 
 export const createPersonDefinition = pcoApiAdapter({
-  apiSchema: PCOPerson,
+  apiSchema: PcoPerson,
   creatableFields: [
     'first_name',
     'last_name',
@@ -131,7 +131,7 @@ export const createPersonDefinition = pcoApiAdapter({
 } as const)
 
 export const updatePersonDefinition = pcoApiAdapter({
-  apiSchema: PCOPerson,
+  apiSchema: PcoPerson,
   entity: 'Person',
   method: 'PATCH',
   module: 'people',
@@ -141,10 +141,10 @@ export const updatePersonDefinition = pcoApiAdapter({
 } as const)
 
 export const deletePersonDefinition = pcoApiAdapter({
-  apiSchema: PCOPerson,
+  apiSchema: PcoPerson,
   entity: 'Person',
   method: 'DELETE',
   module: 'people',
-  name: 'delete',
+  name: 'people.delete',
   path: '/people/v2/people/:personId',
 } as const)

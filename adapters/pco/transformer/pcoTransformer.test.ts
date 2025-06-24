@@ -1,115 +1,115 @@
 import { expect, test } from 'bun:test'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { CustomFieldSchema, OFCustomField, OFFieldName, OFSkipField } from '@openfaith/schema'
+import { CustomFieldSchema, OFSkipField, OfCustomField, OfFieldName } from '@openfaith/schema'
 import { Schema } from 'effect'
 
-const PCOItem = Schema.Struct({
+const PcoItem = Schema.Struct({
   first_name: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'firstName',
+    [OfFieldName]: 'firstName',
   }),
   last_name: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'lastName',
+    [OfFieldName]: 'lastName',
   }),
   middle_name: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'middleName',
-    [OFCustomField]: true,
+    [OfFieldName]: 'middleName',
+    [OfCustomField]: true,
   }),
 })
-type PCOItem = typeof PCOItem.Type
+type PcoItem = typeof PcoItem.Type
 
-const OFItem = Schema.Struct({
+const OfItem = Schema.Struct({
+  customFields: Schema.Array(CustomFieldSchema),
   firstName: Schema.NullOr(Schema.String),
   lastName: Schema.NullOr(Schema.String),
-  customFields: Schema.Array(CustomFieldSchema),
 })
-type OFItem = typeof OFItem.Type
+type OfItem = typeof OfItem.Type
 
 // New schema to test OFSkipField functionality
-const PCOItemWithSkipField = Schema.Struct({
-  first_name: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'firstName',
-  }),
-  last_name: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'lastName',
+const PcoItemWithSkipField = Schema.Struct({
+  // A custom field that should still work normally
+  carrier: Schema.NullOr(Schema.String).annotations({
+    [OfFieldName]: 'carrier',
+    [OfCustomField]: true,
   }),
   // e164 field maps to phoneNumber and should be used
   e164: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'phoneNumber',
+    [OfFieldName]: 'phoneNumber',
+  }),
+  first_name: Schema.NullOr(Schema.String).annotations({
+    [OfFieldName]: 'firstName',
+  }),
+  last_name: Schema.NullOr(Schema.String).annotations({
+    [OfFieldName]: 'lastName',
   }),
   // number field also maps to phoneNumber but should be skipped
   number: Schema.optional(Schema.String).annotations({
-    [OFFieldName]: 'phoneNumber',
+    [OfFieldName]: 'phoneNumber',
     [OFSkipField]: true,
   }),
-  // A custom field that should still work normally
-  carrier: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'carrier',
-    [OFCustomField]: true,
-  }),
 })
-type PCOItemWithSkipField = typeof PCOItemWithSkipField.Type
+type PcoItemWithSkipField = typeof PcoItemWithSkipField.Type
 
-const OFItemWithPhone = Schema.Struct({
+const OfItemWithPhone = Schema.Struct({
+  customFields: Schema.Array(CustomFieldSchema),
   firstName: Schema.NullOr(Schema.String),
   lastName: Schema.NullOr(Schema.String),
   phoneNumber: Schema.NullOr(Schema.String),
-  customFields: Schema.Array(CustomFieldSchema),
 })
-type OFItemWithPhone = typeof OFItemWithPhone.Type
+type OfItemWithPhone = typeof OfItemWithPhone.Type
 
-const pcoTestData: PCOItem = {
+const pcoTestData: PcoItem = {
   first_name: 'Foo',
-  middle_name: 'Yeet',
   last_name: 'Bar',
+  middle_name: 'Yeet',
 }
 
-const ofTestData: OFItem = {
-  firstName: 'Foo',
-  lastName: 'Bar',
+const ofTestData: OfItem = {
   customFields: [
     {
       _tag: 'string',
-      source: 'pco',
       name: 'pco_middle_name',
+      source: 'pco',
       value: 'Yeet',
     },
   ],
+  firstName: 'Foo',
+  lastName: 'Bar',
 }
 
 test('pcoToOf decode: transforms PCO data to OF format', () => {
-  const transformer = pcoToOf(PCOItem, OFItem)
+  const transformer = pcoToOf(PcoItem, OfItem)
   const result = Schema.decodeSync(transformer)(pcoTestData)
 
   expect(result).toEqual(ofTestData)
 })
 
 test('pcoToOf encode: transforms OF data back to PCO format', () => {
-  const transformer = pcoToOf(PCOItem, OFItem)
+  const transformer = pcoToOf(PcoItem, OfItem)
   const result = Schema.encodeSync(transformer)(ofTestData)
 
   expect(result).toEqual(pcoTestData)
 })
 
 test('pcoToOf handles null values correctly', () => {
-  const transformer = pcoToOf(PCOItem, OFItem)
+  const transformer = pcoToOf(PcoItem, OfItem)
 
-  const pcoWithNulls: PCOItem = {
+  const pcoWithNulls: PcoItem = {
     first_name: 'Foo',
-    middle_name: null,
     last_name: null,
+    middle_name: null,
   }
 
-  const expectedOF: OFItem = {
-    firstName: 'Foo',
-    lastName: null,
+  const expectedOF: OfItem = {
     customFields: [
       {
         _tag: 'string',
-        source: 'pco',
         name: 'pco_middle_name',
+        source: 'pco',
         value: null,
       },
     ],
+    firstName: 'Foo',
+    lastName: null,
   }
 
   const result = Schema.decodeSync(transformer)(pcoWithNulls)
@@ -117,9 +117,9 @@ test('pcoToOf handles null values correctly', () => {
 })
 
 test('pcoToOf handles missing fields correctly', () => {
-  const transformer = pcoToOf(PCOItem, OFItem)
+  const transformer = pcoToOf(PcoItem, OfItem)
 
-  const pcoPartial: PCOItem = {
+  const pcoPartial: PcoItem = {
     first_name: 'Foo',
     last_name: null,
     middle_name: null,
@@ -132,8 +132,8 @@ test('pcoToOf handles missing fields correctly', () => {
   expect(result.customFields).toEqual([
     {
       _tag: 'string',
-      source: 'pco',
       name: 'pco_middle_name',
+      source: 'pco',
       value: null,
     },
   ])
@@ -143,28 +143,28 @@ test('pcoToOf handles missing fields correctly', () => {
 })
 
 test('pcoToOf skips fields marked with OFSkipField', () => {
-  const transformer = pcoToOf(PCOItemWithSkipField, OFItemWithPhone)
+  const transformer = pcoToOf(PcoItemWithSkipField, OfItemWithPhone)
 
-  const pcoTestData: PCOItemWithSkipField = {
-    first_name: 'John',
-    last_name: 'Doe',
-    e164: '+1234567890', // This should be used for phoneNumber
-    number: '123-456-7890', // This should be skipped
+  const pcoTestData: PcoItemWithSkipField = {
     carrier: 'Verizon',
+    e164: '+1234567890',
+    first_name: 'John', // This should be used for phoneNumber
+    last_name: 'Doe', // This should be skipped
+    number: '123-456-7890',
   }
 
-  const expectedOF: OFItemWithPhone = {
-    firstName: 'John',
-    lastName: 'Doe',
-    phoneNumber: '+1234567890', // Should come from e164, not number
+  const expectedOF: OfItemWithPhone = {
     customFields: [
       {
         _tag: 'string',
-        source: 'pco',
         name: 'pco_carrier',
+        source: 'pco',
         value: 'Verizon',
       },
     ],
+    firstName: 'John',
+    lastName: 'Doe', // Should come from e164, not number
+    phoneNumber: '+1234567890',
   }
 
   const result = Schema.decodeSync(transformer)(pcoTestData)
@@ -172,20 +172,20 @@ test('pcoToOf skips fields marked with OFSkipField', () => {
 })
 
 test('pcoToOf encode works correctly when skipped field exists in original data', () => {
-  const transformer = pcoToOf(PCOItemWithSkipField, OFItemWithPhone)
+  const transformer = pcoToOf(PcoItemWithSkipField, OfItemWithPhone)
 
-  const ofData: OFItemWithPhone = {
-    firstName: 'John',
-    lastName: 'Doe',
-    phoneNumber: '+1234567890',
+  const ofData: OfItemWithPhone = {
     customFields: [
       {
         _tag: 'string',
-        source: 'pco',
         name: 'pco_carrier',
+        source: 'pco',
         value: 'Verizon',
       },
     ],
+    firstName: 'John',
+    lastName: 'Doe',
+    phoneNumber: '+1234567890',
   }
 
   const result = Schema.encodeSync(transformer)(ofData)
@@ -193,10 +193,10 @@ test('pcoToOf encode works correctly when skipped field exists in original data'
   // The result should only contain the non-skipped fields
   // The 'number' field should not be present since it was marked as skip
   expect(result).toEqual({
+    carrier: 'Verizon',
+    e164: '+1234567890',
     first_name: 'John',
     last_name: 'Doe',
-    e164: '+1234567890',
-    carrier: 'Verizon',
   })
 
   // Verify that the skipped 'number' field is not in the result
@@ -205,38 +205,38 @@ test('pcoToOf encode works correctly when skipped field exists in original data'
 
 test('pcoToOf handles multiple skip fields mapping to same target', () => {
   // Test case where multiple fields map to the same target but all except one are skipped
-  const PCOMultiSkip = Schema.Struct({
+  const PcoMultiSkip = Schema.Struct({
+    name_current: Schema.String.annotations({
+      [OfFieldName]: 'name',
+    }),
     name_v1: Schema.optional(Schema.String).annotations({
-      [OFFieldName]: 'name',
+      [OfFieldName]: 'name',
       [OFSkipField]: true,
     }),
     name_v2: Schema.optional(Schema.String).annotations({
-      [OFFieldName]: 'name',
+      [OfFieldName]: 'name',
       [OFSkipField]: true,
-    }),
-    name_current: Schema.String.annotations({
-      [OFFieldName]: 'name',
     }),
   })
 
   const OFMultiSkip = Schema.Struct({
-    name: Schema.String,
     customFields: Schema.Array(CustomFieldSchema),
+    name: Schema.String,
   })
 
-  const transformer = pcoToOf(PCOMultiSkip, OFMultiSkip)
+  const transformer = pcoToOf(PcoMultiSkip, OFMultiSkip)
 
   const pcoData = {
+    name_current: 'Current Name',
     name_v1: 'Old Name 1',
     name_v2: 'Old Name 2',
-    name_current: 'Current Name',
   }
 
   const result = Schema.decodeSync(transformer)(pcoData)
 
   expect(result).toEqual({
-    name: 'Current Name', // Should only use the non-skipped field
-    customFields: [],
+    customFields: [], // Should only use the non-skipped field
+    name: 'Current Name',
   })
 
   // Encode back should only include the non-skipped field

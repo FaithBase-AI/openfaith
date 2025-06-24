@@ -1,108 +1,108 @@
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BasePerson, OFCustomField, OFFieldName } from '@openfaith/schema'
+import { BasePerson, OfCustomField, OfFieldName } from '@openfaith/schema'
 import { Schema } from 'effect'
 
-export const PCOPersonAttributes = Schema.Struct({
+export const PcoPersonAttributes = Schema.Struct({
   accounting_administrator: Schema.Boolean.annotations({
-    [OFFieldName]: 'accountingAdministrator',
-    [OFCustomField]: true,
+    [OfFieldName]: 'accountingAdministrator',
+    [OfCustomField]: true,
   }),
   anniversary: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'anniversary',
+    [OfFieldName]: 'anniversary',
   }),
   avatar: Schema.String.annotations({
-    [OFFieldName]: 'avatar',
+    [OfFieldName]: 'avatar',
   }),
   birthdate: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'birthdate',
+    [OfFieldName]: 'birthdate',
   }),
   child: Schema.Boolean.annotations({
-    [OFFieldName]: 'child',
-    [OFCustomField]: true,
+    [OfFieldName]: 'child',
+    [OfCustomField]: true,
   }),
   created_at: Schema.String.annotations({
-    [OFFieldName]: 'createdAt',
+    [OfFieldName]: 'createdAt',
   }),
   demographic_avatar_url: Schema.String.annotations({
-    [OFFieldName]: 'demographicAvatarUrl',
-    [OFCustomField]: true,
+    [OfFieldName]: 'demographicAvatarUrl',
+    [OfCustomField]: true,
   }),
   first_name: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'firstName',
+    [OfFieldName]: 'firstName',
   }),
   gender: Schema.NullOr(Schema.Literal('Male', 'Female', 'M', 'F')).annotations({
-    [OFFieldName]: 'gender',
+    [OfFieldName]: 'gender',
   }),
   given_name: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'givenName',
-    [OFCustomField]: true,
+    [OfFieldName]: 'givenName',
+    [OfCustomField]: true,
   }),
   grade: Schema.NullOr(Schema.Literal(-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)).annotations({
-    [OFFieldName]: 'grade',
-    [OFCustomField]: true,
+    [OfFieldName]: 'grade',
+    [OfCustomField]: true,
   }),
   graduation_year: Schema.NullOr(Schema.Number).annotations({
-    [OFFieldName]: 'graduationYear',
-    [OFCustomField]: true,
+    [OfFieldName]: 'graduationYear',
+    [OfCustomField]: true,
   }),
   inactivated_at: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'inactivatedAt',
+    [OfFieldName]: 'inactivatedAt',
   }),
   last_name: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'lastName',
+    [OfFieldName]: 'lastName',
   }),
   medical_notes: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'medicalNotes',
-    [OFCustomField]: true,
+    [OfFieldName]: 'medicalNotes',
+    [OfCustomField]: true,
   }),
   membership: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'membership',
+    [OfFieldName]: 'membership',
   }),
   middle_name: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'middleName',
+    [OfFieldName]: 'middleName',
   }),
   name: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'name',
+    [OfFieldName]: 'name',
   }),
   nickname: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'nickname',
-    [OFCustomField]: true,
+    [OfFieldName]: 'nickname',
+    [OfCustomField]: true,
   }),
   passed_background_check: Schema.Boolean.annotations({
-    [OFFieldName]: 'passedBackgroundCheck',
-    [OFCustomField]: true,
+    [OfFieldName]: 'passedBackgroundCheck',
+    [OfCustomField]: true,
   }),
   people_permissions: Schema.NullOr(
     Schema.Union(Schema.Literal('Manager', 'Editor'), Schema.String),
   ).annotations({
-    [OFFieldName]: 'peoplePermissions',
-    [OFCustomField]: true,
+    [OfFieldName]: 'peoplePermissions',
+    [OfCustomField]: true,
   }),
   remote_id: Schema.NullOr(Schema.Union(Schema.String, Schema.Number)).annotations({
-    [OFFieldName]: 'remoteId',
-    [OFCustomField]: true,
+    [OfFieldName]: 'remoteId',
+    [OfCustomField]: true,
   }),
   school_type: Schema.NullOr(Schema.String).annotations({
-    [OFFieldName]: 'schoolType',
-    [OFCustomField]: true,
+    [OfFieldName]: 'schoolType',
+    [OfCustomField]: true,
   }),
   site_administrator: Schema.Boolean.annotations({
-    [OFFieldName]: 'siteAdministrator',
-    [OFCustomField]: true,
+    [OfFieldName]: 'siteAdministrator',
+    [OfCustomField]: true,
   }),
   status: Schema.Literal('active', 'inactive').annotations({
-    [OFFieldName]: 'status',
+    [OfFieldName]: 'status',
   }),
   updated_at: Schema.String.annotations({
-    [OFFieldName]: 'updatedAt',
+    [OfFieldName]: 'updatedAt',
   }),
 })
-export type PCOPersonAttributes = typeof PCOPersonAttributes.Type
+export type PcoPersonAttributes = typeof PcoPersonAttributes.Type
 
-export const pcoPersonTransformer = pcoToOf(PCOPersonAttributes, BasePerson)
+export const pcoPersonTransformer = pcoToOf(PcoPersonAttributes, BasePerson)
 
-export const PCOPerson = Schema.Struct({
-  attributes: PCOPersonAttributes,
+export const PcoPerson = Schema.Struct({
+  attributes: PcoPersonAttributes,
   id: Schema.String,
   links: Schema.Struct({
     addresses: Schema.optional(Schema.NullOr(Schema.String)),
@@ -140,4 +140,4 @@ export const PCOPerson = Schema.Struct({
   }),
   type: Schema.Literal('Person'),
 })
-export type PCOPerson = typeof PCOPerson.Type
+export type PcoPerson = typeof PcoPerson.Type

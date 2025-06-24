@@ -1,3 +1,4 @@
+/** biome-ignore-all assist/source/useSortedKeys: Keep it organized by category */
 import { createEnv } from '@t3-oss/env-core'
 import { Option, pipe } from 'effect'
 import { z } from 'zod'

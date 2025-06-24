@@ -319,41 +319,28 @@ export function toHttpApiEndpoint(definition: any) {
       // For collection GETs, the success schema is an array of the apiSchema.
       // A more advanced version could distinguish between get-one and get-all.
 
-      const foo = HttpApiEndpoint.get(definition.name, definition.path)
-        .addSuccess(definition.response)
-        // .setUrlParams(urlParamsSchema)
-        .setHeaders(Schema.Struct({ Authorization: Schema.String }))
-
-      return foo as any
+      return HttpApiEndpoint.get(definition.name, definition.path).addSuccess(
+        definition.response,
+      ) as any
     }
     case 'POST': {
       const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.creatableFields)
 
-      const foo = HttpApiEndpoint.post(definition.name, definition.path)
+      return HttpApiEndpoint.post(definition.name, definition.path)
         .setPayload(payloadSchema)
-        .addSuccess(definition.response)
-        .setHeaders(Schema.Struct({ Authorization: Schema.String }))
-
-      return foo as any
+        .addSuccess(definition.response) as any
     }
     case 'PATCH': {
       const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.updatableFields)
 
-      const foo = HttpApiEndpoint.patch(definition.name, definition.path)
+      return HttpApiEndpoint.patch(definition.name, definition.path)
         .setPayload(payloadSchema)
-        .addSuccess(definition.response)
-        .setHeaders(Schema.Struct({ Authorization: Schema.String }))
-
-      return foo as any
+        .addSuccess(definition.response) as any
     }
     case 'DELETE': {
-      const foo = HttpApiEndpoint.del(definition.name, definition.path)
-        .addSuccess(Schema.Void, {
-          status: 204,
-        })
-        .setHeaders(Schema.Struct({ Authorization: Schema.String })) // DELETE typically returns 204 No Content
-
-      return foo as any
+      return HttpApiEndpoint.del(definition.name, definition.path).addSuccess(Schema.Void, {
+        status: 204,
+      }) as any
     }
   }
 }

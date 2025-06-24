@@ -1,11 +1,11 @@
 import { Schema } from 'effect'
 
-export const PCOHeaders = Schema.Struct({
+export const PcoHeaders = Schema.Struct({
   ['Authorization']: Schema.String,
 })
-export type PCOHeaders = typeof PCOHeaders.Type
+export type PcoHeaders = typeof PcoHeaders.Type
 
-export const PCOResponseHeaders = Schema.Struct({
+export const PcoResponseHeaders = Schema.Struct({
   'access-control-allow-credentials': Schema.String,
   'access-control-allow-headers': Schema.String,
   'access-control-allow-methods': Schema.String,
@@ -30,16 +30,16 @@ export const PCOResponseHeaders = Schema.Struct({
   'x-request-id': Schema.String,
   'x-runtime': Schema.String,
 })
-export type PCOResponseHeaders = typeof PCOResponseHeaders.Type
+export type PcoResponseHeaders = typeof PcoResponseHeaders.Type
 
-export const PCOItem = Schema.Struct({
+export const PcoItem = Schema.Struct({
   data: Schema.Unknown,
   included: Schema.Array(Schema.Unknown),
   meta: Schema.Unknown,
 })
-export type PCOItem = typeof PCOItem.Type
+export type PcoItem = typeof PcoItem.Type
 
-export const PCOCollection = Schema.Struct({
+export const PcoCollection = Schema.Struct({
   data: Schema.Array(
     Schema.Struct({
       attributes: Schema.Unknown,
@@ -67,4 +67,4 @@ export const PCOCollection = Schema.Struct({
     total_count: Schema.Number,
   }),
 })
-export type PCOCollection = typeof PCOCollection.Type
+export type PcoCollection = typeof PcoCollection.Type
