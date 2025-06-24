@@ -319,12 +319,6 @@
   "trustedDependencies": [
     "@rocicorp/zero-sqlite3",
   ],
-  "overrides": {
-    "@effect/platform": "0.87.0",
-    "@effect/sql-drizzle": "0.39.0",
-    "@effect/sql-pg": "0.41.0",
-    "effect": "3.16.9",
-  },
   "catalog": {
     "@effect/platform": "0.87.0",
     "@effect/sql-drizzle": "0.39.0",
