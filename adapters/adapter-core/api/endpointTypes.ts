@@ -1,257 +1,302 @@
-import { Match, Schema } from 'effect'
-
-export const arrayToCommaSeparatedString = <A extends string | number | boolean>(
-  literalSchema: Schema.Schema<A, A, never>,
-) =>
-  Schema.transform(Schema.String, Schema.Array(literalSchema), {
-    decode: (str) => str.split(',') as Array<A>,
-    encode: (array) => array.join(','),
-    strict: true,
-  })
-
-export const structToWhereParams = <A extends Schema.Struct.Fields>(
-  structSchema: Schema.Struct<A>,
-) =>
-  Schema.transform(Schema.String, structSchema, {
-    decode: (queryString) => {
-      if (!queryString.trim()) {
-        return {} as Schema.Schema.Encoded<Schema.Struct<A>>
-      }
-
-      const result: Record<string, any> = {}
-      const params = queryString.split('&')
-
-      for (const param of params) {
-        const match = param.match(/^where\[([^\]]+)\]=(.*)$/)
-        if (match) {
-          const [, key, value] = match
-          if (key && value !== undefined) {
-            // URL decode the value
-            result[key] = decodeURIComponent(value)
-          }
-        }
-      }
-
-      return result as Schema.Schema.Encoded<Schema.Struct<A>>
-    },
-    encode: (obj) => {
-      const params: Array<string> = []
-
-      for (const [key, value] of Object.entries(obj)) {
-        // Only include defined values (skip undefined/null)
-        if (value !== undefined && value !== null) {
-          const encodedValue = encodeURIComponent(String(value))
-          params.push(`where[${key}]=${encodedValue}`)
-        }
-      }
-
-      return params.join('&')
-    },
-    strict: true,
-  })
-
-// =============================================================================
-// Type Definitions
-// =============================================================================
+import type { Schema } from 'effect'
 
 /**
- * The base interface containing properties common to ALL endpoint definitions.
- * This is our high-level, declarative model for an endpoint.
+ * HTTP method type for API endpoints
+ */
+export type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE'
+
+/**
+ * Definition for GET endpoint configuration
+ * @template Api - The API schema type
+ * @template Fields - Record of available fields for the entity
+ * @template TModule - The API module name
+ * @template TEntity - The entity name
+ * @template TName - The endpoint name
+ * @template OrderableFields - Array of fields that can be ordered by
+ * @template QueryableFields - Array of fields that can be queried
+ * @template Includes - Array of relationships that can be included
+ * @template QueryableSpecial - Array of special query parameters
+ * @template IsCollection - Whether this endpoint returns a collection
+ */
+export type BaseGetEndpointDefinition<
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends boolean,
+> = IsCollection extends true
+  ? {
+      /** Whether this endpoint returns a collection or single resource */
+      isCollection: true
+      /** Schema for the API resource */
+      apiSchema: Schema.Schema<Api>
+      /** Available relationships that can be included */
+      includes: Includes
+      /** API endpoint path */
+      path: `/${string}`
+      /** Fields that can be used for ordering responses */
+      orderableBy: OrderableFields
+      /** HTTP method for this endpoint */
+      method: 'GET'
+      /** API module name */
+      module: TModule
+      /** Entity name */
+      entity: TEntity
+      /** Endpoint name */
+      name: TName
+      /** Query configuration */
+      queryableBy: {
+        /** Fields that can be queried */
+        fields: QueryableFields
+        /** Special query parameters */
+        special: QueryableSpecial
+      }
+    }
+  : {
+      /** Whether this endpoint returns a collection or single resource */
+      isCollection: false
+      /** Schema for the API resource */
+      apiSchema: Schema.Schema<Api>
+      /** Available relationships that can be included */
+      includes: Includes
+      /** API endpoint path */
+      path: `/${string}`
+      /** HTTP method for this endpoint */
+      method: 'GET'
+      /** API module name */
+      module: TModule
+      /** Entity name */
+      entity: TEntity
+      /** Endpoint name */
+      name: TName
+    }
+
+export type GetEndpointDefinition<
+  Api,
+  Response extends Schema.Schema<any>,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends boolean,
+> = BaseGetEndpointDefinition<
+  Api,
+  Fields,
+  TModule,
+  TEntity,
+  TName,
+  OrderableFields,
+  QueryableFields,
+  Includes,
+  QueryableSpecial,
+  IsCollection
+> & { response: Response }
+
+/**
+ * Type definition for a POST endpoint configuration.
  *
- * @template Api The effect/Schema for the raw API response object.
- * @template Canonical The effect/Schema for the library's internal, standardized object.
+ * @template Api - The API resource type that extends ApiBase
+ * @template TModule - The PCO module name (e.g., "people", "events")
+ * @template TEntity - The entity name (e.g., "Person", "Event")
+ * @template TName - The endpoint operation name (e.g., "create")
  */
-export interface BaseEndpointDefinition<
-  Api extends Schema.Struct<any>,
-  Canonical extends Schema.Struct<any>,
-> {
-  /** The API module this endpoint belongs to (e.g., 'people', 'groups'). */
-  readonly module: string
+export type BasePostEndpointDefinition<
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+> = {
+  /** The Effect schema for the API resource */
+  apiSchema: Schema.Schema<Api>
+  /** The API endpoint path */
+  path: `/${string}`
+  /** HTTP method - always 'POST' for this type */
+  method: 'POST'
+  /** The PCO module this endpoint belongs to */
+  module: TModule
+  /** The entity type this endpoint operates on */
+  entity: TEntity
+  /** The operation name for this endpoint */
+  name: TName
+  /** Array of fields that can be set when creating a new resource */
+  creatableFields: CreatableFields
+}
 
-  /**
-   * A unique, dot-separated name representing the conceptual path.
-   * If the first segment matches the `module`, it is not repeated in the client path.
-   * @example 'people.getAll' -> client.people.getAll()
-   * @example 'phoneNumbers.getAll' (in 'people' module) -> client.people.phoneNumbers.getAll()
-   */
-  readonly name: string
+export type PostEndpointDefinition<
+  Api,
+  Response extends Schema.Schema<any>,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+> = BasePostEndpointDefinition<Api, Fields, TModule, TEntity, TName, CreatableFields> & {
+  response: Response
+}
 
-  /** The URL path, with placeholders like :paramName for path parameters. */
-  readonly path: `/${string}`
+export type BasePatchEndpointDefinition<
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+> = {
+  /** The Effect schema for the API resource */
+  apiSchema: Schema.Schema<Api>
+  /** The API endpoint path */
+  path: `/${string}`
+  /** HTTP method - always 'PATCH' for this type */
+  method: 'PATCH'
+  /** The PCO module this endpoint belongs to */
+  module: TModule
+  /** The entity type this endpoint operates on */
+  entity: TEntity
+  /** The operation name for this endpoint */
+  name: TName
+  /** Array of fields that can be set when updating a resource */
+  updatableFields: UpdatableFields
+}
 
-  /** The schema for the raw API response object. For collections, this is the schema for a single item. */
-  readonly apiSchema: Api
+export type PatchEndpointDefinition<
+  Api,
+  Response extends Schema.Schema<any>,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+> = BasePatchEndpointDefinition<Api, Fields, TModule, TEntity, TName, UpdatableFields> & {
+  response: Response
+}
 
-  /** The schema for the final, canonical data model that the API data is transformed into. */
-  readonly canonicalSchema: Canonical
+export type BaseDeleteEndpointDefinition<
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+> = {
+  /** The Effect schema for the API resource */
+  apiSchema: Schema.Schema<Api>
+  /** The API endpoint path */
+  path: `/${string}`
+  /** HTTP method - always 'PATCH' for this type */
+  method: 'DELETE'
+  /** The PCO module this endpoint belongs to */
+  module: TModule
+  /** The entity type this endpoint operates on */
+  entity: TEntity
+  /** The operation name for this endpoint */
+  name: TName
+}
 
-  /** Metadata for the Sync Engine: True if the API provides webhook events for this entity. */
-  readonly supportsWebhooks: boolean
-
-  /** Metadata for the Sync Engine: The timestamp attribute name used for delta syncing. */
-  readonly deltaSyncField?: string
+export type DeleteEndpointDefinition<
+  Api,
+  Response extends Schema.Schema<any>,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+> = BaseDeleteEndpointDefinition<Api, Fields, TModule, TEntity, TName> & {
+  response: Response
 }
 
 /**
- * Our high-level, declarative definition for a GET request, including query capabilities.
- * @extends BaseEndpointDefinition
+ * Union type for all possible endpoint definitions based on HTTP method.
+ *
+ * @template TMethod - The HTTP method type
+ * @template Api - The API schema type
+ * @template Fields - Record of available fields for the entity
+ * @template TModule - The API module name
+ * @template TEntity - The entity name
+ * @template TName - The endpoint name
+ * @template OrderableFields - Array of fields that can be ordered by
+ * @template QueryableFields - Array of fields that can be queried
+ * @template Includes - Array of relationships that can be included
+ * @template QueryableSpecial - Array of special query parameters
+ * @template IsCollection - Whether this endpoint returns a collection
+ * @template CreatableFields - Array of fields that can be set when creating a new resource
  */
-export interface GetEndpointDefinition<
-  Api extends Schema.Struct<any>,
-  Canonical extends Schema.Struct<any>,
-> extends BaseEndpointDefinition<Api, Canonical> {
-  readonly method: 'GET'
+export type BaseEndpointDefinition<
+  TMethod extends Method,
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends boolean,
+  CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+> = TMethod extends 'GET'
+  ? BaseGetEndpointDefinition<
+      Api,
+      Fields,
+      TModule,
+      TEntity,
+      TName,
+      OrderableFields,
+      QueryableFields,
+      Includes,
+      QueryableSpecial,
+      IsCollection
+    >
+  : TMethod extends 'POST'
+    ? BasePostEndpointDefinition<Api, Fields, TModule, TEntity, TName, CreatableFields>
+    : TMethod extends 'PATCH'
+      ? BasePatchEndpointDefinition<Api, Fields, TModule, TEntity, TName, UpdatableFields>
+      : TMethod extends 'DELETE'
+        ? BaseDeleteEndpointDefinition<Api, Fields, TModule, TEntity, TName>
+        : never
 
-  /** A list of valid values for the 'include' query parameter. */
-  readonly includes: ReadonlyArray<string>
-
-  /** A list of attributes the API allows for sorting. */
-  readonly orderableBy: ReadonlyArray<string>
-
-  /** Declares which fields can be used for filtering. */
-  readonly queryableBy: {
-    readonly fields: ReadonlyArray<string> // For where[field]=... syntax
-    readonly special: ReadonlyArray<string> // For flat params like search=...
-  }
-}
-
-/**
- * Our high-level, declarative definition for a POST request, including creatable fields.
- * @extends BaseEndpointDefinition
- */
-export interface PostEndpointDefinition<
-  Api extends Schema.Struct<any>,
-  Canonical extends Schema.Struct<any>,
-> extends BaseEndpointDefinition<Api, Canonical> {
-  readonly method: 'POST'
-
-  /** A list of attribute keys from the apiSchema that are allowed in the request body. */
-  readonly creatableFields: ReadonlyArray<keyof Schema.Schema.Type<Api>['attributes']>
-}
-
-/**
- * Our high-level, declarative definition for a PATCH request, including updatable fields.
- * @extends BaseEndpointDefinition
- */
-export interface PatchEndpointDefinition<
-  Api extends Schema.Struct<any>,
-  Canonical extends Schema.Struct<any>,
-> extends BaseEndpointDefinition<Api, Canonical> {
-  readonly method: 'PATCH'
-
-  /** A list of attribute keys from the apiSchema that are allowed in the request body. */
-  readonly updatableFields: ReadonlyArray<keyof Schema.Schema.Type<Api>['attributes']>
-}
-
-/**
- * Our high-level, declarative definition for a DELETE request.
- * @extends BaseEndpointDefinition
- */
-export interface DeleteEndpointDefinition<
-  Api extends Schema.Struct<any>,
-  Canonical extends Schema.Struct<any>,
-> extends BaseEndpointDefinition<Api, Canonical> {
-  readonly method: 'DELETE'
-}
-
-/**
- * A union of all possible valid definition types.
- * This is the output of our `defineEndpoint` helper and the input to our `EndpointAdapter`.
- */
 export type EndpointDefinition<
-  Api extends Schema.Struct<any> = Schema.Struct<any>,
-  Canonical extends Schema.Struct<any> = Schema.Struct<any>,
-> =
-  | GetEndpointDefinition<Api, Canonical>
-  | PostEndpointDefinition<Api, Canonical>
-  | PatchEndpointDefinition<Api, Canonical>
-  | DeleteEndpointDefinition<Api, Canonical>
-
-// =============================================================================
-// `defineEndpoint` Function (The Developer-Facing Helper)
-// =============================================================================
-
-/**
- * A type-safe helper for creating a GET endpoint definition.
- * Optional capability fields are defaulted to empty arrays.
- */
-export function defineEndpoint<
-  Api extends Schema.Struct<any>,
-  Canonical extends Schema.Struct<any>,
->(
-  definition: { method: 'GET' } & Omit<
-    GetEndpointDefinition<Api, Canonical>,
-    'method' | 'includes' | 'orderableBy' | 'queryableBy'
-  > &
-    Partial<
-      Pick<GetEndpointDefinition<Api, Canonical>, 'includes' | 'orderableBy' | 'queryableBy'>
-    >,
-): GetEndpointDefinition<Api, Canonical>
-
-/**
- * A type-safe helper for creating a POST endpoint definition.
- * Optional capability fields are defaulted to empty arrays.
- */
-export function defineEndpoint<
-  Api extends Schema.Struct<any>,
-  Canonical extends Schema.Struct<any>,
->(
-  definition: { method: 'POST' } & Omit<
-    PostEndpointDefinition<Api, Canonical>,
-    'method' | 'creatableFields'
-  > &
-    Partial<Pick<PostEndpointDefinition<Api, Canonical>, 'creatableFields'>>,
-): PostEndpointDefinition<Api, Canonical>
-
-/**
- * A type-safe helper for creating a PATCH endpoint definition.
- * Optional capability fields are defaulted to empty arrays.
- */
-export function defineEndpoint<
-  Api extends Schema.Struct<any>,
-  Canonical extends Schema.Struct<any>,
->(
-  definition: { method: 'PATCH' } & Omit<
-    PatchEndpointDefinition<Api, Canonical>,
-    'method' | 'updatableFields'
-  > &
-    Partial<Pick<PatchEndpointDefinition<Api, Canonical>, 'updatableFields'>>,
-): PatchEndpointDefinition<Api, Canonical>
-
-/**
- * A type-safe helper for creating a DELETE endpoint definition.
- */
-export function defineEndpoint<
-  Api extends Schema.Struct<any>,
-  Canonical extends Schema.Struct<any>,
->(
-  definition: { method: 'DELETE' } & Omit<DeleteEndpointDefinition<Api, Canonical>, 'method'>,
-): DeleteEndpointDefinition<Api, Canonical>
-
-/**
- * The single implementation for the `defineEndpoint` function. It takes the
- * user-provided definition, provides sensible defaults for optional fields based
- * on the method, and returns a complete, validated definition object.
- */
-export function defineEndpoint(definition: { method: string } & Partial<EndpointDefinition>) {
-  return Match.value(definition).pipe(
-    Match.when({ method: 'GET' }, (def) => ({
-      includes: [],
-      orderableBy: [],
-      queryableBy: { fields: [], special: [] },
-      ...def,
-    })),
-    Match.when({ method: 'POST' }, (def) => ({
-      creatableFields: [],
-      ...def,
-    })),
-    Match.when({ method: 'PATCH' }, (def) => ({
-      updatableFields: [],
-      ...def,
-    })),
-    Match.when({ method: 'DELETE' }, (def) => ({
-      ...def,
-    })),
-    Match.exhaustive,
-  )
-}
+  TMethod extends Method,
+  Api,
+  Response extends Schema.Schema<any>,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends boolean,
+  CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+> = TMethod extends 'GET'
+  ? GetEndpointDefinition<
+      Api,
+      Response,
+      Fields,
+      TModule,
+      TEntity,
+      TName,
+      OrderableFields,
+      QueryableFields,
+      Includes,
+      QueryableSpecial,
+      IsCollection
+    >
+  : TMethod extends 'POST'
+    ? PostEndpointDefinition<Api, Response, Fields, TModule, TEntity, TName, CreatableFields>
+    : TMethod extends 'PATCH'
+      ? PatchEndpointDefinition<Api, Response, Fields, TModule, TEntity, TName, UpdatableFields>
+      : TMethod extends 'DELETE'
+        ? DeleteEndpointDefinition<Api, Response, Fields, TModule, TEntity, TName>
+        : never

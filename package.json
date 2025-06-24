@@ -16,6 +16,12 @@
   "name": "openfaith",
   "packageManager": "bun@1.2.13",
   "private": true,
+  "resolutions": {
+    "@effect/platform": "0.87.0",
+    "@effect/sql-drizzle": "0.39.0",
+    "@effect/sql-pg": "0.41.0",
+    "effect": "3.16.9"
+  },
   "scripts": {
     "build": "turbo run build",
     "check": "turbo run format lint:biome lint:eslint typecheck test --ui=stream",
@@ -41,9 +47,9 @@
   "type": "module",
   "workspaces": {
     "catalog": {
-      "@effect/platform": "0.84.8",
-      "@effect/sql-drizzle": "0.36.9",
-      "@effect/sql-pg": "0.38.9",
+      "@effect/platform": "0.87.0",
+      "@effect/sql-drizzle": "0.39.0",
+      "@effect/sql-pg": "0.41.0",
       "@rocicorp/zero": "0.20.2025052100",
       "@trpc/client": "11.1.4",
       "@trpc/server": "11.1.4",
@@ -55,7 +61,7 @@
       "date-fns": "4.1.0",
       "drizzle-kit": "0.31.1",
       "drizzle-orm": "0.44.2",
-      "effect": "3.16.4",
+      "effect": "3.16.9",
       "input-otp": "1.4.2",
       "jotai": "2.12.5",
       "next-themes": "0.4.6",

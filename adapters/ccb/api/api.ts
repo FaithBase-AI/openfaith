@@ -1,4 +1,4 @@
-import { mkEntityManifest } from '@openfaith/adapter-core/api6/mkEntityManifest'
+import { mkEntityManifest } from '@openfaith/adapter-core/server'
 import { ccbApiAdapter } from '@openfaith/ccb/api/ccbApiAdapter'
 import { Schema } from 'effect'
 

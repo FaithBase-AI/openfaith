@@ -1,4 +1,4 @@
-import type { EndpointDefinition, Method } from '@openfaith/adapter-core/api6/endpointTypes'
+import type { EndpointDefinition, Method } from '@openfaith/adapter-core/api/endpointTypes'
 import { Array, pipe } from 'effect'
 
 export const mkEntityManifest = <

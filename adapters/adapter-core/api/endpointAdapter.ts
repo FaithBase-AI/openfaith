@@ -1,9 +1,9 @@
 import { HttpApiEndpoint } from '@effect/platform'
-import { arrayToCommaSeparatedString } from '@openfaith/adapter-core/api/endpointTypes' // Assuming EndpointTypes.ts is in the same directory or accessible
 import type {
   EndpointDefinition,
   GetEndpointDefinition,
-} from '@openfaith/adapter-core/api6/endpointTypes'
+} from '@openfaith/adapter-core/api/endpointTypes'
+import { arrayToCommaSeparatedString } from '@openfaith/shared' // Assuming EndpointTypes.ts is in the same directory or accessible
 import { Array, pipe, Schema } from 'effect'
 
 /**
@@ -180,7 +180,7 @@ export function toHttpApiEndpoint<
   never,
   any,
   never,
-  { readonly Authorization: string },
+  never,
   Schema.Schema.Type<Response>,
   never,
   Schema.Schema.Context<Response>,
@@ -222,9 +222,7 @@ export function toHttpApiEndpoint<
   {
     readonly [x: string]: unknown
   },
-  {
-    readonly Authorization: string
-  },
+  never,
   Schema.Schema.Type<Response>,
   never,
   unknown,
@@ -266,9 +264,7 @@ export function toHttpApiEndpoint<
   {
     readonly [x: string]: unknown
   },
-  {
-    readonly Authorization: string
-  },
+  never,
   Schema.Schema.Type<Response>,
   never,
   unknown,
@@ -307,9 +303,7 @@ export function toHttpApiEndpoint<
   never,
   never,
   never,
-  {
-    readonly Authorization: string
-  },
+  never,
   void,
   never,
   never,
@@ -320,7 +314,7 @@ export function toHttpApiEndpoint<
 export function toHttpApiEndpoint(definition: any) {
   switch (definition.method) {
     case 'GET': {
-      const urlParamsSchema = buildUrlParamsSchema(definition)
+      // const urlParamsSchema = buildUrlParamsSchema(definition)
 
       // For collection GETs, the success schema is an array of the apiSchema.
       // A more advanced version could distinguish between get-one and get-all.

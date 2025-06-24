@@ -1,4 +1,4 @@
-import { pcoApiAdapter } from '@openfaith/pco/api6/pcoApiAdapter'
+import { pcoApiAdapter } from '@openfaith/pco/api/pcoApiAdapter'
 import { PCOPerson } from '@openfaith/pco/people/pcoPersonSchema'
 
 /**

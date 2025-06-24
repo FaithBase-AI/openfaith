@@ -4,7 +4,7 @@ import type {
   GetEndpointDefinition,
   PatchEndpointDefinition,
   PostEndpointDefinition,
-} from '@openfaith/adapter-core/api6/endpointTypes'
+} from '@openfaith/adapter-core/server'
 import { Schema } from 'effect'
 
 /**
