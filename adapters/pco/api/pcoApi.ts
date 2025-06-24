@@ -9,7 +9,7 @@ import {
 import { TokenManagerLive, toHttpApiEndpoint } from '@openfaith/adapter-core/server'
 import { PcoAuth, PcoAuthLive } from '@openfaith/pco/api/pcoAuthLayer'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
-import { PcoRefreshToken } from '@openfaith/pco/modules/token/pcoTokenSchema'
+import { PcoRefreshToken, PcoToken } from '@openfaith/pco/modules/token/pcoTokenSchema'
 import { Effect, Layer, Schema } from 'effect'
 
 // import { getAllPeople, getAllPeople } from '@openfaith/pco/people/pcoPeopleEndpoints'
@@ -50,18 +50,32 @@ const peopleApiGroup = HttpApiGroup.make('people').add(
 // .add(toHttpApiEndpoint(pcoEntityManifest.Person.endpoints.update))
 // .add(toHttpApiEndpoint(pcoEntityManifest.Person.endpoints.create))
 
-const tokenApiGroup = HttpApiGroup.make('token').add(
-  HttpApiEndpoint.post('refreshToken', '/oauth/token')
-    .setUrlParams(
-      Schema.Struct({
-        client_id: Schema.String,
-        client_secret: Schema.String,
-        grant_type: Schema.Literal('refresh_token'),
-        refresh_token: Schema.String,
-      }),
-    )
-    .addSuccess(PcoRefreshToken),
-)
+const tokenApiGroup = HttpApiGroup.make('token')
+  .add(
+    HttpApiEndpoint.post('getToken', '/oauth/token')
+      .setUrlParams(
+        Schema.Struct({
+          client_id: Schema.String,
+          client_secret: Schema.String,
+          code: Schema.String,
+          grant_type: Schema.Literal('authorization_code'),
+          redirect_uri: Schema.String,
+        }),
+      )
+      .addSuccess(PcoToken),
+  )
+  .add(
+    HttpApiEndpoint.post('refreshToken', '/oauth/token')
+      .setUrlParams(
+        Schema.Struct({
+          client_id: Schema.String,
+          client_secret: Schema.String,
+          grant_type: Schema.Literal('refresh_token'),
+          refresh_token: Schema.String,
+        }),
+      )
+      .addSuccess(PcoRefreshToken),
+  )
 
 // const PcoApi = HttpApi.make('PCO').add(peopleApiGroup)
 
