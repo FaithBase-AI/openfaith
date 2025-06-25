@@ -101,7 +101,7 @@ export class PcoHttpClient extends Effect.Service<PcoHttpClient>()('PcoHttpClien
       limiter.maybeWait(
         `pco:rate-limit`, // A unique key for this specific action
         Duration.seconds(20),
-        101,
+        100,
       ),
       tokenService.getValidAccessToken,
     )
