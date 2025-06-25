@@ -5,6 +5,7 @@
     "@openfaith/ui": "workspace:*",
     "deepmerge-ts": "7.1.5",
     "effect": "catalog:",
+    "effect-redis": "0.0.10",
     "jotai": "catalog:"
   },
   "devDependencies": {

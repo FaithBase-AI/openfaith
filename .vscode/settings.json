@@ -1,10 +1,11 @@
 {
   "editor.defaultFoldingRangeProvider": "biomejs.biome",
   "editor.defaultFormatter": "biomejs.biome",
-  "notebook.defaultFormatter": "biomejs.biome",
   "editor.formatOnPaste": true,
   "editor.formatOnSave": true,
-  "notebook.formatOnSave.enabled": true,
   "editor.formatOnType": true,
-  "files.autoSaveWhenNoErrors": true
+  "files.autoSaveWhenNoErrors": true,
+  "notebook.defaultFormatter": "biomejs.biome",
+  "notebook.formatOnSave.enabled": true,
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

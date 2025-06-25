@@ -1,34 +1,34 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "target": "ES2022",
-    "lib": ["ESNext", "DOM"],
     "allowJs": true,
-    "resolveJsonModule": true,
-    "moduleDetection": "force",
-    "isolatedModules": true,
-    "incremental": true,
-    "disableSourceOfProjectReferenceRedirect": true,
-    "tsBuildInfoFile": "${configDir}/.cache/tsbuildinfo.json",
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
     "checkJs": true,
+    "disableSourceOfProjectReferenceRedirect": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "incremental": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "lib": ["ESNext", "DOM"],
     "module": "ESNext",
+    "moduleDetection": "force",
     "moduleResolution": "Bundler",
     "noEmit": true,
-    "forceConsistentCasingInFileNames": true,
-    "jsx": "react-jsx",
-    "downlevelIteration": true,
-    "strictNullChecks": true,
     "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "plugins": [
       {
         "name": "@effect/language-service"
       }
-    ]
+    ],
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "target": "ES2022",
+    "tsBuildInfoFile": "${configDir}/.cache/tsbuildinfo.json"
   },
   "exclude": ["node_modules", "build", "dist", ".next", ".expo"]
 }
