@@ -178,7 +178,16 @@ export function toHttpApiEndpoint<
   TName,
   TMethod,
   never,
-  any,
+  IsCollection extends true
+    ? {
+        readonly include?: Includes[number] | (Includes[number] & Includes) | undefined
+        readonly offset?: number | undefined
+        readonly per_page?: number | undefined
+      }
+    : {
+        readonly offset?: number | undefined
+        readonly per_page?: number | undefined
+      },
   never,
   never,
   Schema.Schema.Type<Response>,
@@ -314,14 +323,14 @@ export function toHttpApiEndpoint<
 export function toHttpApiEndpoint(definition: any) {
   switch (definition.method) {
     case 'GET': {
-      // const urlParamsSchema = buildUrlParamsSchema(definition)
+      const urlParamsSchema = buildUrlParamsSchema(definition)
 
       // For collection GETs, the success schema is an array of the apiSchema.
       // A more advanced version could distinguish between get-one and get-all.
 
-      return HttpApiEndpoint.get(definition.name, definition.path).addSuccess(
-        definition.response,
-      ) as any
+      return HttpApiEndpoint.get(definition.name, definition.path)
+        .setUrlParams(urlParamsSchema)
+        .addSuccess(definition.response)
     }
     case 'POST': {
       const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.creatableFields)

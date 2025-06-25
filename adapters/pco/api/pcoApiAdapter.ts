@@ -33,7 +33,9 @@ const mkPcoCollectionSchema = <A>(resourceSchema: Schema.Schema<A>) =>
       can_order_by: Schema.optional(Schema.Array(Schema.String)),
       can_query_by: Schema.optional(Schema.Array(Schema.String)),
       count: Schema.Number,
+      next: Schema.optional(Schema.Struct({ offset: Schema.Number })),
       parent: Schema.optional(Schema.Struct({ id: Schema.String, type: Schema.String })),
+      prev: Schema.optional(Schema.Struct({ offset: Schema.Number })),
       total_count: Schema.Number,
     }),
   })
