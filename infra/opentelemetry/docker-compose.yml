@@ -2,7 +2,7 @@ services:
   otel-lgtm:
     image: docker.io/grafana/otel-lgtm
     ports:
-      - "3010:3010"
+      - "3010:3000"
       - "4317:4317"
       - "4318:4318"
     tty: true

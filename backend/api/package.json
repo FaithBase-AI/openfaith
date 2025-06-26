@@ -1,11 +1,16 @@
 {
   "dependencies": {
+    "@effect/opentelemetry": "catalog:",
     "@effect/platform": "catalog:",
     "@effect/sql-drizzle": "catalog:",
     "@openfaith/auth": "workspace:*",
     "@openfaith/pco": "workspace:*",
     "@openfaith/schema": "workspace:*",
     "@openfaith/shared": "workspace:*",
+    "@opentelemetry/sdk-metrics": "2.0.1",
+    "@opentelemetry/sdk-trace-base": "2.0.1",
+    "@opentelemetry/sdk-trace-node": "2.0.1",
+    "@opentelemetry/sdk-trace-web": "2.0.1",
     "@trpc/server": "catalog:",
     "date-fns": "catalog:",
     "drizzle-orm": "catalog:",
