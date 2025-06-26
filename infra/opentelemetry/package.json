@@ -1,7 +1,7 @@
 {
   "dependencies": {},
   "license": "MIT",
-  "name": "@openfaith/infra-db",
+  "name": "@openfaith/infra-opentelemetry",
   "private": true,
   "scripts": {
     "dev": "docker compose -f ./docker-compose.yml up",
