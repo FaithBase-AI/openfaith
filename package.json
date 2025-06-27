@@ -16,6 +16,17 @@
   "name": "openfaith",
   "packageManager": "bun@1.2.13",
   "private": true,
+  "resolutions": {
+    "@effect/cluster": "0.41.3",
+    "@effect/experimental": "0.51.1",
+    "@effect/opentelemetry": "0.53.1",
+    "@effect/platform": "0.87.1",
+    "@effect/sql": "0.41.1",
+    "@effect/sql-drizzle": "0.39.1",
+    "@effect/sql-pg": "0.41.1",
+    "@effect/workflow": "0.4.2",
+    "effect": "3.16.10"
+  },
   "scripts": {
     "build": "turbo run build",
     "check": "turbo run format lint:biome lint:eslint typecheck test --ui=stream",
@@ -41,10 +52,12 @@
   "type": "module",
   "workspaces": {
     "catalog": {
+      "@effect/cluster": "0.41.3",
       "@effect/opentelemetry": "0.53.1",
       "@effect/platform": "0.87.1",
       "@effect/sql-drizzle": "0.39.1",
       "@effect/sql-pg": "0.41.1",
+      "@effect/workflow": "0.4.2",
       "@rocicorp/zero": "0.20.2025052100",
       "@trpc/client": "11.1.4",
       "@trpc/server": "11.1.4",

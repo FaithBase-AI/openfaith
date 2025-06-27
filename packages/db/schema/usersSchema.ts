@@ -10,19 +10,19 @@ export const usersTable = pgTable(
       .char({ enum: ['user'], length: 4 })
       .default('user')
       .notNull(),
-    id: d.text().primaryKey(),
-    name: d.text().notNull(),
-    email: d.text().notNull().unique(),
-    emailVerified: d.boolean().notNull(),
-    image: d.text(),
-    createdAt: d.timestamp().notNull(),
-    updatedAt: d.timestamp().notNull(),
-    isAnonymous: d.boolean(),
-    stripeCustomerId: d.text(),
-    role: d.text(),
+    banExpires: d.timestamp(),
     banned: d.boolean(),
     banReason: d.text(),
-    banExpires: d.timestamp(),
+    createdAt: d.timestamp().notNull(),
+    email: d.text().notNull().unique(),
+    emailVerified: d.boolean().notNull(),
+    id: d.text().primaryKey(),
+    image: d.text(),
+    isAnonymous: d.boolean(),
+    name: d.text().notNull(),
+    role: d.text(),
+    stripeCustomerId: d.text(),
+    updatedAt: d.timestamp().notNull(),
   }),
   (x) => ({
     emailIdx: index('userEmailIdx').on(x.email),
@@ -37,12 +37,12 @@ export type NewUser = typeof NewUser.Type
 export const verificationsTable = pgTable(
   'verifications',
   (d) => ({
+    createdAt: d.timestamp(),
+    expiresAt: d.timestamp().notNull(),
     id: d.text().primaryKey(),
     identifier: d.text().notNull(),
-    value: d.text().notNull(),
-    expiresAt: d.timestamp().notNull(),
-    createdAt: d.timestamp(),
     updatedAt: d.timestamp(),
+    value: d.text().notNull(),
   }),
   (x) => ({
     identifierIdx: index('verificationIdentifierIdx').on(x.identifier),
@@ -54,10 +54,10 @@ export const NewVerification = createInsertSchema(verificationsTable)
 export type NewVerification = typeof NewVerification.Type
 
 export const jwksTable = pgTable('jwks', (d) => ({
-  id: d.text().primaryKey(),
-  publicKey: d.text().notNull(),
-  privateKey: d.text().notNull(),
   createdAt: d.timestamp().notNull(),
+  id: d.text().primaryKey(),
+  privateKey: d.text().notNull(),
+  publicKey: d.text().notNull(),
 }))
 export const Jwk = createSelectSchema(jwksTable)
 export type Jwk = typeof Jwk.Type
