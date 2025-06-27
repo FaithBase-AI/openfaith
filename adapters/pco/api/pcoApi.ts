@@ -8,6 +8,17 @@ import {
 } from '@effect/platform'
 import { MemoryRateLimitStoreLive } from '@openfaith/adapter-core/ratelimit/RateLimit'
 import { RateLimiter, TokenManagerLive, toHttpApiEndpoint } from '@openfaith/adapter-core/server'
+import {
+  PcoAuthenticationError,
+  PcoAuthorizationError,
+  PcoBadRequestError,
+  PcoConflictError,
+  PcoInternalServerError,
+  PcoNotFoundError,
+  PcoRateLimitError,
+  PcoServiceUnavailableError,
+  PcoValidationError,
+} from '@openfaith/pco/api/pcoApiErrors'
 import { PcoAuth, PcoAuthLive } from '@openfaith/pco/api/pcoAuthLayer'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { PcoRefreshToken, PcoToken } from '@openfaith/pco/modules/token/pcoTokenSchema'
@@ -42,14 +53,17 @@ import { Duration, Effect, Layer, Schema } from 'effect'
 //   }),
 // )
 
-const peopleApiGroup = HttpApiGroup.make('people').add(
-  toHttpApiEndpoint(pcoEntityManifest.Person.endpoints.getAll),
-)
-// .add(toHttpApiEndpoint(pcoEntityManifest.Person.endpoints.getById))
-// .add(toHttpApiEndpoint(pcoEntityManifest.Person.endpoints.delete))
-// These are causing issues.
-// .add(toHttpApiEndpoint(pcoEntityManifest.Person.endpoints.update))
-// .add(toHttpApiEndpoint(pcoEntityManifest.Person.endpoints.create))
+const peopleApiGroup = HttpApiGroup.make('people')
+  .add(toHttpApiEndpoint(pcoEntityManifest.Person.endpoints.getAll))
+  .addError(PcoBadRequestError, { status: 400 })
+  .addError(PcoAuthenticationError, { status: 401 })
+  .addError(PcoAuthorizationError, { status: 403 })
+  .addError(PcoNotFoundError, { status: 404 })
+  .addError(PcoConflictError, { status: 409 })
+  .addError(PcoValidationError, { status: 422 })
+  .addError(PcoRateLimitError, { status: 429 })
+  .addError(PcoInternalServerError, { status: 500 })
+  .addError(PcoServiceUnavailableError, { status: 503 })
 
 const tokenApiGroup = HttpApiGroup.make('token')
   .add(
@@ -77,6 +91,15 @@ const tokenApiGroup = HttpApiGroup.make('token')
       )
       .addSuccess(PcoRefreshToken),
   )
+  .addError(PcoBadRequestError, { status: 400 })
+  .addError(PcoAuthenticationError, { status: 401 })
+  .addError(PcoAuthorizationError, { status: 403 })
+  .addError(PcoNotFoundError, { status: 404 })
+  .addError(PcoConflictError, { status: 409 })
+  .addError(PcoValidationError, { status: 422 })
+  .addError(PcoRateLimitError, { status: 429 })
+  .addError(PcoInternalServerError, { status: 500 })
+  .addError(PcoServiceUnavailableError, { status: 503 })
 
 export const PcoApi = HttpApi.make('PCO').add(peopleApiGroup).add(tokenApiGroup)
 

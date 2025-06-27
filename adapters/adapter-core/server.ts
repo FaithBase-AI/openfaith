@@ -1,3 +1,4 @@
+export * from '@openfaith/adapter-core/api/apiErrors'
 export * from '@openfaith/adapter-core/api/endpointAdapter'
 export * from '@openfaith/adapter-core/api/endpointTypes'
 export * from '@openfaith/adapter-core/api/mkEntityManifest'
