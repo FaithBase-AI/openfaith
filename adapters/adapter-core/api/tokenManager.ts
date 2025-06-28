@@ -3,6 +3,7 @@ import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { adapterTokenTable } from '@openfaith/db/schema/adaptersSchema'
 import { and, eq } from 'drizzle-orm'
 import { Array, Context, Effect, Layer, pipe } from 'effect'
+
 export class TokenKey extends Context.Tag('OpenFaith/TokenKey')<TokenKey, string>() {}
 
 // The shape of the token data your library needs to manage.

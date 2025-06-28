@@ -3,6 +3,7 @@ import {
   AuthorizationError,
   BadRequestError,
   ConflictError,
+  GatewayTimeoutError,
   InternalServerError,
   NotFoundError,
   RateLimitError,
@@ -143,6 +144,21 @@ export const PcoInternalServerError = Schema.transform(PcoErrorBody, InternalSer
 
 export const PcoServiceUnavailableError = Schema.transform(PcoErrorBody, ServiceUnavailableError, {
   decode: (body) => pipe(body.errors, Array.headNonEmpty, (x) => new ServiceUnavailableError(x)),
+  encode: (error) =>
+    ({
+      errors: [
+        {
+          code: error.code,
+          detail: error.detail,
+          title: error.title,
+        },
+      ],
+    }) as const,
+  strict: true,
+})
+
+export const PcoGatewayTimeoutError = Schema.transform(PcoErrorBody, GatewayTimeoutError, {
+  decode: (body) => pipe(body.errors, Array.headNonEmpty, (x) => new GatewayTimeoutError(x)),
   encode: (error) =>
     ({
       errors: [

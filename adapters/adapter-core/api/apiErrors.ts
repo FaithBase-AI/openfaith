@@ -67,6 +67,12 @@ export class TimeoutError extends Schema.TaggedError<TimeoutError>()(
   BaseErrorFields,
 ) {}
 
+// Gateway timeout errors (504)
+export class GatewayTimeoutError extends Schema.TaggedError<GatewayTimeoutError>()(
+  'GatewayTimeoutError',
+  BaseErrorFields,
+) {}
+
 // Generic API error for cases where we need a structured error but don't have a specific type
 export class GenericApiError extends Schema.TaggedError<GenericApiError>()('GenericApiError', {
   ...BaseErrorFields,
