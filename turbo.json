@@ -16,6 +16,11 @@
       "dependsOn": ["@openfaith/infra-db#health-check", "^infra"],
       "persistent": true
     },
+    "@openfaith/shard-manager#dev": {
+      "cache": false,
+      "dependsOn": ["@openfaith/infra-db#health-check", "^infra"],
+      "persistent": true
+    },
     "@openfaith/workers#dev": {
       "cache": false,
       "dependsOn": ["@openfaith/infra-db#health-check", "^infra"],

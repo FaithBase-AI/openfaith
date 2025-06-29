@@ -1,8 +1,8 @@
 /** biome-ignore-all lint/suspicious/useAwait: test function */
 
-import { FetchHttpClient } from '@effect/platform'
+import { FetchHttpClient, HttpApiClient } from '@effect/platform'
 import { createTRPCRouter, protectedProcedure } from '@openfaith/api/trpc'
-import { WorkflowClient } from '@openfaith/workers'
+import { WorkflowApi } from '@openfaith/workers/api/workflowApi'
 import { Effect } from 'effect'
 
 export const coreRouter = createTRPCRouter({
@@ -12,7 +12,11 @@ export const coreRouter = createTRPCRouter({
 
       // Use WorkflowClient service similar to how PcoHttpClient is used
       const program = Effect.gen(function* () {
-        const workflowClient = yield* WorkflowClient
+        const workflowClient = yield* HttpApiClient.make(WorkflowApi, {
+          baseUrl: 'http://localhost:3020',
+        })
+
+        console.log('do the thing', workflowClient)
 
         // Call the PcoSyncWorkflow endpoint - WorkflowProxy generates this method
         const result = yield* workflowClient.workflows.PcoSyncWorkflow({
@@ -21,9 +25,10 @@ export const coreRouter = createTRPCRouter({
           },
         })
 
+        console.log(result)
+
         return result
       }).pipe(
-        Effect.provide(WorkflowClient.Default),
         Effect.provide(FetchHttpClient.layer),
         Effect.catchAll((error) =>
           Effect.gen(function* () {

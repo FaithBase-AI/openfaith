@@ -13,7 +13,7 @@
   "private": true,
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "bun run index.ts",
+    "dev": "bun run --watch index.ts",
     "format": "biome lint .",
     "lint:biome": "biome lint .",
     "typecheck": "tsc --noEmit"

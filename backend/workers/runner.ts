@@ -87,41 +87,38 @@
 // // )
 
 import { ClusterWorkflowEngine } from '@effect/cluster'
-import { HttpApiBuilder, HttpServer } from '@effect/platform'
+import { HttpApiBuilder, HttpMiddleware, HttpServer } from '@effect/platform'
 import { BunClusterRunnerSocket, BunHttpServer, BunRuntime } from '@effect/platform-bun'
 import { WorkflowProxyServer } from '@effect/workflow'
 import { PgLive } from '@openfaith/db'
-import { WorkflowApi, workflows } from '@openfaith/workers/api/workflowApi'
+import { HealthLive, WorkflowApi, workflows } from '@openfaith/workers/api/workflowApi'
 import { PcoSyncWorkflowLayer } from '@openfaith/workers/workflows/pcoSyncWorkflow'
 import { Effect, Layer, Logger } from 'effect'
 
-// Cluster runner configuration
-const RunnerLive = BunClusterRunnerSocket.layer({
-  storage: 'sql',
-}).pipe(Layer.provide(PgLive))
-
 // Workflow engine layer
-const WorkflowEngineLive = ClusterWorkflowEngine.layer
+const WorkflowEngineLayer = ClusterWorkflowEngine.layer.pipe(
+  Layer.provideMerge(
+    BunClusterRunnerSocket.layer({
+      storage: 'sql',
+    }),
+  ),
+  Layer.provideMerge(PgLive),
+)
 
 const WorkflowApiLive = HttpApiBuilder.api(WorkflowApi).pipe(
   Layer.provide(WorkflowProxyServer.layerHttpApi(WorkflowApi, 'workflows', workflows)),
 )
 
-const port = 3001
+const port = 3020
 
-const WorkflowLayers = Layer.mergeAll(PcoSyncWorkflowLayer)
-
-const Workflows = WorkflowLayers.pipe(
-  Layer.provide(WorkflowEngineLive),
-  Layer.provide(Logger.pretty),
-  Layer.provide(RunnerLive),
-)
+const EnvLayer = Layer.mergeAll(PcoSyncWorkflowLayer).pipe(Layer.provide(WorkflowEngineLayer))
 
 // Set up the server using NodeHttpServer on port 3000
-const ServerLive = HttpApiBuilder.serve().pipe(
+const ServerLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(WorkflowApiLive),
-  Layer.provide(Workflows),
-  Layer.provide(RunnerLive),
+  Layer.provide(HealthLive),
+  Layer.provide(EnvLayer),
+  Layer.provide(Logger.pretty),
   HttpServer.withLogAddress,
   Layer.provide(BunHttpServer.layer({ port })),
 )
@@ -136,5 +133,5 @@ Layer.launch(ServerLive).pipe(
       yield* Effect.logInfo('🌐 Workflow HTTP API will be available on http://localhost:3001')
     }),
   ),
-  BunRuntime.runMain,
+  BunRuntime.runMain(),
 )
