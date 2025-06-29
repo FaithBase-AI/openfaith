@@ -1,62 +1,49 @@
 /** biome-ignore-all lint/suspicious/useAwait: test function */
 
-import { NodeSdk } from '@effect/opentelemetry'
 import { FetchHttpClient } from '@effect/platform'
-import { createPaginatedStream, TokenKey } from '@openfaith/adapter-core/server'
 import { createTRPCRouter, protectedProcedure } from '@openfaith/api/trpc'
-import { DBLive } from '@openfaith/db'
-import { PcoApiLayer, PcoHttpClient } from '@openfaith/pco/server'
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
-import { Effect, Stream } from 'effect'
-
-const NodeSdkLive = NodeSdk.layer(() => ({
-  resource: { serviceName: 'openfaith-backend' },
-  spanProcessor: [
-    new BatchSpanProcessor(new OTLPTraceExporter()),
-    // new BatchSpanProcessor(new ConsoleSpanExporter()),
-  ],
-}))
+import { WorkflowClient } from '@openfaith/workers'
+import { Effect } from 'effect'
 
 export const coreRouter = createTRPCRouter({
   testFunction: protectedProcedure.mutation(async () => {
     try {
-      console.log('test function start')
+      console.log('🚀 Starting PCO sync workflow via test function')
 
+      // Use WorkflowClient service similar to how PcoHttpClient is used
       const program = Effect.gen(function* () {
-        const pcoClient = yield* PcoHttpClient
+        const workflowClient = yield* WorkflowClient
 
-        return yield* Stream.runForEach(
-          createPaginatedStream(pcoClient.people.getAll, {
-            urlParams: {
-              include: 'addresses',
-            },
-          } as const),
-          (response) =>
-            Effect.log({
-              offset: response.meta.next?.offset || 0,
-              totalCount: response.meta.total_count,
-            }),
-        )
+        // Call the PcoSyncWorkflow endpoint - WorkflowProxy generates this method
+        const result = yield* workflowClient.workflows.PcoSyncWorkflow({
+          payload: {
+            tokenKey: 'org_01jww7zkeyfzvsxd20nfjzc21z',
+          },
+        })
+
+        return result
       }).pipe(
-        Effect.withSpan('test-fn'),
-        Effect.provide(PcoApiLayer),
+        Effect.provide(WorkflowClient.Default),
         Effect.provide(FetchHttpClient.layer),
-        Effect.provide(DBLive),
-        Effect.provideService(TokenKey, 'org_01jww7zkeyfzvsxd20nfjzc21z'),
-        Effect.provide(NodeSdkLive),
+        Effect.catchAll((error) =>
+          Effect.gen(function* () {
+            yield* Effect.logError(`Failed to trigger workflow: ${error}`)
+            return { error: String(error) }
+          }),
+        ),
       )
 
-      const result = await Effect.runPromiseExit(program)
+      const result = await Effect.runPromise(program)
 
-      console.log(result)
-      console.log(JSON.stringify(result))
+      console.log('📊 Workflow trigger result:', result)
+      console.log('📋 Workflow trigger result JSON:', JSON.stringify(result))
 
-      console.log('test function finish')
+      console.log('✅ Test function completed')
+
+      return 'triggered'
     } catch (error) {
-      console.log(error)
+      console.log('❌ Test function error:', error)
+      return 'error'
     }
-
-    return 'yeet'
   }),
 })

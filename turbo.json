@@ -1,6 +1,31 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "tasks": {
+    "@openfaith/api#dev": {
+      "cache": false,
+      "dependsOn": ["@openfaith/infra-db#health-check", "^infra"],
+      "persistent": true
+    },
+    "@openfaith/db#dev": {
+      "cache": false,
+      "dependsOn": ["@openfaith/infra-db#health-check"],
+      "persistent": true
+    },
+    "@openfaith/openfaith#dev": {
+      "cache": false,
+      "dependsOn": ["@openfaith/infra-db#health-check", "^infra"],
+      "persistent": true
+    },
+    "@openfaith/workers#dev": {
+      "cache": false,
+      "dependsOn": ["@openfaith/infra-db#health-check", "^infra"],
+      "persistent": true
+    },
+    "@openfaith/zero#dev": {
+      "cache": false,
+      "dependsOn": ["@openfaith/infra-db#health-check", "^infra"],
+      "persistent": true
+    },
     "//#clean": {
       "cache": false
     },
@@ -13,11 +38,18 @@
     },
     "dev": {
       "cache": false,
-      "dependsOn": ["^infra:db"],
+      "dependsOn": ["^infra"],
       "persistent": true
     },
     "format": {
       "cache": false
+    },
+    "health-check": {
+      "cache": false
+    },
+    "infra": {
+      "cache": false,
+      "persistent": true
     },
     "infra:db": {
       "cache": false,
@@ -33,6 +65,10 @@
     "push": {
       "cache": false,
       "interactive": true
+    },
+    "start": {
+      "cache": false,
+      "dependsOn": ["^infra"]
     },
     "studio": {
       "cache": false,

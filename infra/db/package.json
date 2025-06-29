@@ -4,7 +4,8 @@
   "name": "@openfaith/infra-db",
   "private": true,
   "scripts": {
-    "dev": "docker compose -f ./docker-compose.yml up",
+    "health-check": "./health-check.sh 30",
+    "infra": "docker compose -f ./docker-compose.yml up",
     "infra:dev": "docker compose -f ./docker-compose.yml up",
     "infra:dev-down": "docker compose -f ./docker-compose.yml down"
   },

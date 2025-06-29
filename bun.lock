@@ -130,6 +130,7 @@
         "@openfaith/pco": "workspace:*",
         "@openfaith/schema": "workspace:*",
         "@openfaith/shared": "workspace:*",
+        "@openfaith/workers": "workspace:*",
         "@opentelemetry/sdk-metrics": "2.0.1",
         "@opentelemetry/sdk-trace-base": "2.0.1",
         "@opentelemetry/sdk-trace-node": "2.0.1",
@@ -159,6 +160,19 @@
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "react-email": "4.0.15",
+        "typescript": "catalog:",
+      },
+    },
+    "backend/shard-manager": {
+      "name": "@openfaith/shard-manager",
+      "version": "0.1.0",
+      "dependencies": {
+        "@effect/platform-node": "catalog:",
+        "@openfaith/db": "workspace:*",
+        "@openfaith/shared": "workspace:*",
+        "effect": "catalog:",
+      },
+      "devDependencies": {
         "typescript": "catalog:",
       },
     },
@@ -347,6 +361,8 @@
     "@effect/experimental": "0.51.1",
     "@effect/opentelemetry": "0.53.1",
     "@effect/platform": "0.87.1",
+    "@effect/platform-bun": "0.72.3",
+    "@effect/platform-node-shared": "0.42.3",
     "@effect/sql": "0.41.1",
     "@effect/sql-drizzle": "0.39.1",
     "@effect/sql-pg": "0.41.1",
@@ -357,6 +373,7 @@
     "@effect/cluster": "0.41.3",
     "@effect/opentelemetry": "0.53.1",
     "@effect/platform": "0.87.1",
+    "@effect/platform-bun": "0.72.3",
     "@effect/platform-node": "0.88.3",
     "@effect/sql-drizzle": "0.39.1",
     "@effect/sql-pg": "0.41.1",
@@ -524,7 +541,7 @@
 
     "@effect/platform": ["@effect/platform@0.87.1", "", { "dependencies": { "find-my-way-ts": "^0.1.5", "msgpackr": "^1.11.4", "multipasta": "^0.2.5" }, "peerDependencies": { "effect": "^3.16.10" } }, "sha512-OJmdAOle5ZYExJIppBh2+N3RHCAdn3WdtxvLgkECI0aJLjpEy/O88XdkkLmRKrVPFByxsShfVUEhZyKtVdHA8A=="],
 
-    "@effect/platform-bun": ["@effect/platform-bun@0.69.16", "", { "dependencies": { "@effect/platform-node-shared": "^0.39.16", "multipasta": "^0.2.5" }, "peerDependencies": { "@effect/cluster": "^0.38.16", "@effect/platform": "^0.84.11", "@effect/rpc": "^0.61.15", "@effect/sql": "^0.37.12", "effect": "^3.16.7" } }, "sha512-5Mocp+ZfCZ4xw1kI5OmoTAzLKtHht8NisEwD66rc8wium+2elFxFsuiM2kGM3TYz9jC3vwkEXf1SXgecBLWz4A=="],
+    "@effect/platform-bun": ["@effect/platform-bun@0.72.3", "", { "dependencies": { "@effect/platform-node-shared": "^0.42.3", "multipasta": "^0.2.5" }, "peerDependencies": { "@effect/cluster": "^0.41.3", "@effect/platform": "^0.87.1", "@effect/rpc": "^0.64.2", "@effect/sql": "^0.40.1", "effect": "^3.16.10" } }, "sha512-HhYq/QZx0wPtJgCCmg1r70V9mKeccxvVH/Q5Y/wpFyoul+KD318EhO9xKDe3dSa+dxGwTEpfWfNP+7MLfTPqwg=="],
 
     "@effect/platform-node": ["@effect/platform-node@0.88.3", "", { "dependencies": { "@effect/platform-node-shared": "^0.42.3", "mime": "^3.0.0", "undici": "^7.10.0", "ws": "^8.18.2" }, "peerDependencies": { "@effect/cluster": "^0.41.3", "@effect/platform": "^0.87.1", "@effect/rpc": "^0.64.2", "@effect/sql": "^0.40.1", "effect": "^3.16.10" } }, "sha512-ChJxjjpT/pSmBpWgyKVHG1m8J8tEtPaKc160FFjNz/HGVmhBSsWce9Vro9Z13mQvsm2K5SZkET2pyQX8Rw60Yw=="],
 
@@ -817,6 +834,8 @@
     "@openfaith/pco": ["@openfaith/pco@workspace:adapters/pco"],
 
     "@openfaith/schema": ["@openfaith/schema@workspace:packages/schema"],
+
+    "@openfaith/shard-manager": ["@openfaith/shard-manager@workspace:backend/shard-manager"],
 
     "@openfaith/shared": ["@openfaith/shared@workspace:packages/shared"],
 
@@ -3432,10 +3451,6 @@
 
     "@effect/experimental/uuid": ["uuid@11.1.0", "", { "bin": { "uuid": "dist/esm/bin/uuid" } }, "sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A=="],
 
-    "@effect/platform-bun/@effect/cluster": ["@effect/cluster@0.38.16", "", { "peerDependencies": { "@effect/platform": "^0.84.11", "@effect/rpc": "^0.61.15", "@effect/sql": "^0.37.12", "@effect/workflow": "^0.1.14", "effect": "^3.16.7" } }, "sha512-Q3UJmDx/ABn3Rx/S6n9O8f2TS1qrJNbP0W6lfouel9JduvDW/1dKQ1dFJYRNCk3i5mcpPTSGn47Oq08muArrqw=="],
-
-    "@effect/platform-bun/@effect/platform-node-shared": ["@effect/platform-node-shared@0.39.16", "", { "dependencies": { "@parcel/watcher": "^2.5.1", "multipasta": "^0.2.5", "ws": "^8.18.2" }, "peerDependencies": { "@effect/cluster": "^0.38.16", "@effect/platform": "^0.84.11", "@effect/rpc": "^0.61.15", "@effect/sql": "^0.37.12", "effect": "^3.16.7" } }, "sha512-aJ7jVm9V+SEeNumRmHb+TxD0C38uv/1LLfBHB2Qg+xb5UjnZhak8SzwolAgSKkMNDFpAAdF2AlxZ1tO/HfhCiw=="],
-
     "@effect/sql/uuid": ["uuid@11.1.0", "", { "bin": { "uuid": "dist/esm/bin/uuid" } }, "sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A=="],
 
     "@esbuild-kit/core-utils/esbuild": ["esbuild@0.18.20", "", { "optionalDependencies": { "@esbuild/android-arm": "0.18.20", "@esbuild/android-arm64": "0.18.20", "@esbuild/android-x64": "0.18.20", "@esbuild/darwin-arm64": "0.18.20", "@esbuild/darwin-x64": "0.18.20", "@esbuild/freebsd-arm64": "0.18.20", "@esbuild/freebsd-x64": "0.18.20", "@esbuild/linux-arm": "0.18.20", "@esbuild/linux-arm64": "0.18.20", "@esbuild/linux-ia32": "0.18.20", "@esbuild/linux-loong64": "0.18.20", "@esbuild/linux-mips64el": "0.18.20", "@esbuild/linux-ppc64": "0.18.20", "@esbuild/linux-riscv64": "0.18.20", "@esbuild/linux-s390x": "0.18.20", "@esbuild/linux-x64": "0.18.20", "@esbuild/netbsd-x64": "0.18.20", "@esbuild/openbsd-x64": "0.18.20", "@esbuild/sunos-x64": "0.18.20", "@esbuild/win32-arm64": "0.18.20", "@esbuild/win32-ia32": "0.18.20", "@esbuild/win32-x64": "0.18.20" }, "bin": { "esbuild": "bin/esbuild" } }, "sha512-ceqxoedUrcayh7Y7ZX6NdbbDzGROiyVBgC4PriJThBKSVPWnnFHZAkfI1lJT8QFkOwH4qOS2SJkS4wvpGl8BpA=="],
@@ -3949,8 +3964,6 @@
     "@deno/shim-deno/which/isexe": ["isexe@3.1.1", "", {}, "sha512-LpB/54B+/2J5hqQ7imZHfdU31OlgQqx7ZicVlkm9kzg9/w8GKLEcFfJl/t7DCEDueOyBAD6zCCwTO6Fzs0NoEQ=="],
 
     "@dotenvx/dotenvx/which/isexe": ["isexe@3.1.1", "", {}, "sha512-LpB/54B+/2J5hqQ7imZHfdU31OlgQqx7ZicVlkm9kzg9/w8GKLEcFfJl/t7DCEDueOyBAD6zCCwTO6Fzs0NoEQ=="],
-
-    "@effect/platform-bun/@effect/cluster/@effect/workflow": ["@effect/workflow@0.1.14", "", { "peerDependencies": { "@effect/platform": "^0.84.11", "@effect/rpc": "^0.61.15", "effect": "^3.16.7" } }, "sha512-0BTIbCp1rJMOzXGUfk9E7IHU9up6rzLztbjVUGDlnKhAtus04GUeA95wP5t8qdhg/I7Q7FlkKfa07WFppkNCsQ=="],
 
     "@esbuild-kit/core-utils/esbuild/@esbuild/android-arm": ["@esbuild/android-arm@0.18.20", "", { "os": "android", "cpu": "arm" }, "sha512-fyi7TDI/ijKKNZTUJAQqiG5T7YjJXgnzkURqmGj13C6dCqckZBLdl4h7bkhHt/t0WP+zO9/zwroDvANaOqO5Sw=="],
 
