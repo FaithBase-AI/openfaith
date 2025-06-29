@@ -1,21 +1,30 @@
 {
+  "dependencies": {
+    "@effect/cluster": "catalog:",
+    "@effect/opentelemetry": "catalog:",
+    "@effect/platform": "catalog:",
+    "@effect/platform-node": "catalog:",
+    "@effect/sql-pg": "catalog:",
+    "@effect/workflow": "catalog:",
+    "@openfaith/adapter-core": "workspace:*",
+    "@openfaith/db": "workspace:*",
+    "@openfaith/pco": "workspace:*",
+    "@openfaith/schema": "workspace:*",
+    "@openfaith/shared": "workspace:*",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  },
+  "license": "MIT",
   "name": "@openfaith/workers",
   "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "license": "MIT",
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "format": "biome lint .",
     "lint:biome": "biome lint .",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@openfaith/shared": "workspace:*",
-    "@openfaith/schema": "workspace:*",
-    "effect": "catalog:"
-  },
-  "devDependencies": {
-    "typescript": "catalog:"
-  }
+  "type": "module",
+  "version": "0.1.0"
 }

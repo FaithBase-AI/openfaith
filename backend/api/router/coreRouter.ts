@@ -8,7 +8,7 @@ import { DBLive } from '@openfaith/db'
 import { PcoApiLayer, PcoHttpClient } from '@openfaith/pco/server'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
-import { Array, Effect, pipe, Stream } from 'effect'
+import { Effect, Stream } from 'effect'
 
 const NodeSdkLive = NodeSdk.layer(() => ({
   resource: { serviceName: 'openfaith-backend' },
@@ -26,26 +26,17 @@ export const coreRouter = createTRPCRouter({
       const program = Effect.gen(function* () {
         const pcoClient = yield* PcoHttpClient
 
-        return yield* Effect.all(
-          pipe(
-            Array.range(1, 150),
-            Array.map((x) =>
-              Stream.runForEach(
-                createPaginatedStream(pcoClient.people.getAll, {
-                  urlParams: {
-                    include: 'addresses',
-                  },
-                } as const),
-                (response) =>
-                  Effect.log({
-                    index: x,
-                    offset: response.meta.next?.offset || 0,
-                    totalCount: response.meta.total_count,
-                  }),
-              ),
-            ),
-          ),
-          { concurrency: 'unbounded' },
+        return yield* Stream.runForEach(
+          createPaginatedStream(pcoClient.people.getAll, {
+            urlParams: {
+              include: 'addresses',
+            },
+          } as const),
+          (response) =>
+            Effect.log({
+              offset: response.meta.next?.offset || 0,
+              totalCount: response.meta.total_count,
+            }),
         )
       }).pipe(
         Effect.withSpan('test-fn'),
