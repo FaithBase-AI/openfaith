@@ -24,7 +24,7 @@
     "@effect/platform-bun": "0.72.3",
     "@effect/platform-node-shared": "0.42.3",
     "@effect/rpc": "0.64.2",
-    "@effect/sql": "0.41.1",
+    "@effect/sql": "0.40.1",
     "@effect/sql-drizzle": "0.39.1",
     "@effect/sql-pg": "0.41.1",
     "@effect/workflow": "0.4.2",
@@ -99,8 +99,5 @@
       "packages/*",
       "tooling/*"
     ]
-  },
-  "patchedDependencies": {
-    "@effect/cluster@0.41.3": "patches/@effect%2Fcluster@0.41.3.patch"
   }
 }

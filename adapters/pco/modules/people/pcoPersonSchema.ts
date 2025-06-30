@@ -27,7 +27,7 @@ export const PcoPersonAttributes = Schema.Struct({
     [OfFieldName]: 'demographicAvatarUrl',
     [OfCustomField]: true,
   }),
-  first_name: Schema.NullOr(Schema.String).annotations({
+  first_name: Schema.String.pipe(Schema.minLength(1)).annotations({
     [OfFieldName]: 'firstName',
   }),
   gender: Schema.NullOr(Schema.Literal('Male', 'Female', 'M', 'F')).annotations({
@@ -48,7 +48,7 @@ export const PcoPersonAttributes = Schema.Struct({
   inactivated_at: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'inactivatedAt',
   }),
-  last_name: Schema.NullOr(Schema.String).annotations({
+  last_name: Schema.String.pipe(Schema.minLength(1)).annotations({
     [OfFieldName]: 'lastName',
   }),
   medical_notes: Schema.NullOr(Schema.String).annotations({

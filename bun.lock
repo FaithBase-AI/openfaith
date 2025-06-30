@@ -356,9 +356,6 @@
   "trustedDependencies": [
     "@rocicorp/zero-sqlite3",
   ],
-  "patchedDependencies": {
-    "@effect/cluster@0.41.3": "patches/@effect%2Fcluster@0.41.3.patch",
-  },
   "overrides": {
     "@effect/cluster": "0.41.3",
     "@effect/experimental": "0.51.1",
@@ -367,7 +364,7 @@
     "@effect/platform-bun": "0.72.3",
     "@effect/platform-node-shared": "0.42.3",
     "@effect/rpc": "0.64.2",
-    "@effect/sql": "0.41.1",
+    "@effect/sql": "0.40.1",
     "@effect/sql-drizzle": "0.39.1",
     "@effect/sql-pg": "0.41.1",
     "@effect/workflow": "0.4.2",
@@ -552,7 +549,7 @@
 
     "@effect/platform-node-shared": ["@effect/platform-node-shared@0.42.3", "", { "dependencies": { "@parcel/watcher": "^2.5.1", "multipasta": "^0.2.5", "ws": "^8.18.2" }, "peerDependencies": { "@effect/cluster": "^0.41.3", "@effect/platform": "^0.87.1", "@effect/rpc": "^0.64.2", "@effect/sql": "^0.40.1", "effect": "^3.16.10" } }, "sha512-3mV3lIeS/nSRbZuNb/64UfHDKf1k3IjCiBE8rajgbvOwMB+Fk5m/9ZPdDVoj/pkGE68EmDoVkbI1ysIiyUm0cg=="],
 
-    "@effect/rpc": ["@effect/rpc@0.61.15", "", { "peerDependencies": { "@effect/platform": "^0.84.11", "effect": "^3.16.7" } }, "sha512-1PdFubnHanzyswxEzYTiPhTaNpnzS+ssm8xsOKIjE1CP+f54mx/5rJl7BY1VqBVcxw9faqq0g5+biMh9e2RN/Q=="],
+    "@effect/rpc": ["@effect/rpc@0.64.2", "", { "peerDependencies": { "@effect/platform": "^0.87.1", "effect": "^3.16.10" } }, "sha512-cpJo/z5AfAy2pJUWFqfx9bScZEMYfAKQKhx57QuTu6m8+sNAXm2hBPh+0MOZnsMxlxUUUyKoh9I8RQWgD472NQ=="],
 
     "@effect/sql": ["@effect/sql@0.37.2", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.33.0", "uuid": "^11.0.3" }, "peerDependencies": { "@effect/experimental": "^0.48.2", "@effect/platform": "^0.84.2", "effect": "^3.16.2" } }, "sha512-Ti2HKjpTWx+yUAoHemr94o36NRIEHpbMGxRhb7NA6Ny+zd9MFzPsRKrSTY62fOsVZTdXJt4Bx+ipAE5YPhWn7g=="],
 
