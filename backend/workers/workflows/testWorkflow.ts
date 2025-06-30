@@ -31,8 +31,6 @@ export const TestWorkflowLayer = TestWorkflow.toLayer(
 
     yield* Effect.log(`✅ Test Workflow completed successfully`)
 
-    console.log('yeeeeeet', payload, executionId)
-
     return
   }),
 )
