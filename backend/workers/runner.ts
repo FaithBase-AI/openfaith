@@ -86,19 +86,21 @@
 // //   NodeRuntime.runMain({ disablePrettyLogger: true }),
 // // )
 
+import { createServer } from 'node:http'
 import { ClusterWorkflowEngine } from '@effect/cluster'
 import { HttpApiBuilder, HttpMiddleware, HttpServer } from '@effect/platform'
-import { BunClusterRunnerSocket, BunHttpServer, BunRuntime } from '@effect/platform-bun'
+import { NodeClusterRunnerSocket, NodeHttpServer, NodeRuntime } from '@effect/platform-node'
 import { WorkflowProxyServer } from '@effect/workflow'
 import { PgLive } from '@openfaith/db'
 import { HealthLive, WorkflowApi, workflows } from '@openfaith/workers/api/workflowApi'
 import { PcoSyncWorkflowLayer } from '@openfaith/workers/workflows/pcoSyncWorkflow'
-import { Effect, Layer, Logger } from 'effect'
+import { TestWorkflowLayer } from '@openfaith/workers/workflows/testWorkflow'
+import { Layer, Logger } from 'effect'
 
 // Workflow engine layer
 const WorkflowEngineLayer = ClusterWorkflowEngine.layer.pipe(
   Layer.provideMerge(
-    BunClusterRunnerSocket.layer({
+    NodeClusterRunnerSocket.layer({
       storage: 'sql',
     }),
   ),
@@ -111,27 +113,18 @@ const WorkflowApiLive = HttpApiBuilder.api(WorkflowApi).pipe(
 
 const port = 3020
 
-const EnvLayer = Layer.mergeAll(PcoSyncWorkflowLayer).pipe(Layer.provide(WorkflowEngineLayer))
+const EnvLayer = Layer.mergeAll(PcoSyncWorkflowLayer, TestWorkflowLayer).pipe(
+  Layer.provide(WorkflowEngineLayer),
+)
 
 // Set up the server using NodeHttpServer on port 3000
-const ServerLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
+HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(WorkflowApiLive),
   Layer.provide(HealthLive),
   Layer.provide(EnvLayer),
   Layer.provide(Logger.pretty),
   HttpServer.withLogAddress,
-  Layer.provide(BunHttpServer.layer({ port })),
-)
-
-// Run the application
-Layer.launch(ServerLive).pipe(
-  Effect.tapError((error) =>
-    Effect.gen(function* () {
-      yield* Effect.logError(`💥 Workflow runner failed to start: ${error}`)
-      yield* Effect.logInfo('🔍 Make sure PostgreSQL is running and accessible')
-      yield* Effect.logInfo('🔍 Check that the shard manager is running')
-      yield* Effect.logInfo('🌐 Workflow HTTP API will be available on http://localhost:3001')
-    }),
-  ),
-  BunRuntime.runMain(),
+  Layer.provide(NodeHttpServer.layer(createServer, { port })),
+  Layer.launch,
+  NodeRuntime.runMain,
 )

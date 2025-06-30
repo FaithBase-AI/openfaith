@@ -1,6 +1,4 @@
-#!/usr/bin/env node
-
-import { BunClusterShardManagerSocket, BunRuntime } from '@effect/platform-bun'
+import { NodeClusterShardManagerSocket, NodeRuntime } from '@effect/platform-node'
 import { PgLive } from '@openfaith/db'
 import { Layer, Logger } from 'effect'
 
@@ -16,9 +14,9 @@ import { Layer, Logger } from 'effect'
 //   logLevel: process.env.LOG_LEVEL || 'info',
 // }
 
-BunClusterShardManagerSocket.layer({
+NodeClusterShardManagerSocket.layer({
   storage: 'sql',
-}).pipe(Layer.provide(PgLive), Layer.provide(Logger.pretty), Layer.launch, BunRuntime.runMain)
+}).pipe(Layer.provide(PgLive), Layer.provide(Logger.pretty), Layer.launch, NodeRuntime.runMain)
 
 // // Shard Manager program
 // const program = Effect.gen(function* () {

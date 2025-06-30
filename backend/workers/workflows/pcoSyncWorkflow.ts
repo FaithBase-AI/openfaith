@@ -1,6 +1,6 @@
 import { NodeSdk } from '@effect/opentelemetry'
 import { FetchHttpClient } from '@effect/platform'
-import { Activity, DurableClock, Workflow } from '@effect/workflow'
+import { Activity, Workflow } from '@effect/workflow'
 import { createPaginatedStream, TokenKey } from '@openfaith/adapter-core/server'
 import { DBLive } from '@openfaith/db'
 import { PcoApiLayer, PcoHttpClient } from '@openfaith/pco/server'
@@ -21,7 +21,7 @@ const PcoSyncPayload = Schema.Struct({
 // Define the PCO sync workflow
 export const PcoSyncWorkflow = Workflow.make({
   error: PcoSyncError,
-  idempotencyKey: ({ tokenKey }) => `pco-sync-${tokenKey}`,
+  idempotencyKey: ({ tokenKey }) => `pco-sync-${tokenKey}-${new Date().toISOString()}`,
   name: 'PcoSyncWorkflow',
   payload: PcoSyncPayload,
   success: Schema.Void,
@@ -39,11 +39,15 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
     yield* Effect.log(`🔄 Starting PCO sync workflow for token: ${payload.tokenKey}`)
     yield* Effect.log(`🆔 Execution ID: ${executionId}`)
 
+    console.log('yeet')
+
     // Create the PCO sync activity
     yield* Activity.make({
       error: PcoSyncError,
       execute: Effect.gen(function* () {
         const attempt = yield* Activity.CurrentAttempt
+
+        console.log('attempt', attempt)
 
         yield* Effect.annotateLogs(Effect.log(`📊 Syncing PCO data`), {
           attempt,
@@ -79,20 +83,13 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
     }).pipe(
       Activity.retry({ times: 3 }),
       PcoSyncWorkflow.withCompensation(
-        Effect.fn(function* (value, cause) {
+        Effect.fn(function* (_value, cause) {
           yield* Effect.log(`🔄 Compensating PCO sync activity for token: ${payload.tokenKey}`)
           yield* Effect.log(`📋 Cause: ${cause}`)
           // Add any cleanup logic here if needed
         }),
       ),
     )
-
-    // Add a small delay between sync operations
-    yield* Effect.log('⏱️  Adding post-sync delay...')
-    yield* DurableClock.sleep({
-      duration: '2 seconds',
-      name: 'PostSyncDelay',
-    })
 
     yield* Effect.log(`✅ Completed PCO sync workflow for token: ${payload.tokenKey}`)
   }),
