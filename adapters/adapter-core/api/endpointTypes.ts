@@ -300,3 +300,11 @@ export type EndpointDefinition<
       : TMethod extends 'DELETE'
         ? DeleteEndpointDefinition<Api, Response, Fields, TModule, TEntity, TName>
         : never
+
+export type EntityManifest = Record<
+  string,
+  | GetEndpointDefinition<any, any, any, any, any, any, any, any, any, any, any>
+  | PostEndpointDefinition<any, any, any, any, any, any, any>
+  | PatchEndpointDefinition<any, any, any, any, any, any, any>
+  | DeleteEndpointDefinition<any, any, any, any, any, any>
+>
