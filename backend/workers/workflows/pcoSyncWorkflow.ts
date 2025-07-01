@@ -1,11 +1,6 @@
-import { NodeSdk } from '@effect/opentelemetry'
-import { FetchHttpClient } from '@effect/platform'
 import { Activity, Workflow } from '@effect/workflow'
 import { createPaginatedStream, TokenKey } from '@openfaith/adapter-core/server'
-import { DBLive } from '@openfaith/db'
 import { PcoApiLayer, PcoHttpClient } from '@openfaith/pco/server'
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { Effect, Schema, Stream } from 'effect'
 
 // Define the PCO sync error
@@ -26,12 +21,6 @@ export const PcoSyncWorkflow = Workflow.make({
   payload: PcoSyncPayload,
   success: Schema.Void,
 })
-
-// NodeSDK layer for telemetry
-const NodeSdkLive = NodeSdk.layer(() => ({
-  resource: { serviceName: 'openfaith-workflow-runner' },
-  spanProcessor: [new BatchSpanProcessor(new OTLPTraceExporter())],
-}))
 
 // Create the workflow implementation layer
 export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
@@ -74,10 +63,7 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
       }).pipe(
         Effect.withSpan('pco-sync-activity'),
         Effect.provide(PcoApiLayer),
-        Effect.provide(FetchHttpClient.layer),
-        Effect.provide(DBLive),
         Effect.provideService(TokenKey, payload.tokenKey),
-        Effect.provide(NodeSdkLive),
       ),
       name: 'SyncPcoData',
     }).pipe(
