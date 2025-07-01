@@ -1,8 +1,12 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.0-beta.5/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
   "assist": {
     "actions": {
-      "source": { "organizeImports": "on", "useSortedAttributes": "on", "useSortedKeys": "on" }
+      "source": {
+        "organizeImports": "on",
+        "useSortedAttributes": "on",
+        "useSortedKeys": "on"
+      }
     }
   },
   "formatter": {
@@ -88,7 +92,6 @@
         "noDangerouslySetInnerHtmlWithChildren": "off"
       },
       "style": {
-        "noArguments": "off",
         "noInferrableTypes": "error",
         "noNonNullAssertion": "off",
         "noParameterAssign": "off",

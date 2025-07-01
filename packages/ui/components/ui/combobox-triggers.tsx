@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/a11y/useSemanticElements: this is the way */
 import { nullOp } from '@openfaith/shared'
 import { UserAvatar } from '@openfaith/ui/components/avatars/userAvatar'
 import { Badge } from '@openfaith/ui/components/ui/badge'
@@ -90,8 +91,6 @@ const DefaultComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
 
   return (
     <button
-      // biome-ignore lint/a11y/useSemanticElements: this is the way
-      role={'combobox'}
       aria-expanded={open}
       className={cn(
         'flex cursor-pointer flex-wrap items-center gap-2 rounded-md border border-transparent p-0.5 hover:border-input data-[state=open]:border-input data-[state=open]:ring-2 data-[state=open]:ring-ring data-[state=open]:ring-offset-2',
@@ -99,6 +98,7 @@ const DefaultComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
       )}
       onClick={() => setOpen(!open)}
       ref={ref}
+      role={'combobox'}
       {...domProps}
     >
       {pipe(
@@ -128,14 +128,14 @@ const DefaultComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
                     Boolean.match({
                       onFalse: () => (
                         <UserAvatar
+                          avatar={y.avatar}
                           name={pipe(
                             y.name,
                             Option.fromNullable,
                             Option.getOrElse(() => ''),
                           )}
-                          userId={y.id}
-                          avatar={y.avatar}
                           size={24}
+                          userId={y.id}
                         />
                       ),
                       onTrue: nullOp,
@@ -150,9 +150,13 @@ const DefaultComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
                       onFalse: nullOp,
                       onTrue: () => (
                         <Button
+                          asChild
                           className={'-mr-2 ml-0.5 size-6 rounded-full p-0'}
-                          variant={'outline'}
-                          size={'icon-xs'}
+                          onClick={(event) => {
+                            event.preventDefault()
+                            event.stopPropagation()
+                            handleUnselect(y)
+                          }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               handleUnselect(y)
@@ -162,12 +166,8 @@ const DefaultComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
                             event.preventDefault()
                             event.stopPropagation()
                           }}
-                          onClick={(event) => {
-                            event.preventDefault()
-                            event.stopPropagation()
-                            handleUnselect(y)
-                          }}
-                          asChild
+                          size={'icon-xs'}
+                          variant={'outline'}
                         >
                           {/* Doing this because button cannot be a descendant of a button */}
                           <div>
@@ -210,8 +210,6 @@ const SelectComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
 
   return (
     <button
-      // biome-ignore lint/a11y/useSemanticElements: this is the way
-      role={'combobox'}
       aria-expanded={open}
       className={cn(
         'flex min-h-10 w-full cursor-pointer items-center justify-between overflow-hidden rounded-md border border-input bg-background px-3 py-0.5 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
@@ -219,6 +217,7 @@ const SelectComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
       )}
       onClick={() => setOpen(!open)}
       ref={ref}
+      role={'combobox'}
       {...domProps}
     >
       <div className={'flex flex-row flex-wrap gap-2 overflow-hidden'}>
@@ -240,6 +239,7 @@ const SelectComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
                 x,
                 Array.map((y) => (
                   <Badge
+                    className={'overflow-hidden'}
                     key={y.id}
                     variant={pipe(
                       y.id === 'all' || hideAvatar,
@@ -248,21 +248,20 @@ const SelectComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
                         onTrue: () => 'secondary',
                       }),
                     )}
-                    className={'overflow-hidden'}
                   >
                     {pipe(
                       y.id === 'all' || hideAvatar,
                       Boolean.match({
                         onFalse: () => (
                           <UserAvatar
+                            avatar={y.avatar}
                             name={pipe(
                               y.name,
                               Option.fromNullable,
                               Option.getOrElse(() => ''),
                             )}
-                            userId={y.id}
-                            avatar={y.avatar}
                             size={24}
+                            userId={y.id}
                           />
                         ),
                         onTrue: nullOp,
@@ -277,9 +276,13 @@ const SelectComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
                         onFalse: nullOp,
                         onTrue: () => (
                           <Button
+                            asChild
                             className={'-mr-2 ml-0.5 size-6 shrink-0 rounded-full p-0'}
-                            variant={'outline'}
-                            size={'icon-xs'}
+                            onClick={(event) => {
+                              event.preventDefault()
+                              event.stopPropagation()
+                              handleUnselect(y)
+                            }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 handleUnselect(y)
@@ -289,12 +292,8 @@ const SelectComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
                               event.preventDefault()
                               event.stopPropagation()
                             }}
-                            onClick={(event) => {
-                              event.preventDefault()
-                              event.stopPropagation()
-                              handleUnselect(y)
-                            }}
-                            asChild
+                            size={'icon-xs'}
+                            variant={'outline'}
                           >
                             {/* Doing this because button cannot be a descendant of a button */}
                             <div>
@@ -338,10 +337,6 @@ const AssignedToComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem
 
   return (
     <Button
-      size={'sm'}
-      variant={'ghost'}
-      // biome-ignore lint/a11y/useSemanticElements: this is the way
-      role={'combobox'}
       aria-expanded={open}
       className={cn(
         'shrink-0 overflow-hidden',
@@ -357,6 +352,9 @@ const AssignedToComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem
       )}
       onClick={() => setOpen(!open)}
       ref={ref}
+      role={'combobox'}
+      size={'sm'}
+      variant={'ghost'}
       {...domProps}
     >
       <AtSignIcon />
@@ -408,10 +406,6 @@ const LinkedRecordsComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxI
 
   return (
     <Button
-      size={'sm'}
-      variant={'ghost'}
-      // biome-ignore lint/a11y/useSemanticElements: this is the way
-      role={'combobox'}
       aria-expanded={open}
       className={cn(
         'shrink-0 overflow-hidden',
@@ -427,6 +421,9 @@ const LinkedRecordsComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxI
       )}
       onClick={() => setOpen(!open)}
       ref={ref}
+      role={'combobox'}
+      size={'sm'}
+      variant={'ghost'}
       {...domProps}
     >
       <ArrowUpRightIcon />
@@ -471,15 +468,14 @@ const SortableComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      <SortableList items={items} onItemsChange={setItems} className='space-y-2'>
+      <SortableList className='space-y-2' items={items} onItemsChange={setItems}>
         <Button
-          size={'sm'}
-          variant={'ghost'}
-          // biome-ignore lint/a11y/useSemanticElements: this is the way
-          role={'combobox'}
           aria-expanded={open}
           onClick={() => setOpen(!open)}
           ref={ref}
+          role={'combobox'}
+          size={'sm'}
+          variant={'ghost'}
           {...domProps}
         >
           <PlusIcon className={'size-4 shrink-0 opacity-50'} />
@@ -489,7 +485,7 @@ const SortableComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
         {pipe(
           selectedOptions,
           Array.map((option) => (
-            <SortableItem key={option.id} id={option.id}>
+            <SortableItem id={option.id} key={option.id}>
               <Card
                 className={cn(
                   'cursor-grab border py-0 transition-colors hover:bg-accent/50 active:cursor-grabbing',
@@ -507,13 +503,13 @@ const SortableComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
                     </span>
                   </div>
                   <Button
-                    variant='ghost'
-                    size='icon'
                     className='h-8 w-8'
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onTouchStart={(e) => e.stopPropagation()}
                     onClick={() => handleUnselect(option)}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    size='icon'
+                    variant='ghost'
                   >
                     <XIcon className='h-4 w-4' />
                   </Button>

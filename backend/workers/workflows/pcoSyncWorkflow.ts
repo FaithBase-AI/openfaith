@@ -10,6 +10,7 @@ class PcoSyncError extends Schema.TaggedError<PcoSyncError>('PcoSyncError')('Pco
 
 // Define the workflow payload schema
 const PcoSyncPayload = Schema.Struct({
+  entities: Schema.Array(Schema.String),
   tokenKey: Schema.String,
 })
 

@@ -1,6 +1,7 @@
 export * from '@openfaith/adapter-core/api/apiErrors'
 export * from '@openfaith/adapter-core/api/endpointAdapter'
 export * from '@openfaith/adapter-core/api/endpointTypes'
+export * from '@openfaith/adapter-core/api/entityManifestLayer'
 export * from '@openfaith/adapter-core/api/mkEntityManifest'
 export * from '@openfaith/adapter-core/api/pagination'
 export * from '@openfaith/adapter-core/api/tokenManager'

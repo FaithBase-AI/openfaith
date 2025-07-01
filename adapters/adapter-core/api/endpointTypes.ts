@@ -301,7 +301,7 @@ export type EndpointDefinition<
         ? DeleteEndpointDefinition<Api, Response, Fields, TModule, TEntity, TName>
         : never
 
-export type EntityManifest = Record<
+export type EntityManifestShape = Record<
   string,
   | GetEndpointDefinition<any, any, any, any, any, any, any, any, any, any, any>
   | PostEndpointDefinition<any, any, any, any, any, any, any>

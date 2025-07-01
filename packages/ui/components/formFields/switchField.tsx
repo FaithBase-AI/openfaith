@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/a11y/useSemanticElements: this is the way */
+/** biome-ignore-all lint/a11y/noNoninteractiveElementToInteractiveRole: this is the way */
 'use client'
 
 import { getFieldErrors } from '@openfaith/ui/components/formFields/fieldHelpers'
@@ -37,38 +39,36 @@ export function SwitchField(props: SwitchFieldProps) {
 
   return (
     <InputWrapper
-      required={required}
-      name={field.name}
       className={wrapperClassName}
-      labelClassName={labelClassName}
       errorClassName={errorClassName}
+      labelClassName={labelClassName}
+      name={field.name}
       processedError={processedError}
+      required={required}
     >
       <label
-        htmlFor={field.name}
         className={cn('flex w-full items-center justify-between gap-2 py-2', subWrapperClassName)}
-        // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: this is the way
-        // biome-ignore lint/a11y/useSemanticElements: this is the way
-        role='button'
-        tabIndex={0}
+        htmlFor={field.name}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
             field.handleChange(!field.state.value)
           }
         }}
+        role='button'
+        tabIndex={0}
       >
         <InputLabel
-          required={required}
           label={label}
-          processedError={processedError}
           labelClassName={cn(labelClassName, 'cursor-pointer select-none')}
           name={field.name}
+          processedError={processedError}
+          required={required}
         />
 
         <Switch
-          id={field.name}
           checked={field.state.value}
+          id={field.name}
           onBlur={field.handleBlur}
           onCheckedChange={field.handleChange}
           {...domProps}
