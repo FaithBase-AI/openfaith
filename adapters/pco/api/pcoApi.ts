@@ -14,6 +14,7 @@ import {
   TokenKey,
   TokenManagerLive,
   toHttpApiEndpoint,
+  toHttpApiGroup,
 } from '@openfaith/adapter-core/server'
 import {
   PcoAuthenticationError,
@@ -112,6 +113,21 @@ const tokenApiGroup = HttpApiGroup.make('token')
   .addError(PcoGatewayTimeoutError, { status: 504 })
 
 export const PcoApi = HttpApi.make('PCO').add(peopleApiGroup).add(tokenApiGroup)
+
+// New API using toHttpApiGroup function - following Effect patterns
+const peopleApiGroupNew = toHttpApiGroup('people', pcoEntityManifest.Person)
+  .addError(PcoBadRequestError, { status: 400 })
+  .addError(PcoAuthenticationError, { status: 401 })
+  .addError(PcoAuthorizationError, { status: 403 })
+  .addError(PcoNotFoundError, { status: 404 })
+  .addError(PcoConflictError, { status: 409 })
+  .addError(PcoValidationError, { status: 422 })
+  .addError(PcoRateLimitError, { status: 429 })
+  .addError(PcoInternalServerError, { status: 500 })
+  .addError(PcoServiceUnavailableError, { status: 503 })
+  .addError(PcoGatewayTimeoutError, { status: 504 })
+
+export const PcoApiNew = HttpApi.make('PCO').add(peopleApiGroupNew).add(tokenApiGroup)
 
 // const PcoApiTest = (() => {
 //   let api = HttpApi.make('PCO') as HttpApi.HttpApi<
@@ -244,8 +260,78 @@ export class PcoHttpClient extends Effect.Service<PcoHttpClient>()('PcoHttpClien
   }),
 }) {}
 
+export class PcoHttpClientNew extends Effect.Service<PcoHttpClientNew>()('PcoHttpClientNew', {
+  effect: Effect.gen(function* () {
+    const tokenService = yield* PcoAuth
+    const limiter = yield* RateLimiter.RateLimiter
+    const tokenKey = yield* TokenKey
+    const getRateLimitedAccessToken = Effect.zipRight(
+      limiter.maybeWait(`pco:rate-limit:${tokenKey}`, Duration.seconds(20), 101),
+      tokenService.getValidAccessToken,
+    )
+
+    const client = (yield* HttpClient.HttpClient).pipe(
+      HttpClient.mapRequestEffect(
+        Effect.fn(function* (request) {
+          const token = yield* getRateLimitedAccessToken
+          console.log('Using PCO token for request')
+          return HttpClientRequest.bearerToken(request, token)
+        }),
+      ),
+      HttpClient.transformResponse((responseEffect) => {
+        return pipe(
+          responseEffect,
+          Effect.flatMap(handlePcoError),
+          Effect.retry({
+            schedule: Schedule.identity<HttpClientError.ResponseError>().pipe(
+              Schedule.addDelay((error) => {
+                if (error instanceof HttpClientError.ResponseError) {
+                  if (error.response.status === 429) {
+                    return calculateRateLimitDelay(error.response)
+                  }
+                  if (error.response.status >= 500) {
+                    return Duration.seconds(1)
+                  }
+                }
+                return Duration.zero
+              }),
+              Schedule.intersect(Schedule.recurs(5)),
+            ),
+            while: (error) => {
+              if (error instanceof HttpClientError.ResponseError) {
+                const status = error.response.status
+                return status === 429 || status >= 500
+              }
+              return false
+            },
+          }),
+          Effect.catchAll((error) => {
+            if (error instanceof HttpClientError.ResponseError) {
+              console.log(`PCO API request failed after retries: ${error.response.status}`)
+            }
+            return Effect.fail(error)
+          }),
+        )
+      }),
+    )
+
+    return yield* HttpApiClient.makeWith(PcoApiNew, {
+      baseUrl: 'https://api.planningcenteronline.com',
+      httpClient: client,
+    })
+  }),
+}) {}
+
 export const PcoApiLayer = Layer.empty.pipe(
   Layer.provideMerge(PcoHttpClient.Default),
+  Layer.provideMerge(PcoAuthLive),
+  Layer.provideMerge(TokenManagerLive),
+  Layer.provideMerge(RateLimiter.RateLimiterLive),
+  Layer.provideMerge(MemoryRateLimitStoreLive),
+)
+
+export const PcoApiLayerNew = Layer.empty.pipe(
+  Layer.provideMerge(PcoHttpClientNew.Default),
   Layer.provideMerge(PcoAuthLive),
   Layer.provideMerge(TokenManagerLive),
   Layer.provideMerge(RateLimiter.RateLimiterLive),

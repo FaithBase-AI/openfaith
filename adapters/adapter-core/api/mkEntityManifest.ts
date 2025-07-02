@@ -1,3 +1,5 @@
+import { type HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
+import { toHttpApiEndpoint } from '@openfaith/adapter-core/api/endpointAdapter'
 import type * as Endpoint from '@openfaith/adapter-core/api/endpointTypes'
 import { Array, pipe } from 'effect'
 import type { NonEmptyReadonlyArray } from 'effect/Array'
@@ -23,6 +25,114 @@ export type ConvertEntityManifest<Endpoints extends Endpoint.Any> = {
     module: Extract<Endpoints, { entity: Entity }>['module']
   }
 }
+
+/**
+ * Converts entity manifest endpoints into HttpApiEndpoint types for platform integration
+ * Properly infers types from endpoint definitions like WorkflowProxy.ConvertHttpApi
+ * @since 1.0.0
+ */
+export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
+  Endpoints extends Endpoint.GetEndpointDefinition<
+    infer _Api,
+    infer _Response,
+    infer _Fields,
+    infer _Module,
+    infer _Entity,
+    infer _Name,
+    infer _OrderableFields,
+    infer _QueryableFields,
+    infer _Includes,
+    infer _QueryableSpecial,
+    infer _IsCollection
+  >
+    ? HttpApiEndpoint.HttpApiEndpoint<
+        _Name,
+        'GET',
+        never,
+        _IsCollection extends true
+          ? {
+              readonly include?: _Includes[number] | (_Includes[number] & _Includes) | undefined
+              readonly offset?: number | undefined
+              readonly per_page?: number | undefined
+            }
+          : {
+              readonly offset?: number | undefined
+              readonly per_page?: number | undefined
+            },
+        never,
+        never,
+        _Response['Type'],
+        never,
+        _Response['Context'],
+        never
+      >
+    : Endpoints extends Endpoint.PostEndpointDefinition<
+          infer _Api,
+          infer _Response,
+          infer _Fields,
+          infer _Module,
+          infer _Entity,
+          infer _Name,
+          infer _CreatableFields
+        >
+      ? HttpApiEndpoint.HttpApiEndpoint<
+          _Name,
+          'POST',
+          never,
+          never,
+          {
+            readonly [K in _CreatableFields[number]]: _Fields[K]
+          },
+          never,
+          _Response['Type'],
+          never,
+          _Response['Context'],
+          never
+        >
+      : Endpoints extends Endpoint.PatchEndpointDefinition<
+            infer _Api,
+            infer _Response,
+            infer _Fields,
+            infer _Module,
+            infer _Entity,
+            infer _Name,
+            infer _UpdatableFields
+          >
+        ? HttpApiEndpoint.HttpApiEndpoint<
+            _Name,
+            'PATCH',
+            never,
+            never,
+            {
+              readonly [K in _UpdatableFields[number]]: _Fields[K]
+            },
+            never,
+            _Response['Type'],
+            never,
+            _Response['Context'],
+            never
+          >
+        : Endpoints extends Endpoint.DeleteEndpointDefinition<
+              infer _Api,
+              infer _Response,
+              infer _Fields,
+              infer _Module,
+              infer _Entity,
+              infer _Name
+            >
+          ? HttpApiEndpoint.HttpApiEndpoint<
+              _Name,
+              'DELETE',
+              never,
+              never,
+              never,
+              never,
+              void,
+              never,
+              never,
+              never
+            >
+          : never
 
 /**
  * Creates a well-typed entity manifest from a list of endpoint definitions
@@ -73,3 +183,44 @@ export const mkEntityManifest = <const Endpoints extends NonEmptyReadonlyArray<E
         }),
       ),
   ) as any
+
+/**
+ * Derives an `HttpApiGroup` from an entity manifest, similar to WorkflowProxy.toHttpApiGroup
+ *
+ * @example
+ * ```ts
+ * import { HttpApi } from '@effect/platform'
+ * import { mkEntityManifest, toHttpApiGroup } from '@openfaith/adapter-core/server'
+ * import { pcoEndpoints } from '@openfaith/pco/modules/people/pcoPeopleEndpoints'
+ *
+ * const manifest = mkEntityManifest(pcoEndpoints)
+ *
+ * const PcoApi = HttpApi.make('PCO')
+ *   .add(toHttpApiGroup('people', manifest.Person))
+ * ```
+ *
+ * @since 1.0.0
+ * @category Constructors
+ */
+export const toHttpApiGroup = <
+  const Name extends string,
+  EntityManifest extends {
+    readonly endpoints: Record<string, Endpoint.Any>
+    readonly module: string
+  },
+>(
+  name: Name,
+  entityManifest: EntityManifest,
+): HttpApiGroup.HttpApiGroup<
+  Name,
+  ConvertHttpApi<EntityManifest['endpoints'][keyof EntityManifest['endpoints']]>
+> => {
+  let group = HttpApiGroup.make(name)
+
+  const endpoints = Object.values(entityManifest.endpoints)
+  for (const endpoint of endpoints) {
+    group = group.add(toHttpApiEndpoint(endpoint as any)) as any
+  }
+
+  return group as any
+}
