@@ -145,6 +145,6 @@ export const deletePersonDefinition = pcoApiAdapter({
   entity: 'Person',
   method: 'DELETE',
   module: 'people',
-  name: 'people.delete',
+  name: 'people',
   path: '/people/v2/people/:personId',
 } as const)
