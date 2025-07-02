@@ -1,7 +1,23 @@
+/**
+ * @since 1.0.0
+ */
 import type { Schema } from 'effect'
 
 /**
+ * @since 1.0.0
+ * @category Symbols
+ */
+export const TypeId: unique symbol = Symbol.for('@openfaith/adapter-core/Endpoint')
+
+/**
+ * @since 1.0.0
+ * @category Symbols
+ */
+export type TypeId = typeof TypeId
+
+/**
  * HTTP method type for API endpoints
+ * @since 1.0.0
  */
 export type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE'
 
@@ -105,7 +121,7 @@ export type GetEndpointDefinition<
  * Type definition for a POST endpoint configuration.
  *
  * @template Api - The API resource type that extends ApiBase
- * @template TModule - The PCO module name (e.g., "people", "events")
+ * @template TModule - The module name (e.g., "people", "events")
  * @template TEntity - The entity name (e.g., "Person", "Event")
  * @template TName - The endpoint operation name (e.g., "create")
  */
@@ -123,7 +139,7 @@ export type BasePostEndpointDefinition<
   path: `/${string}`
   /** HTTP method - always 'POST' for this type */
   method: 'POST'
-  /** The PCO module this endpoint belongs to */
+  /** The module this endpoint belongs to */
   module: TModule
   /** The entity type this endpoint operates on */
   entity: TEntity
@@ -159,7 +175,7 @@ export type BasePatchEndpointDefinition<
   path: `/${string}`
   /** HTTP method - always 'PATCH' for this type */
   method: 'PATCH'
-  /** The PCO module this endpoint belongs to */
+  /** The module this endpoint belongs to */
   module: TModule
   /** The entity type this endpoint operates on */
   entity: TEntity
@@ -192,9 +208,9 @@ export type BaseDeleteEndpointDefinition<
   apiSchema: Schema.Schema<Api>
   /** The API endpoint path */
   path: `/${string}`
-  /** HTTP method - always 'PATCH' for this type */
+  /** HTTP method - always 'DELETE' for this type */
   method: 'DELETE'
-  /** The PCO module this endpoint belongs to */
+  /** The module this endpoint belongs to */
   module: TModule
   /** The entity type this endpoint operates on */
   entity: TEntity
@@ -308,3 +324,211 @@ export type EntityManifestShape = Record<
   | PatchEndpointDefinition<any, any, any, any, any, any, any>
   | DeleteEndpointDefinition<any, any, any, any, any, any>
 >
+
+/**
+ * A type-level helper representing any endpoint definition
+ * @since 1.0.0
+ * @category Models
+ */
+export type Any = EndpointDefinition<
+  Method,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any
+>
+
+// New interface-based types (following Effect patterns)
+// These are for future use and new development
+
+/**
+ * @since 1.0.0
+ * @category Interfaces
+ */
+export interface GetEndpoint<
+  Api,
+  Response extends Schema.Schema.Any,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends boolean,
+> {
+  readonly [TypeId]: TypeId
+  /** Schema for the API resource */
+  readonly apiSchema: Schema.Schema<Api>
+  /** Response schema */
+  readonly response: Response
+  /** Available relationships that can be included */
+  readonly includes: Includes
+  /** API endpoint path */
+  readonly path: `/${string}`
+  /** HTTP method for this endpoint */
+  readonly method: 'GET'
+  /** API module name */
+  readonly module: TModule
+  /** Entity name */
+  readonly entity: TEntity
+  /** Endpoint name */
+  readonly name: TName
+  /** Whether this endpoint returns a collection or single resource */
+  readonly isCollection: IsCollection
+  /** Fields that can be used for ordering responses (only for collections) */
+  readonly orderableBy: IsCollection extends true ? OrderableFields : never
+  /** Query configuration (only for collections) */
+  readonly queryableBy: IsCollection extends true
+    ? {
+        /** Fields that can be queried */
+        readonly fields: QueryableFields
+        /** Special query parameters */
+        readonly special: QueryableSpecial
+      }
+    : never
+}
+
+/**
+ * @since 1.0.0
+ * @category Interfaces
+ */
+export interface PostEndpoint<
+  Api,
+  Response extends Schema.Schema.Any,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+> {
+  readonly [TypeId]: TypeId
+  /** The Effect schema for the API resource */
+  readonly apiSchema: Schema.Schema<Api>
+  /** Response schema */
+  readonly response: Response
+  /** The API endpoint path */
+  readonly path: `/${string}`
+  /** HTTP method - always 'POST' for this type */
+  readonly method: 'POST'
+  /** The module this endpoint belongs to */
+  readonly module: TModule
+  /** The entity type this endpoint operates on */
+  readonly entity: TEntity
+  /** The operation name for this endpoint */
+  readonly name: TName
+  /** Array of fields that can be set when creating a new resource */
+  readonly creatableFields: CreatableFields
+}
+
+/**
+ * @since 1.0.0
+ * @category Interfaces
+ */
+export interface PatchEndpoint<
+  Api,
+  Response extends Schema.Schema.Any,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+> {
+  readonly [TypeId]: TypeId
+  /** The Effect schema for the API resource */
+  readonly apiSchema: Schema.Schema<Api>
+  /** Response schema */
+  readonly response: Response
+  /** The API endpoint path */
+  readonly path: `/${string}`
+  /** HTTP method - always 'PATCH' for this type */
+  readonly method: 'PATCH'
+  /** The module this endpoint belongs to */
+  readonly module: TModule
+  /** The entity type this endpoint operates on */
+  readonly entity: TEntity
+  /** The operation name for this endpoint */
+  readonly name: TName
+  /** Array of fields that can be set when updating a resource */
+  readonly updatableFields: UpdatableFields
+}
+
+/**
+ * @since 1.0.0
+ * @category Interfaces
+ */
+export interface DeleteEndpoint<
+  Api,
+  Response extends Schema.Schema.Any,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+> {
+  readonly [TypeId]: TypeId
+  /** The Effect schema for the API resource */
+  readonly apiSchema: Schema.Schema<Api>
+  /** Response schema */
+  readonly response: Response
+  /** The API endpoint path */
+  readonly path: `/${string}`
+  /** HTTP method - always 'DELETE' for this type */
+  readonly method: 'DELETE'
+  /** The module this endpoint belongs to */
+  readonly module: TModule
+  /** The entity type this endpoint operates on */
+  readonly entity: TEntity
+  /** The operation name for this endpoint */
+  readonly name: TName
+}
+
+/**
+ * @since 1.0.0
+ * @category Interfaces
+ */
+export type Endpoint<
+  TMethod extends Method,
+  Api,
+  Response extends Schema.Schema.Any,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends boolean,
+  CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+> = TMethod extends 'GET'
+  ? GetEndpoint<
+      Api,
+      Response,
+      Fields,
+      TModule,
+      TEntity,
+      TName,
+      OrderableFields,
+      QueryableFields,
+      Includes,
+      QueryableSpecial,
+      IsCollection
+    >
+  : TMethod extends 'POST'
+    ? PostEndpoint<Api, Response, Fields, TModule, TEntity, TName, CreatableFields>
+    : TMethod extends 'PATCH'
+      ? PatchEndpoint<Api, Response, Fields, TModule, TEntity, TName, UpdatableFields>
+      : TMethod extends 'DELETE'
+        ? DeleteEndpoint<Api, Response, Fields, TModule, TEntity, TName>
+        : never

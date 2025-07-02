@@ -1,32 +1,6 @@
-import type { EndpointDefinition, Method } from '@openfaith/adapter-core/api/endpointTypes'
+import type * as Endpoint from '@openfaith/adapter-core/api/endpointTypes'
 import { Array, pipe } from 'effect'
 import type { NonEmptyReadonlyArray } from 'effect/Array'
-
-/**
- * @since 1.0.0
- */
-export namespace Endpoint {
-  /**
-   * A type-level helper representing any endpoint definition
-   * @since 1.0.0
-   */
-  export type Any = EndpointDefinition<
-    Method,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any
-  >
-}
 
 /**
  * Converts endpoint definitions into a typed entity manifest structure
