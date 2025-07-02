@@ -196,26 +196,24 @@ export const mkEntityManifest = <const Endpoints extends NonEmptyReadonlyArray<E
  * const manifest = mkEntityManifest(pcoEndpoints)
  *
  * const PcoApi = HttpApi.make('PCO')
- *   .add(toHttpApiGroup('people', manifest.Person))
+ *   .add(toHttpApiGroup(manifest.Person)) // Name automatically derived from module
  * ```
  *
  * @since 1.0.0
  * @category Constructors
  */
 export const toHttpApiGroup = <
-  const Name extends string,
   EntityManifest extends {
     readonly endpoints: Record<string, Endpoint.Any>
     readonly module: string
   },
 >(
-  name: Name,
   entityManifest: EntityManifest,
 ): HttpApiGroup.HttpApiGroup<
-  Name,
+  EntityManifest['module'],
   ConvertHttpApi<EntityManifest['endpoints'][keyof EntityManifest['endpoints']]>
 > => {
-  let group = HttpApiGroup.make(name)
+  let group = HttpApiGroup.make(entityManifest.module)
 
   const endpoints = Object.values(entityManifest.endpoints)
   for (const endpoint of endpoints) {

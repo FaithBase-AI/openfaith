@@ -115,7 +115,7 @@ const tokenApiGroup = HttpApiGroup.make('token')
 export const PcoApi = HttpApi.make('PCO').add(peopleApiGroup).add(tokenApiGroup)
 
 // New API using toHttpApiGroup function - following Effect patterns
-const peopleApiGroupNew = toHttpApiGroup('people', pcoEntityManifest.Person)
+const peopleApiGroupNew = toHttpApiGroup(pcoEntityManifest.Person)
   .addError(PcoBadRequestError, { status: 400 })
   .addError(PcoAuthenticationError, { status: 401 })
   .addError(PcoAuthorizationError, { status: 403 })
