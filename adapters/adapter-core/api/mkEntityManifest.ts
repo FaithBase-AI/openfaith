@@ -1,14 +1,20 @@
 import { type HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
 import { toHttpApiEndpoint } from '@openfaith/adapter-core/api/endpointAdapter'
 import type * as Endpoint from '@openfaith/adapter-core/api/endpointTypes'
-import { Array, pipe } from 'effect'
+import { Array, pipe, type Schema } from 'effect'
 import type { NonEmptyReadonlyArray } from 'effect/Array'
+
+/**
+ * Error configuration for HttpApiGroup
+ * @since 1.0.0
+ */
+export type ErrorConfig = { [key: number]: Schema.Schema.Any }
 
 /**
  * Converts endpoint definitions into a typed entity manifest structure
  * @since 1.0.0
  */
-export type ConvertEntityManifest<Endpoints extends Endpoint.Any> = {
+export type ConvertEntityManifest<Endpoints extends Endpoint.Any, Errors extends ErrorConfig> = {
   [Entity in Endpoints['entity']]: {
     /** The Effect schema for this entity's API resource */
     apiSchema: Extract<Endpoints, { entity: Entity }>['apiSchema']
@@ -23,12 +29,14 @@ export type ConvertEntityManifest<Endpoints extends Endpoint.Any> = {
     entity: Entity
     /** The module this entity belongs to */
     module: Extract<Endpoints, { entity: Entity }>['module']
+    /** Error configuration for HttpApiGroup */
+    errors: Errors
   }
 }
 
 /**
  * Converts entity manifest endpoints into HttpApiEndpoint types for platform integration
- * Properly infers types from endpoint definitions like WorkflowProxy.ConvertHttpApi
+ * Similar to WorkflowProxy.ConvertHttpApi but for endpoints with proper error distribution
  * @since 1.0.0
  */
 export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
@@ -148,23 +156,34 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
  *   updatePersonDefinition,
  * } from '@openfaith/pco/modules/people/pcoPeopleEndpoints'
  *
- * export const pcoEntityManifest = mkEntityManifest([
- *   getAllPeopleDefinition,
- *   getPersonByIdDefinition,
- *   createPersonDefinition,
- *   updatePersonDefinition,
- *   deletePersonDefinition,
- * ] as const)
+ * export const pcoEntityManifest = mkEntityManifest({
+ *   endpoints: [
+ *     getAllPeopleDefinition,
+ *     getPersonByIdDefinition,
+ *     createPersonDefinition,
+ *     updatePersonDefinition,
+ *     deletePersonDefinition,
+ *   ],
+ *   errors: [
+ *     { error: PcoBadRequestError, options: { status: 400 } },
+ *     { error: PcoAuthenticationError, options: { status: 401 } },
+ *     // ... other errors
+ *   ]
+ * } as const)
  * ```
  *
  * @since 1.0.0
  * @category Constructors
  */
-export const mkEntityManifest = <const Endpoints extends NonEmptyReadonlyArray<Endpoint.Any>>(
-  endpoints: Endpoints,
-): ConvertEntityManifest<Endpoints[number]> =>
+export const mkEntityManifest = <
+  const Endpoints extends NonEmptyReadonlyArray<Endpoint.Any>,
+  const Errors extends ErrorConfig,
+>(config: {
+  readonly endpoints: Endpoints
+  readonly errors: Errors
+}): ConvertEntityManifest<Endpoints[number], Errors> =>
   pipe(
-    endpoints,
+    config.endpoints,
     Array.groupBy((x) => x.entity),
     (grouped) =>
       Object.fromEntries(
@@ -177,6 +196,7 @@ export const mkEntityManifest = <const Endpoints extends NonEmptyReadonlyArray<E
               apiSchema: firstEndpoint.apiSchema,
               endpoints: Object.fromEntries(entityEndpoints.map((x) => [x.name, x])),
               entity: entity,
+              errors: config.errors,
               module: firstEndpoint.module,
             },
           ]
@@ -193,31 +213,38 @@ export const mkEntityManifest = <const Endpoints extends NonEmptyReadonlyArray<E
  * import { mkEntityManifest, toHttpApiGroup } from '@openfaith/adapter-core/server'
  * import { pcoEndpoints } from '@openfaith/pco/modules/people/pcoPeopleEndpoints'
  *
- * const manifest = mkEntityManifest(pcoEndpoints)
+ * const manifest = mkEntityManifest({ endpoints: pcoEndpoints, errors: [...] })
  *
  * const PcoApi = HttpApi.make('PCO')
- *   .add(toHttpApiGroup(manifest.Person)) // Name automatically derived from module
+ *   .add(toHttpApiGroup(manifest.Person)) // Errors automatically applied
  * ```
  *
  * @since 1.0.0
  * @category Constructors
  */
 export const toHttpApiGroup = <
-  EntityManifest extends {
-    readonly endpoints: Record<string, Endpoint.Any>
-    readonly module: string
-  },
->(
-  entityManifest: EntityManifest,
-): HttpApiGroup.HttpApiGroup<
-  EntityManifest['module'],
-  ConvertHttpApi<EntityManifest['endpoints'][keyof EntityManifest['endpoints']]>
+  Endpoints extends Record<string, Endpoint.Any>,
+  Module extends string,
+  Errors extends ErrorConfig,
+>(entityManifest: {
+  readonly endpoints: Endpoints
+  readonly module: Module
+  readonly errors: Errors
+}): HttpApiGroup.HttpApiGroup<
+  Module,
+  ConvertHttpApi<Endpoints[keyof Endpoints]>,
+  Errors[keyof Errors]
 > => {
   let group = HttpApiGroup.make(entityManifest.module)
 
   const endpoints = Object.values(entityManifest.endpoints)
   for (const endpoint of endpoints) {
     group = group.add(toHttpApiEndpoint(endpoint as any)) as any
+  }
+
+  // Apply error configuration - errors are now always present
+  for (const [status, error] of Object.entries(entityManifest.errors)) {
+    group = group.addError(error, { status: Number(status) }) as any
   }
 
   return group as any

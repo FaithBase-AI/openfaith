@@ -105,4 +105,7 @@ const getAllIndividualsDefinition = ccbApiAdapter({
   },
 })
 
-export const ccbEntityManifest = mkEntityManifest([getAllIndividualsDefinition])
+export const ccbEntityManifest = mkEntityManifest({
+  endpoints: [getAllIndividualsDefinition],
+  errors: {},
+} as const)

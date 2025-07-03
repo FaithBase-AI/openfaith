@@ -115,17 +115,8 @@ const tokenApiGroup = HttpApiGroup.make('token')
 export const PcoApi = HttpApi.make('PCO').add(peopleApiGroup).add(tokenApiGroup)
 
 // New API using toHttpApiGroup function - following Effect patterns
+// Errors are automatically applied from entity manifest configuration
 const peopleApiGroupNew = toHttpApiGroup(pcoEntityManifest.Person)
-  .addError(PcoBadRequestError, { status: 400 })
-  .addError(PcoAuthenticationError, { status: 401 })
-  .addError(PcoAuthorizationError, { status: 403 })
-  .addError(PcoNotFoundError, { status: 404 })
-  .addError(PcoConflictError, { status: 409 })
-  .addError(PcoValidationError, { status: 422 })
-  .addError(PcoRateLimitError, { status: 429 })
-  .addError(PcoInternalServerError, { status: 500 })
-  .addError(PcoServiceUnavailableError, { status: 503 })
-  .addError(PcoGatewayTimeoutError, { status: 504 })
 
 export const PcoApiNew = HttpApi.make('PCO').add(peopleApiGroupNew).add(tokenApiGroup)
 
