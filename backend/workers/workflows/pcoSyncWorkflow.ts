@@ -60,10 +60,18 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
           return yield* Stream.runForEach(
             createPaginatedStream(entityHttp.list, {
               urlParams: {
-                include: 'addresses',
+                per_page: 100,
               },
             } as const),
-            saveDataE,
+            (data) =>
+              saveDataE(data).pipe(
+                Effect.mapError(
+                  (error) =>
+                    new PcoSyncError({
+                      message: error.message,
+                    }),
+                ),
+              ),
           )
         }
       }).pipe(

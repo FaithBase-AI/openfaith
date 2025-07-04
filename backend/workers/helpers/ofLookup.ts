@@ -5,7 +5,7 @@ import type { pcoEntityManifest } from '@openfaith/pco/server'
 import { pcoPersonTransformer } from '@openfaith/pco/server'
 import { BasePerson } from '@openfaith/schema'
 import { getExternalLinkId, getPersonId } from '@openfaith/shared'
-import { getTableColumns, sql } from 'drizzle-orm'
+import { getTableColumns, getTableName, sql } from 'drizzle-orm'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
 
 export const ofLookup = {
@@ -102,10 +102,6 @@ export const saveDataE = Effect.fn(function* (
     entityType: ofEntity,
     orgId,
     returnedCount: externalLinks.length,
-    statuses: pipe(
-      data.data,
-      Array.map((x) => x.attributes.status),
-    ),
   })
 
   const entityValues = pipe(
@@ -120,8 +116,6 @@ export const saveDataE = Effect.fn(function* (
       ),
     ),
     Array.map(([id, entity]) => {
-      console.log(entity.attributes)
-
       const { createdAt, deletedAt, inactivatedAt, updatedAt, customFields, ...canonicalAttrs } =
         Schema.decodeSync(transformer, { errors: 'all' })(entity.attributes)
 
@@ -176,7 +170,7 @@ export const saveDataE = Effect.fn(function* (
   yield* Effect.annotateLogs(Effect.log('Upserting entities into table'), {
     entityType: ofEntity,
     orgId,
-    table: table._.name,
+    table: getTableName(table),
     upsertCount: entityValues.length,
   })
 
@@ -189,8 +183,9 @@ export const saveDataE = Effect.fn(function* (
         ...pipe(
           getTableColumns(table),
           Record.keys,
-          Array.filter((x) => x !== 'id' && x !== 'orgId' && x !== 'customFields'),
-          Array.map((x) => [x, sql`EXCLUDED."${x}"`] as const),
+          Array.filter((x) => x !== 'id' && x !== 'orgId' && x !== 'customFields' && x !== '_tag'),
+          // This needs to not be sql`` because it's gonna try and insert x as a sql expression
+          Array.map((x) => [x, sql.raw(`EXCLUDED."${x}"`)] as const),
           Record.fromEntries,
         ),
         // Only update the customFields for the pco source.
@@ -199,7 +194,13 @@ export const saveDataE = Effect.fn(function* (
             COALESCE(
               (
                 SELECT jsonb_agg(elem)
-                FROM jsonb_array_elements(${table.customFields}) elem
+                FROM jsonb_array_elements(
+                  CASE 
+                    WHEN jsonb_typeof(${table.customFields}) = 'array' 
+                    THEN ${table.customFields} 
+                    ELSE '[]'::jsonb 
+                  END
+                ) elem
                 WHERE elem->>'source' IS DISTINCT FROM 'pco'
               ), '[]'::jsonb
             )
@@ -207,7 +208,13 @@ export const saveDataE = Effect.fn(function* (
             COALESCE(
               (
                 SELECT jsonb_agg(elem)
-                FROM jsonb_array_elements(EXCLUDED."customFields") elem
+                FROM jsonb_array_elements(
+                  CASE 
+                    WHEN jsonb_typeof(EXCLUDED."customFields") = 'array' 
+                    THEN EXCLUDED."customFields" 
+                    ELSE '[]'::jsonb 
+                  END
+                ) elem
                 WHERE elem->>'source' = 'pco'
               ), '[]'::jsonb
             )
@@ -219,7 +226,7 @@ export const saveDataE = Effect.fn(function* (
   yield* Effect.annotateLogs(Effect.log('Entity upsert complete'), {
     entityType: ofEntity,
     orgId,
-    table: table._.name,
+    table: getTableName(table),
     upsertCount: entityValues.length,
   })
 })
