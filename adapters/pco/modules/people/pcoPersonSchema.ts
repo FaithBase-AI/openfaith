@@ -99,7 +99,7 @@ export const PcoPersonAttributes = Schema.Struct({
 })
 export type PcoPersonAttributes = typeof PcoPersonAttributes.Type
 
-export const pcoPersonTransformer = pcoToOf(PcoPersonAttributes, BasePerson)
+export const pcoPersonTransformer = pcoToOf(PcoPersonAttributes, BasePerson, 'person')
 
 export const PcoPerson = Schema.Struct({
   attributes: PcoPersonAttributes,

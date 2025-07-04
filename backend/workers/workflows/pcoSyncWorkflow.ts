@@ -2,6 +2,7 @@ import { Activity, Workflow } from '@effect/workflow'
 import { createPaginatedStream, TokenKey } from '@openfaith/adapter-core/server'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { PcoApiLayer, PcoHttpClient } from '@openfaith/pco/server'
+import { saveDataE } from '@openfaith/workers/helpers/ofLookup'
 import { Array, Effect, pipe, Record, Schema, Stream } from 'effect'
 
 // Define the PCO sync error
@@ -62,12 +63,7 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
                 include: 'addresses',
               },
             } as const),
-            (response) =>
-              Effect.log({
-                offset: response.meta.next?.offset || 0,
-                tokenKey: payload.tokenKey,
-                totalCount: response.meta.total_count,
-              }),
+            saveDataE,
           )
         }
       }).pipe(

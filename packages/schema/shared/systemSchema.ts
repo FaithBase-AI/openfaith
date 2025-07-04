@@ -17,17 +17,9 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   deletedBy: Schema.String.annotations({
     description: 'The typeid of the user who deleted the record',
   }).pipe(Schema.optional),
-  externalIds: Schema.Array(
-    Schema.Struct({
-      id: Schema.String,
-      type: Schema.String,
-    }),
-  ).annotations({
-    description: 'The external ids for the record (e.g. PCO, CCB, etc.)',
-  }),
   inactivatedAt: Schema.String.annotations({
     description: 'The datetime the record was inactivated',
-  }).pipe(Schema.optional),
+  }).pipe(Schema.NullOr, Schema.optional),
   inactivatedBy: Schema.String.annotations({
     description: 'The typeid of the user who inactivated the record',
   }).pipe(Schema.optional),
@@ -46,6 +38,14 @@ export const BaseSystemFieldsSchema = Schema.Struct({
 })
 
 export const IdentificationFieldsSchema = Schema.Struct({
+  externalIds: Schema.Array(
+    Schema.Struct({
+      id: Schema.String,
+      type: Schema.String,
+    }),
+  ).annotations({
+    description: 'The external ids for the record (e.g. PCO, CCB, etc.)',
+  }),
   id: Schema.String.annotations({
     description: 'The typeid for the record',
   }),

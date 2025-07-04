@@ -1,0 +1,1 @@
+ALTER TABLE "openfaith_people" ADD COLUMN "externalIds" jsonb DEFAULT '[]'::jsonb NOT NULL;

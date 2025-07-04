@@ -34,12 +34,28 @@ export const saveDataE = Effect.fn(function* (
     Option.map((x) => x.type),
   )
 
+  yield* Effect.annotateLogs(Effect.log('Received data for saveDataE'), {
+    dataCount: data.data.length,
+    entityType: Option.isSome(entityTypeOpt) ? entityTypeOpt.value : undefined,
+    orgId,
+  })
+
   // This also acts as our zero check for `data.data`
   if (entityTypeOpt._tag === 'None') {
+    yield* Effect.annotateLogs(Effect.log('No data to process, skipping saveDataE'), {
+      dataCount: data.data.length,
+      orgId,
+    })
     return
   }
 
   const { table, transformer, getId, ofEntity } = ofLookup[entityTypeOpt.value]
+
+  yield* Effect.annotateLogs(Effect.log('Inserting external links'), {
+    count: data.data.length,
+    entityType: ofEntity,
+    orgId,
+  })
 
   const externalLinks = yield* db
     .insert(externalLinksTable)
@@ -82,6 +98,16 @@ export const saveDataE = Effect.fn(function* (
       lastProcessedAt: externalLinksTable.lastProcessedAt,
     })
 
+  yield* Effect.annotateLogs(Effect.log('External links inserted/updated'), {
+    entityType: ofEntity,
+    orgId,
+    returnedCount: externalLinks.length,
+    statuses: pipe(
+      data.data,
+      Array.map((x) => x.attributes.status),
+    ),
+  })
+
   const entityValues = pipe(
     externalLinks,
     // Filter out the external links that have already been processed for their updatedAt
@@ -94,8 +120,10 @@ export const saveDataE = Effect.fn(function* (
       ),
     ),
     Array.map(([id, entity]) => {
+      console.log(entity.attributes)
+
       const { createdAt, deletedAt, inactivatedAt, updatedAt, customFields, ...canonicalAttrs } =
-        Schema.decodeSync(transformer)(entity.attributes)
+        Schema.decodeSync(transformer, { errors: 'all' })(entity.attributes)
 
       return {
         createdAt: new Date(createdAt),
@@ -131,9 +159,26 @@ export const saveDataE = Effect.fn(function* (
     }),
   )
 
+  yield* Effect.annotateLogs(Effect.log('Prepared entity values for upsert'), {
+    entityType: ofEntity,
+    orgId,
+    upsertCount: entityValues.length,
+  })
+
   if (entityValues.length === 0) {
+    yield* Effect.annotateLogs(Effect.log('No new/changed entities to upsert'), {
+      entityType: ofEntity,
+      orgId,
+    })
     return
   }
+
+  yield* Effect.annotateLogs(Effect.log('Upserting entities into table'), {
+    entityType: ofEntity,
+    orgId,
+    table: table._.name,
+    upsertCount: entityValues.length,
+  })
 
   yield* db
     .insert(table)
@@ -171,4 +216,10 @@ export const saveDataE = Effect.fn(function* (
       },
       target: [table.id],
     })
+  yield* Effect.annotateLogs(Effect.log('Entity upsert complete'), {
+    entityType: ofEntity,
+    orgId,
+    table: table._.name,
+    upsertCount: entityValues.length,
+  })
 })

@@ -77,21 +77,21 @@ const ofTestData: OfItem = {
 }
 
 test('pcoToOf decode: transforms PCO data to OF format', () => {
-  const transformer = pcoToOf(PcoItem, OfItem)
+  const transformer = pcoToOf(PcoItem, OfItem, 'item')
   const result = Schema.decodeSync(transformer)(pcoTestData)
 
   expect(result).toEqual(ofTestData)
 })
 
 test('pcoToOf encode: transforms OF data back to PCO format', () => {
-  const transformer = pcoToOf(PcoItem, OfItem)
+  const transformer = pcoToOf(PcoItem, OfItem, 'item')
   const result = Schema.encodeSync(transformer)(ofTestData)
 
   expect(result).toEqual(pcoTestData)
 })
 
 test('pcoToOf handles null values correctly', () => {
-  const transformer = pcoToOf(PcoItem, OfItem)
+  const transformer = pcoToOf(PcoItem, OfItem, 'item')
 
   const pcoWithNulls: PcoItem = {
     first_name: 'Foo',
@@ -117,7 +117,7 @@ test('pcoToOf handles null values correctly', () => {
 })
 
 test('pcoToOf handles missing fields correctly', () => {
-  const transformer = pcoToOf(PcoItem, OfItem)
+  const transformer = pcoToOf(PcoItem, OfItem, 'item')
 
   const pcoPartial: PcoItem = {
     first_name: 'Foo',
@@ -143,7 +143,7 @@ test('pcoToOf handles missing fields correctly', () => {
 })
 
 test('pcoToOf skips fields marked with OFSkipField', () => {
-  const transformer = pcoToOf(PcoItemWithSkipField, OfItemWithPhone)
+  const transformer = pcoToOf(PcoItemWithSkipField, OfItemWithPhone, 'itemWithPhone')
 
   const pcoTestData: PcoItemWithSkipField = {
     carrier: 'Verizon',
@@ -172,7 +172,7 @@ test('pcoToOf skips fields marked with OFSkipField', () => {
 })
 
 test('pcoToOf encode works correctly when skipped field exists in original data', () => {
-  const transformer = pcoToOf(PcoItemWithSkipField, OfItemWithPhone)
+  const transformer = pcoToOf(PcoItemWithSkipField, OfItemWithPhone, 'itemWithPhone')
 
   const ofData: OfItemWithPhone = {
     customFields: [
@@ -224,7 +224,7 @@ test('pcoToOf handles multiple skip fields mapping to same target', () => {
     name: Schema.String,
   })
 
-  const transformer = pcoToOf(PcoMultiSkip, OFMultiSkip)
+  const transformer = pcoToOf(PcoMultiSkip, OFMultiSkip, 'multiSkip')
 
   const pcoData = {
     name_current: 'Current Name',

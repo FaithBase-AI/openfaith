@@ -39,7 +39,7 @@ export const PcoAddressAttributes = Schema.Struct({
 })
 export type PcoAddressAttributes = typeof PcoAddressAttributes.Type
 
-export const pcoAddressTransformer = pcoToOf(PcoAddressAttributes, BaseAddress)
+export const pcoAddressTransformer = pcoToOf(PcoAddressAttributes, BaseAddress, 'address')
 
 export const PcoAddress = Schema.Struct({
   attributes: PcoAddressAttributes,

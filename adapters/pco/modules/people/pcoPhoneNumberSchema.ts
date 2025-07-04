@@ -47,7 +47,11 @@ export const PcoPhoneNumberAttributes = Schema.Struct({
 })
 export type PcoPhoneNumberAttributes = typeof PcoPhoneNumberAttributes.Type
 
-export const pcoPhoneNumberTransformer = pcoToOf(PcoPhoneNumberAttributes, BasePhoneNumber)
+export const pcoPhoneNumberTransformer = pcoToOf(
+  PcoPhoneNumberAttributes,
+  BasePhoneNumber,
+  'phoneNumber',
+)
 
 export const PcoPhoneNumber = Schema.Struct({
   attributes: PcoPhoneNumberAttributes,

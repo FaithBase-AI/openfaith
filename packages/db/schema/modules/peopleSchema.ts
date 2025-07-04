@@ -18,6 +18,11 @@ export const peopleTable = pgTable(
     customFields: d.jsonb().$type<ReadonlyArray<CustomFieldSchema>>().notNull().default([]),
     deletedAt: d.timestamp(),
     deletedBy: d.text(),
+    externalIds: d
+      .jsonb()
+      .$type<ReadonlyArray<{ id: string; type: string }>>()
+      .notNull()
+      .default([]),
     gender: d.text({ enum: ['male', 'female'] }),
     id: d.text().primaryKey(),
     inactivatedAt: d.timestamp(),

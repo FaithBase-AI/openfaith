@@ -16,6 +16,7 @@ type FieldShape<T> = readonly [string, T] | readonly ['customFields', CustomFiel
 export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Struct.Fields>(
   from: Schema.Struct<From>,
   to: Schema.Struct<To>,
+  tag: string,
 ) => {
   return Schema.transform(from, to, {
     decode: (fromItem) =>
@@ -71,6 +72,10 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
             ...b,
             [key]: value,
           }
+        }),
+        (merged) => ({
+          _tag: tag,
+          ...merged,
         }),
       ),
     encode: (toItem) => {
