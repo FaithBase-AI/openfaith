@@ -21,7 +21,7 @@ These are the mandatory fields that every endpoint definition must have.
     The entity name this endpoint operates on (e.g., `'Person'`, `'Group'`). Used for type safety and documentation.
 
 *   **`name: string`**
-    The endpoint operation name (e.g., `'getAll'`, `'getById'`, `'create'`). This becomes the method name in the final API client.
+    The endpoint operation name (e.g., `'list'`, `'getById'`, `'create'`). This becomes the method name in the final API client.
 
 *   **`method: 'GET' | 'POST' | 'PATCH' | 'DELETE'`**
     The HTTP method for the endpoint.
@@ -76,7 +76,7 @@ export const getAllPeopleDefinition = pcoApiAdapter({
   entity: 'Person',
   method: 'GET',
   module: 'people',
-  name: 'getAll',
+  name: 'list',
   path: '/people/v2/people',
   isCollection: true,
   

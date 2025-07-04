@@ -41,7 +41,7 @@ export const getAllPeopleDefinition = pcoApiAdapter({
   module: 'people',
   
   /** The endpoint operation name */
-  name: 'getAll',
+  name: 'list',
   
   /** The URL path for the endpoint */
   path: '/people/v2/people',

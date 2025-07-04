@@ -29,7 +29,7 @@ export const getAllDonationsDefinition = pcoApiAdapter({
   entity: 'Donation',
   method: 'GET',
   module: 'giving',
-  name: 'getAll',
+  name: 'list',
   path: '/giving/v2/donations',
   isCollection: true,
   

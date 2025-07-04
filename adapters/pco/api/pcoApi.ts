@@ -32,35 +32,6 @@ import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { PcoRefreshToken, PcoToken } from '@openfaith/pco/modules/token/pcoTokenSchema'
 import { Duration, Effect, Layer, Number, Option, pipe, Schedule, Schema } from 'effect'
 
-// import { getAllPeople, getAllPeople } from '@openfaith/pco/people/pcoPeopleEndpoints'
-
-// const apiGroups = pipe(
-//   pcoEntityManifest,
-//   Record.values,
-//   Array.map((x) => {
-//     const platformEndpoints = pipe(
-//       x.endpoints,
-//       Record.map((x) => toHttpApiEndpoint(x)),
-//       Record.values,
-//     )
-
-//     const platformEndpointsTest = pipe(x.endpoints, Record.values)
-//     let group = HttpApiGroup.make(x.module) as HttpApiGroup.HttpApiGroup<
-//       typeof x.module,
-//       (typeof platformEndpoints)[number],
-//       never,
-//       never,
-//       false
-//     >
-
-//     for (const endpoint of platformEndpoints) {
-//       group = group.add(endpoint)
-//     }
-
-//     return group
-//   }),
-// )
-
 const tokenApiGroup = HttpApiGroup.make('token')
   .add(
     HttpApiEndpoint.post('getToken', '/oauth/token')
@@ -98,24 +69,9 @@ const tokenApiGroup = HttpApiGroup.make('token')
   .addError(PcoServiceUnavailableError, { status: 503 })
   .addError(PcoGatewayTimeoutError, { status: 504 })
 
-// New API using toHttpApiGroup function - following Effect patterns
-// Errors are automatically applied from entity manifest configuration
 const peopleApiGroupNew = toHttpApiGroup(pcoEntityManifest.Person)
 
 export const PcoApi = HttpApi.make('PCO').add(peopleApiGroupNew).add(tokenApiGroup)
-
-// const PcoApiTest = (() => {
-//   let api = HttpApi.make('PCO') as HttpApi.HttpApi<
-//     'PCO',
-//     (typeof apiGroups)[number],
-//     HttpApiError.HttpApiDecodeError
-//   >
-//   for (const group of apiGroups) {
-//     // Correctly chain the .add() calls in a loop.
-//     api = api.add(group)
-//   }
-//   return api
-// })()
 
 const calculateRateLimitDelay = (
   response: HttpClientResponse.HttpClientResponse,

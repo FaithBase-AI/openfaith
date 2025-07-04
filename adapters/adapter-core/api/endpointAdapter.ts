@@ -118,22 +118,22 @@ export function buildUrlParamsSchema<
  * Builds the request body (payload) schema for a POST or PATCH endpoint
  * by picking the specified fields from the main API schema's attributes.
  */
-function buildPayloadSchema<Api, Keys extends ReadonlyArray<string>>(
-  apiSchema: Schema.Schema<Api>,
-  keys: Keys,
-): Schema.Struct<any> {
-  // @ts-ignore - This relies on the convention that our API schemas have an 'attributes' struct.
-  const attributeSchema = apiSchema.properties.attributes
-  if (!attributeSchema || !Schema.isSchema(attributeSchema)) {
-    throw new Error(
-      `apiSchema for endpoint does not have a valid 'attributes' property needed to build a payload.`,
-    )
-  }
-  return Schema.Struct({
-    // The payload is expected to be nested under `attributes` as per many JSON:API-like standards.
-    attributes: (attributeSchema as Schema.Struct<any>).pick(...keys),
-  })
-}
+// function _buildPayloadSchema<Api, Keys extends ReadonlyArray<string>>(
+//   apiSchema: Schema.Schema<Api>,
+//   keys: Keys,
+// ): Schema.Struct<any> {
+//   // @ts-ignore - This relies on the convention that our API schemas have an 'attributes' struct.
+//   const attributeSchema = apiSchema.properties.attributes
+//   if (!attributeSchema || !Schema.isSchema(attributeSchema)) {
+//     throw new Error(
+//       `apiSchema for endpoint does not have a valid 'attributes' property needed to build a payload.`,
+//     )
+//   }
+//   return Schema.Struct({
+//     // The payload is expected to be nested under `attributes` as per many JSON:API-like standards.
+//     attributes: (attributeSchema as Schema.Struct<any>).pick(...keys),
+//   })
+// }
 
 /**
  * Transforms our custom, high-level EndpointDefinition into an official
@@ -333,18 +333,22 @@ export function toHttpApiEndpoint(definition: any) {
         .addSuccess(definition.response)
     }
     case 'POST': {
-      const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.creatableFields)
+      // const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.creatableFields)
 
-      return HttpApiEndpoint.post(definition.name, definition.path)
-        .setPayload(payloadSchema)
-        .addSuccess(definition.response) as any
+      return (
+        HttpApiEndpoint.post(definition.name, definition.path)
+          // .setPayload(payloadSchema)
+          .addSuccess(definition.response) as any
+      )
     }
     case 'PATCH': {
-      const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.updatableFields)
+      // const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.updatableFields)
 
-      return HttpApiEndpoint.patch(definition.name, definition.path)
-        .setPayload(payloadSchema)
-        .addSuccess(definition.response) as any
+      return (
+        HttpApiEndpoint.patch(definition.name, definition.path)
+          // .setPayload(payloadSchema)
+          .addSuccess(definition.response) as any
+      )
     }
     case 'DELETE': {
       return HttpApiEndpoint.del(definition.name, definition.path).addSuccess(Schema.Void, {

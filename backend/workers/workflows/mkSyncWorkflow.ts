@@ -35,9 +35,9 @@ export const mkSyncWorkflow = (adapterKey: string) => {
 
           const entityHttp = pcoClient[entity]
 
-          if ('getAll' in entityHttp) {
+          if ('list' in entityHttp) {
             return yield* Stream.runForEach(
-              createPaginatedStream(entityHttp.getAll, {
+              createPaginatedStream(entityHttp.list, {
                 urlParams: {
                   include: 'addresses',
                 },

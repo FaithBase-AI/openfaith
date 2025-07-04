@@ -4,7 +4,11 @@ const BaseCustomFieldSchema = Schema.Struct({
   name: Schema.String.annotations({
     description: 'The name of the custom field',
   }),
-  source: Schema.Union(Schema.Literal('pco', 'ccb'), Schema.String, Schema.Undefined).annotations({
+  source: Schema.Union(
+    Schema.Literal('pco', 'ccb', 'internal'),
+    Schema.String,
+    Schema.Undefined,
+  ).annotations({
     description: 'The source of the custom field',
   }),
 })

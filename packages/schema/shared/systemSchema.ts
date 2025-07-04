@@ -7,16 +7,16 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   }),
   createdBy: Schema.String.annotations({
     description: 'The typeid of the user who created the record',
-  }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
+  }).pipe(Schema.optional),
   customFields: Schema.Array(CustomFieldSchema).annotations({
     description: 'The custom fields for the record',
   }),
   deletedAt: Schema.String.annotations({
     description: 'The datetime the record was deleted',
-  }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
+  }).pipe(Schema.optional),
   deletedBy: Schema.String.annotations({
     description: 'The typeid of the user who deleted the record',
-  }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
+  }).pipe(Schema.optional),
   externalIds: Schema.Array(
     Schema.Struct({
       id: Schema.String,
@@ -27,10 +27,10 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   }),
   inactivatedAt: Schema.String.annotations({
     description: 'The datetime the record was inactivated',
-  }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
+  }).pipe(Schema.optional),
   inactivatedBy: Schema.String.annotations({
     description: 'The typeid of the user who inactivated the record',
-  }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
+  }).pipe(Schema.optional),
   status: Schema.Literal('active', 'inactive').annotations({
     description: 'The status of the record',
   }),
@@ -39,10 +39,10 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   }),
   updatedAt: Schema.String.annotations({
     description: 'The datetime the record was updated',
-  }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
+  }).pipe(Schema.optional),
   updatedBy: Schema.String.annotations({
     description: 'The typeid of the user who updated the record',
-  }).pipe(Schema.optionalWith({ as: 'Option', nullable: true })),
+  }).pipe(Schema.optional),
 })
 
 export const IdentificationFieldsSchema = Schema.Struct({

@@ -14,14 +14,14 @@ import {
 import {
   createPersonDefinition,
   deletePersonDefinition,
-  getAllPeopleDefinition,
   getPersonByIdDefinition,
+  listPeopleDefinition,
   updatePersonDefinition,
 } from '@openfaith/pco/modules/people/pcoPeopleEndpoints'
 
 export const pcoEntityManifest = mkEntityManifest({
   endpoints: [
-    getAllPeopleDefinition,
+    listPeopleDefinition,
     getPersonByIdDefinition,
     createPersonDefinition,
     updatePersonDefinition,
@@ -40,3 +40,5 @@ export const pcoEntityManifest = mkEntityManifest({
     504: PcoGatewayTimeoutError,
   },
 } as const)
+
+pcoEntityManifest.Person.endpoints.list.response

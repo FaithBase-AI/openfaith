@@ -4,7 +4,7 @@ import { PcoPerson } from '@openfaith/pco/modules/people/pcoPersonSchema'
 /**
  * Endpoint definition for retrieving all people from PCO
  */
-export const getAllPeopleDefinition = pcoApiAdapter({
+export const listPeopleDefinition = pcoApiAdapter({
   apiSchema: PcoPerson,
   entity: 'Person',
   includes: [
@@ -28,7 +28,7 @@ export const getAllPeopleDefinition = pcoApiAdapter({
   isCollection: true,
   method: 'GET',
   module: 'people',
-  name: 'getAll',
+  name: 'list',
   orderableBy: [
     'accounting_administrator',
     'anniversary',
@@ -92,7 +92,7 @@ export const getAllPeopleDefinition = pcoApiAdapter({
 export const getPersonByIdDefinition = pcoApiAdapter({
   apiSchema: PcoPerson,
   entity: 'Person',
-  includes: getAllPeopleDefinition.includes,
+  includes: listPeopleDefinition.includes,
   isCollection: false,
   method: 'GET',
   module: 'people',

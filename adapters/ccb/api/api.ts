@@ -89,14 +89,14 @@ export const CCBIndividual = Schema.Struct({
   preferred_Number: Schema.optional(Schema.Literal('HOME', 'MOBILE', 'WORK', 'NONE', '')),
 })
 
-const getAllIndividualsDefinition = ccbApiAdapter({
+const listIndividualsDefinition = ccbApiAdapter({
   apiSchema: CCBIndividual,
   entity: 'Individual',
   includes: [],
   isCollection: true,
   method: 'GET',
   module: 'individuals',
-  name: 'getAll',
+  name: 'list',
   orderableBy: [],
   path: '/individuals',
   queryableBy: {
@@ -106,6 +106,6 @@ const getAllIndividualsDefinition = ccbApiAdapter({
 })
 
 export const ccbEntityManifest = mkEntityManifest({
-  endpoints: [getAllIndividualsDefinition],
+  endpoints: [listIndividualsDefinition],
   errors: {},
 } as const)
