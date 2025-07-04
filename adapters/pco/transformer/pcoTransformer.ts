@@ -40,9 +40,11 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
             return Option.none()
           }
 
+          const value =
+            key in (fromItem as any) ? Option.some((fromItem as any)[key]) : Option.none()
+
           return pipe(
-            fromItem,
-            Record.get(key),
+            value,
             Option.flatMap((x) =>
               pipe(
                 fieldKeyOpt,
@@ -73,10 +75,41 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
             [key]: value,
           }
         }),
-        (merged) => ({
-          _tag: tag,
-          ...merged,
-        }),
+        (merged) => {
+          // Add default values for required fields that don't exist in PCO
+          const result = {
+            _tag: tag,
+            ...merged,
+          } as any
+
+          // Add default tags if not present
+          if (!('tags' in result)) {
+            result.tags = []
+          }
+
+          // Add default type if not present
+          if (!('type' in result)) {
+            result.type = 'default'
+          }
+
+          // Transform gender format from PCO to OF format
+          if (result.gender) {
+            switch (result.gender) {
+              case 'Male':
+              case 'M':
+                result.gender = 'male'
+                break
+              case 'Female':
+              case 'F':
+                result.gender = 'female'
+                break
+              default:
+                result.gender = null
+            }
+          }
+
+          return result
+        },
       ),
     encode: (toItem) => {
       const { customFields, ...rest } = toItem as MergeShape
@@ -106,8 +139,9 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
             fieldKeyOpt,
             Option.flatMap((OfFieldName) =>
               pipe(
-                rest,
-                Record.get(OfFieldName),
+                OfFieldName in (rest as any)
+                  ? Option.some((rest as any)[OfFieldName])
+                  : Option.none(),
                 Option.map((value) => [pcoKey, value] as const),
               ),
             ),

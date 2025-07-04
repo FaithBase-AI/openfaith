@@ -31,6 +31,16 @@ export const getUnderlyingType = (
     }
   }
 
+  // Handle refinement types (e.g., minLength, maxLength, etc.)
+  if (SchemaAST.isRefinement(ast)) {
+    return getUnderlyingType(ast.from)
+  }
+
+  // Handle transformation types
+  if (SchemaAST.isTransformation(ast)) {
+    return getUnderlyingType(ast.from)
+  }
+
   switch (ast._tag) {
     case 'StringKeyword':
       return 'string' as const
@@ -38,6 +48,18 @@ export const getUnderlyingType = (
       return 'number' as const
     case 'BooleanKeyword':
       return 'boolean' as const
+    case 'Literal':
+      // Determine the type based on the literal value
+      if (typeof ast.literal === 'string') {
+        return 'string' as const
+      }
+      if (typeof ast.literal === 'number') {
+        return 'number' as const
+      }
+      if (typeof ast.literal === 'boolean') {
+        return 'boolean' as const
+      }
+      return 'unknown' as const
     default:
       return 'unknown' as const
   }

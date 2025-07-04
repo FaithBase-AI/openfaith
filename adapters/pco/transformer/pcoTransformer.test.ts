@@ -1,6 +1,13 @@
 import { expect, test } from 'bun:test'
+import { PcoPersonAttributes } from '@openfaith/pco/server'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { CustomFieldSchema, OFSkipField, OfCustomField, OfFieldName } from '@openfaith/schema'
+import {
+  BasePerson,
+  CustomFieldSchema,
+  OFSkipField,
+  OfCustomField,
+  OfFieldName,
+} from '@openfaith/schema'
 import { Schema } from 'effect'
 
 const PcoItem = Schema.Struct({
@@ -243,5 +250,141 @@ test('pcoToOf handles multiple skip fields mapping to same target', () => {
   const encoded = Schema.encodeSync(transformer)(result)
   expect(encoded).toEqual({
     name_current: 'Current Name',
+  })
+})
+
+test('pcoToOf: transforms real PCO person shape to BasePerson (integration test)', () => {
+  const pcoPersonData = {
+    accounting_administrator: true,
+    anniversary: null,
+    avatar: 'https://avatars.planningcenteronline.com/uploads/initials/IF.png',
+    birthdate: null,
+    child: false,
+    created_at: '2020-05-03T12:19:13Z',
+    demographic_avatar_url: 'https://avatars.planningcenteronline.com/uploads/initials/IF.png',
+    first_name: 'Izak',
+    gender: null,
+    given_name: null,
+    grade: null,
+    graduation_year: null,
+    inactivated_at: null,
+    last_name: 'Filmalter',
+    medical_notes: null,
+    membership: null,
+    middle_name: null,
+    name: 'Izak Filmalter',
+    nickname: null,
+    passed_background_check: false,
+    people_permissions: 'Manager',
+    remote_id: null,
+    school_type: null,
+    site_administrator: true,
+    status: 'active',
+    updated_at: '2025-06-18T15:30:50Z',
+  } as const
+
+  // Use the actual transformer from the PCO person schema
+  // Import here to avoid circular dependency in test imports
+  const transformer = pcoToOf(PcoPersonAttributes, BasePerson, 'person')
+
+  const result = Schema.decodeSync(transformer, { errors: 'all' })(pcoPersonData)
+
+  expect(result).toEqual({
+    _tag: 'person',
+    anniversary: null,
+    avatar: 'https://avatars.planningcenteronline.com/uploads/initials/IF.png',
+    birthdate: null,
+    createdAt: '2020-05-03T12:19:13Z',
+    customFields: [
+      {
+        _tag: 'boolean',
+        name: 'pco_accounting_administrator',
+        source: 'pco',
+        value: true,
+      },
+      {
+        _tag: 'boolean',
+        name: 'pco_child',
+        source: 'pco',
+        value: false,
+      },
+      {
+        _tag: 'string',
+        name: 'pco_demographic_avatar_url',
+        source: 'pco',
+        value: 'https://avatars.planningcenteronline.com/uploads/initials/IF.png',
+      },
+      {
+        _tag: 'string',
+        name: 'pco_given_name',
+        source: 'pco',
+        value: null,
+      },
+      {
+        _tag: 'number',
+        name: 'pco_grade',
+        source: 'pco',
+        value: null,
+      },
+      {
+        _tag: 'number',
+        name: 'pco_graduation_year',
+        source: 'pco',
+        value: null,
+      },
+      {
+        _tag: 'string',
+        name: 'pco_medical_notes',
+        source: 'pco',
+        value: null,
+      },
+      {
+        _tag: 'string',
+        name: 'pco_nickname',
+        source: 'pco',
+        value: null,
+      },
+      {
+        _tag: 'boolean',
+        name: 'pco_passed_background_check',
+        source: 'pco',
+        value: false,
+      },
+      {
+        _tag: 'string',
+        name: 'pco_people_permissions',
+        source: 'pco',
+        value: 'Manager',
+      },
+      {
+        _tag: 'string',
+        name: 'pco_remote_id',
+        source: 'pco',
+        value: null,
+      },
+      {
+        _tag: 'string',
+        name: 'pco_school_type',
+        source: 'pco',
+        value: null,
+      },
+      {
+        _tag: 'boolean',
+        name: 'pco_site_administrator',
+        source: 'pco',
+        value: true,
+      },
+    ],
+    firstName: 'Izak',
+    gender: null,
+    inactivatedAt: null,
+    lastName: 'Filmalter',
+    membership: null,
+    middleName: null,
+    name: 'Izak Filmalter',
+    status: 'active',
+    tags: [],
+    type: 'default',
+    updatedAt: '2025-06-18T15:30:50Z',
   })
 })
