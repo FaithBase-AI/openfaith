@@ -104,6 +104,7 @@ export type GetEndpointDefinition<
   Includes extends ReadonlyArray<string>,
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends boolean,
+  Query extends Schema.Schema<any>,
 > = BaseGetEndpointDefinition<
   Api,
   Fields,
@@ -115,7 +116,7 @@ export type GetEndpointDefinition<
   Includes,
   QueryableSpecial,
   IsCollection
-> & { response: Response }
+> & { response: Response; query?: Query }
 
 /**
  * Type definition for a POST endpoint configuration.
@@ -295,6 +296,7 @@ export type EndpointDefinition<
   IsCollection extends boolean,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Query extends Schema.Schema<any>,
 > = TMethod extends 'GET'
   ? GetEndpointDefinition<
       Api,
@@ -307,7 +309,8 @@ export type EndpointDefinition<
       QueryableFields,
       Includes,
       QueryableSpecial,
-      IsCollection
+      IsCollection,
+      Query
     >
   : TMethod extends 'POST'
     ? PostEndpointDefinition<Api, Response, Fields, TModule, TEntity, TName, CreatableFields>
@@ -319,7 +322,7 @@ export type EndpointDefinition<
 
 export type EntityManifestShape = Record<
   string,
-  | GetEndpointDefinition<any, any, any, any, any, any, any, any, any, any, any>
+  | GetEndpointDefinition<any, any, any, any, any, any, any, any, any, any, any, any>
   | PostEndpointDefinition<any, any, any, any, any, any, any>
   | PatchEndpointDefinition<any, any, any, any, any, any, any>
   | DeleteEndpointDefinition<any, any, any, any, any, any>
@@ -332,6 +335,7 @@ export type EntityManifestShape = Record<
  */
 export type Any = EndpointDefinition<
   Method,
+  any,
   any,
   any,
   any,

@@ -5,7 +5,8 @@ import type {
   PatchEndpointDefinition,
   PostEndpointDefinition,
 } from '@openfaith/adapter-core/server'
-import { Schema } from 'effect'
+import { arrayToCommaSeparatedString } from '@openfaith/shared'
+import { Array, pipe, Schema } from 'effect'
 
 /**
  * Creates a PCO collection response schema.
@@ -75,6 +76,7 @@ function createApiAdapter<
     QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     Includes extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
+    Query extends Schema.Schema<any>,
   >(
     params: BaseEndpointDefinition<
       'GET',
@@ -102,7 +104,8 @@ function createApiAdapter<
     QueryableFields,
     Includes,
     QueryableSpecial,
-    true
+    true,
+    Query
   >
 
   // GET Single overload
@@ -115,6 +118,7 @@ function createApiAdapter<
     QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     Includes extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
+    Query extends Schema.Schema<any>,
   >(
     params: BaseEndpointDefinition<
       'GET',
@@ -142,7 +146,8 @@ function createApiAdapter<
     QueryableFields,
     Includes,
     QueryableSpecial,
-    false
+    false,
+    Query
   >
 
   // POST overload
@@ -244,12 +249,14 @@ function createApiAdapter<
 
   // Implementation
   function defineEndpoint(params: any) {
+    const isGet = params.method === 'GET'
     return {
       ...params,
       response:
-        params.method === 'GET' && params.isCollection
+        isGet && params.isCollection
           ? mkPcoCollectionSchema(params.apiSchema)
           : mkPcoSingleSchema(params.apiSchema),
+      ...(isGet ? { query: buildUrlParamsSchema(params) } : {}),
     }
   }
 
@@ -267,3 +274,105 @@ type PcoApiBase = {
  * PCO API adapter configured for resources with attributes field
  */
 export const pcoApiAdapter = createApiAdapter<'attributes', PcoApiBase>()
+
+export function getQueryParamSchema(apiSchema: Schema.Struct<any>, field: string) {
+  // @ts-ignore - We assume the schema has `properties.attributes.properties`
+  const attributeType = apiSchema.properties?.attributes?.properties[field]?.ast._tag
+
+  switch (attributeType) {
+    case 'NumberKeyword':
+      return Schema.optional(Schema.NumberFromString)
+    case 'BooleanKeyword':
+      return Schema.optional(Schema.BooleanFromString)
+    default:
+      return Schema.optional(Schema.String)
+  }
+}
+
+export function buildUrlParamsSchema<
+  Api,
+  Response extends Schema.Schema<any>,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends boolean,
+  Query extends Schema.Schema<any>,
+>(
+  definition: GetEndpointDefinition<
+    Api,
+    Response,
+    Fields,
+    TModule,
+    TEntity,
+    TName,
+    OrderableFields,
+    QueryableFields,
+    Includes,
+    QueryableSpecial,
+    IsCollection,
+    Query
+  >,
+) {
+  const { includes } = definition
+
+  const include = pipe(
+    includes,
+    Array.match({
+      onEmpty: () => ({
+        include: Schema.optional(Schema.String),
+      }),
+      onNonEmpty: () => ({
+        include: Schema.optional(
+          Schema.Union(arrayToCommaSeparatedString(Schema.String), Schema.String),
+        ),
+      }),
+    }),
+  )
+  if (definition.isCollection) {
+    const { queryableBy, orderableBy } = definition
+
+    const fields = pipe(
+      queryableBy.fields,
+      Array.reduce({}, (acc, _field) => ({
+        ...acc,
+        // [`where[${field}]`]: getQueryParamSchema(apiSchema, field),
+      })),
+    )
+
+    const special = pipe(
+      queryableBy.special,
+      Array.reduce({}, (acc, field) => ({
+        ...acc,
+        [field]: Schema.optional(Schema.String), // Special fields are assumed to be strings
+      })),
+    )
+
+    const order = pipe(
+      orderableBy,
+      Array.match({
+        onEmpty: () => ({}),
+        onNonEmpty: () => ({ order: Schema.optional(Schema.String) }),
+      }),
+    ) as typeof fields
+
+    return Schema.Struct({
+      ...fields,
+      ...special,
+      ...order,
+      ...include,
+      offset: Schema.optional(Schema.NumberFromString),
+      per_page: Schema.optional(Schema.NumberFromString),
+    })
+  }
+
+  return Schema.Struct({
+    ...include,
+    offset: Schema.optional(Schema.NumberFromString),
+    per_page: Schema.optional(Schema.NumberFromString),
+  })
+}

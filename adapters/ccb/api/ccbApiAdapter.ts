@@ -41,6 +41,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     QueryableFields extends ReadonlyArray<Extract<keyof Api, string>>,
     Includes extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
+    Query extends Schema.Schema<any>,
   >(
     params: BaseEndpointDefinition<
       'GET',
@@ -68,7 +69,8 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     QueryableFields,
     Includes,
     QueryableSpecial,
-    true
+    true,
+    Query
   >
 
   // GET Single overload
@@ -81,6 +83,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     QueryableFields extends ReadonlyArray<Extract<keyof Api, string>>,
     Includes extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
+    Query extends Schema.Schema<any>,
   >(
     params: BaseEndpointDefinition<
       'GET',
@@ -108,7 +111,8 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     QueryableFields,
     Includes,
     QueryableSpecial,
-    false
+    false,
+    Query
   >
 
   // POST overload

@@ -7,24 +7,6 @@ import { arrayToCommaSeparatedString } from '@openfaith/shared' // Assuming Endp
 import { Array, pipe, Schema } from 'effect'
 
 /**
- * A utility to intelligently determine the schema type for a query parameter
- * based on the corresponding attribute in the main API schema.
- */
-export function getQueryParamSchema(apiSchema: Schema.Struct<any>, field: string) {
-  // @ts-ignore - We assume the schema has `properties.attributes.properties`
-  const attributeType = apiSchema.properties?.attributes?.properties[field]?.ast._tag
-
-  switch (attributeType) {
-    case 'NumberKeyword':
-      return Schema.optional(Schema.NumberFromString)
-    case 'BooleanKeyword':
-      return Schema.optional(Schema.BooleanFromString)
-    default:
-      return Schema.optional(Schema.String)
-  }
-}
-
-/**
  * Builds the comprehensive URL parameter schema for a GET endpoint
  * from our high-level, declarative definition.
  */
@@ -40,6 +22,7 @@ export function buildUrlParamsSchema<
   Includes extends ReadonlyArray<string>,
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends boolean,
+  Query extends Schema.Schema<any>,
 >(
   definition: GetEndpointDefinition<
     Api,
@@ -52,7 +35,8 @@ export function buildUrlParamsSchema<
     QueryableFields,
     Includes,
     QueryableSpecial,
-    IsCollection
+    IsCollection,
+    Query
   >,
 ) {
   const { includes } = definition
@@ -157,6 +141,7 @@ export function toHttpApiEndpoint<
   Includes extends ReadonlyArray<string>,
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends boolean,
+  Query extends Schema.Schema<any>,
 >(
   definition: EndpointDefinition<
     TMethod,
@@ -172,7 +157,8 @@ export function toHttpApiEndpoint<
     QueryableSpecial,
     IsCollection,
     never,
-    never
+    never,
+    Query
   >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
@@ -206,6 +192,7 @@ export function toHttpApiEndpoint<
   TEntity extends string,
   TName extends string,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Query extends Schema.Schema<any>,
 >(
   definition: EndpointDefinition<
     TMethod,
@@ -221,7 +208,8 @@ export function toHttpApiEndpoint<
     never,
     false,
     CreatableFields,
-    never
+    never,
+    Query
   >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
@@ -248,6 +236,7 @@ export function toHttpApiEndpoint<
   TEntity extends string,
   TName extends string,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Query extends Schema.Schema<any>,
 >(
   definition: EndpointDefinition<
     TMethod,
@@ -263,7 +252,8 @@ export function toHttpApiEndpoint<
     never,
     false,
     never,
-    UpdatableFields
+    UpdatableFields,
+    Query
   >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
@@ -289,6 +279,7 @@ export function toHttpApiEndpoint<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  Query extends Schema.Schema<any>,
 >(
   definition: EndpointDefinition<
     TMethod,
@@ -304,7 +295,8 @@ export function toHttpApiEndpoint<
     never,
     false,
     never,
-    never
+    never,
+    Query
   >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
@@ -323,13 +315,9 @@ export function toHttpApiEndpoint<
 export function toHttpApiEndpoint(definition: any) {
   switch (definition.method) {
     case 'GET': {
-      const urlParamsSchema = buildUrlParamsSchema(definition)
-
-      // For collection GETs, the success schema is an array of the apiSchema.
-      // A more advanced version could distinguish between get-one and get-all.
-
+      // Use the query property if present
       return HttpApiEndpoint.get(definition.name, definition.path)
-        .setUrlParams(urlParamsSchema)
+        .setUrlParams(definition.query)
         .addSuccess(definition.response)
     }
     case 'POST': {

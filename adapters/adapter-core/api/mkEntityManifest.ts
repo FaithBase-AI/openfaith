@@ -51,22 +51,14 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
     infer _QueryableFields,
     infer _Includes,
     infer _QueryableSpecial,
-    infer _IsCollection
+    infer _IsCollection,
+    infer _Query
   >
     ? HttpApiEndpoint.HttpApiEndpoint<
         _Name,
         'GET',
         never,
-        _IsCollection extends true
-          ? {
-              readonly include?: _Includes[number] | (_Includes[number] & _Includes) | undefined
-              readonly offset?: number | undefined
-              readonly per_page?: number | undefined
-            }
-          : {
-              readonly offset?: number | undefined
-              readonly per_page?: number | undefined
-            },
+        Schema.Schema.Type<_Query>,
         never,
         never,
         _Response['Type'],

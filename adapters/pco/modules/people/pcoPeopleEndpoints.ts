@@ -96,7 +96,7 @@ export const getPersonByIdDefinition = pcoApiAdapter({
   isCollection: false,
   method: 'GET',
   module: 'people',
-  name: 'getById',
+  name: 'get',
   path: '/people/v2/people/:personId',
 } as const)
 
@@ -145,6 +145,6 @@ export const deletePersonDefinition = pcoApiAdapter({
   entity: 'Person',
   method: 'DELETE',
   module: 'people',
-  name: 'people',
+  name: 'delete',
   path: '/people/v2/people/:personId',
 } as const)
