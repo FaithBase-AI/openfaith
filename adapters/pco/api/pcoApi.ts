@@ -9,12 +9,7 @@ import {
   type HttpClientResponse,
 } from '@effect/platform'
 import { MemoryRateLimitStoreLive } from '@openfaith/adapter-core/ratelimit/RateLimit'
-import {
-  RateLimiter,
-  TokenKey,
-  TokenManagerLive,
-  toHttpApiGroup,
-} from '@openfaith/adapter-core/server'
+import { RateLimiter, TokenKey, TokenManagerLive } from '@openfaith/adapter-core/server'
 import {
   PcoAuthenticationError,
   PcoAuthorizationError,
@@ -28,6 +23,7 @@ import {
   PcoValidationError,
 } from '@openfaith/pco/api/pcoApiErrors'
 import { PcoAuth, PcoAuthLive } from '@openfaith/pco/api/pcoAuthLayer'
+import { toPcoHttpApiGroup } from '@openfaith/pco/api/pcoMkEntityManifest'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { PcoRefreshToken, PcoToken } from '@openfaith/pco/modules/token/pcoTokenSchema'
 import { Duration, Effect, Layer, Number, Option, pipe, Schedule, Schema } from 'effect'
@@ -69,7 +65,7 @@ const tokenApiGroup = HttpApiGroup.make('token')
   .addError(PcoServiceUnavailableError, { status: 503 })
   .addError(PcoGatewayTimeoutError, { status: 504 })
 
-const peopleApiGroupNew = toHttpApiGroup(pcoEntityManifest.Person)
+const peopleApiGroupNew = toPcoHttpApiGroup(pcoEntityManifest.Person)
 
 export const PcoApi = HttpApi.make('PCO').add(peopleApiGroupNew).add(tokenApiGroup)
 

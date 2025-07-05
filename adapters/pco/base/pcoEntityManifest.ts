@@ -1,4 +1,3 @@
-import { mkEntityManifest } from '@openfaith/adapter-core/server'
 import {
   PcoAuthenticationError,
   PcoAuthorizationError,
@@ -11,6 +10,7 @@ import {
   PcoServiceUnavailableError,
   PcoValidationError,
 } from '@openfaith/pco/api/pcoApiErrors'
+import { mkPcoEntityManifest } from '@openfaith/pco/api/pcoMkEntityManifest'
 import {
   createPersonDefinition,
   deletePersonDefinition,
@@ -19,7 +19,7 @@ import {
   updatePersonDefinition,
 } from '@openfaith/pco/modules/people/pcoPeopleEndpoints'
 
-export const pcoEntityManifest = mkEntityManifest({
+export const pcoEntityManifest = mkPcoEntityManifest({
   endpoints: [
     listPeopleDefinition,
     getPersonByIdDefinition,
