@@ -1,3 +1,4 @@
+export * from '@openfaith/pco/base/pcoEntityRegistry'
 export * from '@openfaith/pco/mkPcoClientAdapter'
 export * from '@openfaith/pco/modules/people/pcoAddressSchema'
 export * from '@openfaith/pco/modules/people/pcoPersonSchema'

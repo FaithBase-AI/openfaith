@@ -6,6 +6,7 @@ import type {
   PatchEndpointDefinition,
   PostEndpointDefinition,
 } from '@openfaith/adapter-core/server'
+import { type PcoEntityRegistry, PcoIncludedEntity } from '@openfaith/pco/base/pcoEntityRegistry'
 import { arrayToCommaSeparatedString } from '@openfaith/shared'
 import { Schema } from 'effect'
 
@@ -15,13 +16,16 @@ import { Schema } from 'effect'
  * A GET request for a collection (e.g., `/people/v2/people`) returns a
  * comprehensive object with pagination and metadata following JSON:API spec.
  */
-const mkPcoCollectionSchema = <A>(resourceSchema: Schema.Schema<A>) =>
+const mkPcoCollectionSchema = <A, B>(
+  resourceSchema: Schema.Schema<A>,
+  entityRegistry: Schema.Schema<B>,
+) =>
   Schema.Struct({
     /** The 'data' key contains the array of primary resource objects. */
     data: Schema.Array(resourceSchema),
 
     /** The 'included' key contains side-loaded related resources. */
-    included: Schema.Array(Schema.Unknown),
+    included: Schema.Array(entityRegistry),
 
     /** The 'links' object contains pagination links. */
     links: Schema.Struct({
@@ -48,10 +52,13 @@ const mkPcoCollectionSchema = <A>(resourceSchema: Schema.Schema<A>) =>
  * A GET request for a single item (e.g., `/people/v2/people/123`) returns an
  * object following JSON:API spec with data and included sections.
  */
-const mkPcoSingleSchema = <A>(resourceSchema: Schema.Schema<A>) =>
+const mkPcoSingleSchema = <A, B>(
+  resourceSchema: Schema.Schema<A>,
+  entityRegistry: Schema.Schema<B>,
+) =>
   Schema.Struct({
     data: resourceSchema,
-    included: Schema.Array(Schema.Unknown),
+    included: Schema.Array(entityRegistry),
   })
 
 /**
@@ -60,7 +67,7 @@ const mkPcoSingleSchema = <A>(resourceSchema: Schema.Schema<A>) =>
  *
  * @template TFieldsKey - The key of the property on the API resource that contains the filterable/orderable fields
  * @template TApiBase - The base shape that all resources must have
- * @param fieldsKey The key of the property on the API resource that contains the filterable/orderable fields
+ * @param entityRegistry Optional schema for entities that can be included in responses
  * @returns A function to define endpoints for this API family
  */
 function createApiAdapter<
@@ -75,7 +82,7 @@ function createApiAdapter<
     TName extends string,
     OrderableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
-    Includes extends ReadonlyArray<string>,
+    Includes extends ReadonlyArray<keyof typeof PcoEntityRegistry & string>,
     QueryableSpecial extends ReadonlyArray<string>,
     IsCollection extends true,
     Query extends ReturnType<
@@ -110,7 +117,7 @@ function createApiAdapter<
     > & { isCollection: true; defaultQuery?: Schema.Schema.Type<Query> },
   ): GetEndpointDefinition<
     Api,
-    ReturnType<typeof mkPcoCollectionSchema<Api>>,
+    ReturnType<typeof mkPcoCollectionSchema<Api, (typeof PcoEntityRegistry)[Includes[number]]>>,
     Api[TFieldsKey],
     TModule,
     TEntity,
@@ -131,7 +138,7 @@ function createApiAdapter<
     TName extends string,
     OrderableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
-    Includes extends ReadonlyArray<string>,
+    Includes extends ReadonlyArray<keyof typeof PcoEntityRegistry & string>,
     QueryableSpecial extends ReadonlyArray<string>,
     IsCollection extends false,
     Query extends ReturnType<
@@ -166,7 +173,7 @@ function createApiAdapter<
     > & { isCollection: false; defaultQuery?: Schema.Schema.Type<Query> },
   ): GetEndpointDefinition<
     Api,
-    ReturnType<typeof mkPcoSingleSchema<Api>>,
+    ReturnType<typeof mkPcoCollectionSchema<Api, (typeof PcoEntityRegistry)[Includes[number]]>>,
     Api[TFieldsKey],
     TModule,
     TEntity,
@@ -204,7 +211,9 @@ function createApiAdapter<
     >,
   ): PostEndpointDefinition<
     Api,
-    ReturnType<typeof mkPcoSingleSchema<Api>>,
+    ReturnType<
+      typeof mkPcoCollectionSchema<Api, (typeof PcoEntityRegistry)[keyof typeof PcoEntityRegistry]>
+    >,
     Api[TFieldsKey],
     TModule,
     TEntity,
@@ -237,7 +246,9 @@ function createApiAdapter<
     >,
   ): PatchEndpointDefinition<
     Api,
-    ReturnType<typeof mkPcoSingleSchema<Api>>,
+    ReturnType<
+      typeof mkPcoCollectionSchema<Api, (typeof PcoEntityRegistry)[keyof typeof PcoEntityRegistry]>
+    >,
     Api[TFieldsKey],
     TModule,
     TEntity,
@@ -269,7 +280,9 @@ function createApiAdapter<
     >,
   ): DeleteEndpointDefinition<
     Api,
-    ReturnType<typeof mkPcoSingleSchema<Api>>,
+    ReturnType<
+      typeof mkPcoCollectionSchema<Api, (typeof PcoEntityRegistry)[keyof typeof PcoEntityRegistry]>
+    >,
     Api[TFieldsKey],
     TModule,
     TEntity,
@@ -283,8 +296,8 @@ function createApiAdapter<
       ...params,
       response:
         isGet && params.isCollection
-          ? mkPcoCollectionSchema(params.apiSchema)
-          : mkPcoSingleSchema(params.apiSchema),
+          ? mkPcoCollectionSchema(params.apiSchema, PcoIncludedEntity)
+          : mkPcoSingleSchema(params.apiSchema, PcoIncludedEntity),
       ...(isGet ? { query: buildUrlParamsSchema(params) } : {}),
     }
   }
