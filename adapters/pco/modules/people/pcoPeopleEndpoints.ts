@@ -6,6 +6,10 @@ import { PcoPerson } from '@openfaith/pco/modules/people/pcoPersonSchema'
  */
 export const listPeopleDefinition = pcoApiAdapter({
   apiSchema: PcoPerson,
+  defaultQuery: {
+    include: 'addresses',
+    per_page: 100,
+  },
   entity: 'Person',
   includes: [
     'addresses',

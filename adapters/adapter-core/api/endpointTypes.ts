@@ -116,7 +116,7 @@ export type GetEndpointDefinition<
   Includes,
   QueryableSpecial,
   IsCollection
-> & { response: Response; query?: Query }
+> & { response: Response; query: Query; defaultQuery?: Schema.Schema.Type<Query> }
 
 /**
  * Type definition for a POST endpoint configuration.
@@ -370,6 +370,7 @@ export interface GetEndpoint<
   Includes extends ReadonlyArray<string>,
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends boolean,
+  Query extends Schema.Schema<any>,
 > {
   readonly [TypeId]: TypeId
   /** Schema for the API resource */
@@ -401,6 +402,9 @@ export interface GetEndpoint<
         readonly special: QueryableSpecial
       }
     : never
+  /** Optional default query parameters */
+  readonly defaultQuery?: Schema.Schema.Type<Query>
+  readonly query: Query
 }
 
 /**
@@ -515,6 +519,7 @@ export type Endpoint<
   IsCollection extends boolean,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Query extends Schema.Schema<any>,
 > = TMethod extends 'GET'
   ? GetEndpoint<
       Api,
@@ -527,7 +532,8 @@ export type Endpoint<
       QueryableFields,
       Includes,
       QueryableSpecial,
-      IsCollection
+      IsCollection,
+      Query
     >
   : TMethod extends 'POST'
     ? PostEndpoint<Api, Response, Fields, TModule, TEntity, TName, CreatableFields>

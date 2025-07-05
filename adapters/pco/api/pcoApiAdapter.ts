@@ -1,5 +1,6 @@
 import type {
   BaseEndpointDefinition,
+  BaseGetEndpointDefinition,
   DeleteEndpointDefinition,
   GetEndpointDefinition,
   PatchEndpointDefinition,
@@ -76,7 +77,21 @@ function createApiAdapter<
     QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     Includes extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
-    Query extends Schema.Schema<any>,
+    IsCollection extends true,
+    Query extends ReturnType<
+      typeof buildUrlParamsSchema<
+        Api,
+        Api[TFieldsKey],
+        TModule,
+        TEntity,
+        TName,
+        OrderableFields,
+        QueryableFields,
+        Includes,
+        QueryableSpecial,
+        IsCollection
+      >
+    >,
   >(
     params: BaseEndpointDefinition<
       'GET',
@@ -92,7 +107,7 @@ function createApiAdapter<
       true,
       never,
       never
-    > & { isCollection: true },
+    > & { isCollection: true; defaultQuery?: Schema.Schema.Type<Query> },
   ): GetEndpointDefinition<
     Api,
     ReturnType<typeof mkPcoCollectionSchema<Api>>,
@@ -118,7 +133,21 @@ function createApiAdapter<
     QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     Includes extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
-    Query extends Schema.Schema<any>,
+    IsCollection extends false,
+    Query extends ReturnType<
+      typeof buildUrlParamsSchema<
+        Api,
+        Api[TFieldsKey],
+        TModule,
+        TEntity,
+        TName,
+        OrderableFields,
+        QueryableFields,
+        Includes,
+        QueryableSpecial,
+        IsCollection
+      >
+    >,
   >(
     params: BaseEndpointDefinition<
       'GET',
@@ -134,7 +163,7 @@ function createApiAdapter<
       false,
       never,
       never
-    > & { isCollection: false },
+    > & { isCollection: false; defaultQuery?: Schema.Schema.Type<Query> },
   ): GetEndpointDefinition<
     Api,
     ReturnType<typeof mkPcoSingleSchema<Api>>,
@@ -291,7 +320,6 @@ export function getQueryParamSchema(apiSchema: Schema.Struct<any>, field: string
 
 export function buildUrlParamsSchema<
   Api,
-  Response extends Schema.Schema<any>,
   Fields extends Record<string, any>,
   TModule extends string,
   TEntity extends string,
@@ -301,11 +329,9 @@ export function buildUrlParamsSchema<
   Includes extends ReadonlyArray<string>,
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends boolean,
-  Query extends Schema.Schema<any>,
 >(
-  definition: GetEndpointDefinition<
+  definition: BaseGetEndpointDefinition<
     Api,
-    Response,
     Fields,
     TModule,
     TEntity,
@@ -314,25 +340,18 @@ export function buildUrlParamsSchema<
     QueryableFields,
     Includes,
     QueryableSpecial,
-    IsCollection,
-    Query
+    IsCollection
   >,
 ) {
-  const { includes } = definition
+  const include = {
+    include: Schema.optional(
+      Schema.Union(
+        arrayToCommaSeparatedString(Schema.Literal(...definition.includes)),
+        Schema.Literal(...definition.includes),
+      ),
+    ),
+  }
 
-  const include = pipe(
-    includes,
-    Array.match({
-      onEmpty: () => ({
-        include: Schema.optional(Schema.String),
-      }),
-      onNonEmpty: () => ({
-        include: Schema.optional(
-          Schema.Union(arrayToCommaSeparatedString(Schema.String), Schema.String),
-        ),
-      }),
-    }),
-  )
   if (definition.isCollection) {
     const { queryableBy, orderableBy } = definition
 
