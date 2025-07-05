@@ -41,7 +41,7 @@ export const PcoPhoneNumberAttributes = Schema.Struct({
   primary: Schema.Boolean.annotations({
     [OfFieldName]: 'primary',
   }),
-  updated_at: Schema.NullOr(Schema.String).annotations({
+  updated_at: Schema.String.annotations({
     [OfFieldName]: 'updatedAt',
   }),
 })

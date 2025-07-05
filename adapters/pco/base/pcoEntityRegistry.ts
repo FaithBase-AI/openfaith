@@ -21,6 +21,6 @@ export type PcoEntitySchema = (typeof PcoEntityRegistry)[keyof typeof PcoEntityR
 /**
  * Creates a union schema of all PCO entities for use in `included` arrays
  */
-export const PcoIncludedEntity = Schema.Union(...Object.values(PcoEntityRegistry))
+export const PcoEntity = Schema.Union(...Object.values(PcoEntityRegistry))
 
-export type PcoIncludedEntity = typeof PcoIncludedEntity.Type
+export type PcoEntity = typeof PcoEntity.Type

@@ -1,10 +1,15 @@
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { TokenKey } from '@openfaith/adapter-core/server'
-import { addressesTable, externalLinksTable, peopleTable } from '@openfaith/db'
-import type { pcoEntityManifest } from '@openfaith/pco/server'
-import { pcoAddressTransformer, pcoPersonTransformer } from '@openfaith/pco/server'
-import { BaseAddress, BasePerson } from '@openfaith/schema'
-import { getAddressId, getPersonId } from '@openfaith/shared'
+import { addressesTable, externalLinksTable, peopleTable, phoneNumbersTable } from '@openfaith/db'
+import {
+  type PcoEntity,
+  pcoAddressTransformer,
+  type pcoEntityManifest,
+  pcoPersonTransformer,
+  pcoPhoneNumberTransformer,
+} from '@openfaith/pco/server'
+import { BaseAddress, BasePerson, BasePhoneNumber } from '@openfaith/schema'
+import { getAddressId, getPersonId, getPhoneNumberId } from '@openfaith/shared'
 import { getTableColumns, getTableName, sql } from 'drizzle-orm'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
 
@@ -23,52 +28,52 @@ export const ofLookup = {
     table: peopleTable,
     transformer: pcoPersonTransformer,
   },
+  PhoneNumber: {
+    getId: getPhoneNumberId,
+    ofEntity: 'phoneNumber',
+    ofSchema: BasePhoneNumber,
+    table: phoneNumbersTable,
+    transformer: pcoPhoneNumberTransformer,
+  },
 } as const
 
-export const saveDataE = Effect.fn(function* (
-  data: Schema.Schema.Type<
-    (typeof pcoEntityManifest)[keyof typeof pcoEntityManifest]['endpoints']['list']['response']
-  >,
-) {
-  const db = yield* PgDrizzle.PgDrizzle
+export const mkExternalLinksE = Effect.fn(function* (data: ReadonlyArray<PcoEntity>) {
   const orgId = yield* TokenKey
 
-  const lastProcessedAt = new Date()
-
   const entityTypeOpt = pipe(
-    data.data,
+    data,
     Array.head,
     Option.map((x) => x.type),
   )
 
-  yield* Effect.annotateLogs(Effect.log('Received data for saveDataE'), {
-    dataCount: data.data.length,
-    entityType: Option.isSome(entityTypeOpt) ? entityTypeOpt.value : undefined,
-    orgId,
-  })
+  const lastProcessedAt = new Date()
 
-  // This also acts as our zero check for `data.data`
   if (entityTypeOpt._tag === 'None') {
-    yield* Effect.annotateLogs(Effect.log('No data to process, skipping saveDataE'), {
-      dataCount: data.data.length,
+    yield* Effect.annotateLogs(Effect.log('No data to process, skipping mkExternalLinksE'), {
+      dataCount: data.length,
       orgId,
     })
-    return
+
+    return {
+      externalLinks: [],
+      lastProcessedAt,
+    }
   }
 
-  const { table, transformer, getId, ofEntity } = ofLookup[entityTypeOpt.value]
+  const { getId, ofEntity } = ofLookup[entityTypeOpt.value]
 
   yield* Effect.annotateLogs(Effect.log('Inserting external links'), {
-    count: data.data.length,
+    count: data.length,
     entityType: ofEntity,
     orgId,
   })
 
+  const db = yield* PgDrizzle.PgDrizzle
   const externalLinks = yield* db
     .insert(externalLinksTable)
     .values(
       pipe(
-        data.data,
+        data,
         Array.map(
           (entity) =>
             ({
@@ -80,7 +85,15 @@ export const saveDataE = Effect.fn(function* (
               externalId: entity.id,
               lastProcessedAt,
               orgId,
-              updatedAt: new Date(entity.attributes.updated_at),
+              // Some entities don't have an updatedAt, so we default to the current date
+              updatedAt: pipe(
+                entity.attributes.updated_at,
+                Option.fromNullable,
+                Option.match({
+                  onNone: () => new Date(),
+                  onSome: (x) => new Date(x),
+                }),
+              ),
             }) as const,
         ),
       ),
@@ -109,6 +122,46 @@ export const saveDataE = Effect.fn(function* (
     orgId,
     returnedCount: externalLinks.length,
   })
+
+  return {
+    externalLinks,
+    lastProcessedAt,
+  }
+})
+
+export const saveDataE = Effect.fn(function* (
+  data: Schema.Schema.Type<
+    (typeof pcoEntityManifest)[keyof typeof pcoEntityManifest]['endpoints']['list']['response']
+  >,
+) {
+  const db = yield* PgDrizzle.PgDrizzle
+  const orgId = yield* TokenKey
+
+  const entityTypeOpt = pipe(
+    data.data,
+    Array.head,
+    Option.map((x) => x.type),
+  )
+
+  yield* Effect.annotateLogs(Effect.log('Received data for saveDataE'), {
+    dataCount: data.data.length,
+    entityType: Option.isSome(entityTypeOpt) ? entityTypeOpt.value : undefined,
+    orgId,
+  })
+
+  // This also acts as our zero check for `data.data`
+  if (entityTypeOpt._tag === 'None') {
+    yield* Effect.annotateLogs(Effect.log('No data to process, skipping saveDataE'), {
+      dataCount: data.data.length,
+      orgId,
+    })
+    return
+  }
+
+  const { table, transformer, ofEntity } = ofLookup[entityTypeOpt.value]
+
+  // Use mkExternalLinksE for externalLinks logic and logging
+  const { externalLinks, lastProcessedAt } = yield* mkExternalLinksE(data.data)
 
   const entityValues = pipe(
     externalLinks,

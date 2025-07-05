@@ -30,7 +30,7 @@ export const PcoAddressAttributes = Schema.Struct({
   street_line_2: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'streetLine2',
   }),
-  updated_at: Schema.NullOr(Schema.String).annotations({
+  updated_at: Schema.String.annotations({
     [OfFieldName]: 'updatedAt',
   }),
   zip: Schema.NullOr(Schema.String).annotations({

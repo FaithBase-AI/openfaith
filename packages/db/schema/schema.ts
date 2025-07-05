@@ -6,6 +6,8 @@ import { externalLinksRelations } from '@openfaith/db/schema/modules/externalLin
 import { externalLinksTable } from '@openfaith/db/schema/modules/externalLinksSchema'
 import { peopleRelations } from '@openfaith/db/schema/modules/peopleRelations'
 import { peopleTable } from '@openfaith/db/schema/modules/peopleSchema'
+import { phoneNumbersRelations } from '@openfaith/db/schema/modules/phoneNumbersRelations'
+import { phoneNumbersTable } from '@openfaith/db/schema/modules/phoneNumbersSchema'
 import {
   invitationsRelations,
   orgSettingsRelations,
@@ -39,6 +41,8 @@ export const schema = {
   orgUsersTable,
   peopleRelations,
   peopleTable,
+  phoneNumbersRelations,
+  phoneNumbersTable,
   usersRelations,
   usersTable,
   verificationsTable,

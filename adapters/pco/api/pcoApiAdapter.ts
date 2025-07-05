@@ -6,7 +6,7 @@ import type {
   PatchEndpointDefinition,
   PostEndpointDefinition,
 } from '@openfaith/adapter-core/server'
-import { type PcoEntityRegistry, PcoIncludedEntity } from '@openfaith/pco/base/pcoEntityRegistry'
+import { PcoEntity, type PcoEntityRegistry } from '@openfaith/pco/base/pcoEntityRegistry'
 import { arrayToCommaSeparatedString } from '@openfaith/shared'
 import { Schema } from 'effect'
 
@@ -296,8 +296,8 @@ function createApiAdapter<
       ...params,
       response:
         isGet && params.isCollection
-          ? mkPcoCollectionSchema(params.apiSchema, PcoIncludedEntity)
-          : mkPcoSingleSchema(params.apiSchema, PcoIncludedEntity),
+          ? mkPcoCollectionSchema(params.apiSchema, PcoEntity)
+          : mkPcoSingleSchema(params.apiSchema, PcoEntity),
       ...(isGet ? { query: buildUrlParamsSchema(params) } : {}),
     }
   }

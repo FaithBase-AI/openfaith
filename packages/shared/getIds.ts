@@ -5,3 +5,5 @@ export const getIdType = (id: string) => pipe(id, String.split('_'), Array.headN
 export const getPersonId = () => typeid('person').toString()
 
 export const getAddressId = () => typeid('address').toString()
+
+export const getPhoneNumberId = () => typeid('phonenumber').toString()
