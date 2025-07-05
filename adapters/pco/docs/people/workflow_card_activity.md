@@ -1,0 +1,384 @@
+Planning Center API DocumentationYou need to enable JavaScript to run this app.
+
+Menu
+
+[Overview](#/overview/)
+
+[Reference](workflow_card_activity.md)
+
+[My Developer Account](https://api.planningcenteronline.com/oauth/applications)
+
+OverviewReference
+
+Close
+
+[API](#/apps/api)[Calendar](#/apps/calendar)[Check-Ins](#/apps/check-ins)[Giving](#/apps/giving)[Groups](#/apps/groups)[People](#/apps/people)
+
+2025-03-20
+
+Info
+
+[Address](address.md)
+
+[App](app.md)
+
+[BackgroundCheck](background_check.md)
+
+[BirthdayPeople](birthday_people.md)
+
+[Campus](campus.md)
+
+[Carrier](carrier.md)
+
+[Condition](condition.md)
+
+[ConnectedPerson](connected_person.md)
+
+[CustomSender](custom_sender.md)
+
+[Email](email.md)
+
+[FieldDatum](field_datum.md)
+
+[FieldDefinition](field_definition.md)
+
+[FieldOption](field_option.md)
+
+[Form](form.md)
+
+[FormCategory](form_category.md)
+
+[FormField](form_field.md)
+
+[FormFieldOption](form_field_option.md)
+
+[FormSubmission](form_submission.md)
+
+[FormSubmissionValue](form_submission_value.md)
+
+[Household](household.md)
+
+[HouseholdMembership](household_membership.md)
+
+[InactiveReason](inactive_reason.md)
+
+[List](list.md)
+
+[ListCategory](list_category.md)
+
+[ListResult](list_result.md)
+
+[ListShare](list_share.md)
+
+[ListStar](list_star.md)
+
+[MailchimpSyncStatus](mailchimp_sync_status.md)
+
+[MaritalStatus](marital_status.md)
+
+[Message](message.md)
+
+[MessageGroup](message_group.md)
+
+[NamePrefix](name_prefix.md)
+
+[NameSuffix](name_suffix.md)
+
+[Note](note.md)
+
+[NoteCategory](note_category.md)
+
+[NoteCategoryShare](note_category_share.md)
+
+[NoteCategorySubscription](note_category_subscription.md)
+
+[Organization](organization.md)
+
+[OrganizationStatistics](organization_statistics.md)
+
+[PeopleImport](people_import.md)
+
+[PeopleImportConflict](people_import_conflict.md)
+
+[PeopleImportHistory](people_import_history.md)
+
+[Person](person.md)
+
+[PersonApp](person_app.md)
+
+[PersonMerger](person_merger.md)
+
+[PhoneNumber](phone_number.md)
+
+[PlatformNotification](platform_notification.md)
+
+[Report](report.md)
+
+[Rule](rule.md)
+
+[SchoolOption](school_option.md)
+
+[ServiceTime](service_time.md)
+
+[SocialProfile](social_profile.md)
+
+[SpamEmailAddress](spam_email_address.md)
+
+[Tab](tab.md)
+
+[Workflow](workflow.md)
+
+[WorkflowCard](workflow_card.md)
+
+[WorkflowCardActivity](workflow_card_activity.md)
+
+[WorkflowCardNote](workflow_card_note.md)
+
+[WorkflowCategory](workflow_category.md)
+
+[WorkflowShare](workflow_share.md)
+
+[WorkflowStep](workflow_step.md)
+
+[WorkflowStepAssigneeSummary](workflow_step_assignee_summary.md)
+
+[Publishing](#/apps/publishing)[Registrations](#/apps/registrations)[Services](#/apps/services)[Webhooks](#/apps/webhooks)
+
+# WorkflowCardActivity
+
+Workflow Card Activity is a record of an action performed on a card
+
+[# Example Request](#/apps/people/2025-03-20/vertices/workflow_card_activity#example-request)
+
+```
+curl https://api.planningcenteronline.com/people/v2/people/{person_id}/workflow_cards/{workflow_card_id}/activities
+```
+
+[View in API Explorer](https://api.planningcenteronline.com/explorer/people/v2/people/{person_id}/workflow_cards/{workflow_card_id}/activities)
+
+[# Example Object](#/apps/people/2025-03-20/vertices/workflow_card_activity#example-object)
+
+```
+{
+  "type": "WorkflowCardActivity",
+  "id": "1",
+  "attributes": {
+    "comment": "string",
+    "content": "string",
+    "form_submission_url": "string",
+    "automation_url": "string",
+    "person_avatar_url": "string",
+    "person_name": "string",
+    "reassigned_to_avatar_url": "string",
+    "reassigned_to_name": "string",
+    "subject": "string",
+    "type": "string",
+    "content_is_html": true,
+    "created_at": "2000-01-01T12:00:00Z"
+  },
+  "relationships": {
+    "workflow_card": {
+      "data": {
+        "type": "WorkflowCard",
+        "id": "1"
+      }
+    },
+    "workflow_step": {
+      "data": {
+        "type": "WorkflowStep",
+        "id": "1"
+      }
+    }
+  }
+}
+```
+
+[# Attributes](#/apps/people/2025-03-20/vertices/workflow_card_activity#attributes)
+
+Name
+
+Type
+
+Description
+
+`id`
+
+`primary_key`
+
+`comment`
+
+`string`
+
+`content`
+
+`string`
+
+`form_submission_url`
+
+`string`
+
+`automation_url`
+
+`string`
+
+`person_avatar_url`
+
+`string`
+
+`person_name`
+
+`string`
+
+`reassigned_to_avatar_url`
+
+`string`
+
+`reassigned_to_name`
+
+`string`
+
+`subject`
+
+`string`
+
+`type`
+
+`string`
+
+`content_is_html`
+
+`boolean`
+
+`created_at`
+
+`date_time`
+
+[# Relationships](#/apps/people/2025-03-20/vertices/workflow_card_activity#relationships)
+
+Name
+
+Type
+
+Association Type
+
+Note
+
+workflow\_card
+
+WorkflowCard
+
+to\_one
+
+workflow\_step
+
+WorkflowStep
+
+to\_one
+
+Only available when `type` attribute is `completion`, `skip`, or `reversal`.
+
+[# URL Parameters](#/apps/people/2025-03-20/vertices/workflow_card_activity#url-parameters)
+
+# Order By
+
+Parameter
+
+Value
+
+Type
+
+Description
+
+order
+
+id
+
+string
+
+prefix with a hyphen (-id) to reverse the order
+
+# Pagination
+
+Name
+
+Parameter
+
+Type
+
+Description
+
+per\_page
+
+per\_page
+
+integer
+
+how many records to return per page (min=1, max=100, default=25)
+
+offset
+
+offset
+
+integer
+
+get results from given offset
+
+[# Endpoints](#/apps/people/2025-03-20/vertices/workflow_card_activity#endpoints)
+
+# Listing
+
+HTTP Method
+
+Endpoint
+
+GET
+
+`/people/v2/people/{person_id}/workflow_cards/{workflow_card_id}/activities`
+
+Copy
+
+# Reading
+
+HTTP Method
+
+Endpoint
+
+GET
+
+`/people/v2/people/{person_id}/workflow_cards/{workflow_card_id}/activities/{id}`
+
+Copy
+
+# Deleting
+
+HTTP Method
+
+Endpoint
+
+DELETE
+
+`/people/v2/people/{person_id}/workflow_cards/{workflow_card_id}/activities/{id}`
+
+Copy
+
+[# Belongs To](#/apps/people/2025-03-20/vertices/workflow_card_activity#belongs-to)
+
+# WorkflowCard
+
+HTTP Method
+
+Endpoint
+
+Association
+
+Details
+
+Filter By
+
+GET
+
+`/people/v2/people/{person_id}/workflow_cards/{workflow_card_id}/activities`
+
+Copy
+
+[WorkflowCard](workflow_card.md)
