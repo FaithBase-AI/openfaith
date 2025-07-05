@@ -8,6 +8,7 @@ export const listPeopleDefinition = pcoApiAdapter({
   apiSchema: PcoPerson,
   defaultQuery: {
     include: 'addresses',
+    order: 'created_at',
     per_page: 100,
   },
   entity: 'Person',

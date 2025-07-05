@@ -7,7 +7,7 @@ import type {
   PostEndpointDefinition,
 } from '@openfaith/adapter-core/server'
 import { arrayToCommaSeparatedString } from '@openfaith/shared'
-import { Array, pipe, Schema } from 'effect'
+import { Schema } from 'effect'
 
 /**
  * Creates a PCO collection response schema.
@@ -342,6 +342,66 @@ export function buildUrlParamsSchema<
     QueryableSpecial,
     IsCollection
   >,
+): IsCollection extends true
+  ? ReturnType<
+      typeof buildCollectionUrlParamsSchema<
+        Api,
+        Fields,
+        TModule,
+        TEntity,
+        TName,
+        OrderableFields,
+        QueryableFields,
+        Includes,
+        QueryableSpecial,
+        IsCollection
+      >
+    >
+  : ReturnType<
+      typeof buildSingleUrlParamsSchema<
+        Api,
+        Fields,
+        TModule,
+        TEntity,
+        TName,
+        OrderableFields,
+        QueryableFields,
+        Includes,
+        QueryableSpecial,
+        false
+      >
+    > {
+  if (definition.isCollection) {
+    return buildCollectionUrlParamsSchema(definition) as any
+  }
+
+  return buildSingleUrlParamsSchema(definition) as any
+}
+
+export function buildSingleUrlParamsSchema<
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends false,
+>(
+  definition: BaseGetEndpointDefinition<
+    Api,
+    Fields,
+    TModule,
+    TEntity,
+    TName,
+    OrderableFields,
+    QueryableFields,
+    Includes,
+    QueryableSpecial,
+    IsCollection
+  >,
 ) {
   const include = {
     include: Schema.optional(
@@ -352,46 +412,65 @@ export function buildUrlParamsSchema<
     ),
   }
 
-  if (definition.isCollection) {
-    const { queryableBy, orderableBy } = definition
-
-    const fields = pipe(
-      queryableBy.fields,
-      Array.reduce({}, (acc, _field) => ({
-        ...acc,
-        // [`where[${field}]`]: getQueryParamSchema(apiSchema, field),
-      })),
-    )
-
-    const special = pipe(
-      queryableBy.special,
-      Array.reduce({}, (acc, field) => ({
-        ...acc,
-        [field]: Schema.optional(Schema.String), // Special fields are assumed to be strings
-      })),
-    )
-
-    const order = pipe(
-      orderableBy,
-      Array.match({
-        onEmpty: () => ({}),
-        onNonEmpty: () => ({ order: Schema.optional(Schema.String) }),
-      }),
-    ) as typeof fields
-
-    return Schema.Struct({
-      ...fields,
-      ...special,
-      ...order,
-      ...include,
-      offset: Schema.optional(Schema.NumberFromString),
-      per_page: Schema.optional(Schema.NumberFromString),
-    })
-  }
-
   return Schema.Struct({
     ...include,
     offset: Schema.optional(Schema.NumberFromString),
+    per_page: Schema.optional(Schema.NumberFromString),
+  })
+}
+
+export function buildCollectionUrlParamsSchema<
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends true,
+>(
+  definition: BaseGetEndpointDefinition<
+    Api,
+    Fields,
+    TModule,
+    TEntity,
+    TName,
+    OrderableFields,
+    QueryableFields,
+    Includes,
+    QueryableSpecial,
+    IsCollection
+  >,
+) {
+  // const { queryableBy, orderableBy } = definition
+
+  // const fields = pipe(
+  //   queryableBy.fields,
+  //   Array.reduce({}, (acc, _field) => ({
+  //     ...acc,
+  //     // [`where[${field}]`]: getQueryParamSchema(apiSchema, field),
+  //   })),
+  // )
+
+  // const special = pipe(
+  //   queryableBy.special,
+  //   Array.reduce({}, (acc, field) => ({
+  //     ...acc,
+  //     [field]: Schema.optional(Schema.String), // Special fields are assumed to be strings
+  //   })),
+  // )
+
+  return Schema.Struct({
+    include: Schema.optional(
+      Schema.Union(
+        arrayToCommaSeparatedString(Schema.Literal(...definition.includes)),
+        Schema.Literal(...definition.includes),
+      ),
+    ),
+    offset: Schema.optional(Schema.NumberFromString),
+    order: Schema.optional(Schema.Literal(...definition.orderableBy)),
     per_page: Schema.optional(Schema.NumberFromString),
   })
 }
