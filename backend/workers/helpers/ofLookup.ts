@@ -2,7 +2,7 @@ import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { TokenKey } from '@openfaith/adapter-core/server'
 import { addressesTable, externalLinksTable, peopleTable, phoneNumbersTable } from '@openfaith/db'
 import {
-  type PcoEntity,
+  type PcoEntityRegistry,
   pcoAddressTransformer,
   type pcoEntityManifest,
   pcoPersonTransformer,
@@ -37,12 +37,18 @@ export const ofLookup = {
   },
 } as const
 
-export const mkExternalLinksE = Effect.fn(function* (data: ReadonlyArray<PcoEntity>) {
+export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* (
+  data: {
+    [K in keyof typeof PcoEntityRegistry]: ReadonlyArray<
+      Schema.Schema.Type<(typeof PcoEntityRegistry)[K]>
+    >
+  }[keyof typeof PcoEntityRegistry],
+) {
   const orgId = yield* TokenKey
 
   const entityTypeOpt = pipe(
-    data,
-    Array.head,
+    data[0],
+    Option.fromNullable,
     Option.map((x) => x.type),
   )
 
@@ -53,11 +59,7 @@ export const mkExternalLinksE = Effect.fn(function* (data: ReadonlyArray<PcoEnti
       dataCount: data.length,
       orgId,
     })
-
-    return {
-      externalLinks: [],
-      lastProcessedAt,
-    }
+    return []
   }
 
   const { getId, ofEntity } = ofLookup[entityTypeOpt.value]
@@ -123,36 +125,29 @@ export const mkExternalLinksE = Effect.fn(function* (data: ReadonlyArray<PcoEnti
     returnedCount: externalLinks.length,
   })
 
-  return {
-    externalLinks,
-    lastProcessedAt,
-  }
+  // Filter out the external links that have already been processed for their updatedAt
+  return externalLinks.filter((x) => x.lastProcessedAt !== lastProcessedAt)
 })
 
-export const saveDataE = Effect.fn(function* (
-  data: Schema.Schema.Type<
-    (typeof pcoEntityManifest)[keyof typeof pcoEntityManifest]['endpoints']['list']['response']
-  >,
+export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
+  data: {
+    [K in keyof typeof PcoEntityRegistry]: ReadonlyArray<
+      Schema.Schema.Type<(typeof PcoEntityRegistry)[K]>
+    >
+  }[keyof typeof PcoEntityRegistry],
 ) {
-  const db = yield* PgDrizzle.PgDrizzle
   const orgId = yield* TokenKey
+  const db = yield* PgDrizzle.PgDrizzle
 
   const entityTypeOpt = pipe(
-    data.data,
-    Array.head,
+    data[0],
+    Option.fromNullable,
     Option.map((x) => x.type),
   )
 
-  yield* Effect.annotateLogs(Effect.log('Received data for saveDataE'), {
-    dataCount: data.data.length,
-    entityType: Option.isSome(entityTypeOpt) ? entityTypeOpt.value : undefined,
-    orgId,
-  })
-
-  // This also acts as our zero check for `data.data`
   if (entityTypeOpt._tag === 'None') {
-    yield* Effect.annotateLogs(Effect.log('No data to process, skipping saveDataE'), {
-      dataCount: data.data.length,
+    yield* Effect.annotateLogs(Effect.log('No data to process, skipping mkEntityUpsertE'), {
+      dataCount: data.length,
       orgId,
     })
     return
@@ -160,22 +155,11 @@ export const saveDataE = Effect.fn(function* (
 
   const { table, transformer, ofEntity } = ofLookup[entityTypeOpt.value]
 
-  // Use mkExternalLinksE for externalLinks logic and logging
-  const { externalLinks, lastProcessedAt } = yield* mkExternalLinksE(data.data)
-
   const entityValues = pipe(
-    externalLinks,
-    // Filter out the external links that have already been processed for their updatedAt
-    Array.filter((x) => x.lastProcessedAt !== lastProcessedAt),
-    Array.filterMap((x) =>
-      pipe(
-        data.data,
-        Array.findFirst((y) => y.id === x.externalId),
-        Option.map((y) => [x.entityId, y] as const),
-      ),
-    ),
-    Array.map(([id, entity]) => {
+    data,
+    Array.map((entity) => {
       const { createdAt, deletedAt, inactivatedAt, updatedAt, customFields, ...canonicalAttrs } =
+        // @ts-expect-error - Too much DP happening here.
         Schema.decodeSync(transformer, { errors: 'all' })(entity.attributes)
 
       return {
@@ -189,7 +173,7 @@ export const saveDataE = Effect.fn(function* (
             onSome: (x) => new Date(x),
           }),
         ),
-        id,
+        id: entity.id,
         inactivatedAt: pipe(
           inactivatedAt,
           Option.fromNullable,
@@ -237,17 +221,14 @@ export const saveDataE = Effect.fn(function* (
     .insert(table)
     .values(entityValues)
     .onConflictDoUpdate({
-      // Get all the columns for the table, filter out id and orgId, and map to a record of column name to the sql expression to update the column
       set: {
         ...pipe(
           getTableColumns(table),
-          Record.keys,
+          Object.keys,
           Array.filter((x) => x !== 'id' && x !== 'orgId' && x !== 'customFields' && x !== '_tag'),
-          // This needs to not be sql`` because it's gonna try and insert x as a sql expression
           Array.map((x) => [x, sql.raw(`EXCLUDED."${x}"`)] as const),
           Record.fromEntries,
         ),
-        // Only update the customFields for the pco source.
         customFields: sql`
           (
             COALESCE(
@@ -282,10 +263,105 @@ export const saveDataE = Effect.fn(function* (
       },
       target: [table.id],
     })
+
   yield* Effect.annotateLogs(Effect.log('Entity upsert complete'), {
     entityType: ofEntity,
     orgId,
     table: getTableName(table),
     upsertCount: entityValues.length,
   })
+})
+
+export const saveDataE = Effect.fn('saveDataE')(function* (
+  data: Schema.Schema.Type<
+    (typeof pcoEntityManifest)[keyof typeof pcoEntityManifest]['endpoints']['list']['response']
+  >,
+) {
+  const orgId = yield* TokenKey
+
+  const entityTypeOpt = pipe(
+    data.data,
+    Array.head,
+    Option.map((x) => x.type),
+  )
+
+  yield* Effect.annotateLogs(Effect.log('Received data for saveDataE'), {
+    dataCount: data.data.length,
+    entityType: Option.isSome(entityTypeOpt) ? entityTypeOpt.value : undefined,
+    orgId,
+  })
+
+  // This also acts as our zero check for `data.data`
+  if (entityTypeOpt._tag === 'None') {
+    yield* Effect.annotateLogs(Effect.log('No data to process, skipping saveDataE'), {
+      dataCount: data.data.length,
+      orgId,
+    })
+    return
+  }
+
+  const externalLinks = yield* mkExternalLinksE(data.data)
+
+  yield* mkEntityUpsertE(
+    pipe(
+      externalLinks,
+      Array.filterMap((x) =>
+        pipe(
+          data.data,
+          Array.findFirst((y) => y.id === x.externalId),
+        ),
+      ),
+    ),
+  )
+
+  yield* saveIncludesE(data)
+})
+
+const saveIncludesE = Effect.fn('saveIncludesE')(function* (
+  data: Schema.Schema.Type<
+    (typeof pcoEntityManifest)[keyof typeof pcoEntityManifest]['endpoints']['list']['response']
+  >,
+) {
+  const includesMap = pipe(
+    data.included,
+    Array.reduce(
+      {} as {
+        [K in keyof typeof PcoEntityRegistry as Schema.Schema.Type<
+          (typeof PcoEntityRegistry)[K]
+        >['type']]: Array<Schema.Schema.Type<(typeof PcoEntityRegistry)[K]>>
+      },
+      (b, a) => {
+        return {
+          ...b,
+          [a.type]: pipe(
+            b[a.type],
+            Option.fromNullable,
+            Option.getOrElse(() => []),
+            // @ts-expect-error - Too much DP happening here.
+            Array.append(a),
+          ),
+        }
+      },
+    ),
+  )
+
+  yield* Effect.forEach(pipe(includesMap, Record.values), (x) =>
+    Effect.gen(function* () {
+      const externalLinks = yield* mkExternalLinksE(x)
+
+      yield* mkEntityUpsertE(
+        pipe(
+          externalLinks,
+          Array.filterMap((y) =>
+            pipe(
+              // @ts-expect-error - Too much DP happening here.
+              x,
+              // @ts-expect-error - Too much DP happening here.
+              Array.findFirst((z) => z.id === y.externalId),
+            ),
+          ),
+        ),
+      )
+    }),
+  )
 })

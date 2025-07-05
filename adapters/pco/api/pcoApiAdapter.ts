@@ -117,7 +117,12 @@ function createApiAdapter<
     > & { isCollection: true; defaultQuery?: Schema.Schema.Type<Query> },
   ): GetEndpointDefinition<
     Api,
-    ReturnType<typeof mkPcoCollectionSchema<Api, (typeof PcoEntityRegistry)[Includes[number]]>>,
+    ReturnType<
+      typeof mkPcoCollectionSchema<
+        Api,
+        Schema.Schema.Type<(typeof PcoEntityRegistry)[Includes[number]]>
+      >
+    >,
     Api[TFieldsKey],
     TModule,
     TEntity,
@@ -173,7 +178,12 @@ function createApiAdapter<
     > & { isCollection: false; defaultQuery?: Schema.Schema.Type<Query> },
   ): GetEndpointDefinition<
     Api,
-    ReturnType<typeof mkPcoCollectionSchema<Api, (typeof PcoEntityRegistry)[Includes[number]]>>,
+    ReturnType<
+      typeof mkPcoCollectionSchema<
+        Api,
+        Schema.Schema.Type<(typeof PcoEntityRegistry)[Includes[number]]>
+      >
+    >,
     Api[TFieldsKey],
     TModule,
     TEntity,
