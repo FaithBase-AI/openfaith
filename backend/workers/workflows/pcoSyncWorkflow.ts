@@ -3,7 +3,7 @@ import { createPaginatedStream, TokenKey } from '@openfaith/adapter-core/server'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { PcoApiLayer, PcoHttpClient } from '@openfaith/pco/server'
 import { saveDataE } from '@openfaith/workers/helpers/ofLookup'
-import { Array, Effect, pipe, Record, Schema, Stream } from 'effect'
+import { Array, Effect, Option, pipe, Record, Schema, Stream } from 'effect'
 
 // Define the PCO sync error
 class PcoSyncError extends Schema.TaggedError<PcoSyncError>('PcoSyncError')('PcoSyncError', {
@@ -57,11 +57,16 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
         const entityHttp = pcoClient[payload.entity]
 
         if ('list' in entityHttp) {
+          const urlParams = pipe(
+            pcoEntityManifest,
+            Record.findFirst((x) => x.module === payload.entity),
+            Option.flatMapNullable(([, x]) => x.endpoints.list.defaultQuery),
+            Option.getOrElse(() => ({})),
+          )
+
           return yield* Stream.runForEach(
             createPaginatedStream(entityHttp.list, {
-              urlParams: {
-                per_page: 100,
-              },
+              urlParams,
             } as const),
             (data) =>
               saveDataE(data).pipe(

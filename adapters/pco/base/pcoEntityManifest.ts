@@ -40,5 +40,3 @@ export const pcoEntityManifest = mkEntityManifest({
     504: PcoGatewayTimeoutError,
   },
 } as const)
-
-pcoEntityManifest.Person.endpoints.list.response
