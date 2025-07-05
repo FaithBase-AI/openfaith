@@ -3,16 +3,16 @@ import { createInsertSchema, createSelectSchema } from '@openfaith/db/drizzleEff
 import type { CustomFieldSchema } from '@openfaith/schema/shared/customFieldsSchema'
 import { index } from 'drizzle-orm/pg-core'
 
-export const peopleTable = pgTable(
-  'people',
+export const addressesTable = pgTable(
+  'addresses',
   (d) => ({
     _tag: d
-      .char({ enum: ['person'], length: 6 })
-      .default('person')
+      .char({ enum: ['address'], length: 7 })
+      .default('address')
       .notNull(),
-    anniversary: d.text(),
-    avatar: d.text(),
-    birthdate: d.text(),
+    city: d.text(),
+    countryCode: d.text(),
+    countryName: d.text(),
     createdAt: d.timestamp().notNull(),
     createdBy: d.text(),
     customFields: d.jsonb().$type<ReadonlyArray<CustomFieldSchema>>().notNull().default([]),
@@ -23,31 +23,32 @@ export const peopleTable = pgTable(
       .$type<ReadonlyArray<{ id: string; type: string }>>()
       .notNull()
       .default([]),
-    gender: d.text({ enum: ['male', 'female'] }),
     id: d.text().primaryKey(),
     inactivatedAt: d.timestamp(),
     inactivatedBy: d.text(),
-    lastName: d.text(),
-    membership: d.text(),
-    middleName: d.text(),
-    name: d.text(),
+    location: d.text(),
     orgId: d.text().notNull(),
+    primary: d.boolean().notNull().default(false),
+    state: d.text(),
     status: d
       .text({ enum: ['active', 'inactive'] })
       .notNull()
       .default('active'),
+    streetLine1: d.text(),
+    streetLine2: d.text(),
     tags: d.jsonb().$type<ReadonlyArray<string>>().notNull().default([]),
     type: d.text().notNull().default('default'),
     updatedAt: d.timestamp(),
     updatedBy: d.text(),
+    zip: d.text(),
   }),
   (x) => ({
-    orgIdIdx: index('peopleOrgIdIdx').on(x.orgId),
+    orgIdIdx: index('addressOrgIdIdx').on(x.orgId),
   }),
 )
 
-export const Person = createSelectSchema(peopleTable)
-export type Person = typeof Person.Type
+export const Address = createSelectSchema(addressesTable)
+export type Address = typeof Address.Type
 
-export const NewPerson = createInsertSchema(peopleTable)
-export type NewPerson = typeof NewPerson.Type
+export const NewAddress = createInsertSchema(addressesTable)
+export type NewAddress = typeof NewAddress.Type

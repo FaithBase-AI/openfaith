@@ -1,14 +1,21 @@
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { TokenKey } from '@openfaith/adapter-core/server'
-import { externalLinksTable, peopleTable } from '@openfaith/db'
+import { addressesTable, externalLinksTable, peopleTable } from '@openfaith/db'
 import type { pcoEntityManifest } from '@openfaith/pco/server'
-import { pcoPersonTransformer } from '@openfaith/pco/server'
-import { BasePerson } from '@openfaith/schema'
-import { getExternalLinkId, getPersonId } from '@openfaith/shared'
+import { pcoAddressTransformer, pcoPersonTransformer } from '@openfaith/pco/server'
+import { BaseAddress, BasePerson } from '@openfaith/schema'
+import { getAddressId, getPersonId } from '@openfaith/shared'
 import { getTableColumns, getTableName, sql } from 'drizzle-orm'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
 
 export const ofLookup = {
+  Address: {
+    getId: getAddressId,
+    ofEntity: 'address',
+    ofSchema: BaseAddress,
+    table: addressesTable,
+    transformer: pcoAddressTransformer,
+  },
   Person: {
     getId: getPersonId,
     ofEntity: 'person',
@@ -71,7 +78,6 @@ export const saveDataE = Effect.fn(function* (
               entityId: getId(),
               entityType: ofEntity,
               externalId: entity.id,
-              id: getExternalLinkId(),
               lastProcessedAt,
               orgId,
               updatedAt: new Date(entity.attributes.updated_at),

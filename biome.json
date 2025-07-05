@@ -71,7 +71,10 @@
         "noChildrenProp": "off",
         "noConstructorReturn": "off",
         "noInnerDeclarations": "off",
-        "noUnusedImports": "error",
+        "noUnusedImports": {
+          "fix": "safe",
+          "level": "error"
+        },
         "useExhaustiveDependencies": "error"
       },
       "nursery": {

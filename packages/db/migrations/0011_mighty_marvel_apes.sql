@@ -1,0 +1,1 @@
+ALTER TABLE "openfaith_external_links" RENAME TO "openfaith_externalLinks";

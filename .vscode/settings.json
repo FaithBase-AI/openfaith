@@ -1,4 +1,7 @@
 {
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "editor.defaultFoldingRangeProvider": "biomejs.biome",
   "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnPaste": true,

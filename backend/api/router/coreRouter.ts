@@ -1,8 +1,6 @@
-import { WorkflowApi } from '@openfaith/workers/api/workflowApi'
-/** biome-ignore-all lint/suspicious/useAwait: test function */
-
 import { FetchHttpClient, HttpApiClient } from '@effect/platform'
 import { createTRPCRouter, protectedProcedure } from '@openfaith/api/trpc'
+import { WorkflowApi } from '@openfaith/workers/api/workflowApi'
 import { Effect } from 'effect'
 
 export const coreRouter = createTRPCRouter({

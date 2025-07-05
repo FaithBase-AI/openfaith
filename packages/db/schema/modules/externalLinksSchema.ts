@@ -1,9 +1,9 @@
 import { pgTable } from '@openfaith/db/_table'
 import { createInsertSchema, createSelectSchema } from '@openfaith/db/drizzleEffect'
-import { index, unique } from 'drizzle-orm/pg-core'
+import { index, primaryKey } from 'drizzle-orm/pg-core'
 
 export const externalLinksTable = pgTable(
-  'external_links',
+  'externalLinks',
   (d) => ({
     // Tag field for discriminated union
     _tag: d
@@ -17,13 +17,14 @@ export const externalLinksTable = pgTable(
     // Standard audit fields
     createdAt: d.timestamp().notNull(),
 
-    // OpenFaith entity being linked
-    entityId: d.text().notNull(),
-    entityType: d.text().notNull(), // e.g., "person", "group"
-    externalId: d.text().notNull(), // e.g., "pco", "ccb", "breeze"
+    // Soft delete fields
+    deletedAt: d.timestamp(),
+    deletedBy: d.text(), // e.g., "person", "group"
 
-    // Primary key for the link itself
-    id: d.text().primaryKey(),
+    // OpenFaith entity being linked
+    entityId: d.text().notNull(), // e.g., "pco", "ccb", "breeze"
+    entityType: d.text().notNull(),
+    externalId: d.text().notNull(),
 
     // Sync tracking
     lastProcessedAt: d.timestamp().notNull(),
@@ -34,11 +35,13 @@ export const externalLinksTable = pgTable(
   }),
   (x) => ({
     adapterExternalIdIdx: index('adapterExternalIdIdx').on(x.adapter, x.externalId),
-
     // Essential indexes for core CRUD operations
     entityIdIdx: index('entityIdIdx').on(x.entityId), // For outgoing lookups
-    // Unique constraint: one external record can only be linked once per organization
-    uniqueExternalLink: unique('uniqueExternalLink').on(x.orgId, x.adapter, x.externalId), // For incoming lookups
+    // Composite primary key: one external record per org, adapter, and externalId
+    pk: primaryKey({
+      columns: [x.orgId, x.adapter, x.externalId],
+      name: 'externalLinkPk',
+    }),
   }),
 )
 

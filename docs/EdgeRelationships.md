@@ -2,6 +2,60 @@
 
 A core innovation within the OpenFaith platform is its **`Edge`-Based Relationship Model**. This approach moves beyond the often rigid, predetermined links found in traditional Church Management Systems (ChMS) by providing a flexible and universal way to define, query, and manage connections between any two entities in the system.
 
+### Deterministic Source/Target Assignment: The Alpha Pattern
+
+To ensure consistency and avoid ambiguity in directionality, OpenFaith uses a deterministic, convention-based rule for assigning `sourceEntity` and `targetEntity` in an Edge:
+
+- **Alpha Pattern Rule:**
+  - Compare the first character of each entity's ID (or name, if preferred).
+  - If one entity's first letter falls in the range A–M (1–13), it is assigned as the `sourceEntity`. If the other is in N–Z (14–26), it is the `targetEntity`.
+  - **If both entities fall in the same alpha range (both A–M or both N–Z):**
+    - Compare the full string values lexicographically (alphabetically). The entity with the lower value is the `sourceEntity`, the other is the `targetEntity`.
+    - If the values are identical (extremely rare), use a secondary property (e.g., entity type, or a numeric ID if available) to break the tie.
+
+**Example:**
+
+- `alice` (A) and `bob` (B): Both A–M, so compare full string: `alice` < `bob` → `alice` is source, `bob` is target.
+- `nancy` (N) and `bob` (B): `nancy` is N–Z, `bob` is A–M → `bob` is source, `nancy` is target.
+- `zoe` (Z) and `yara` (Y): Both N–Z, so compare full string: `yara` < `zoe` → `yara` is source, `zoe` is target.
+
+**Rationale:**
+
+- This approach is fully deterministic and does not require developers or users to remember or look up relationship directionality for each type.
+- It works for any entity type and any relationship, making the system highly dynamic and scalable.
+- It avoids ambiguity and ensures that the same pair of entities will always be stored in the same direction, regardless of who creates the edge.
+
+**Developer Note:**
+
+- When creating an edge, always apply the alpha pattern rule to determine which entity is the source and which is the target.
+- This rule should be encapsulated in a utility function used throughout the codebase.
+
+**Example Utility Function (TypeScript):**
+
+```ts
+function getEdgeDirection(
+  idA: string,
+  idB: string
+): { source: string; target: string } {
+  const alphaRange = (id: string) => {
+    const c = id[0].toLowerCase();
+    return c >= "a" && c <= "m" ? "A-M" : "N-Z";
+  };
+  const rangeA = alphaRange(idA);
+  const rangeB = alphaRange(idB);
+  if (rangeA !== rangeB) {
+    return rangeA === "A-M"
+      ? { source: idA, target: idB }
+      : { source: idB, target: idA };
+  }
+  // Same range: use full string comparison
+  if (idA < idB) return { source: idA, target: idB };
+  if (idB < idA) return { source: idB, target: idA };
+  // Tie-breaker: use a secondary property (e.g., entity type)
+  throw new Error("Cannot determine edge direction: IDs are identical");
+}
+```
+
 ### The Problem with Predetermined Links in Traditional ChMS
 
 Most ChMS platforms define a fixed set of possible relationships: a `Person` can be in a `Group`; a `Donation` can be linked to a `Person` and a `Fund`; an `Event` can have `Attendees` (who are `People`). While these are essential, this fixed structure has limitations:
@@ -23,15 +77,19 @@ OpenFaith introduces a generic `Edge` entity as a first-class citizen in its Can
 
 **`Edge` Entity Schema (Key Fields):**
 
-- `id` (Primary Key for the edge itself)
 - `orgId` (The OpenFaith organization this link belongs to)
 - `sourceEntityId` (ID of the starting entity of the relationship)
 - `sourceEntityTypeTag` (The `_tag` of the source entity, e.g., "person", "group")
 - `targetEntityId` (ID of the ending entity of the relationship)
 - `targetEntityTypeTag` (The `_tag` of the target entity)
 - `relationshipType` (A string defining the _meaning_ of the connection, e.g., "member_of", "attended", "suitable_for_group", "mentors", "discussed_in_sermon")
-- `metadata` (JSONB field to store arbitrary key-value pairs describing the relationship itself, e.g., `{"role": "leader", "join_date": "2023-01-15", "status": "active"}`)
-- **Auditing Timestamps & User Tracking:** `createdAt`, `updatedAt`, `createdBy`, `updatedBy`.
+- `metadata` (JSONB field to store arbitrary key-value pairs describing the relationship itself, e.g., `{ "role": "leader", "join_date": "2023-01-15", "status": "active" }`)
+- **Auditing Timestamps & User Tracking:** `createdAt`, `updatedAt`, `createdBy`, `updatedBy`
+- **Soft Delete:** `deletedAt`, `deletedBy`
+
+**Primary Key:**
+
+- The combination of (`orgId`, `sourceEntityId`, `targetEntityId`, `relationshipType`) forms the composite primary key for the Edge table. There is no separate `id` field.
 
 ### How `Edge`s Empower OpenFaith
 
@@ -78,6 +136,7 @@ OpenFaith introduces a generic `Edge` entity as a first-class citizen in its Can
 - **Query Performance:** Heavily relying on `Edge`s means the `Edge` table can grow very large. Efficient indexing on `sourceEntityId`, `targetEntityId`, `relationshipType`, and potentially fields within the `metadata` is critical.
 - **Defining `relationshipType`s:** Organizations will need a way to manage and understand the `relationshipType`s they use. Some might be system-defined, others user-defined.
 - **User Interface:** Presenting and managing these flexible relationships in a user-friendly way is a UI/UX challenge.
+- **Alpha Pattern Enforcement:** All edge creation and querying logic should use the alpha pattern utility to ensure consistency. Document this pattern for all developers and contributors.
 
 ### Conclusion
 

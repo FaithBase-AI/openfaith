@@ -1,5 +1,7 @@
 import { adapterTokenRelations } from '@openfaith/db/schema/adaptersRelations'
 import { adapterTokenTable } from '@openfaith/db/schema/adaptersSchema'
+import { edgeRelations } from '@openfaith/db/schema/modules/edgeRelations'
+import { edgeTable } from '@openfaith/db/schema/modules/edgeSchema'
 import { externalLinksRelations } from '@openfaith/db/schema/modules/externalLinksRelations'
 import { externalLinksTable } from '@openfaith/db/schema/modules/externalLinksSchema'
 import { peopleRelations } from '@openfaith/db/schema/modules/peopleRelations'
@@ -22,6 +24,8 @@ import { jwksTable, usersTable, verificationsTable } from '@openfaith/db/schema/
 export const schema = {
   adapterTokenRelations,
   adapterTokenTable,
+  edgeRelations,
+  edgeTable,
   externalLinksRelations,
   externalLinksTable,
   invitationsRelations,

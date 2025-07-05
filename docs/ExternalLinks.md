@@ -39,7 +39,6 @@ This dedicated entity is crucial for building a scalable and maintainable sync s
 A typical `ExternalLink` record would include:
 
 - `_tag` (Discriminated union tag, set to "externalLink")
-- `id` (Primary Key for the link itself)
 - `orgId` (The OpenFaith organization this link belongs to)
 - `entityId` (Foreign Key to the ID of the OpenFaith entity, e.g., `Person.id`)
 - `entityType` (The `_tag` of the OpenFaith entity, e.g., "person", "group")
@@ -47,6 +46,11 @@ A typical `ExternalLink` record would include:
 - `externalId` (The unique identifier of the record _within_ the external system)
 - `lastProcessedAt` (Timestamp indicating when this link was last involved in a successful sync operation)
 - `updatedAt` (Timestamp from the external system indicating when the record was last modified)
+- **Soft Delete:** `deletedAt`, `deletedBy`
+
+**Primary Key:**
+
+- The combination of (`orgId`, `adapter`, `externalId`) forms the composite primary key for the ExternalLink table. There is no separate `id` field.
 
 **Critical Constraint:** A `UNIQUE` constraint is enforced on `(orgId, adapter, externalId)` to ensure that a specific external record can only be linked once per organization.
 
