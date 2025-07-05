@@ -11,7 +11,7 @@ export const BasePhoneNumber = Schema.TaggedStruct('phoneNumber', {
   }),
   location: Schema.String.annotations({
     description: 'The location type of the phone number (e.g., Mobile, Home, Work)',
-  }).pipe(Schema.optional),
+  }).pipe(Schema.NullOr),
   number: Schema.String.annotations({
     description: 'The phone number',
   }),

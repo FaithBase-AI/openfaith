@@ -1,4 +1,8 @@
 import { expect, test } from 'bun:test'
+import {
+  type PcoPhoneNumberAttributes,
+  pcoPhoneNumberTransformer,
+} from '@openfaith/pco/modules/people/pcoPhoneNumberSchema'
 import { PcoPersonAttributes } from '@openfaith/pco/server'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
 import {
@@ -386,5 +390,55 @@ test('pcoToOf: transforms real PCO person shape to BasePerson (integration test)
     tags: [],
     type: 'default',
     updatedAt: '2025-06-18T15:30:50Z',
+  })
+})
+
+test('pcoToOf: transforms PCO phone number to BasePhoneNumber (integration test)', () => {
+  const pcoPhoneData: PcoPhoneNumberAttributes = {
+    carrier: null,
+    country_code: 'US',
+    created_at: '2025-06-23T19:20:24Z',
+    e164: '+17275550198',
+    international: '+1 727-555-0198',
+    location: 'Mobile',
+    national: '(727) 555-0198',
+    number: '+17275550198',
+    primary: true,
+    updated_at: '2025-06-23T19:20:24Z',
+  }
+
+  const result = Schema.decodeSync(pcoPhoneNumberTransformer)(pcoPhoneData)
+
+  expect(result).toEqual({
+    _tag: 'phoneNumber',
+    countryCode: 'US',
+    createdAt: '2025-06-23T19:20:24Z',
+    customFields: [
+      {
+        _tag: 'string',
+        name: 'pco_carrier',
+        source: 'pco',
+        value: null,
+      },
+      {
+        _tag: 'string',
+        name: 'pco_international',
+        source: 'pco',
+        value: '+1 727-555-0198',
+      },
+      {
+        _tag: 'string',
+        name: 'pco_national',
+        source: 'pco',
+        value: '(727) 555-0198',
+      },
+    ],
+    location: 'Mobile',
+    number: '+17275550198',
+    primary: true,
+    status: 'active',
+    tags: [],
+    type: 'default',
+    updatedAt: '2025-06-23T19:20:24Z',
   })
 })

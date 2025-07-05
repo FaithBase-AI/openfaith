@@ -92,6 +92,10 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
             result.type = 'default'
           }
 
+          if (!('status' in result)) {
+            result.status = 'active'
+          }
+
           // Transform gender format from PCO to OF format
           if (result.gender) {
             switch (result.gender) {

@@ -13,9 +13,8 @@ export const PcoPhoneNumberAttributes = Schema.Struct({
   created_at: Schema.String.annotations({
     [OfFieldName]: 'createdAt',
   }),
-  e164: Schema.NullOr(Schema.String).annotations({
+  e164: Schema.String.annotations({
     [OfFieldName]: 'number',
-    [OfCustomField]: true,
   }),
   international: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'international',
