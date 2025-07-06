@@ -1,5 +1,5 @@
 import type {
-  BaseEndpointDefinition,
+  DefineEndpointInput,
   DeleteEndpointDefinition,
   GetEndpointDefinition,
   PatchEndpointDefinition,
@@ -43,7 +43,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     QueryableSpecial extends ReadonlyArray<string>,
     Query extends Schema.Schema<any>,
   >(
-    params: BaseEndpointDefinition<
+    params: DefineEndpointInput<
       'GET',
       Api,
       Api,
@@ -85,7 +85,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     QueryableSpecial extends ReadonlyArray<string>,
     Query extends Schema.Schema<any>,
   >(
-    params: BaseEndpointDefinition<
+    params: DefineEndpointInput<
       'GET',
       Api,
       Api,
@@ -123,7 +123,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TName extends string,
     CreatableFields extends ReadonlyArray<Extract<keyof Api, string>>,
   >(
-    params: BaseEndpointDefinition<
+    params: DefineEndpointInput<
       'POST',
       Api,
       Api,
@@ -156,7 +156,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TName extends string,
     UpdatableFields extends ReadonlyArray<Extract<keyof Api, string>>,
   >(
-    params: BaseEndpointDefinition<
+    params: DefineEndpointInput<
       'PATCH',
       Api,
       Api,
@@ -188,7 +188,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TEntity extends string,
     TName extends string,
   >(
-    params: BaseEndpointDefinition<
+    params: DefineEndpointInput<
       'DELETE',
       Api,
       Api,

@@ -1,7 +1,9 @@
 import { type HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
 import { toHttpApiEndpoint } from '@openfaith/adapter-core/api/endpointAdapter'
 import type * as Endpoint from '@openfaith/adapter-core/api/endpointTypes'
-import { Array, pipe, type Schema } from 'effect'
+import { mkPcoCollectionSchema, mkPcoSingleSchema } from '@openfaith/pco/api/pcoResponseSchemas'
+import { PcoEntity } from '@openfaith/pco/base/pcoEntityRegistry'
+import { Array, pipe, Record, type Schema } from 'effect'
 import type { NonEmptyReadonlyArray } from 'effect/Array'
 
 /**
@@ -14,7 +16,10 @@ export type ErrorConfig = { [key: number]: Schema.Schema.Any }
  * Converts endpoint definitions into a typed entity manifest structure
  * @since 1.0.0
  */
-export type ConvertPcoEntityManifest<Endpoints extends Endpoint.Any, Errors extends ErrorConfig> = {
+export type ConvertPcoEntityManifest<
+  Endpoints extends Endpoint.BaseAny,
+  Errors extends ErrorConfig,
+> = {
   [Entity in Endpoints['entity']]: {
     /** The Effect schema for this entity's API resource */
     apiSchema: Extract<Endpoints, { entity: Entity }>['apiSchema']
@@ -23,7 +28,65 @@ export type ConvertPcoEntityManifest<Endpoints extends Endpoint.Any, Errors exte
       [Name in Extract<Endpoints, { entity: Entity }>['name']]: Extract<
         Endpoints,
         { entity: Entity; name: Name }
-      >
+      > extends infer E
+        ? E extends Endpoint.BaseGetEndpointDefinition<
+            infer Api,
+            infer _Fields,
+            infer _Module,
+            infer _Entity,
+            infer _Name,
+            infer _OrderableFields,
+            infer _QueryableFields,
+            infer _Includes,
+            infer _QueryableSpecial,
+            infer IsCollection,
+            infer _Query
+          >
+          ? E & {
+              response: IsCollection extends true
+                ? ReturnType<
+                    typeof mkPcoCollectionSchema<Api, Schema.Schema.Type<typeof PcoEntity>>
+                  >
+                : ReturnType<typeof mkPcoSingleSchema<Api, Schema.Schema.Type<typeof PcoEntity>>>
+            }
+          : E extends Endpoint.BasePostEndpointDefinition<
+                infer Api,
+                infer _Fields,
+                infer _Module,
+                infer _Entity,
+                infer _Name,
+                infer _CreatableFields
+              >
+            ? E & {
+                response: ReturnType<
+                  typeof mkPcoSingleSchema<Api, Schema.Schema.Type<typeof PcoEntity>>
+                >
+              }
+            : E extends Endpoint.BasePatchEndpointDefinition<
+                  infer Api,
+                  infer _Fields,
+                  infer _Module,
+                  infer _Entity,
+                  infer _Name,
+                  infer _UpdatableFields
+                >
+              ? E & {
+                  response: ReturnType<
+                    typeof mkPcoSingleSchema<Api, Schema.Schema.Type<typeof PcoEntity>>
+                  >
+                }
+              : E extends Endpoint.BaseDeleteEndpointDefinition<
+                    infer _Api,
+                    infer _Fields,
+                    infer _Module,
+                    infer _Entity,
+                    infer _Name
+                  >
+                ? E & {
+                    response: typeof Schema.Void
+                  }
+                : never
+        : never
     }
     /** The entity name */
     entity: Entity
@@ -168,33 +231,55 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
  * @category Constructors
  */
 export const mkPcoEntityManifest = <
-  const Endpoints extends NonEmptyReadonlyArray<Endpoint.Any>,
+  const Endpoints extends NonEmptyReadonlyArray<Endpoint.BaseAny>,
   const Errors extends ErrorConfig,
 >(config: {
   readonly endpoints: Endpoints
   readonly errors: Errors
-}): ConvertPcoEntityManifest<Endpoints[number], Errors> =>
-  pipe(
+}): ConvertPcoEntityManifest<Endpoints[number], Errors> => {
+  const endpointLookup = pipe(
     config.endpoints,
     Array.groupBy((x) => x.entity),
-    (grouped) =>
-      Object.fromEntries(
-        Object.entries(grouped).map(([entity, entityEndpoints]) => {
-          const firstEndpoint = entityEndpoints[0]
+    Record.toEntries,
+  )
 
-          return [
-            entity,
-            {
-              apiSchema: firstEndpoint.apiSchema,
-              endpoints: Object.fromEntries(entityEndpoints.map((x) => [x.name, x])),
-              entity: entity,
-              errors: config.errors,
-              module: firstEndpoint.module,
-            },
-          ]
-        }),
-      ),
+  // TODO: Create PcoEntity here out of endpointLookup
+
+  return pipe(
+    endpointLookup,
+    Array.map(([entity, entityEndpoints]) => {
+      const firstEndpoint = pipe(entityEndpoints, Array.headNonEmpty)
+
+      return [
+        entity,
+        {
+          apiSchema: firstEndpoint.apiSchema,
+          endpoints: pipe(
+            entityEndpoints,
+            Array.map(
+              (endpoint) =>
+                [
+                  endpoint.name,
+                  {
+                    ...endpoint,
+                    response:
+                      endpoint.method === 'GET' && endpoint.isCollection
+                        ? mkPcoCollectionSchema(endpoint.apiSchema, PcoEntity)
+                        : mkPcoSingleSchema(endpoint.apiSchema, PcoEntity),
+                  },
+                ] as const,
+            ),
+            Record.fromEntries,
+          ),
+          entity: entity,
+          errors: config.errors,
+          module: firstEndpoint.module,
+        },
+      ] as const
+    }),
+    Record.fromEntries,
   ) as any
+}
 
 /**
  * Derives an `HttpApiGroup` from an entity manifest, similar to WorkflowProxy.toHttpApiGroup

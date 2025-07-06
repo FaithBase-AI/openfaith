@@ -1,13 +1,12 @@
 import type {
-  BaseEndpointDefinition,
+  BaseDeleteEndpointDefinition,
   BaseGetEndpointDefinition,
-  DeleteEndpointDefinition,
-  GetEndpointDefinition,
-  PatchEndpointDefinition,
-  PostEndpointDefinition,
+  BasePatchEndpointDefinition,
+  BasePostEndpointDefinition,
+  DefineEndpointInput,
+  DefineGetEndpointInput,
 } from '@openfaith/adapter-core/server'
-import { mkPcoCollectionSchema, mkPcoSingleSchema } from '@openfaith/pco/api/pcoResponseSchemas'
-import { PcoEntity, type PcoEntityRegistry } from '@openfaith/pco/base/pcoEntityRegistry'
+import type { PcoEntityRegistry } from '@openfaith/pco/base/pcoEntityRegistry'
 import { arrayToCommaSeparatedString } from '@openfaith/shared'
 import { Schema } from 'effect'
 
@@ -50,7 +49,7 @@ function createApiAdapter<
       >
     >,
   >(
-    params: BaseEndpointDefinition<
+    params: DefineEndpointInput<
       'GET',
       Api,
       Api[TFieldsKey],
@@ -65,14 +64,8 @@ function createApiAdapter<
       never,
       never
     > & { isCollection: true; defaultQuery?: Schema.Schema.Type<Query> },
-  ): GetEndpointDefinition<
+  ): BaseGetEndpointDefinition<
     Api,
-    ReturnType<
-      typeof mkPcoCollectionSchema<
-        Api,
-        Schema.Schema.Type<(typeof PcoEntityRegistry)[Includes[number]]>
-      >
-    >,
     Api[TFieldsKey],
     TModule,
     TEntity,
@@ -111,7 +104,7 @@ function createApiAdapter<
       >
     >,
   >(
-    params: BaseEndpointDefinition<
+    params: DefineEndpointInput<
       'GET',
       Api,
       Api[TFieldsKey],
@@ -126,14 +119,8 @@ function createApiAdapter<
       never,
       never
     > & { isCollection: false; defaultQuery?: Schema.Schema.Type<Query> },
-  ): GetEndpointDefinition<
+  ): BaseGetEndpointDefinition<
     Api,
-    ReturnType<
-      typeof mkPcoCollectionSchema<
-        Api,
-        Schema.Schema.Type<(typeof PcoEntityRegistry)[Includes[number]]>
-      >
-    >,
     Api[TFieldsKey],
     TModule,
     TEntity,
@@ -154,7 +141,7 @@ function createApiAdapter<
     TName extends string,
     CreatableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
   >(
-    params: BaseEndpointDefinition<
+    params: DefineEndpointInput<
       'POST',
       Api,
       Api[TFieldsKey],
@@ -169,17 +156,7 @@ function createApiAdapter<
       CreatableFields,
       never
     >,
-  ): PostEndpointDefinition<
-    Api,
-    ReturnType<
-      typeof mkPcoCollectionSchema<Api, (typeof PcoEntityRegistry)[keyof typeof PcoEntityRegistry]>
-    >,
-    Api[TFieldsKey],
-    TModule,
-    TEntity,
-    TName,
-    CreatableFields
-  >
+  ): BasePostEndpointDefinition<Api, Api[TFieldsKey], TModule, TEntity, TName, CreatableFields>
 
   // PATCH overload
   function defineEndpoint<
@@ -189,7 +166,7 @@ function createApiAdapter<
     TName extends string,
     UpdatableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
   >(
-    params: BaseEndpointDefinition<
+    params: DefineEndpointInput<
       'PATCH',
       Api,
       Api[TFieldsKey],
@@ -204,17 +181,7 @@ function createApiAdapter<
       never,
       UpdatableFields
     >,
-  ): PatchEndpointDefinition<
-    Api,
-    ReturnType<
-      typeof mkPcoCollectionSchema<Api, (typeof PcoEntityRegistry)[keyof typeof PcoEntityRegistry]>
-    >,
-    Api[TFieldsKey],
-    TModule,
-    TEntity,
-    TName,
-    UpdatableFields
-  >
+  ): BasePatchEndpointDefinition<Api, Api[TFieldsKey], TModule, TEntity, TName, UpdatableFields>
 
   // DELETE overload
   function defineEndpoint<
@@ -223,7 +190,7 @@ function createApiAdapter<
     TEntity extends string,
     TName extends string,
   >(
-    params: BaseEndpointDefinition<
+    params: DefineEndpointInput<
       'DELETE',
       Api,
       Api[TFieldsKey],
@@ -238,26 +205,13 @@ function createApiAdapter<
       never,
       never
     >,
-  ): DeleteEndpointDefinition<
-    Api,
-    ReturnType<
-      typeof mkPcoCollectionSchema<Api, (typeof PcoEntityRegistry)[keyof typeof PcoEntityRegistry]>
-    >,
-    Api[TFieldsKey],
-    TModule,
-    TEntity,
-    TName
-  >
+  ): BaseDeleteEndpointDefinition<Api, Api[TFieldsKey], TModule, TEntity, TName>
 
   // Implementation
   function defineEndpoint(params: any) {
     const isGet = params.method === 'GET'
     return {
       ...params,
-      response:
-        isGet && params.isCollection
-          ? mkPcoCollectionSchema(params.apiSchema, PcoEntity)
-          : mkPcoSingleSchema(params.apiSchema, PcoEntity),
       ...(isGet ? { query: buildUrlParamsSchema(params) } : {}),
     }
   }
@@ -303,7 +257,7 @@ export function buildUrlParamsSchema<
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends boolean,
 >(
-  definition: BaseGetEndpointDefinition<
+  definition: DefineGetEndpointInput<
     Api,
     Fields,
     TModule,
@@ -363,7 +317,7 @@ export function buildSingleUrlParamsSchema<
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends false,
 >(
-  definition: BaseGetEndpointDefinition<
+  definition: DefineGetEndpointInput<
     Api,
     Fields,
     TModule,
@@ -404,7 +358,7 @@ export function buildCollectionUrlParamsSchema<
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends true,
 >(
-  definition: BaseGetEndpointDefinition<
+  definition: DefineGetEndpointInput<
     Api,
     Fields,
     TModule,
