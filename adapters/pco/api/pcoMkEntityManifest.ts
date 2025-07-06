@@ -16,7 +16,10 @@ export type ErrorConfig = { [key: number]: Schema.Schema.Any }
  * Converts endpoint definitions into a typed entity manifest structure
  * @since 1.0.0
  */
-export type ConvertPcoEntityManifest<Endpoints extends Endpoint.Any, Errors extends ErrorConfig> = {
+export type ConvertPcoEntityManifest<
+  Endpoints extends Endpoint.BaseAny,
+  Errors extends ErrorConfig,
+> = {
   [Entity in Endpoints['entity']]: {
     /** The Effect schema for this entity's API resource */
     apiSchema: Extract<Endpoints, { entity: Entity }>['apiSchema']
@@ -41,7 +44,7 @@ export type ConvertPcoEntityManifest<Endpoints extends Endpoint.Any, Errors exte
  * Similar to WorkflowProxy.ConvertHttpApi but for endpoints with proper error distribution
  * @since 1.0.0
  */
-export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
+export type ConvertPcoHttpApi<Endpoints extends Endpoint.BaseAny> =
   Endpoints extends Endpoint.GetEndpointDefinition<
     infer _Api,
     infer _Response,
@@ -170,7 +173,7 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
  * @category Constructors
  */
 export const mkPcoEntityManifest = <
-  const Endpoints extends NonEmptyReadonlyArray<Endpoint.Any>,
+  const Endpoints extends NonEmptyReadonlyArray<Endpoint.BaseAny>,
   const Errors extends ErrorConfig,
 >(config: {
   readonly endpoints: Endpoints
@@ -239,7 +242,7 @@ export const mkPcoEntityManifest = <
  * @category Constructors
  */
 export const toPcoHttpApiGroup = <
-  Endpoints extends Record<string, Endpoint.Any>,
+  Endpoints extends Record<string, Endpoint.BaseAny>,
   Module extends string,
   Errors extends ErrorConfig,
 >(entityManifest: {

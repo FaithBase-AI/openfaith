@@ -92,6 +92,31 @@ export type DefineGetEndpointInput<
       name: TName
     }
 
+export type BaseGetEndpointDefinition<
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends boolean,
+  Query extends Schema.Schema<any>,
+> = DefineGetEndpointInput<
+  Api,
+  Fields,
+  TModule,
+  TEntity,
+  TName,
+  OrderableFields,
+  QueryableFields,
+  Includes,
+  QueryableSpecial,
+  IsCollection
+> & { query: Query; defaultQuery?: Schema.Schema.Type<Query> }
+
 export type GetEndpointDefinition<
   Api,
   Response extends Schema.Schema<any>,
@@ -150,6 +175,15 @@ export type DefinePostEndpointInput<
   creatableFields: CreatableFields
 }
 
+export type BasePostEndpointDefinition<
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+> = DefinePostEndpointInput<Api, Fields, TModule, TEntity, TName, CreatableFields>
+
 export type PostEndpointDefinition<
   Api,
   Response extends Schema.Schema<any>,
@@ -186,6 +220,15 @@ export type DefinePatchEndpointInput<
   updatableFields: UpdatableFields
 }
 
+export type BasePatchEndpointDefinition<
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+> = DefinePatchEndpointInput<Api, Fields, TModule, TEntity, TName, UpdatableFields>
+
 export type PatchEndpointDefinition<
   Api,
   Response extends Schema.Schema<any>,
@@ -218,6 +261,14 @@ export type DefineDeleteEndpointInput<
   /** The operation name for this endpoint */
   name: TName
 }
+
+export type BaseDeleteEndpointDefinition<
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+> = DefineDeleteEndpointInput<Api, Fields, TModule, TEntity, TName>
 
 export type DeleteEndpointDefinition<
   Api,
@@ -281,6 +332,43 @@ export type DefineEndpointInput<
         ? DefineDeleteEndpointInput<Api, Fields, TModule, TEntity, TName>
         : never
 
+export type BaseEndpointDefinition<
+  TMethod extends Method,
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends boolean,
+  CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Query extends Schema.Schema<any>,
+> = TMethod extends 'GET'
+  ? BaseGetEndpointDefinition<
+      Api,
+      Fields,
+      TModule,
+      TEntity,
+      TName,
+      OrderableFields,
+      QueryableFields,
+      Includes,
+      QueryableSpecial,
+      IsCollection,
+      Query
+    >
+  : TMethod extends 'POST'
+    ? BasePostEndpointDefinition<Api, Fields, TModule, TEntity, TName, CreatableFields>
+    : TMethod extends 'PATCH'
+      ? BasePatchEndpointDefinition<Api, Fields, TModule, TEntity, TName, UpdatableFields>
+      : TMethod extends 'DELETE'
+        ? BaseDeleteEndpointDefinition<Api, Fields, TModule, TEntity, TName>
+        : never
+
 export type EndpointDefinition<
   TMethod extends Method,
   Api,
@@ -336,6 +424,28 @@ export type EntityManifestShape = Record<
 export type Any = EndpointDefinition<
   Method,
   any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any
+>
+
+/**
+ * A type-level helper representing any endpoint definition
+ * @since 1.0.0
+ * @category Models
+ */
+export type BaseAny = BaseEndpointDefinition<
+  Method,
   any,
   any,
   any,

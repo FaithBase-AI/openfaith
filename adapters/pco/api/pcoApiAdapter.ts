@@ -1,10 +1,10 @@
 import type {
+  BaseDeleteEndpointDefinition,
+  BaseGetEndpointDefinition,
+  BasePatchEndpointDefinition,
+  BasePostEndpointDefinition,
   DefineEndpointInput,
   DefineGetEndpointInput,
-  DeleteEndpointDefinition,
-  GetEndpointDefinition,
-  PatchEndpointDefinition,
-  PostEndpointDefinition,
 } from '@openfaith/adapter-core/server'
 import type { PcoEntityRegistry } from '@openfaith/pco/base/pcoEntityRegistry'
 import { arrayToCommaSeparatedString } from '@openfaith/shared'
@@ -64,22 +64,18 @@ function createApiAdapter<
       never,
       never
     > & { isCollection: true; defaultQuery?: Schema.Schema.Type<Query> },
-  ): Omit<
-    GetEndpointDefinition<
-      Api,
-      never,
-      Api[TFieldsKey],
-      TModule,
-      TEntity,
-      TName,
-      OrderableFields,
-      QueryableFields,
-      Includes,
-      QueryableSpecial,
-      true,
-      Query
-    >,
-    'response'
+  ): BaseGetEndpointDefinition<
+    Api,
+    Api[TFieldsKey],
+    TModule,
+    TEntity,
+    TName,
+    OrderableFields,
+    QueryableFields,
+    Includes,
+    QueryableSpecial,
+    true,
+    Query
   >
 
   // GET Single overload
@@ -123,22 +119,18 @@ function createApiAdapter<
       never,
       never
     > & { isCollection: false; defaultQuery?: Schema.Schema.Type<Query> },
-  ): Omit<
-    GetEndpointDefinition<
-      Api,
-      never,
-      Api[TFieldsKey],
-      TModule,
-      TEntity,
-      TName,
-      OrderableFields,
-      QueryableFields,
-      Includes,
-      QueryableSpecial,
-      false,
-      Query
-    >,
-    'response'
+  ): BaseGetEndpointDefinition<
+    Api,
+    Api[TFieldsKey],
+    TModule,
+    TEntity,
+    TName,
+    OrderableFields,
+    QueryableFields,
+    Includes,
+    QueryableSpecial,
+    false,
+    Query
   >
 
   // POST overload
@@ -164,10 +156,7 @@ function createApiAdapter<
       CreatableFields,
       never
     >,
-  ): Omit<
-    PostEndpointDefinition<Api, never, Api[TFieldsKey], TModule, TEntity, TName, CreatableFields>,
-    'response'
-  >
+  ): BasePostEndpointDefinition<Api, Api[TFieldsKey], TModule, TEntity, TName, CreatableFields>
 
   // PATCH overload
   function defineEndpoint<
@@ -192,10 +181,7 @@ function createApiAdapter<
       never,
       UpdatableFields
     >,
-  ): Omit<
-    PatchEndpointDefinition<Api, never, Api[TFieldsKey], TModule, TEntity, TName, UpdatableFields>,
-    'response'
-  >
+  ): BasePatchEndpointDefinition<Api, Api[TFieldsKey], TModule, TEntity, TName, UpdatableFields>
 
   // DELETE overload
   function defineEndpoint<
@@ -219,10 +205,7 @@ function createApiAdapter<
       never,
       never
     >,
-  ): Omit<
-    DeleteEndpointDefinition<Api, never, Api[TFieldsKey], TModule, TEntity, TName>,
-    'response'
-  >
+  ): BaseDeleteEndpointDefinition<Api, Api[TFieldsKey], TModule, TEntity, TName>
 
   // Implementation
   function defineEndpoint(params: any) {
