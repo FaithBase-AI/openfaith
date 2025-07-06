@@ -28,7 +28,65 @@ export type ConvertPcoEntityManifest<
       [Name in Extract<Endpoints, { entity: Entity }>['name']]: Extract<
         Endpoints,
         { entity: Entity; name: Name }
-      >
+      > extends infer E
+        ? E extends Endpoint.BaseGetEndpointDefinition<
+            infer Api,
+            infer _Fields,
+            infer _Module,
+            infer _Entity,
+            infer _Name,
+            infer _OrderableFields,
+            infer _QueryableFields,
+            infer _Includes,
+            infer _QueryableSpecial,
+            infer IsCollection,
+            infer _Query
+          >
+          ? E & {
+              response: IsCollection extends true
+                ? ReturnType<
+                    typeof mkPcoCollectionSchema<Api, Schema.Schema.Type<typeof PcoEntity>>
+                  >
+                : ReturnType<typeof mkPcoSingleSchema<Api, Schema.Schema.Type<typeof PcoEntity>>>
+            }
+          : E extends Endpoint.BasePostEndpointDefinition<
+                infer Api,
+                infer _Fields,
+                infer _Module,
+                infer _Entity,
+                infer _Name,
+                infer _CreatableFields
+              >
+            ? E & {
+                response: ReturnType<
+                  typeof mkPcoSingleSchema<Api, Schema.Schema.Type<typeof PcoEntity>>
+                >
+              }
+            : E extends Endpoint.BasePatchEndpointDefinition<
+                  infer Api,
+                  infer _Fields,
+                  infer _Module,
+                  infer _Entity,
+                  infer _Name,
+                  infer _UpdatableFields
+                >
+              ? E & {
+                  response: ReturnType<
+                    typeof mkPcoSingleSchema<Api, Schema.Schema.Type<typeof PcoEntity>>
+                  >
+                }
+              : E extends Endpoint.BaseDeleteEndpointDefinition<
+                    infer _Api,
+                    infer _Fields,
+                    infer _Module,
+                    infer _Entity,
+                    infer _Name
+                  >
+                ? E & {
+                    response: typeof Schema.Void
+                  }
+                : never
+        : never
     }
     /** The entity name */
     entity: Entity
