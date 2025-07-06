@@ -2,8 +2,9 @@ import { type HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
 import { toHttpApiEndpoint } from '@openfaith/adapter-core/api/endpointAdapter'
 import type * as Endpoint from '@openfaith/adapter-core/api/endpointTypes'
 import { mkPcoCollectionSchema, mkPcoSingleSchema } from '@openfaith/pco/api/pcoResponseSchemas'
-import { PcoEntity } from '@openfaith/pco/base/pcoEntityRegistry'
-import { Array, pipe, Record, type Schema } from 'effect'
+import { singularize } from '@openfaith/shared'
+import type { CaseTransform } from '@openfaith/shared/types'
+import { Array, Option, pipe, Record, Schema, String } from 'effect'
 import type { NonEmptyReadonlyArray } from 'effect/Array'
 
 /**
@@ -11,6 +12,74 @@ import type { NonEmptyReadonlyArray } from 'effect/Array'
  * @since 1.0.0
  */
 export type ErrorConfig = { [key: number]: Schema.Schema.Any }
+
+/**
+ * Extracts the entity type name from an API schema
+ * Assumes the schema has a 'type' field with a single literal value
+ */
+type ExtractEntityType<ApiSchema> = ApiSchema extends Schema.Schema<{
+  readonly type: infer TypeLiteral
+}>
+  ? TypeLiteral extends string
+    ? TypeLiteral
+    : never
+  : never
+
+/**
+ * Creates a type-level registry mapping entity type names to their API schemas
+ * Equivalent to the runtime PcoEntityRegistry creation
+ */
+type CreatePcoEntityRegistry<Endpoints extends Endpoint.BaseAny> = {
+  [E in Endpoints as ExtractEntityType<E['apiSchema']>]: E['apiSchema']
+}
+
+/**
+ * Fallback schema for unknown includes
+ */
+type FallbackEntitySchema<Include extends string> = Schema.Schema<{
+  readonly attributes: any
+  readonly id: string
+  readonly links: Record<string, any>
+  readonly relationships?: Record<string, any>
+  readonly type: CaseTransform.SnakeToPascalSingular<Include>
+}>
+
+/**
+ * Type-level equivalent of Record.get with Option.getOrElse fallback
+ * Looks up an include in the registry, falls back to generic schema if not found
+ */
+type GetEntitySchemaOrFallback<
+  Registry extends Record<string, Schema.Schema<any>>,
+  Include extends string,
+> = Include extends keyof Registry ? Registry[Include] : FallbackEntitySchema<Include>
+
+/**
+ * Creates the final PcoEntity schema based on includes and all available endpoints
+ * This is the type-level equivalent of the runtime pcoEntities creation
+ */
+type PcoEntitySchemaFromIncludes<
+  Endpoints extends Endpoint.BaseAny,
+  Includes extends ReadonlyArray<string>,
+> = Includes extends readonly []
+  ? Schema.Schema<never>
+  : Includes extends readonly [infer First, ...infer Rest]
+    ? First extends string
+      ? Rest extends ReadonlyArray<string>
+        ? Schema.Schema<
+            | Schema.Schema.Type<
+                GetEntitySchemaOrFallback<CreatePcoEntityRegistry<Endpoints>, First>
+              >
+            | Schema.Schema.Type<PcoEntitySchemaFromIncludes<Endpoints, Rest>>
+          >
+        : Schema.Schema<
+            Schema.Schema.Type<GetEntitySchemaOrFallback<CreatePcoEntityRegistry<Endpoints>, First>>
+          >
+      : never
+    : Schema.Schema<
+        Schema.Schema.Type<
+          GetEntitySchemaOrFallback<CreatePcoEntityRegistry<Endpoints>, Includes[number]>
+        >
+      >
 
 /**
  * Converts endpoint definitions into a typed entity manifest structure
@@ -37,7 +106,7 @@ export type ConvertPcoEntityManifest<
             infer _Name,
             infer _OrderableFields,
             infer _QueryableFields,
-            infer _Includes,
+            infer Includes,
             infer _QueryableSpecial,
             infer IsCollection,
             infer _Query
@@ -45,9 +114,17 @@ export type ConvertPcoEntityManifest<
           ? E & {
               response: IsCollection extends true
                 ? ReturnType<
-                    typeof mkPcoCollectionSchema<Api, Schema.Schema.Type<typeof PcoEntity>>
+                    typeof mkPcoCollectionSchema<
+                      Api,
+                      Schema.Schema.Type<PcoEntitySchemaFromIncludes<Endpoints, Includes>>
+                    >
                   >
-                : ReturnType<typeof mkPcoSingleSchema<Api, Schema.Schema.Type<typeof PcoEntity>>>
+                : ReturnType<
+                    typeof mkPcoSingleSchema<
+                      Api,
+                      Schema.Schema.Type<PcoEntitySchemaFromIncludes<Endpoints, Includes>>
+                    >
+                  >
             }
           : E extends Endpoint.BasePostEndpointDefinition<
                 infer Api,
@@ -59,7 +136,10 @@ export type ConvertPcoEntityManifest<
               >
             ? E & {
                 response: ReturnType<
-                  typeof mkPcoSingleSchema<Api, Schema.Schema.Type<typeof PcoEntity>>
+                  typeof mkPcoSingleSchema<
+                    Api,
+                    Schema.Schema.Type<PcoEntitySchemaFromIncludes<Endpoints, readonly []>>
+                  >
                 >
               }
             : E extends Endpoint.BasePatchEndpointDefinition<
@@ -72,7 +152,10 @@ export type ConvertPcoEntityManifest<
                 >
               ? E & {
                   response: ReturnType<
-                    typeof mkPcoSingleSchema<Api, Schema.Schema.Type<typeof PcoEntity>>
+                    typeof mkPcoSingleSchema<
+                      Api,
+                      Schema.Schema.Type<PcoEntitySchemaFromIncludes<Endpoints, readonly []>>
+                    >
                   >
                 }
               : E extends Endpoint.BaseDeleteEndpointDefinition<
@@ -198,6 +281,19 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
           : never
 
 /**
+ * Converts a PCO entity manifest into a properly typed entity registry
+ * Maps pluralized snake_case entity names to their corresponding API schemas
+ * @since 1.0.0
+ */
+export type ConvertPcoEntityRegistry<
+  Manifest extends Record<string, { apiSchema: Schema.Schema.Any; entity: string }>,
+> = {
+  [K in keyof Manifest as CaseTransform.PascalToSnakePlural<
+    Manifest[K]['entity']
+  >]: Manifest[K]['apiSchema']
+}
+
+/**
  * Creates a well-typed entity manifest from a list of endpoint definitions
  *
  * @example
@@ -243,6 +339,17 @@ export const mkPcoEntityManifest = <
     Record.toEntries,
   )
 
+  const PcoEntityRegistry = pipe(
+    endpointLookup,
+    Array.map(([, entityEndpoints]) => {
+      const apiSchema = pipe(entityEndpoints, Array.headNonEmpty).apiSchema
+
+      // @ts-expect-error - It doesn't know that it's {}
+      return [apiSchema.fields.type.literals[0] as string, apiSchema] as const
+    }),
+    Record.fromEntries,
+  )
+
   // TODO: Create PcoEntity here out of endpointLookup
 
   return pipe(
@@ -256,19 +363,45 @@ export const mkPcoEntityManifest = <
           apiSchema: firstEndpoint.apiSchema,
           endpoints: pipe(
             entityEndpoints,
-            Array.map(
-              (endpoint) =>
-                [
+            Array.map((endpoint) => {
+              if (endpoint.method === 'GET') {
+                const pcoEntities = Schema.Union(
+                  ...pipe(
+                    endpoint.includes as Array<string>,
+                    Array.map((include) =>
+                      pipe(
+                        PcoEntityRegistry,
+                        Record.get(include),
+                        Option.getOrElse(() =>
+                          Schema.Struct({
+                            attributes: Schema.Any,
+                            type: Schema.Literal(pipe(include, String.snakeToPascal, singularize)),
+                          }),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+
+                return [
                   endpoint.name,
                   {
                     ...endpoint,
-                    response:
-                      endpoint.method === 'GET' && endpoint.isCollection
-                        ? mkPcoCollectionSchema(endpoint.apiSchema, PcoEntity)
-                        : mkPcoSingleSchema(endpoint.apiSchema, PcoEntity),
+                    response: endpoint.isCollection
+                      ? mkPcoCollectionSchema(endpoint.apiSchema, pcoEntities)
+                      : mkPcoSingleSchema(endpoint.apiSchema, pcoEntities),
                   },
-                ] as const,
-            ),
+                ] as const
+              }
+
+              return [
+                endpoint.name,
+                {
+                  ...endpoint,
+                  response: mkPcoSingleSchema(endpoint.apiSchema),
+                },
+              ] as const
+            }),
             Record.fromEntries,
           ),
           entity: entity,

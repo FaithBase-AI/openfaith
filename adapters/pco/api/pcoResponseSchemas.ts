@@ -1,4 +1,4 @@
-import { Schema } from 'effect'
+import { Option, pipe, Schema } from 'effect'
 
 /**
  * Creates a PCO collection response schema.
@@ -42,11 +42,31 @@ export const mkPcoCollectionSchema = <A, B>(
  * A GET request for a single item (e.g., `/people/v2/people/123`) returns an
  * object following JSON:API spec with data and included sections.
  */
-export const mkPcoSingleSchema = <A, B>(
+export function mkPcoSingleSchema<A>(resourceSchema: Schema.Schema<A>): Schema.Struct<{
+  data: Schema.Schema<A, A, never>
+}>
+export function mkPcoSingleSchema<A, B>(
   resourceSchema: Schema.Schema<A>,
   entityRegistry: Schema.Schema<B>,
-) =>
-  Schema.Struct({
+): Schema.Struct<{
+  included: Schema.Array$<Schema.Schema<B, B, never>>
+  data: Schema.Schema<A, A, never>
+}>
+export function mkPcoSingleSchema(
+  resourceSchema: Schema.Schema<any>,
+  entityRegistry?: Schema.Schema<any>,
+) {
+  return Schema.Struct({
     data: resourceSchema,
-    included: Schema.Array(entityRegistry),
-  })
+    ...pipe(
+      entityRegistry,
+      Option.fromNullable,
+      Option.match({
+        onNone: () => ({}),
+        onSome: (x) => ({
+          included: Schema.Array(x),
+        }),
+      }),
+    ),
+  }) as any
+}

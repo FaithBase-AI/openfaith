@@ -159,7 +159,6 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
     data,
     Array.map((entity) => {
       const { createdAt, deletedAt, inactivatedAt, updatedAt, customFields, ...canonicalAttrs } =
-        // @ts-expect-error - Too much DP happening here.
         Schema.decodeSync(transformer, { errors: 'all' })(entity.attributes)
 
       return {
@@ -334,10 +333,10 @@ const saveIncludesE = Effect.fn('saveIncludesE')(function* (
         return {
           ...b,
           [a.type]: pipe(
+            // @ts-expect-error - Too much DP happening here.
             b[a.type],
             Option.fromNullable,
             Option.getOrElse(() => []),
-            // @ts-expect-error - Too much DP happening here.
             Array.append(a),
           ),
         }
@@ -354,9 +353,7 @@ const saveIncludesE = Effect.fn('saveIncludesE')(function* (
           externalLinks,
           Array.filterMap((y) =>
             pipe(
-              // @ts-expect-error - Too much DP happening here.
               x,
-              // @ts-expect-error - Too much DP happening here.
               Array.findFirst((z) => z.id === y.externalId),
             ),
           ),
