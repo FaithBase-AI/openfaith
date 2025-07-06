@@ -34,7 +34,7 @@ export type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE'
  * @template QueryableSpecial - Array of special query parameters
  * @template IsCollection - Whether this endpoint returns a collection
  */
-export type BaseGetEndpointDefinition<
+export type DefineGetEndpointInput<
   Api,
   Fields extends Record<string, any>,
   TModule extends string,
@@ -105,7 +105,7 @@ export type GetEndpointDefinition<
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends boolean,
   Query extends Schema.Schema<any>,
-> = BaseGetEndpointDefinition<
+> = DefineGetEndpointInput<
   Api,
   Fields,
   TModule,
@@ -126,7 +126,7 @@ export type GetEndpointDefinition<
  * @template TEntity - The entity name (e.g., "Person", "Event")
  * @template TName - The endpoint operation name (e.g., "create")
  */
-export type BasePostEndpointDefinition<
+export type DefinePostEndpointInput<
   Api,
   Fields extends Record<string, any>,
   TModule extends string,
@@ -158,11 +158,11 @@ export type PostEndpointDefinition<
   TEntity extends string,
   TName extends string,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
-> = BasePostEndpointDefinition<Api, Fields, TModule, TEntity, TName, CreatableFields> & {
+> = DefinePostEndpointInput<Api, Fields, TModule, TEntity, TName, CreatableFields> & {
   response: Response
 }
 
-export type BasePatchEndpointDefinition<
+export type DefinePatchEndpointInput<
   Api,
   Fields extends Record<string, any>,
   TModule extends string,
@@ -194,11 +194,11 @@ export type PatchEndpointDefinition<
   TEntity extends string,
   TName extends string,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
-> = BasePatchEndpointDefinition<Api, Fields, TModule, TEntity, TName, UpdatableFields> & {
+> = DefinePatchEndpointInput<Api, Fields, TModule, TEntity, TName, UpdatableFields> & {
   response: Response
 }
 
-export type BaseDeleteEndpointDefinition<
+export type DefineDeleteEndpointInput<
   Api,
   _Fields extends Record<string, any>,
   TModule extends string,
@@ -226,7 +226,7 @@ export type DeleteEndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
-> = BaseDeleteEndpointDefinition<Api, Fields, TModule, TEntity, TName> & {
+> = DefineDeleteEndpointInput<Api, Fields, TModule, TEntity, TName> & {
   response: Response
 }
 
@@ -246,7 +246,7 @@ export type DeleteEndpointDefinition<
  * @template IsCollection - Whether this endpoint returns a collection
  * @template CreatableFields - Array of fields that can be set when creating a new resource
  */
-export type BaseEndpointDefinition<
+export type DefineEndpointInput<
   TMethod extends Method,
   Api,
   Fields extends Record<string, any>,
@@ -261,7 +261,7 @@ export type BaseEndpointDefinition<
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
 > = TMethod extends 'GET'
-  ? BaseGetEndpointDefinition<
+  ? DefineGetEndpointInput<
       Api,
       Fields,
       TModule,
@@ -274,11 +274,11 @@ export type BaseEndpointDefinition<
       IsCollection
     >
   : TMethod extends 'POST'
-    ? BasePostEndpointDefinition<Api, Fields, TModule, TEntity, TName, CreatableFields>
+    ? DefinePostEndpointInput<Api, Fields, TModule, TEntity, TName, CreatableFields>
     : TMethod extends 'PATCH'
-      ? BasePatchEndpointDefinition<Api, Fields, TModule, TEntity, TName, UpdatableFields>
+      ? DefinePatchEndpointInput<Api, Fields, TModule, TEntity, TName, UpdatableFields>
       : TMethod extends 'DELETE'
-        ? BaseDeleteEndpointDefinition<Api, Fields, TModule, TEntity, TName>
+        ? DefineDeleteEndpointInput<Api, Fields, TModule, TEntity, TName>
         : never
 
 export type EndpointDefinition<

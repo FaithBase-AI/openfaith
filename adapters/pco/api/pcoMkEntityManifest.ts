@@ -1,7 +1,9 @@
 import { type HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
 import { toHttpApiEndpoint } from '@openfaith/adapter-core/api/endpointAdapter'
 import type * as Endpoint from '@openfaith/adapter-core/api/endpointTypes'
-import { Array, pipe, type Schema } from 'effect'
+import { mkPcoCollectionSchema, mkPcoSingleSchema } from '@openfaith/pco/api/pcoResponseSchemas'
+import { PcoEntity } from '@openfaith/pco/base/pcoEntityRegistry'
+import { Array, pipe, Record, type Schema } from 'effect'
 import type { NonEmptyReadonlyArray } from 'effect/Array'
 
 /**
@@ -173,28 +175,50 @@ export const mkPcoEntityManifest = <
 >(config: {
   readonly endpoints: Endpoints
   readonly errors: Errors
-}): ConvertPcoEntityManifest<Endpoints[number], Errors> =>
-  pipe(
+}): ConvertPcoEntityManifest<Endpoints[number], Errors> => {
+  const endpointLookup = pipe(
     config.endpoints,
     Array.groupBy((x) => x.entity),
-    (grouped) =>
-      Object.fromEntries(
-        Object.entries(grouped).map(([entity, entityEndpoints]) => {
-          const firstEndpoint = entityEndpoints[0]
+    Record.toEntries,
+  )
 
-          return [
-            entity,
-            {
-              apiSchema: firstEndpoint.apiSchema,
-              endpoints: Object.fromEntries(entityEndpoints.map((x) => [x.name, x])),
-              entity: entity,
-              errors: config.errors,
-              module: firstEndpoint.module,
-            },
-          ]
-        }),
-      ),
+  // TODO: Create PcoEntity here out of endpointLookup
+
+  return pipe(
+    endpointLookup,
+    Array.map(([entity, entityEndpoints]) => {
+      const firstEndpoint = pipe(entityEndpoints, Array.headNonEmpty)
+
+      return [
+        entity,
+        {
+          apiSchema: firstEndpoint.apiSchema,
+          endpoints: pipe(
+            entityEndpoints,
+            Array.map(
+              (endpoint) =>
+                [
+                  endpoint.name,
+                  {
+                    ...endpoint,
+                    response:
+                      endpoint.method === 'GET' && endpoint.isCollection
+                        ? mkPcoCollectionSchema(endpoint.apiSchema, PcoEntity)
+                        : mkPcoSingleSchema(endpoint.apiSchema, PcoEntity),
+                  },
+                ] as const,
+            ),
+            Record.fromEntries,
+          ),
+          entity: entity,
+          errors: config.errors,
+          module: firstEndpoint.module,
+        },
+      ] as const
+    }),
+    Record.fromEntries,
   ) as any
+}
 
 /**
  * Derives an `HttpApiGroup` from an entity manifest, similar to WorkflowProxy.toHttpApiGroup
