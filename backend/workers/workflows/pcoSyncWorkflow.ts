@@ -1,3 +1,5 @@
+import type { HttpClient } from '@effect/platform/HttpClient'
+import type * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { Activity, Workflow } from '@effect/workflow'
 import { createPaginatedStream, TokenKey } from '@openfaith/adapter-core/server'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
@@ -65,10 +67,12 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
           )
 
           return yield* Stream.runForEach(
+            // @ts-expect-error - Too much DP happening here.
             createPaginatedStream(entityHttp.list, {
               urlParams,
             } as const),
             (data) =>
+              // @ts-expect-error - Too much DP happening here.
               saveDataE(data).pipe(
                 Effect.mapError(
                   (error) =>
@@ -83,7 +87,7 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
         Effect.withSpan('pco-sync-activity'),
         Effect.provide(PcoApiLayer),
         Effect.provideService(TokenKey, payload.tokenKey),
-      ),
+      ) as Effect.Effect<void, PcoSyncError, HttpClient | PgDrizzle.PgDrizzle>,
       name: 'SyncPcoData',
     }).pipe(
       Activity.retry({ times: 3 }),

@@ -20,12 +20,26 @@ import {
   getPersonByIdDefinition,
   listPeopleDefinition,
   updatePersonDefinition,
-} from '@openfaith/pco/modules/people/pcoPeopleEndpoints'
+} from '@openfaith/pco/modules/people/pcoPersonEndpoints'
+import {
+  createPhoneNumberDefinition,
+  deletePhoneNumberDefinition,
+  getPhoneNumberByIdDefinition,
+  listPersonPhoneNumbersDefinition,
+  listPhoneNumbersDefinition,
+  updatePhoneNumberDefinition,
+} from '@openfaith/pco/modules/people/pcoPhoneNumberEndpoints'
 import { pluralize } from '@openfaith/shared'
 import { Array, pipe, Record, Schema, String } from 'effect'
 
 export const pcoEntityManifest = mkPcoEntityManifest({
   endpoints: [
+    listPhoneNumbersDefinition,
+    getPhoneNumberByIdDefinition,
+    listPersonPhoneNumbersDefinition,
+    createPhoneNumberDefinition,
+    updatePhoneNumberDefinition,
+    deletePhoneNumberDefinition,
     listPeopleDefinition,
     getPersonByIdDefinition,
     createPersonDefinition,

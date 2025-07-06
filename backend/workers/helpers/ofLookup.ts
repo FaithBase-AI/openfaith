@@ -159,6 +159,7 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
     data,
     Array.map((entity) => {
       const { createdAt, deletedAt, inactivatedAt, updatedAt, customFields, ...canonicalAttrs } =
+        // @ts-expect-error - Too much DP happening here.
         Schema.decodeSync(transformer, { errors: 'all' })(entity.attributes)
 
       return {
@@ -280,6 +281,7 @@ export const saveDataE = Effect.fn('saveDataE')(function* (
 
   const entityTypeOpt = pipe(
     data.data,
+    // @ts-expect-error - Too much DP happening here.
     Array.head,
     Option.map((x) => x.type),
   )
@@ -306,7 +308,9 @@ export const saveDataE = Effect.fn('saveDataE')(function* (
       externalLinks,
       Array.filterMap((x) =>
         pipe(
+          // @ts-expect-error - Too much DP happening here.
           data.data,
+          // @ts-expect-error - Too much DP happening here.
           Array.findFirst((y) => y.id === x.externalId),
         ),
       ),
@@ -322,6 +326,7 @@ const saveIncludesE = Effect.fn('saveIncludesE')(function* (
   >,
 ) {
   const includesMap = pipe(
+    // @ts-expect-error - Too much DP happening here.
     data.included,
     Array.reduce(
       {} as {
@@ -332,6 +337,7 @@ const saveIncludesE = Effect.fn('saveIncludesE')(function* (
       (b, a) => {
         return {
           ...b,
+          // @ts-expect-error - Too much DP happening here.
           [a.type]: pipe(
             // @ts-expect-error - Too much DP happening here.
             b[a.type],
@@ -353,7 +359,9 @@ const saveIncludesE = Effect.fn('saveIncludesE')(function* (
           externalLinks,
           Array.filterMap((y) =>
             pipe(
+              // @ts-expect-error - Too much DP happening here.
               x,
+              // @ts-expect-error - Too much DP happening here.
               Array.findFirst((z) => z.id === y.externalId),
             ),
           ),
