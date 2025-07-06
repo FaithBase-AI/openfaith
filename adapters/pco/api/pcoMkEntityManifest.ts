@@ -44,7 +44,7 @@ export type ConvertPcoEntityManifest<
  * Similar to WorkflowProxy.ConvertHttpApi but for endpoints with proper error distribution
  * @since 1.0.0
  */
-export type ConvertPcoHttpApi<Endpoints extends Endpoint.BaseAny> =
+export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
   Endpoints extends Endpoint.GetEndpointDefinition<
     infer _Api,
     infer _Response,
@@ -242,7 +242,7 @@ export const mkPcoEntityManifest = <
  * @category Constructors
  */
 export const toPcoHttpApiGroup = <
-  Endpoints extends Record<string, Endpoint.BaseAny>,
+  Endpoints extends Record<string, Endpoint.Any>,
   Module extends string,
   Errors extends ErrorConfig,
 >(entityManifest: {
