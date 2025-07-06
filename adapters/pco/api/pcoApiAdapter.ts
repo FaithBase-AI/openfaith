@@ -6,7 +6,6 @@ import type {
   DefineEndpointInput,
   DefineGetEndpointInput,
 } from '@openfaith/adapter-core/server'
-import type { PcoEntityRegistry } from '@openfaith/pco/base/pcoEntityRegistry'
 import { arrayToCommaSeparatedString } from '@openfaith/shared'
 import { Schema } from 'effect'
 
@@ -31,7 +30,7 @@ function createApiAdapter<
     TName extends string,
     OrderableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
-    Includes extends ReadonlyArray<keyof typeof PcoEntityRegistry & string>,
+    Includes extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
     IsCollection extends true,
     Query extends ReturnType<
@@ -86,7 +85,7 @@ function createApiAdapter<
     TName extends string,
     OrderableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
-    Includes extends ReadonlyArray<keyof typeof PcoEntityRegistry & string>,
+    Includes extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
     IsCollection extends false,
     Query extends ReturnType<

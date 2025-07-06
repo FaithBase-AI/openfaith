@@ -10,7 +10,10 @@ import {
   PcoServiceUnavailableError,
   PcoValidationError,
 } from '@openfaith/pco/api/pcoApiErrors'
-import { mkPcoEntityManifest } from '@openfaith/pco/api/pcoMkEntityManifest'
+import {
+  type ConvertPcoEntityRegistry,
+  mkPcoEntityManifest,
+} from '@openfaith/pco/api/pcoMkEntityManifest'
 import {
   createPersonDefinition,
   deletePersonDefinition,
@@ -18,6 +21,8 @@ import {
   listPeopleDefinition,
   updatePersonDefinition,
 } from '@openfaith/pco/modules/people/pcoPeopleEndpoints'
+import { pluralize } from '@openfaith/shared'
+import { Array, pipe, Record, Schema, String } from 'effect'
 
 export const pcoEntityManifest = mkPcoEntityManifest({
   endpoints: [
@@ -40,3 +45,16 @@ export const pcoEntityManifest = mkPcoEntityManifest({
     504: PcoGatewayTimeoutError,
   },
 } as const)
+
+export const PcoEntityRegistry: ConvertPcoEntityRegistry<typeof pcoEntityManifest> = pipe(
+  pcoEntityManifest,
+  Record.values,
+  Array.map((x) => [pipe(x.entity, String.pascalToSnake, pluralize), x.apiSchema] as const),
+  Record.fromEntries,
+) as any
+
+export type PcoEntitySchema = (typeof PcoEntityRegistry)[keyof typeof PcoEntityRegistry]
+
+export const PcoEntity = Schema.Union(...Object.values(PcoEntityRegistry))
+
+export type PcoEntity = typeof PcoEntity.Type
