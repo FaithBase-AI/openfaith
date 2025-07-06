@@ -4,8 +4,9 @@ import { Activity, Workflow } from '@effect/workflow'
 import { createPaginatedStream, TokenKey } from '@openfaith/adapter-core/server'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { PcoApiLayer, PcoHttpClient } from '@openfaith/pco/server'
+import { pluralize } from '@openfaith/shared'
 import { saveDataE } from '@openfaith/workers/helpers/ofLookup'
-import { Array, Effect, Option, pipe, Record, Schema, Stream } from 'effect'
+import { Array, Effect, Option, pipe, Record, Schema, Stream, String } from 'effect'
 
 // Define the PCO sync error
 class PcoSyncError extends Schema.TaggedError<PcoSyncError>('PcoSyncError')('PcoSyncError', {
@@ -61,7 +62,9 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
         if ('list' in entityHttp) {
           const urlParams = pipe(
             pcoEntityManifest,
-            Record.findFirst((x) => x.module === payload.entity),
+            Record.findFirst(
+              (x) => pipe(x.entity, String.pascalToSnake, pluralize) === payload.entity,
+            ),
             Option.flatMapNullable(([, x]) => x.endpoints.list.defaultQuery),
             Option.getOrElse(() => ({})),
           )

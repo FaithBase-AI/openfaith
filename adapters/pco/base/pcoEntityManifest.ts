@@ -15,6 +15,14 @@ import {
   mkPcoEntityManifest,
 } from '@openfaith/pco/api/pcoMkEntityManifest'
 import {
+  createAddressDefinition,
+  deleteAddressDefinition,
+  getAddressByIdDefinition,
+  listAddressesDefinition,
+  listPersonAddressesDefinition,
+  updateAddressDefinition,
+} from '@openfaith/pco/modules/people/pcoAddressEndpoints'
+import {
   createPersonDefinition,
   deletePersonDefinition,
   getPersonByIdDefinition,
@@ -34,12 +42,21 @@ import { Array, pipe, Record, Schema, String } from 'effect'
 
 export const pcoEntityManifest = mkPcoEntityManifest({
   endpoints: [
+    // Addresses
+    listAddressesDefinition,
+    getAddressByIdDefinition,
+    listPersonAddressesDefinition,
+    createAddressDefinition,
+    updateAddressDefinition,
+    deleteAddressDefinition,
+    // Phone Numbers
     listPhoneNumbersDefinition,
     getPhoneNumberByIdDefinition,
     listPersonPhoneNumbersDefinition,
     createPhoneNumberDefinition,
     updatePhoneNumberDefinition,
     deletePhoneNumberDefinition,
+    // People
     listPeopleDefinition,
     getPersonByIdDefinition,
     createPersonDefinition,
