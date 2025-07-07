@@ -2,9 +2,10 @@ import { Activity, Workflow } from '@effect/workflow'
 import { createPaginatedStream, TokenKey } from '@openfaith/adapter-core/server'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { PcoApiLayer, PcoHttpClient } from '@openfaith/pco/server'
+import { OfSkipEntity } from '@openfaith/schema'
 import { pluralize } from '@openfaith/shared'
 import { saveDataE } from '@openfaith/workers/helpers/ofLookup'
-import { Array, Effect, Option, pipe, Record, Schema, Stream, String } from 'effect'
+import { Array, Effect, Option, pipe, Record, Schema, SchemaAST, Stream, String } from 'effect'
 
 // Define the PCO sync error
 class PcoSyncError extends Schema.TaggedError<PcoSyncError>('PcoSyncError')('PcoSyncError', {
@@ -58,11 +59,32 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
         const entityHttp = pcoClient[payload.entity]
 
         if ('list' in entityHttp) {
-          const urlParams = pipe(
+          const entityOpt = pipe(
             pcoEntityManifest,
             Record.findFirst(
               (x) => pipe(x.entity, String.pascalToSnake, pluralize) === payload.entity,
             ),
+            Option.filter(([, x]) => {
+              return !SchemaAST.getAnnotation<boolean>(OfSkipEntity)(x.apiSchema.ast).pipe(
+                Option.getOrElse(() => false),
+              )
+            }),
+          )
+
+          if (entityOpt._tag === 'None') {
+            yield* Effect.annotateLogs(
+              Effect.log(`🔄 Skipping PCO sync for entity: ${payload.entity}`),
+              {
+                attempt,
+                executionId,
+                tokenKey: payload.tokenKey,
+              },
+            )
+            return
+          }
+
+          const urlParams = pipe(
+            entityOpt,
             Option.flatMapNullable(([, x]) => x.endpoints.list.defaultQuery),
             Option.getOrElse(() => ({})),
           )
