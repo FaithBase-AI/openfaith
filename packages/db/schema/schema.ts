@@ -4,6 +4,8 @@ import { edgeRelations } from '@openfaith/db/schema/modules/edgeRelations'
 import { edgeTable } from '@openfaith/db/schema/modules/edgeSchema'
 import { externalLinksRelations } from '@openfaith/db/schema/modules/externalLinksRelations'
 import { externalLinksTable } from '@openfaith/db/schema/modules/externalLinksSchema'
+import { folderRelations } from '@openfaith/db/schema/modules/folderRelations'
+import { folderTable } from '@openfaith/db/schema/modules/folderSchema'
 import { peopleRelations } from '@openfaith/db/schema/modules/peopleRelations'
 import { peopleTable } from '@openfaith/db/schema/modules/peopleSchema'
 import { phoneNumbersRelations } from '@openfaith/db/schema/modules/phoneNumbersRelations'
@@ -30,6 +32,8 @@ export const schema = {
   edgeTable,
   externalLinksRelations,
   externalLinksTable,
+  folderRelations,
+  folderTable,
   invitationsRelations,
   invitationsTable,
   jwksTable,
