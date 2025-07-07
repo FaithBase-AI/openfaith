@@ -2,9 +2,9 @@ import {
   type CustomFieldSchema,
   getUnderlyingType,
   mkCustomField,
-  OFSkipField,
   OfCustomField,
   OfFieldName,
+  OfSkipField,
 } from '@openfaith/schema'
 import { Array, Boolean, Option, pipe, Record, Schema, SchemaAST, String } from 'effect'
 
@@ -30,7 +30,7 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
           const customField = SchemaAST.getAnnotation<boolean>(OfCustomField)(
             field.ast as SchemaAST.Annotated,
           ).pipe(Option.getOrElse(() => false))
-          const skipField = SchemaAST.getAnnotation<boolean>(OFSkipField)(
+          const skipField = SchemaAST.getAnnotation<boolean>(OfSkipField)(
             field.ast as SchemaAST.Annotated,
           ).pipe(Option.getOrElse(() => false))
 
@@ -129,7 +129,7 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
           const customField = SchemaAST.getAnnotation<boolean>(OfCustomField)(
             fieldAst as SchemaAST.Annotated,
           ).pipe(Option.getOrElse(() => false))
-          const skipField = SchemaAST.getAnnotation<boolean>(OFSkipField)(
+          const skipField = SchemaAST.getAnnotation<boolean>(OfSkipField)(
             fieldAst as SchemaAST.Annotated,
           ).pipe(Option.getOrElse(() => false))
 

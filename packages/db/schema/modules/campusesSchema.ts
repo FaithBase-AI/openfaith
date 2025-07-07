@@ -10,15 +10,12 @@ export const campusesTable = pgTable(
       .char({ enum: ['campus'], length: 6 })
       .default('campus')
       .notNull(),
-    avatarUrl: d.text(),
-    churchCenterEnabled: d.boolean(),
+    avatar: d.text(),
     city: d.text(),
-    contactEmailAddress: d.text(),
     country: d.text(),
     createdAt: d.timestamp().notNull(),
     createdBy: d.text(),
     customFields: d.jsonb().$type<ReadonlyArray<CustomFieldSchema>>().notNull().default([]),
-    dateFormat: d.integer(),
     deletedAt: d.timestamp(),
     deletedBy: d.text(),
     description: d.text(),
@@ -27,7 +24,6 @@ export const campusesTable = pgTable(
       .$type<ReadonlyArray<{ id: string; type: string }>>()
       .notNull()
       .default([]),
-    geolocationSetManually: d.boolean(),
     id: d.text().primaryKey(),
     inactivatedAt: d.timestamp(),
     inactivatedBy: d.text(),
@@ -35,7 +31,6 @@ export const campusesTable = pgTable(
     longitude: d.doublePrecision(),
     name: d.text().notNull(),
     orgId: d.text().notNull(),
-    phoneNumber: d.text(),
     state: d.text(),
     status: d
       .text({ enum: ['active', 'inactive'] })
@@ -43,13 +38,10 @@ export const campusesTable = pgTable(
       .default('active'),
     street: d.text(),
     tags: d.jsonb().$type<ReadonlyArray<string>>().notNull().default([]),
-    timeZone: d.text(),
-    timeZoneRaw: d.text(),
-    twentyFourHourTime: d.boolean(),
     type: d.text().notNull().default('default'),
     updatedAt: d.timestamp(),
     updatedBy: d.text(),
-    website: d.text(),
+    url: d.text(),
     zip: d.text(),
   }),
   (x) => ({

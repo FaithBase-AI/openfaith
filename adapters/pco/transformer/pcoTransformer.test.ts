@@ -8,9 +8,9 @@ import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
 import {
   BasePerson,
   CustomFieldSchema,
-  OFSkipField,
   OfCustomField,
   OfFieldName,
+  OfSkipField,
 } from '@openfaith/schema'
 import { Schema } from 'effect'
 
@@ -55,7 +55,7 @@ const PcoItemWithSkipField = Schema.Struct({
   // number field also maps to phoneNumber but should be skipped
   number: Schema.optional(Schema.String).annotations({
     [OfFieldName]: 'phoneNumber',
-    [OFSkipField]: true,
+    [OfSkipField]: true,
   }),
 })
 type PcoItemWithSkipField = typeof PcoItemWithSkipField.Type
@@ -222,11 +222,11 @@ test('pcoToOf handles multiple skip fields mapping to same target', () => {
     }),
     name_v1: Schema.optional(Schema.String).annotations({
       [OfFieldName]: 'name',
-      [OFSkipField]: true,
+      [OfSkipField]: true,
     }),
     name_v2: Schema.optional(Schema.String).annotations({
       [OfFieldName]: 'name',
-      [OFSkipField]: true,
+      [OfSkipField]: true,
     }),
   })
 

@@ -1,4 +1,4 @@
-import { campusesTable } from '@openfaith/db/schema/modules/campusSchema'
+import { campusesTable } from '@openfaith/db/schema/modules/campusesSchema'
 import { orgsTable } from '@openfaith/db/schema/orgsSchema'
 import { relations } from 'drizzle-orm'
 

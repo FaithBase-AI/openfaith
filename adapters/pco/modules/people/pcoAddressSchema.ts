@@ -1,5 +1,6 @@
+import { PcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BaseAddress, OfFieldName } from '@openfaith/schema'
+import { BaseAddress, OfEntity, OfFieldName } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoAddressAttributes = Schema.Struct({
@@ -41,13 +42,10 @@ export type PcoAddressAttributes = typeof PcoAddressAttributes.Type
 
 export const pcoAddressTransformer = pcoToOf(PcoAddressAttributes, BaseAddress, 'address')
 
-export const PcoAddress = Schema.Struct({
-  attributes: PcoAddressAttributes,
-  id: Schema.String,
-  links: Schema.Struct({
-    self: Schema.String,
-  }),
-  relationships: Schema.Struct({
+export const PcoAddress = PcoEntity(
+  'address',
+  PcoAddressAttributes,
+  Schema.Struct({
     person: Schema.Struct({
       data: Schema.Struct({
         id: Schema.String,
@@ -55,6 +53,13 @@ export const PcoAddress = Schema.Struct({
       }),
     }),
   }),
-  type: Schema.Literal('Address'),
-})
+  Schema.Struct({
+    self: Schema.String,
+  }),
+).annotations({ [OfEntity]: 'address', identifier: 'pco-address' })
+
 export type PcoAddress = typeof PcoAddress.Type
+
+const Foo = Schema.String.annotations({
+  [OfEntity]: 'address',
+})

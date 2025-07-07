@@ -1,5 +1,12 @@
+import { PcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BasePhoneNumber, OFSkipField, OfCustomField, OfFieldName } from '@openfaith/schema'
+import {
+  BasePhoneNumber,
+  OfCustomField,
+  OfEntity,
+  OfFieldName,
+  OfSkipField,
+} from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoPhoneNumberAttributes = Schema.Struct({
@@ -35,7 +42,7 @@ export const PcoPhoneNumberAttributes = Schema.Struct({
   number: Schema.String.annotations({
     [OfFieldName]: 'number',
     // We skip because `e164` gives us the number in E.164 format.
-    [OFSkipField]: true,
+    [OfSkipField]: true,
   }),
   primary: Schema.Boolean.annotations({
     [OfFieldName]: 'primary',
@@ -52,13 +59,13 @@ export const pcoPhoneNumberTransformer = pcoToOf(
   'phoneNumber',
 )
 
-export const PcoPhoneNumber = Schema.Struct({
-  attributes: PcoPhoneNumberAttributes,
-  id: Schema.String,
-  links: Schema.Struct({
+export const PcoPhoneNumber = PcoEntity(
+  'PhoneNumber',
+  PcoPhoneNumberAttributes,
+  Schema.Struct({
     self: Schema.String,
   }),
-  relationships: Schema.Struct({
+  Schema.Struct({
     person: Schema.Struct({
       data: Schema.Struct({
         id: Schema.String,
@@ -66,6 +73,5 @@ export const PcoPhoneNumber = Schema.Struct({
       }),
     }),
   }),
-  type: Schema.Literal('PhoneNumber'),
-})
+).annotations({ [OfEntity]: 'phoneNumber', identifier: 'pco-phone-number' })
 export type PcoPhoneNumber = typeof PcoPhoneNumber.Type

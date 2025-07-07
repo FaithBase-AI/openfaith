@@ -2,14 +2,31 @@ import { Array, Option, pipe, SchemaAST } from 'effect'
 
 export const OfFieldName = Symbol.for('OfFieldName')
 export const OfCustomField = Symbol.for('ofCustomField')
-export const OFSkipField = Symbol.for('ofSkipField')
+export const OfSkipField = Symbol.for('ofSkipField')
+export const OfEntity = Symbol.for('ofEntity')
+export const OfEdge = Symbol.for('ofEdge')
+export const OfFolder = Symbol.for('ofFolder')
+export const OfSkipEntity = Symbol.for('ofSkipEntity')
+
+export type OfEdgeAnnotation = {
+  relationshipType: string
+  targetEntityTypeTag: string
+}
+
+export type OfFolderAnnotation = {
+  folderType: string
+}
 
 declare module 'effect/Schema' {
   namespace Annotations {
     interface GenericSchema<A> extends Schema<A> {
       [OfFieldName]?: string
       [OfCustomField]?: boolean
-      [OFSkipField]?: boolean
+      [OfSkipField]?: boolean
+      [OfEntity]?: string
+      [OfEdge]?: OfEdgeAnnotation
+      [OfFolder]?: OfFolderAnnotation
+      [OfSkipEntity]?: boolean
     }
   }
 }

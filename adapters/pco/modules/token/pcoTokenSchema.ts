@@ -1,4 +1,4 @@
-import { OFSkipField, OfFieldName } from '@openfaith/schema/shared/schema'
+import { OfFieldName, OfSkipField } from '@openfaith/schema/shared/schema'
 import { Schema } from 'effect'
 
 export const PcoToken = Schema.Struct({
@@ -15,7 +15,7 @@ export const PcoToken = Schema.Struct({
     [OfFieldName]: 'refreshToken',
   }),
   scope: Schema.String.annotations({
-    [OFSkipField]: true,
+    [OfSkipField]: true,
   }),
   token_type: Schema.String.annotations({
     [OfFieldName]: 'tokenType',
