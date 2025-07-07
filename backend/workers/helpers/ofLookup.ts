@@ -9,27 +9,24 @@ import {
   pcoPhoneNumberTransformer,
 } from '@openfaith/pco/server'
 import { BaseAddress, BasePerson, BasePhoneNumber } from '@openfaith/schema'
-import { getAddressId, getPersonId, getPhoneNumberId } from '@openfaith/shared'
+import { getEntityId } from '@openfaith/shared'
 import { getTableColumns, getTableName, sql } from 'drizzle-orm'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
 
 export const ofLookup = {
   Address: {
-    getId: getAddressId,
     ofEntity: 'address',
     ofSchema: BaseAddress,
     table: addressesTable,
     transformer: pcoAddressTransformer,
   },
   Person: {
-    getId: getPersonId,
     ofEntity: 'person',
     ofSchema: BasePerson,
     table: peopleTable,
     transformer: pcoPersonTransformer,
   },
   PhoneNumber: {
-    getId: getPhoneNumberId,
     ofEntity: 'phoneNumber',
     ofSchema: BasePhoneNumber,
     table: phoneNumbersTable,
@@ -62,7 +59,17 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* (
     return []
   }
 
-  const { getId, ofEntity } = ofLookup[entityTypeOpt.value]
+  // For some reason, it's a super pain in the butt to get this type to narrow.
+  if (!(entityTypeOpt.value in ofLookup)) {
+    yield* Effect.annotateLogs(Effect.log('No data to process, skipping mkExternalLinksE'), {
+      dataCount: data.length,
+      orgId,
+    })
+    return []
+  }
+
+  // Have to cast here even though we have narrowed the type above.
+  const { ofEntity } = ofLookup[entityTypeOpt.value as keyof typeof ofLookup]
 
   yield* Effect.annotateLogs(Effect.log('Inserting external links'), {
     count: data.length,
@@ -82,7 +89,7 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* (
               _tag: 'externalLink',
               adapter: 'pco',
               createdAt: new Date(entity.attributes.created_at),
-              entityId: getId(),
+              entityId: getEntityId(ofEntity),
               entityType: ofEntity,
               externalId: entity.id,
               lastProcessedAt,
@@ -153,7 +160,17 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
     return
   }
 
-  const { table, transformer, ofEntity } = ofLookup[entityTypeOpt.value]
+  // For some reason, it's a super pain in the butt to get this type to narrow.
+  if (!(entityTypeOpt.value in ofLookup)) {
+    yield* Effect.annotateLogs(Effect.log('No data to process, skipping mkEntityUpsertE'), {
+      dataCount: data.length,
+      orgId,
+    })
+    return
+  }
+
+  // Have to cast here even though we have narrowed the type above.
+  const { table, transformer, ofEntity } = ofLookup[entityTypeOpt.value as keyof typeof ofLookup]
 
   const entityValues = pipe(
     data,

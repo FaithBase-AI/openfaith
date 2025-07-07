@@ -1,28 +1,22 @@
+import { Array, pipe, Record } from 'effect'
+
+const irregularPlurals: Record<string, string> = {
+  child: 'children',
+  person: 'people',
+}
+
+const irregularSingulars = pipe(
+  irregularPlurals,
+  Record.toEntries,
+  Array.map(([a, b]) => [b, a] as const),
+  Record.fromEntries,
+)
+
 export function pluralize(word: string): string {
   // Handle empty strings
   if (!word) return word
 
   const lower = word.toLowerCase()
-
-  // Irregular plurals
-  const irregularPlurals: Record<string, string> = {
-    alumnus: 'alumni',
-    analysis: 'analyses',
-    basis: 'bases',
-    child: 'children',
-    crisis: 'crises',
-    datum: 'data',
-    foot: 'feet',
-    goose: 'geese',
-    man: 'men',
-    medium: 'media',
-    mouse: 'mice',
-    ox: 'oxen',
-    person: 'people',
-    thesis: 'theses',
-    tooth: 'teeth',
-    woman: 'women',
-  }
 
   // Check for irregular plurals (case-insensitive)
   if (irregularPlurals[lower]) {
@@ -71,26 +65,6 @@ export function singularize(word: string): string {
   if (!word) return word
 
   const lower = word.toLowerCase()
-
-  // Irregular singulars
-  const irregularSingulars: Record<string, string> = {
-    alumni: 'alumnus',
-    analyses: 'analysis',
-    bases: 'basis',
-    children: 'child',
-    crises: 'crisis',
-    data: 'datum',
-    feet: 'foot',
-    geese: 'goose',
-    media: 'medium',
-    men: 'man',
-    mice: 'mouse',
-    oxen: 'ox',
-    people: 'person',
-    teeth: 'tooth',
-    theses: 'thesis',
-    women: 'woman',
-  }
 
   // Check for irregular singulars (case-insensitive)
   if (irregularSingulars[lower]) {
