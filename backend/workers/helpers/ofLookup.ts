@@ -1,10 +1,16 @@
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { TokenKey } from '@openfaith/adapter-core/server'
-import { addressesTable, externalLinksTable, peopleTable, phoneNumbersTable } from '@openfaith/db'
 import {
-  type PcoEntityRegistry,
+  addressesTable,
+  EdgeDirectionSchema,
+  edgeTable,
+  externalLinksTable,
+  peopleTable,
+  phoneNumbersTable,
+} from '@openfaith/db'
+import type { mkPcoCollectionSchema } from '@openfaith/pco/api/pcoResponseSchemas'
+import {
   pcoAddressTransformer,
-  type pcoEntityManifest,
   pcoPersonTransformer,
   pcoPhoneNumberTransformer,
 } from '@openfaith/pco/server'
@@ -12,6 +18,17 @@ import { BaseAddress, BasePerson, BasePhoneNumber } from '@openfaith/schema'
 import { getEntityId } from '@openfaith/shared'
 import { getTableColumns, getTableName, sql } from 'drizzle-orm'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
+
+type BaseEntity = {
+  id: string
+  type: string
+  attributes: {
+    created_at: string
+    updated_at?: string | null | undefined
+  }
+
+  relationships?: Record<string, { data: { id: string; type: string } | null }> | undefined
+}
 
 export const ofLookup = {
   Address: {
@@ -32,15 +49,11 @@ export const ofLookup = {
     table: phoneNumbersTable,
     transformer: pcoPhoneNumberTransformer,
   },
-} as const
+}
 
-export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* (
-  data: {
-    [K in keyof typeof PcoEntityRegistry]: ReadonlyArray<
-      Schema.Schema.Type<(typeof PcoEntityRegistry)[K]>
-    >
-  }[keyof typeof PcoEntityRegistry],
-) {
+export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
+  D extends ReadonlyArray<BaseEntity>,
+>(data: D) {
   const orgId = yield* TokenKey
 
   const entityTypeOpt = pipe(
@@ -137,11 +150,7 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* (
 })
 
 export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
-  data: {
-    [K in keyof typeof PcoEntityRegistry]: ReadonlyArray<
-      Schema.Schema.Type<(typeof PcoEntityRegistry)[K]>
-    >
-  }[keyof typeof PcoEntityRegistry],
+  data: ReadonlyArray<BaseEntity>,
 ) {
   const orgId = yield* TokenKey
   const db = yield* PgDrizzle.PgDrizzle
@@ -172,45 +181,51 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
   // Have to cast here even though we have narrowed the type above.
   const { table, transformer, ofEntity } = ofLookup[entityTypeOpt.value as keyof typeof ofLookup]
 
-  const entityValues = pipe(
-    data,
-    Array.map((entity) => {
-      const { createdAt, deletedAt, inactivatedAt, updatedAt, customFields, ...canonicalAttrs } =
-        // @ts-expect-error - Too much DP happening here.
-        Schema.decodeSync(transformer, { errors: 'all' })(entity.attributes)
-
-      return {
-        createdAt: new Date(createdAt),
-        customFields,
-        deletedAt: pipe(
-          deletedAt,
-          Option.fromNullable,
-          Option.match({
-            onNone: () => null,
-            onSome: (x) => new Date(x),
-          }),
+  const entityValues = yield* Effect.all(
+    pipe(
+      data,
+      Array.map((entity) =>
+        Schema.decodeUnknown(transformer as unknown as typeof pcoPersonTransformer, {
+          errors: 'all',
+        })(entity.attributes).pipe(
+          Effect.map(
+            ({ createdAt, deletedAt, inactivatedAt, updatedAt, customFields, ...canonicalAttrs }) =>
+              ({
+                createdAt: new Date(createdAt),
+                customFields,
+                deletedAt: pipe(
+                  deletedAt,
+                  Option.fromNullable,
+                  Option.match({
+                    onNone: () => null,
+                    onSome: (x) => new Date(x),
+                  }),
+                ),
+                id: entity.id,
+                inactivatedAt: pipe(
+                  inactivatedAt,
+                  Option.fromNullable,
+                  Option.match({
+                    onNone: () => null,
+                    onSome: (x) => new Date(x),
+                  }),
+                ),
+                orgId,
+                updatedAt: pipe(
+                  updatedAt,
+                  Option.fromNullable,
+                  Option.match({
+                    onNone: () => null,
+                    onSome: (x) => new Date(x),
+                  }),
+                ),
+                ...canonicalAttrs,
+              }) satisfies typeof table.$inferInsert,
+          ),
         ),
-        id: entity.id,
-        inactivatedAt: pipe(
-          inactivatedAt,
-          Option.fromNullable,
-          Option.match({
-            onNone: () => null,
-            onSome: (x) => new Date(x),
-          }),
-        ),
-        orgId,
-        updatedAt: pipe(
-          updatedAt,
-          Option.fromNullable,
-          Option.match({
-            onNone: () => null,
-            onSome: (x) => new Date(x),
-          }),
-        ),
-        ...canonicalAttrs,
-      } as const
-    }),
+      ),
+    ),
+    { concurrency: 'unbounded' },
   )
 
   yield* Effect.annotateLogs(Effect.log('Prepared entity values for upsert'), {
@@ -290,15 +305,12 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
 })
 
 export const saveDataE = Effect.fn('saveDataE')(function* (
-  data: Schema.Schema.Type<
-    (typeof pcoEntityManifest)[keyof typeof pcoEntityManifest]['endpoints']['list']['response']
-  >,
+  data: Schema.Schema.Type<ReturnType<typeof mkPcoCollectionSchema<BaseEntity, BaseEntity>>>,
 ) {
   const orgId = yield* TokenKey
 
   const entityTypeOpt = pipe(
     data.data,
-    // @ts-expect-error - Too much DP happening here.
     Array.head,
     Option.map((x) => x.type),
   )
@@ -325,65 +337,211 @@ export const saveDataE = Effect.fn('saveDataE')(function* (
       externalLinks,
       Array.filterMap((x) =>
         pipe(
-          // @ts-expect-error - Too much DP happening here.
           data.data,
-          // @ts-expect-error - Too much DP happening here.
           Array.findFirst((y) => y.id === x.externalId),
         ),
       ),
     ),
   )
 
-  yield* saveIncludesE(data)
+  yield* saveIncludesE(data, externalLinks, entityTypeOpt.value)
 })
 
-const saveIncludesE = Effect.fn('saveIncludesE')(function* (
-  data: Schema.Schema.Type<
-    (typeof pcoEntityManifest)[keyof typeof pcoEntityManifest]['endpoints']['list']['response']
-  >,
+export const saveIncludesE = Effect.fn('saveIncludesE')(function* <
+  D extends { included: ReadonlyArray<BaseEntity> },
+>(
+  data: D,
+  rootExternalLinks: ReadonlyArray<{
+    readonly entityId: string
+    readonly externalId: string
+    readonly lastProcessedAt: Date
+  }>,
+  rootEntityType: string,
 ) {
   const includesMap = pipe(
-    // @ts-expect-error - Too much DP happening here.
     data.included,
     Array.reduce(
       {} as {
-        [K in keyof typeof PcoEntityRegistry as Schema.Schema.Type<
-          (typeof PcoEntityRegistry)[K]
-        >['type']]: Array<Schema.Schema.Type<(typeof PcoEntityRegistry)[K]>>
+        [K in string]: ReadonlyArray<BaseEntity>
       },
-      (b, a) => {
-        return {
-          ...b,
-          // @ts-expect-error - Too much DP happening here.
-          [a.type]: pipe(
-            // @ts-expect-error - Too much DP happening here.
-            b[a.type],
-            Option.fromNullable,
-            Option.getOrElse(() => []),
-            Array.append(a),
-          ),
-        }
-      },
+      (b, a) => ({
+        ...b,
+        [a.type]: pipe(
+          b[a.type],
+          Option.fromNullable,
+          Option.getOrElse(() => []),
+          Array.append(a),
+        ),
+      }),
     ),
   )
 
-  yield* Effect.forEach(pipe(includesMap, Record.values), (x) =>
-    Effect.gen(function* () {
-      const externalLinks = yield* mkExternalLinksE(x)
-
-      yield* mkEntityUpsertE(
-        pipe(
-          externalLinks,
-          Array.filterMap((y) =>
+  yield* Effect.all(
+    pipe(
+      includesMap,
+      Record.values,
+      Array.map((x) =>
+        Effect.gen(function* () {
+          const externalLinks = yield* mkExternalLinksE(x)
+          yield* mkEntityUpsertE(
             pipe(
-              // @ts-expect-error - Too much DP happening here.
-              x,
-              // @ts-expect-error - Too much DP happening here.
-              Array.findFirst((z) => z.id === y.externalId),
+              externalLinks,
+              Array.filterMap((y) =>
+                pipe(
+                  x,
+                  Array.findFirst((z) => z.id === y.externalId),
+                ),
+              ),
             ),
+          )
+          yield* mkEdgesFromIncludesE(x, rootExternalLinks, externalLinks, rootEntityType)
+        }),
+      ),
+    ),
+  )
+})
+
+export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* <
+  I extends ReadonlyArray<BaseEntity>,
+>(
+  includedData: I,
+  rootExternalLinks: ReadonlyArray<{
+    readonly entityId: string
+    readonly externalId: string
+    readonly lastProcessedAt: Date
+  }>,
+  entityExternalLinks: ReadonlyArray<{
+    readonly entityId: string
+    readonly externalId: string
+    readonly lastProcessedAt: Date
+  }>,
+  rootEntityType: string,
+) {
+  const orgId = yield* TokenKey
+  const db = yield* PgDrizzle.PgDrizzle
+
+  // Process included data to find relationships and create edge mappings
+  // This pipeline filters and transforms included entities that have relationships
+  // to the root entity type, then maps them to internal entity IDs
+  const baseEdgeData = pipe(
+    includedData,
+    Array.filterMap((x) =>
+      pipe(
+        // Extract relationships from the included entity
+        x.relationships,
+        Option.fromNullable,
+        // Look for relationship to the root entity type
+        Option.flatMap((y) => pipe(y, Record.get(rootEntityType))),
+        // Extract the relationship data (the actual related entity)
+        Option.flatMapNullable((y) => y.data),
+        // Find the corresponding root external link by matching external ID
+        Option.flatMap((y) =>
+          pipe(
+            rootExternalLinks,
+            Array.findFirst((z) => z.externalId === y.id),
           ),
         ),
-      )
+        // Create initial mapping with root entity ID and target entity info
+        Option.map((y) => ({
+          createdAt: pipe(
+            x.attributes.created_at,
+            Option.fromNullable,
+            Option.map((date) => new Date(date)),
+            Option.getOrElse(() => y.lastProcessedAt),
+          ),
+          root: y.entityId,
+          target: x.id,
+          targetType: x.type,
+        })),
+        // Find the internal entity ID for the target entity
+        Option.flatMap((y) =>
+          pipe(
+            entityExternalLinks,
+            Array.findFirst((z) => z.externalId === y.target),
+            Option.map((z) => ({
+              createdAt: y.createdAt,
+              root: y.root,
+              target: z.entityId,
+              targetType: y.targetType,
+            })),
+          ),
+        ),
+      ),
+    ),
+  )
+
+  // Create edge values using the clean foo pipeline data
+  const edgeValues = pipe(
+    baseEdgeData,
+    Array.map((item) => {
+      // Determine edge direction using alpha pattern
+      const { source, target } = Schema.decodeUnknownSync(EdgeDirectionSchema)({
+        idA: item.root,
+        idB: item.target,
+      }) as { source: string; target: string }
+
+      const sourceEntityTypeTag =
+        source === item.root ? rootEntityType.toLowerCase() : item.targetType.toLowerCase()
+
+      const targetEntityTypeTag =
+        target === item.root ? rootEntityType.toLowerCase() : item.targetType.toLowerCase()
+
+      // Create relationship type based on the entity types
+      const relationshipType = `${sourceEntityTypeTag}_has_${targetEntityTypeTag}`
+
+      return {
+        _tag: 'edge' as const,
+        createdAt: item.createdAt,
+        createdBy: null,
+        deletedAt: null,
+        deletedBy: null,
+        metadata: {},
+        orgId,
+        relationshipType,
+        sourceEntityId: source,
+        sourceEntityTypeTag,
+        targetEntityId: target,
+        targetEntityTypeTag,
+        updatedAt: null,
+        updatedBy: null,
+      }
     }),
   )
+
+  if (edgeValues.length === 0) {
+    yield* Effect.annotateLogs(Effect.log('No edges to create from included data'), {
+      orgId,
+      rootEntityType,
+    })
+    return
+  }
+
+  yield* Effect.annotateLogs(Effect.log('Creating edges from included data'), {
+    edgeCount: edgeValues.length,
+    orgId,
+    rootEntityType,
+  })
+
+  // Insert edges with conflict handling
+  yield* db
+    .insert(edgeTable)
+    .values(edgeValues)
+    .onConflictDoUpdate({
+      set: {
+        metadata: sql`EXCLUDED."metadata"`,
+        updatedAt: sql`EXCLUDED."updatedAt"`,
+      },
+      target: [
+        edgeTable.orgId,
+        edgeTable.sourceEntityId,
+        edgeTable.targetEntityId,
+        edgeTable.relationshipType,
+      ],
+    })
+
+  yield* Effect.annotateLogs(Effect.log('Edges created successfully'), {
+    edgeCount: edgeValues.length,
+    orgId,
+    rootEntityType,
+  })
 })
