@@ -2,6 +2,7 @@ import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { TokenKey } from '@openfaith/adapter-core/server'
 import {
   addressesTable,
+  campusesTable,
   EdgeDirectionSchema,
   edgeTable,
   externalLinksTable,
@@ -11,10 +12,11 @@ import {
 import type { mkPcoCollectionSchema } from '@openfaith/pco/api/pcoResponseSchemas'
 import {
   pcoAddressTransformer,
+  pcoCampusTransformer,
   pcoPersonTransformer,
   pcoPhoneNumberTransformer,
 } from '@openfaith/pco/server'
-import { BaseAddress, BasePerson, BasePhoneNumber } from '@openfaith/schema'
+import { BaseAddress, BaseCampus, BasePerson, BasePhoneNumber } from '@openfaith/schema'
 import { getEntityId } from '@openfaith/shared'
 import { getTableColumns, getTableName, sql } from 'drizzle-orm'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
@@ -36,6 +38,12 @@ export const ofLookup = {
     ofSchema: BaseAddress,
     table: addressesTable,
     transformer: pcoAddressTransformer,
+  },
+  Campus: {
+    ofEntity: 'campus',
+    ofSchema: BaseCampus,
+    table: campusesTable,
+    transformer: pcoCampusTransformer,
   },
   Person: {
     ofEntity: 'person',
