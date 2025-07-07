@@ -31,21 +31,21 @@ export type PcoEntity<
   links: Schema.Struct<Links>
 }>
 
-export const PcoEntity = <
-  Tag extends SchemaAST.LiteralValue,
+export const mkPcoEntity = <
+  EntityType extends SchemaAST.LiteralValue,
   Attributes extends Struct.Fields,
   Relationships extends Struct.Fields,
   Links extends Struct.Fields,
->(
-  value: Tag,
-  attributes: Schema.Struct<Attributes>,
-  relationships: Schema.Struct<Relationships>,
-  links: Schema.Struct<Links>,
-): PcoEntity<Tag, Attributes, Relationships, Links> =>
+>(params: {
+  type: EntityType
+  attributes: Schema.Struct<Attributes>
+  relationships: Schema.Struct<Relationships>
+  links: Schema.Struct<Links>
+}): PcoEntity<EntityType, Attributes, Relationships, Links> =>
   Struct({
-    attributes: attributes,
+    attributes: params.attributes,
     id: Schema.String,
-    links: links,
-    relationships: relationships,
-    type: entityType(value),
+    links: params.links,
+    relationships: params.relationships,
+    type: entityType(params.type),
   })

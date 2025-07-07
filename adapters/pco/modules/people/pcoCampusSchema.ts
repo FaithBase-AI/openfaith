@@ -1,4 +1,4 @@
-import { PcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
+import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
 import { OfCustomField, OfEntity, OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
@@ -80,16 +80,15 @@ export type PcoCampusAttributes = typeof PcoCampusAttributes.Type
 
 export const pcoCampusTransformer = pcoToOf(PcoCampusAttributes, Schema.Struct({}), 'campus')
 
-export const PcoCampus = PcoEntity(
-  'Campus',
-  PcoCampusAttributes,
-  Schema.Struct({
+export const PcoCampus = mkPcoEntity({
+  attributes: PcoCampusAttributes,
+  links: Schema.Struct({
     lists: Schema.optional(Schema.NullOr(Schema.String)),
     organization: Schema.optional(Schema.NullOr(Schema.String)),
     self: Schema.String,
     service_times: Schema.optional(Schema.NullOr(Schema.String)),
   }),
-  Schema.Struct({
+  relationships: Schema.Struct({
     organization: Schema.Struct({
       data: Schema.NullOr(
         Schema.Struct({
@@ -99,5 +98,6 @@ export const PcoCampus = PcoEntity(
       ),
     }),
   }),
-).annotations({ [OfEntity]: 'campus', [OfSkipEntity]: true, identifier: 'pco-campus' })
+  type: 'Campus',
+}).annotations({ [OfEntity]: 'campus', [OfSkipEntity]: true, identifier: 'pco-campus' })
 export type PcoCampus = typeof PcoCampus.Type

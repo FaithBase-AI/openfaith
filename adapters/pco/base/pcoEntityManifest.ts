@@ -102,6 +102,6 @@ export const PcoEntityRegistry: ConvertPcoEntityRegistry<typeof pcoEntityManifes
 
 export type PcoEntitySchema = (typeof PcoEntityRegistry)[keyof typeof PcoEntityRegistry]
 
-export const PcoEntity = Schema.Union(...Object.values(PcoEntityRegistry))
+export const PcoEntities = Schema.Union(...Object.values(PcoEntityRegistry))
 
-export type PcoEntity = typeof PcoEntity.Type
+export type PcoEntities = typeof PcoEntities.Type

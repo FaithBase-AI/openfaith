@@ -1,4 +1,4 @@
-import { PcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
+import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
 import {
   BasePhoneNumber,
@@ -59,13 +59,12 @@ export const pcoPhoneNumberTransformer = pcoToOf(
   'phoneNumber',
 )
 
-export const PcoPhoneNumber = PcoEntity(
-  'PhoneNumber',
-  PcoPhoneNumberAttributes,
-  Schema.Struct({
+export const PcoPhoneNumber = mkPcoEntity({
+  attributes: PcoPhoneNumberAttributes,
+  links: Schema.Struct({
     self: Schema.String,
   }),
-  Schema.Struct({
+  relationships: Schema.Struct({
     person: Schema.Struct({
       data: Schema.Struct({
         id: Schema.String,
@@ -73,5 +72,6 @@ export const PcoPhoneNumber = PcoEntity(
       }),
     }),
   }),
-).annotations({ [OfEntity]: 'phoneNumber', identifier: 'pco-phone-number' })
+  type: 'PhoneNumber',
+}).annotations({ [OfEntity]: 'phoneNumber', identifier: 'pco-phone-number' })
 export type PcoPhoneNumber = typeof PcoPhoneNumber.Type

@@ -1,4 +1,4 @@
-import { PcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
+import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
 import { BasePerson, OfCustomField, OfEntity, OfFieldName } from '@openfaith/schema'
 import { Schema } from 'effect'
@@ -102,10 +102,9 @@ export type PcoPersonAttributes = typeof PcoPersonAttributes.Type
 
 export const pcoPersonTransformer = pcoToOf(PcoPersonAttributes, BasePerson, 'person')
 
-export const PcoPerson = PcoEntity(
-  'person',
-  PcoPersonAttributes,
-  Schema.Struct({
+export const PcoPerson = mkPcoEntity({
+  attributes: PcoPersonAttributes,
+  links: Schema.Struct({
     addresses: Schema.optional(Schema.NullOr(Schema.String)),
     apps: Schema.optional(Schema.NullOr(Schema.String)),
     connected_people: Schema.optional(Schema.NullOr(Schema.String)),
@@ -129,7 +128,7 @@ export const PcoPerson = PcoEntity(
     social_profiles: Schema.optional(Schema.NullOr(Schema.String)),
     workflow_cards: Schema.optional(Schema.NullOr(Schema.String)),
   }),
-  Schema.Struct({
+  relationships: Schema.Struct({
     primary_campus: Schema.Struct({
       data: Schema.NullOr(
         Schema.Struct({
@@ -139,5 +138,6 @@ export const PcoPerson = PcoEntity(
       ),
     }),
   }),
-).annotations({ [OfEntity]: 'person', identifier: 'pco-person' })
+  type: 'person',
+}).annotations({ [OfEntity]: 'person', identifier: 'pco-person' })
 export type PcoPerson = typeof PcoPerson.Type

@@ -346,7 +346,7 @@ export const mkPcoEntityManifest = <
 
       return [
         // @ts-expect-error - It doesn't know that it's {}
-        pipe(apiSchema.fields.type.literals[0] as string, String.pascalToSnake, pluralize),
+        pipe(apiSchema.fields.type.ast.type.literal as string, String.pascalToSnake, pluralize),
         apiSchema,
       ] as const
     }),
