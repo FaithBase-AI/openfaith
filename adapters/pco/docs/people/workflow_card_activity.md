@@ -263,17 +263,17 @@ Association Type
 
 Note
 
-workflow\_card
+workflow_card
 
 WorkflowCard
 
-to\_one
+to_one
 
-workflow\_step
+workflow_step
 
 WorkflowStep
 
-to\_one
+to_one
 
 Only available when `type` attribute is `completion`, `skip`, or `reversal`.
 
@@ -307,9 +307,9 @@ Type
 
 Description
 
-per\_page
+per_page
 
-per\_page
+per_page
 
 integer
 
