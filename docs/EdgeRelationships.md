@@ -11,26 +11,49 @@ To ensure consistency and avoid ambiguity in directionality, OpenFaith uses a de
   - If one entity's first letter falls in the range A–M (1–13), it is assigned as the `sourceEntity`. If the other is in N–Z (14–26), it is the `targetEntity`.
   - **If both entities fall in the same alpha range (both A–M or both N–Z):**
     - Compare the full string values lexicographically (alphabetically). The entity with the lower value is the `sourceEntity`, the other is the `targetEntity`.
-    - If the values are identical (extremely rare), use a secondary property (e.g., entity type, or a numeric ID if available) to break the tie.
+    - **If the values are identical, allow self-linking** where both `sourceEntity` and `targetEntity` are the same entity. This enables reflexive relationships.
 
 **Example:**
 
 - `alice` (A) and `bob` (B): Both A–M, so compare full string: `alice` < `bob` → `alice` is source, `bob` is target.
 - `nancy` (N) and `bob` (B): `nancy` is N–Z, `bob` is A–M → `bob` is source, `nancy` is target.
 - `zoe` (Z) and `yara` (Y): Both N–Z, so compare full string: `yara` < `zoe` → `yara` is source, `zoe` is target.
+- `alice` and `alice`: Identical IDs → `alice` is both source and target (self-linking).
 
 **Rationale:**
 
 - This approach is fully deterministic and does not require developers or users to remember or look up relationship directionality for each type.
 - It works for any entity type and any relationship, making the system highly dynamic and scalable.
 - It avoids ambiguity and ensures that the same pair of entities will always be stored in the same direction, regardless of who creates the edge.
+- **Self-linking support** enables reflexive relationships where an entity can be related to itself (e.g., a person being their own emergency contact, a location being its own parent location).
 
 **Developer Note:**
 
 - When creating an edge, always apply the alpha pattern rule to determine which entity is the source and which is the target.
 - This rule should be encapsulated in a utility function used throughout the codebase.
+- **Use the `EdgeDirectionSchema` from `@openfaith/db`** which provides a robust, Effect-based implementation with proper error handling.
 
-**Example Utility Function (TypeScript):**
+**Example Usage (TypeScript):**
+
+```ts
+import { Schema } from "effect";
+import { EdgeDirectionSchema } from "@openfaith/db";
+
+// Determine edge direction using the schema
+const { source, target } = Schema.decodeUnknownSync(EdgeDirectionSchema)({
+  idA: "person_123",
+  idB: "group_456",
+});
+
+// Self-linking example
+const selfLink = Schema.decodeUnknownSync(EdgeDirectionSchema)({
+  idA: "person_123",
+  idB: "person_123",
+});
+// Result: { source: 'person_123', target: 'person_123' }
+```
+
+**Legacy Example Utility Function (for reference):**
 
 ```ts
 function getEdgeDirection(
@@ -43,16 +66,20 @@ function getEdgeDirection(
   };
   const rangeA = alphaRange(idA);
   const rangeB = alphaRange(idB);
+
+  // Different ranges: A-M is source, N-Z is target
   if (rangeA !== rangeB) {
     return rangeA === "A-M"
       ? { source: idA, target: idB }
       : { source: idB, target: idA };
   }
+
   // Same range: use full string comparison
   if (idA < idB) return { source: idA, target: idB };
   if (idB < idA) return { source: idB, target: idA };
-  // Tie-breaker: use a secondary property (e.g., entity type)
-  throw new Error("Cannot determine edge direction: IDs are identical");
+
+  // Self-linking: identical IDs
+  return { source: idA, target: idB };
 }
 ```
 
@@ -96,6 +123,7 @@ OpenFaith introduces a generic `Edge` entity as a first-class citizen in its Can
 1.  **Universal Connectivity:**
 
     - Any entity can be linked to any other entity. A `Person` can be linked to a `Group` with a "member_of" edge, but also to another `Person` with a "spouse_of" or "mentor_for" edge, or to a `Skill` entity (if you define one) with a "possesses_skill" edge.
+    - **Self-linking is supported**, allowing entities to have reflexive relationships with themselves (e.g., a person being their own emergency contact, a location being its own parent location).
     - This allows for emergent, graph-like data structures that can more accurately model real-world ministry relationships.
 
 2.  **Rich Relationship Context (Metadata on the Edge):**
@@ -108,6 +136,7 @@ OpenFaith introduces a generic `Edge` entity as a first-class citizen in its Can
     - **Prospective Links:** You can now easily represent "Person A _could be good for_ Group X" using an `Edge` with `relationshipType: "suitable_for_group"` and perhaps `metadata: {"reason": "interest_in_topic_Y"}`. This isn't about current membership but potential or suggested connections.
     - **Custom Relationship Types:** Churches can define their own `relationshipTypes` to model specific ministry processes or connections unique to their context.
     - **Inter-Module Connectivity:** An `Edge` can connect an `Event` from the Schedule module to a `Folder` in the Collection module (`relationshipType: "event_resources_in_folder"`).
+    - **Reflexive Relationships:** Self-linking enables modeling of reflexive relationships like "Person A is their own emergency contact" or "Organization X is a subsidiary of itself."
 
 4.  **Enhanced Querying and Insights:**
 
@@ -130,14 +159,19 @@ OpenFaith introduces a generic `Edge` entity as a first-class citizen in its Can
 - `(Event E1) --held_at--> (Location L1)`
 - `(Document D1) --version_of--> (Document D0)`
   - `metadata: {"version_number": 2, "change_summary": "Updated introduction"}`
+- `(Person A) --emergency_contact--> (Person A)` _(Self-linking)_
+  - `metadata: {"contact_type": "self", "notes": "Primary contact is self"}`
+- `(Organization O1) --parent_organization--> (Organization O1)` _(Self-linking)_
+  - `metadata: {"relationship_type": "self_governing", "established_date": "2020-01-01"}`
 
 ### Implementation Considerations
 
 - **Query Performance:** Heavily relying on `Edge`s means the `Edge` table can grow very large. Efficient indexing on `sourceEntityId`, `targetEntityId`, `relationshipType`, and potentially fields within the `metadata` is critical.
 - **Defining `relationshipType`s:** Organizations will need a way to manage and understand the `relationshipType`s they use. Some might be system-defined, others user-defined.
 - **User Interface:** Presenting and managing these flexible relationships in a user-friendly way is a UI/UX challenge.
-- **Alpha Pattern Enforcement:** All edge creation and querying logic should use the alpha pattern utility to ensure consistency. Document this pattern for all developers and contributors.
+- **Alpha Pattern Enforcement:** All edge creation and querying logic should use the `EdgeDirectionSchema` from `@openfaith/db` to ensure consistency. This schema provides robust error handling and supports self-linking.
+- **Self-Linking Considerations:** When implementing UI for self-linking relationships, ensure users understand that the source and target are the same entity, and provide appropriate validation and user feedback.
 
 ### Conclusion
 
-The `Edge`-based relationship model is a fundamental shift from the limitations of hardcoded links in many traditional ChMS. By treating relationships as first-class entities with their own types and metadata, OpenFaith provides a significantly more flexible, extensible, and powerful way to represent the complex web of connections inherent in ministry. This not only improves data modeling capabilities but also opens up new possibilities for advanced querying, insights, and AI-driven interactions with church data.
+The `Edge`-based relationship model is a fundamental shift from the limitations of hardcoded links in many traditional ChMS. By treating relationships as first-class entities with their own types and metadata, OpenFaith provides a significantly more flexible, extensible, and powerful way to represent the complex web of connections inherent in ministry. The addition of self-linking support further enhances this flexibility by allowing entities to have reflexive relationships with themselves. This not only improves data modeling capabilities but also opens up new possibilities for advanced querying, insights, and AI-driven interactions with church data.
