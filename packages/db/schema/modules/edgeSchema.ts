@@ -77,7 +77,7 @@ const EdgeDirectionOutput = Schema.Struct({
 })
 
 export const EdgeDirectionSchema = Schema.transformOrFail(EdgeDirectionInput, EdgeDirectionOutput, {
-  decode: ({ idA, idB }, options, ast) => {
+  decode: ({ idA, idB }, _options, ast) => {
     // Check for empty IDs first
     if (!idA || !idB) {
       return ParseResult.fail(

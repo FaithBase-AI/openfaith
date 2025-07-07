@@ -67,7 +67,10 @@ export namespace CaseTransform {
                 | `${infer Base}x`
                 | `${infer Base}z`
                 | `${infer Base}ch`
-                | `${infer Base}sh`
+                | `${
+                    // biome-ignore lint/correctness/noUnusedVariables: this is the way
+                    infer Base
+                  }sh`
             ? `${S}es`
             : // Words ending in 'f' or 'fe'
               S extends `${infer Base}f`
