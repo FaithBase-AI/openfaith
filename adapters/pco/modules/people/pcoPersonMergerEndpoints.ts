@@ -4,7 +4,6 @@ import { PcoPersonMerger } from '@openfaith/pco/modules/people/pcoPersonMergerSc
 export const listPersonMergersDefinition = pcoApiAdapter({
   apiSchema: PcoPersonMerger,
   entity: 'PersonMerger',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listPersonMergersDefinition = pcoApiAdapter({
 export const getPersonMergerByIdDefinition = pcoApiAdapter({
   apiSchema: PcoPersonMerger,
   entity: 'PersonMerger',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

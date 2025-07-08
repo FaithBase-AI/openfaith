@@ -4,7 +4,6 @@ import { PcoRule } from '@openfaith/pco/modules/people/pcoRuleSchema'
 export const listRulesDefinition = pcoApiAdapter({
   apiSchema: PcoRule,
   entity: 'Rule',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listRulesDefinition = pcoApiAdapter({
 export const getRuleByIdDefinition = pcoApiAdapter({
   apiSchema: PcoRule,
   entity: 'Rule',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

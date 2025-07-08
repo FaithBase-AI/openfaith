@@ -4,7 +4,6 @@ import { PcoMessageGroup } from '@openfaith/pco/modules/people/pcoMessageGroupSc
 export const listMessageGroupsDefinition = pcoApiAdapter({
   apiSchema: PcoMessageGroup,
   entity: 'MessageGroup',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listMessageGroupsDefinition = pcoApiAdapter({
 export const getMessageGroupByIdDefinition = pcoApiAdapter({
   apiSchema: PcoMessageGroup,
   entity: 'MessageGroup',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

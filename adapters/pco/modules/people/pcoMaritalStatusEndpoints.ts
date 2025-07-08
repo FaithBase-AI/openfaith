@@ -4,7 +4,6 @@ import { PcoMaritalStatus } from '@openfaith/pco/modules/people/pcoMaritalStatus
 export const listMaritalStatusesDefinition = pcoApiAdapter({
   apiSchema: PcoMaritalStatus,
   entity: 'MaritalStatus',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listMaritalStatusesDefinition = pcoApiAdapter({
 export const getMaritalStatusByIdDefinition = pcoApiAdapter({
   apiSchema: PcoMaritalStatus,
   entity: 'MaritalStatus',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

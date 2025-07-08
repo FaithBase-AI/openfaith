@@ -4,7 +4,6 @@ import { PcoWorkflowStep } from './pcoWorkflowStepSchema'
 export const listWorkflowStepsDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowStep,
   entity: 'WorkflowStep',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -17,7 +16,6 @@ export const listWorkflowStepsDefinition = pcoApiAdapter({
 export const getWorkflowStepByIdDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowStep,
   entity: 'WorkflowStep',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

@@ -4,7 +4,6 @@ import { PcoConnectedPerson } from '@openfaith/pco/modules/people/pcoConnectedPe
 export const listConnectedPeopleDefinition = pcoApiAdapter({
   apiSchema: PcoConnectedPerson,
   entity: 'ConnectedPerson',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',

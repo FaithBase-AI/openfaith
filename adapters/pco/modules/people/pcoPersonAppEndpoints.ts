@@ -4,7 +4,6 @@ import { PcoPersonApp } from '@openfaith/pco/modules/people/pcoPersonAppSchema'
 export const listPersonAppsDefinition = pcoApiAdapter({
   apiSchema: PcoPersonApp,
   entity: 'PersonApp',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listPersonAppsDefinition = pcoApiAdapter({
 export const getPersonAppByIdDefinition = pcoApiAdapter({
   apiSchema: PcoPersonApp,
   entity: 'PersonApp',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

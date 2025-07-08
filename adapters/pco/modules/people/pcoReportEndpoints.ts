@@ -4,7 +4,6 @@ import { PcoReport } from '@openfaith/pco/modules/people/pcoReportSchema'
 export const listReportsDefinition = pcoApiAdapter({
   apiSchema: PcoReport,
   entity: 'Report',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listReportsDefinition = pcoApiAdapter({
 export const getReportByIdDefinition = pcoApiAdapter({
   apiSchema: PcoReport,
   entity: 'Report',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

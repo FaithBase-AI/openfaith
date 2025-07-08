@@ -4,7 +4,6 @@ import { PcoWorkflowCardNote } from './pcoWorkflowCardNoteSchema'
 export const listWorkflowCardNotesDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowCardNote,
   entity: 'WorkflowCardNote',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -17,7 +16,6 @@ export const listWorkflowCardNotesDefinition = pcoApiAdapter({
 export const getWorkflowCardNoteByIdDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowCardNote,
   entity: 'WorkflowCardNote',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

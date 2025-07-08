@@ -4,7 +4,6 @@ import { PcoWorkflowStepAssigneeSummary } from './pcoWorkflowStepAssigneeSummary
 export const listWorkflowStepAssigneeSummariesDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowStepAssigneeSummary,
   entity: 'WorkflowStepAssigneeSummary',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -17,7 +16,6 @@ export const listWorkflowStepAssigneeSummariesDefinition = pcoApiAdapter({
 export const getWorkflowStepAssigneeSummaryByIdDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowStepAssigneeSummary,
   entity: 'WorkflowStepAssigneeSummary',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

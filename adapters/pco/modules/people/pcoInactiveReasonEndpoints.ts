@@ -4,7 +4,6 @@ import { PcoInactiveReason } from '@openfaith/pco/modules/people/pcoInactiveReas
 export const listInactiveReasonsDefinition = pcoApiAdapter({
   apiSchema: PcoInactiveReason,
   entity: 'InactiveReason',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listInactiveReasonsDefinition = pcoApiAdapter({
 export const getInactiveReasonByIdDefinition = pcoApiAdapter({
   apiSchema: PcoInactiveReason,
   entity: 'InactiveReason',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

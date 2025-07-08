@@ -4,7 +4,6 @@ import { PcoMessage } from '@openfaith/pco/modules/people/pcoMessageSchema'
 export const listMessagesDefinition = pcoApiAdapter({
   apiSchema: PcoMessage,
   entity: 'Message',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listMessagesDefinition = pcoApiAdapter({
 export const getMessageByIdDefinition = pcoApiAdapter({
   apiSchema: PcoMessage,
   entity: 'Message',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

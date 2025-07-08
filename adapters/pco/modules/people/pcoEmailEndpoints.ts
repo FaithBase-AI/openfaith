@@ -4,7 +4,6 @@ import { PcoEmail } from '@openfaith/pco/modules/people/pcoEmailSchema'
 export const listEmailsDefinition = pcoApiAdapter({
   apiSchema: PcoEmail,
   entity: 'Email',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listEmailsDefinition = pcoApiAdapter({
 export const getEmailByIdDefinition = pcoApiAdapter({
   apiSchema: PcoEmail,
   entity: 'Email',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

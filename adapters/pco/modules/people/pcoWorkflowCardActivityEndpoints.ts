@@ -4,7 +4,6 @@ import { PcoWorkflowCardActivity } from './pcoWorkflowCardActivitySchema'
 export const listWorkflowCardActivitiesDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowCardActivity,
   entity: 'WorkflowCardActivity',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -19,7 +18,6 @@ export const listWorkflowCardActivitiesDefinition = pcoApiAdapter({
 export const getWorkflowCardActivityByIdDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowCardActivity,
   entity: 'WorkflowCardActivity',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

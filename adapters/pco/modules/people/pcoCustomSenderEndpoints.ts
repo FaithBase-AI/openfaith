@@ -4,7 +4,6 @@ import { PcoCustomSender } from '@openfaith/pco/modules/people/pcoCustomSenderSc
 export const listCustomSendersDefinition = pcoApiAdapter({
   apiSchema: PcoCustomSender,
   entity: 'CustomSender',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listCustomSendersDefinition = pcoApiAdapter({
 export const getCustomSenderByIdDefinition = pcoApiAdapter({
   apiSchema: PcoCustomSender,
   entity: 'CustomSender',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

@@ -4,7 +4,6 @@ import { PcoOrganizationStatistics } from '@openfaith/pco/modules/people/pcoOrga
 export const listOrganizationStatisticsDefinition = pcoApiAdapter({
   apiSchema: PcoOrganizationStatistics,
   entity: 'OrganizationStatistics',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',

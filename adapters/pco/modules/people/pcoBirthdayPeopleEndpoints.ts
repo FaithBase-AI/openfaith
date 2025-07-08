@@ -4,7 +4,6 @@ import { PcoBirthdayPeople } from '@openfaith/pco/modules/people/pcoBirthdayPeop
 export const listBirthdayPeopleDefinition = pcoApiAdapter({
   apiSchema: PcoBirthdayPeople,
   entity: 'BirthdayPeople',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',

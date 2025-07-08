@@ -4,7 +4,6 @@ import { PcoListResult } from '@openfaith/pco/modules/people/pcoListResultSchema
 export const listListResultsDefinition = pcoApiAdapter({
   apiSchema: PcoListResult,
   entity: 'ListResult',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listListResultsDefinition = pcoApiAdapter({
 export const getListResultByIdDefinition = pcoApiAdapter({
   apiSchema: PcoListResult,
   entity: 'ListResult',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

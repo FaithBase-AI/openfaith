@@ -4,7 +4,6 @@ import { PcoHouseholdMembership } from '@openfaith/pco/modules/people/pcoHouseho
 export const listHouseholdMembershipsDefinition = pcoApiAdapter({
   apiSchema: PcoHouseholdMembership,
   entity: 'HouseholdMembership',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listHouseholdMembershipsDefinition = pcoApiAdapter({
 export const getHouseholdMembershipByIdDefinition = pcoApiAdapter({
   apiSchema: PcoHouseholdMembership,
   entity: 'HouseholdMembership',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

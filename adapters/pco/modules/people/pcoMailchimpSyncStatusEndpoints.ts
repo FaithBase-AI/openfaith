@@ -4,7 +4,6 @@ import { PcoMailchimpSyncStatus } from '@openfaith/pco/modules/people/pcoMailchi
 export const listMailchimpSyncStatusesDefinition = pcoApiAdapter({
   apiSchema: PcoMailchimpSyncStatus,
   entity: 'MailchimpSyncStatus',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listMailchimpSyncStatusesDefinition = pcoApiAdapter({
 export const getMailchimpSyncStatusByIdDefinition = pcoApiAdapter({
   apiSchema: PcoMailchimpSyncStatus,
   entity: 'MailchimpSyncStatus',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

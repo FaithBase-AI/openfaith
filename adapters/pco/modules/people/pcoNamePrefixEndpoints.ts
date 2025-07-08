@@ -4,7 +4,6 @@ import { PcoNamePrefix } from '@openfaith/pco/modules/people/pcoNamePrefixSchema
 export const listNamePrefixesDefinition = pcoApiAdapter({
   apiSchema: PcoNamePrefix,
   entity: 'NamePrefix',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listNamePrefixesDefinition = pcoApiAdapter({
 export const getNamePrefixByIdDefinition = pcoApiAdapter({
   apiSchema: PcoNamePrefix,
   entity: 'NamePrefix',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

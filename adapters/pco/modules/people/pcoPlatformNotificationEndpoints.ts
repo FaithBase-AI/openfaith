@@ -4,7 +4,6 @@ import { PcoPlatformNotification } from '@openfaith/pco/modules/people/pcoPlatfo
 export const listPlatformNotificationsDefinition = pcoApiAdapter({
   apiSchema: PcoPlatformNotification,
   entity: 'PlatformNotification',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listPlatformNotificationsDefinition = pcoApiAdapter({
 export const getPlatformNotificationByIdDefinition = pcoApiAdapter({
   apiSchema: PcoPlatformNotification,
   entity: 'PlatformNotification',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

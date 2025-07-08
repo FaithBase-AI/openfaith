@@ -4,7 +4,6 @@ import { PcoFormCategory } from '@openfaith/pco/modules/people/pcoFormCategorySc
 export const listFormCategoriesDefinition = pcoApiAdapter({
   apiSchema: PcoFormCategory,
   entity: 'FormCategory',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listFormCategoriesDefinition = pcoApiAdapter({
 export const getFormCategoryByIdDefinition = pcoApiAdapter({
   apiSchema: PcoFormCategory,
   entity: 'FormCategory',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

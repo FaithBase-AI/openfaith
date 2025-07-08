@@ -4,7 +4,6 @@ import { PcoPeopleImportConflict } from '@openfaith/pco/modules/people/pcoPeople
 export const listPeopleImportConflictsDefinition = pcoApiAdapter({
   apiSchema: PcoPeopleImportConflict,
   entity: 'PeopleImportConflict',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listPeopleImportConflictsDefinition = pcoApiAdapter({
 export const getPeopleImportConflictByIdDefinition = pcoApiAdapter({
   apiSchema: PcoPeopleImportConflict,
   entity: 'PeopleImportConflict',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

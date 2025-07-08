@@ -4,7 +4,6 @@ import { PcoSchoolOption } from '@openfaith/pco/modules/people/pcoSchoolOptionSc
 export const listSchoolOptionsDefinition = pcoApiAdapter({
   apiSchema: PcoSchoolOption,
   entity: 'SchoolOption',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listSchoolOptionsDefinition = pcoApiAdapter({
 export const getSchoolOptionByIdDefinition = pcoApiAdapter({
   apiSchema: PcoSchoolOption,
   entity: 'SchoolOption',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

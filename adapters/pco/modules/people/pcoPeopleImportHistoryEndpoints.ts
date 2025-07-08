@@ -4,7 +4,6 @@ import { PcoPeopleImportHistory } from '@openfaith/pco/modules/people/pcoPeopleI
 export const listPeopleImportHistoriesDefinition = pcoApiAdapter({
   apiSchema: PcoPeopleImportHistory,
   entity: 'PeopleImportHistory',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listPeopleImportHistoriesDefinition = pcoApiAdapter({
 export const getPeopleImportHistoryByIdDefinition = pcoApiAdapter({
   apiSchema: PcoPeopleImportHistory,
   entity: 'PeopleImportHistory',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

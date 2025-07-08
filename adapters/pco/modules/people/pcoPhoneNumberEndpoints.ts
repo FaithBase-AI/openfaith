@@ -26,7 +26,6 @@ export const listPhoneNumbersDefinition = pcoApiAdapter({
 export const getPhoneNumberByIdDefinition = pcoApiAdapter({
   apiSchema: PcoPhoneNumber,
   entity: 'PhoneNumber',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',
@@ -37,7 +36,6 @@ export const getPhoneNumberByIdDefinition = pcoApiAdapter({
 export const listPersonPhoneNumbersDefinition = pcoApiAdapter({
   apiSchema: PcoPhoneNumber,
   entity: 'PhoneNumber',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',

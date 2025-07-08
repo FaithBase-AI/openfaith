@@ -4,7 +4,6 @@ import { PcoListStar } from '@openfaith/pco/modules/people/pcoListStarSchema'
 export const listListStarsDefinition = pcoApiAdapter({
   apiSchema: PcoListStar,
   entity: 'ListStar',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listListStarsDefinition = pcoApiAdapter({
 export const getListStarByIdDefinition = pcoApiAdapter({
   apiSchema: PcoListStar,
   entity: 'ListStar',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

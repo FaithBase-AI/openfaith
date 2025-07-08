@@ -4,7 +4,6 @@ import { PcoFormSubmission } from '@openfaith/pco/modules/people/pcoFormSubmissi
 export const listFormSubmissionsDefinition = pcoApiAdapter({
   apiSchema: PcoFormSubmission,
   entity: 'FormSubmission',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listFormSubmissionsDefinition = pcoApiAdapter({
 export const getFormSubmissionByIdDefinition = pcoApiAdapter({
   apiSchema: PcoFormSubmission,
   entity: 'FormSubmission',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

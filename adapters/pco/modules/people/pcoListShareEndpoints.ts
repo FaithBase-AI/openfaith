@@ -4,7 +4,6 @@ import { PcoListShare } from '@openfaith/pco/modules/people/pcoListShareSchema'
 export const listListSharesDefinition = pcoApiAdapter({
   apiSchema: PcoListShare,
   entity: 'ListShare',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listListSharesDefinition = pcoApiAdapter({
 export const getListShareByIdDefinition = pcoApiAdapter({
   apiSchema: PcoListShare,
   entity: 'ListShare',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

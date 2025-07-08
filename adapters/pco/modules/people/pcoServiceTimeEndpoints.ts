@@ -4,7 +4,6 @@ import { PcoServiceTime } from '@openfaith/pco/modules/people/pcoServiceTimeSche
 export const listServiceTimesDefinition = pcoApiAdapter({
   apiSchema: PcoServiceTime,
   entity: 'ServiceTime',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listServiceTimesDefinition = pcoApiAdapter({
 export const getServiceTimeByIdDefinition = pcoApiAdapter({
   apiSchema: PcoServiceTime,
   entity: 'ServiceTime',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

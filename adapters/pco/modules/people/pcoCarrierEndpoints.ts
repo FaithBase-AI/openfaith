@@ -4,7 +4,6 @@ import { PcoCarrier } from '@openfaith/pco/modules/people/pcoCarrierSchema'
 export const listCarriersDefinition = pcoApiAdapter({
   apiSchema: PcoCarrier,
   entity: 'Carrier',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',

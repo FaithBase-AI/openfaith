@@ -92,7 +92,6 @@ export const CCBIndividual = Schema.Struct({
 const listIndividualsDefinition = ccbApiAdapter({
   apiSchema: CCBIndividual,
   entity: 'Individual',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'individuals',

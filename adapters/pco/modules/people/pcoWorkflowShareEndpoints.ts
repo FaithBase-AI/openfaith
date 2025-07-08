@@ -4,7 +4,6 @@ import { PcoWorkflowShare } from './pcoWorkflowShareSchema'
 export const listWorkflowSharesDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowShare,
   entity: 'WorkflowShare',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -17,7 +16,6 @@ export const listWorkflowSharesDefinition = pcoApiAdapter({
 export const getWorkflowShareByIdDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowShare,
   entity: 'WorkflowShare',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

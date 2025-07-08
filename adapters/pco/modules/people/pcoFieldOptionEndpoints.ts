@@ -4,7 +4,6 @@ import { PcoFieldOption } from '@openfaith/pco/modules/people/pcoFieldOptionSche
 export const listFieldOptionsDefinition = pcoApiAdapter({
   apiSchema: PcoFieldOption,
   entity: 'FieldOption',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listFieldOptionsDefinition = pcoApiAdapter({
 export const getFieldOptionByIdDefinition = pcoApiAdapter({
   apiSchema: PcoFieldOption,
   entity: 'FieldOption',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',

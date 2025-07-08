@@ -43,21 +43,24 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     QueryableSpecial extends ReadonlyArray<string>,
     Query extends Schema.Schema<any>,
   >(
-    params: DefineEndpointInput<
-      'GET',
-      Api,
-      Api,
-      TModule,
-      TEntity,
-      TName,
-      OrderableFields,
-      QueryableFields,
-      Includes,
-      QueryableSpecial,
-      true,
-      never,
-      never
-    > & { isCollection: true },
+    params: Omit<
+      DefineEndpointInput<
+        'GET',
+        Api,
+        Api,
+        TModule,
+        TEntity,
+        TName,
+        OrderableFields,
+        QueryableFields,
+        Includes,
+        QueryableSpecial,
+        true,
+        never,
+        never
+      >,
+      'includes'
+    > & { isCollection: true; includes?: Includes },
   ): GetEndpointDefinition<
     Api,
     ReturnType<typeof mkCcbCollectionSchema<Api>>,
@@ -85,21 +88,24 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     QueryableSpecial extends ReadonlyArray<string>,
     Query extends Schema.Schema<any>,
   >(
-    params: DefineEndpointInput<
-      'GET',
-      Api,
-      Api,
-      TModule,
-      TEntity,
-      TName,
-      OrderableFields,
-      QueryableFields,
-      Includes,
-      QueryableSpecial,
-      false,
-      never,
-      never
-    > & { isCollection: false },
+    params: Omit<
+      DefineEndpointInput<
+        'GET',
+        Api,
+        Api,
+        TModule,
+        TEntity,
+        TName,
+        OrderableFields,
+        QueryableFields,
+        Includes,
+        QueryableSpecial,
+        false,
+        never,
+        never
+      >,
+      'includes'
+    > & { isCollection: false; includes?: Includes },
   ): GetEndpointDefinition<
     Api,
     ReturnType<typeof mkCcbSingleSchema<Api>>,
@@ -214,12 +220,18 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
 
   // Implementation
   function defineEndpoint(params: any) {
-    return {
+    const isGet = params.method === 'GET'
+    const baseParams = {
       ...params,
+      includes: params.includes ?? [],
+    }
+
+    return {
+      ...baseParams,
       response:
-        params.method === 'GET' && params.isCollection
-          ? mkCcbCollectionSchema(params.apiSchema)
-          : mkCcbSingleSchema(params.apiSchema),
+        isGet && baseParams.isCollection
+          ? mkCcbCollectionSchema(baseParams.apiSchema)
+          : mkCcbSingleSchema(baseParams.apiSchema),
     }
   }
 

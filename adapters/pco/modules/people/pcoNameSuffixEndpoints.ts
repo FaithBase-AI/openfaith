@@ -4,7 +4,6 @@ import { PcoNameSuffix } from '@openfaith/pco/modules/people/pcoNameSuffixSchema
 export const listNameSuffixesDefinition = pcoApiAdapter({
   apiSchema: PcoNameSuffix,
   entity: 'NameSuffix',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -20,7 +19,6 @@ export const listNameSuffixesDefinition = pcoApiAdapter({
 export const getNameSuffixByIdDefinition = pcoApiAdapter({
   apiSchema: PcoNameSuffix,
   entity: 'NameSuffix',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',
