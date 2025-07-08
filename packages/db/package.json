@@ -21,7 +21,6 @@
     "dev:db-up": "docker compose --env-file .env -f ./docker-compose.yml up",
     "format": "biome lint .",
     "lint:biome": "biome lint .",
-    "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
   "type": "module",

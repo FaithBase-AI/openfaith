@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
-import { getEntityId } from '@openfaith/shared'
+import { getEntityId } from '@openfaith/shared/getIds'
+import { EdgeDirectionSchema } from '@openfaith/shared/schema'
 import { Schema } from 'effect'
-import { EdgeDirectionSchema } from './edgeSchema'
 
 describe('EdgeDirectionSchema', () => {
   // Helper function to decode using the schema
