@@ -48,21 +48,24 @@ function createApiAdapter<
       >
     >,
   >(
-    params: DefineEndpointInput<
-      'GET',
-      Api,
-      Api[TFieldsKey],
-      TModule,
-      TEntity,
-      TName,
-      OrderableFields,
-      QueryableFields,
-      Includes,
-      QueryableSpecial,
-      true,
-      never,
-      never
-    > & { isCollection: true; defaultQuery?: Schema.Schema.Type<Query> },
+    params: Omit<
+      DefineEndpointInput<
+        'GET',
+        Api,
+        Api[TFieldsKey],
+        TModule,
+        TEntity,
+        TName,
+        OrderableFields,
+        QueryableFields,
+        Includes,
+        QueryableSpecial,
+        true,
+        never,
+        never
+      >,
+      'includes'
+    > & { isCollection: true; defaultQuery?: Schema.Schema.Type<Query>; includes?: Includes },
   ): BaseGetEndpointDefinition<
     Api,
     Api[TFieldsKey],
@@ -103,21 +106,24 @@ function createApiAdapter<
       >
     >,
   >(
-    params: DefineEndpointInput<
-      'GET',
-      Api,
-      Api[TFieldsKey],
-      TModule,
-      TEntity,
-      TName,
-      OrderableFields,
-      QueryableFields,
-      Includes,
-      QueryableSpecial,
-      false,
-      never,
-      never
-    > & { isCollection: false; defaultQuery?: Schema.Schema.Type<Query> },
+    params: Omit<
+      DefineEndpointInput<
+        'GET',
+        Api,
+        Api[TFieldsKey],
+        TModule,
+        TEntity,
+        TName,
+        OrderableFields,
+        QueryableFields,
+        Includes,
+        QueryableSpecial,
+        false,
+        never,
+        never
+      >,
+      'includes'
+    > & { isCollection: false; defaultQuery?: Schema.Schema.Type<Query>; includes?: Includes },
   ): BaseGetEndpointDefinition<
     Api,
     Api[TFieldsKey],
@@ -209,9 +215,14 @@ function createApiAdapter<
   // Implementation
   function defineEndpoint(params: any) {
     const isGet = params.method === 'GET'
-    return {
+    const baseParams = {
       ...params,
-      ...(isGet ? { query: buildUrlParamsSchema(params) } : {}),
+      includes: params.includes ?? [],
+    }
+
+    return {
+      ...baseParams,
+      ...(isGet ? { query: buildUrlParamsSchema(baseParams) } : {}),
     }
   }
 
@@ -256,18 +267,21 @@ export function buildUrlParamsSchema<
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends boolean,
 >(
-  definition: DefineGetEndpointInput<
-    Api,
-    Fields,
-    TModule,
-    TEntity,
-    TName,
-    OrderableFields,
-    QueryableFields,
-    Includes,
-    QueryableSpecial,
-    IsCollection
-  >,
+  definition: Omit<
+    DefineGetEndpointInput<
+      Api,
+      Fields,
+      TModule,
+      TEntity,
+      TName,
+      OrderableFields,
+      QueryableFields,
+      Includes,
+      QueryableSpecial,
+      IsCollection
+    >,
+    'includes'
+  > & { includes: Includes },
 ): IsCollection extends true
   ? ReturnType<
       typeof buildCollectionUrlParamsSchema<
@@ -298,10 +312,10 @@ export function buildUrlParamsSchema<
       >
     > {
   if (definition.isCollection) {
-    return buildCollectionUrlParamsSchema(definition) as any
+    return buildCollectionUrlParamsSchema(definition as any) as any
   }
 
-  return buildSingleUrlParamsSchema(definition) as any
+  return buildSingleUrlParamsSchema(definition as any) as any
 }
 
 export function buildSingleUrlParamsSchema<
@@ -316,18 +330,21 @@ export function buildSingleUrlParamsSchema<
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends false,
 >(
-  definition: DefineGetEndpointInput<
-    Api,
-    Fields,
-    TModule,
-    TEntity,
-    TName,
-    OrderableFields,
-    QueryableFields,
-    Includes,
-    QueryableSpecial,
-    IsCollection
-  >,
+  definition: Omit<
+    DefineGetEndpointInput<
+      Api,
+      Fields,
+      TModule,
+      TEntity,
+      TName,
+      OrderableFields,
+      QueryableFields,
+      Includes,
+      QueryableSpecial,
+      IsCollection
+    >,
+    'includes'
+  > & { includes: Includes },
 ) {
   const include = {
     include: Schema.optional(
@@ -357,18 +374,21 @@ export function buildCollectionUrlParamsSchema<
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends true,
 >(
-  definition: DefineGetEndpointInput<
-    Api,
-    Fields,
-    TModule,
-    TEntity,
-    TName,
-    OrderableFields,
-    QueryableFields,
-    Includes,
-    QueryableSpecial,
-    IsCollection
-  >,
+  definition: Omit<
+    DefineGetEndpointInput<
+      Api,
+      Fields,
+      TModule,
+      TEntity,
+      TName,
+      OrderableFields,
+      QueryableFields,
+      Includes,
+      QueryableSpecial,
+      IsCollection
+    >,
+    'includes'
+  > & { includes: Includes },
 ) {
   // const { queryableBy, orderableBy } = definition
 

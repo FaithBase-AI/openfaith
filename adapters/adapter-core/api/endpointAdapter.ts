@@ -1,102 +1,98 @@
 import { HttpApiEndpoint } from '@effect/platform'
-import type {
-  EndpointDefinition,
-  GetEndpointDefinition,
-} from '@openfaith/adapter-core/api/endpointTypes'
-import { arrayToCommaSeparatedString } from '@openfaith/shared' // Assuming EndpointTypes.ts is in the same directory or accessible
-import { Array, pipe, Schema } from 'effect'
+import type { EndpointDefinition } from '@openfaith/adapter-core/api/endpointTypes'
+import { Schema } from 'effect'
 
 /**
  * Builds the comprehensive URL parameter schema for a GET endpoint
  * from our high-level, declarative definition.
  */
-export function buildUrlParamsSchema<
-  Api,
-  Response extends Schema.Schema<any>,
-  Fields extends Record<string, any>,
-  TModule extends string,
-  TEntity extends string,
-  TName extends string,
-  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
-  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
-  Includes extends ReadonlyArray<string>,
-  QueryableSpecial extends ReadonlyArray<string>,
-  IsCollection extends boolean,
-  Query extends Schema.Schema<any>,
->(
-  definition: GetEndpointDefinition<
-    Api,
-    Response,
-    Fields,
-    TModule,
-    TEntity,
-    TName,
-    OrderableFields,
-    QueryableFields,
-    Includes,
-    QueryableSpecial,
-    IsCollection,
-    Query
-  >,
-) {
-  const { includes } = definition
+// export function buildUrlParamsSchema<
+//   Api,
+//   Response extends Schema.Schema<any>,
+//   Fields extends Record<string, any>,
+//   TModule extends string,
+//   TEntity extends string,
+//   TName extends string,
+//   OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+//   QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+//   Includes extends ReadonlyArray<string>,
+//   QueryableSpecial extends ReadonlyArray<string>,
+//   IsCollection extends boolean,
+//   Query extends Schema.Schema<any>,
+// >(
+//   definition: GetEndpointDefinition<
+//     Api,
+//     Response,
+//     Fields,
+//     TModule,
+//     TEntity,
+//     TName,
+//     OrderableFields,
+//     QueryableFields,
+//     Includes,
+//     QueryableSpecial,
+//     IsCollection,
+//     Query
+//   >,
+// ) {
+//   const { includes } = definition
 
-  const include = pipe(
-    includes,
-    Array.match({
-      onEmpty: () => ({
-        include: Schema.optional(Schema.String),
-      }),
-      onNonEmpty: () => ({
-        include: Schema.optional(
-          Schema.Union(arrayToCommaSeparatedString(Schema.String), Schema.String),
-        ),
-      }),
-    }),
-  )
-  if (definition.isCollection) {
-    const { queryableBy, orderableBy } = definition
+//   const include = pipe(
+//     includes,
+//     Array.match({
+//       onEmpty: () => ({
+//         include: Schema.optional(Schema.String),
+//       }),
+//       onNonEmpty: () => ({
+//         include: Schema.optional(
+//           Schema.Union(arrayToCommaSeparatedString(Schema.String), Schema.String),
+//         ),
+//       }),
+//     }),
+//   )
+//   if (definition.isCollection) {
+//     const { queryableBy, orderableBy } = definition
 
-    const fields = pipe(
-      queryableBy.fields,
-      Array.reduce({}, (acc, _field) => ({
-        ...acc,
-        // [`where[${field}]`]: getQueryParamSchema(apiSchema, field),
-      })),
-    )
+//     const fields = pipe(
+//       queryableBy.fields,
+//       Array.reduce({}, (acc, _field) => ({
+//         ...acc,
+//         // [`where[${field}]`]: getQueryParamSchema(apiSchema, field),
+//       })),
+//     )
 
-    const special = pipe(
-      queryableBy.special,
-      Array.reduce({}, (acc, field) => ({
-        ...acc,
-        [field]: Schema.optional(Schema.String), // Special fields are assumed to be strings
-      })),
-    )
+//     const special = pipe(
+//       queryableBy.special,
+//       Array.reduce({}, (acc, field) => ({
+//         ...acc,
+//         [field]: Schema.optional(Schema.String), // Special fields are assumed to be strings
+//       })),
+//     )
 
-    const order = pipe(
-      orderableBy,
-      Array.match({
-        onEmpty: () => ({}),
-        onNonEmpty: () => ({ order: Schema.optional(Schema.String) }),
-      }),
-    ) as typeof fields
+//     const order = pipe(
+//       orderableBy,
+//       Array.match({
+//         onEmpty: () => ({}),
+//         onNonEmpty: () => ({ order: Schema.optional(Schema.String) }),
+//       }),
+//     ) as typeof fields
 
-    return Schema.Struct({
-      ...fields,
-      ...special,
-      ...order,
-      ...include,
-      offset: Schema.optional(Schema.NumberFromString),
-      per_page: Schema.optional(Schema.NumberFromString),
-    })
-  }
+//     return Schema.Struct({
+//       ...fields,
+//       ...special,
+//       ...order,
+//       ...include,
+//       offset: Schema.optional(Schema.NumberFromString),
+//       per_page: Schema.optional(Schema.NumberFromString),
+//     })
+//   }
 
-  return Schema.Struct({
-    ...include,
-    offset: Schema.optional(Schema.NumberFromString),
-    per_page: Schema.optional(Schema.NumberFromString),
-  })
-}
+//   return Schema.Struct({
+//     ...include,
+//     offset: Schema.optional(Schema.NumberFromString),
+//     per_page: Schema.optional(Schema.NumberFromString),
+//   })
+// }
 
 /**
  * Builds the request body (payload) schema for a POST or PATCH endpoint

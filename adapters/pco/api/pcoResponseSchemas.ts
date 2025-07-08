@@ -6,16 +6,66 @@ import { Option, pipe, Schema } from 'effect'
  * A GET request for a collection (e.g., `/people/v2/people`) returns a
  * comprehensive object with pagination and metadata following JSON:API spec.
  */
-export const mkPcoCollectionSchema = <A, B>(
+// export function mkPcoCollectionSchema<A>(resourceSchema: Schema.Schema<A>): Schema.Struct<{
+//   data: Schema.Array$<Schema.Schema<A, A, never>>
+//   links: Schema.Struct<{
+//     next: Schema.optional<typeof Schema.String>
+//     self: typeof Schema.String
+//   }>
+//   included: Schema.Array$<typeof Schema.Void>
+//   meta: Schema.Struct<{
+//     can_include: Schema.optional<Schema.Array$<typeof Schema.String>>
+//     can_order_by: Schema.optional<Schema.Array$<typeof Schema.String>>
+//     can_query_by: Schema.optional<Schema.Array$<typeof Schema.String>>
+//     count: typeof Schema.Number
+//     next: Schema.optional<Schema.Struct<{ offset: typeof Schema.Number }>>
+//     parent: Schema.optional<Schema.Struct<{ id: typeof Schema.String; type: typeof Schema.String }>>
+//     prev: Schema.optional<Schema.Struct<{ offset: typeof Schema.Number }>>
+//     total_count: typeof Schema.Number
+//   }>
+// }>
+// export function mkPcoCollectionSchema<A, B>(
+//   resourceSchema: Schema.Schema<A>,
+//   entityRegistry: Schema.Schema<B>,
+// ): Schema.Struct<{
+//   data: Schema.Array$<Schema.Schema<A, A, never>>
+//   included: Schema.Array$<Schema.Schema<B, B, never>>
+//   links: Schema.Struct<{
+//     next: Schema.optional<typeof Schema.String>
+//     self: typeof Schema.String
+//   }>
+//   meta: Schema.Struct<{
+//     can_include: Schema.optional<Schema.Array$<typeof Schema.String>>
+//     can_order_by: Schema.optional<Schema.Array$<typeof Schema.String>>
+//     can_query_by: Schema.optional<Schema.Array$<typeof Schema.String>>
+//     count: typeof Schema.Number
+//     next: Schema.optional<Schema.Struct<{ offset: typeof Schema.Number }>>
+//     parent: Schema.optional<Schema.Struct<{ id: typeof Schema.String; type: typeof Schema.String }>>
+//     prev: Schema.optional<Schema.Struct<{ offset: typeof Schema.Number }>>
+//     total_count: typeof Schema.Number
+//   }>
+// }>
+export function mkPcoCollectionSchema<A, B>(
   resourceSchema: Schema.Schema<A>,
-  entityRegistry: Schema.Schema<B>,
-) =>
-  Schema.Struct({
+  entityRegistry?: Schema.Schema<B>,
+) {
+  return Schema.Struct({
     /** The 'data' key contains the array of primary resource objects. */
     data: Schema.Array(resourceSchema),
 
     /** The 'included' key contains side-loaded related resources. */
-    included: Schema.Array(entityRegistry),
+    ...pipe(
+      entityRegistry,
+      Option.fromNullable,
+      Option.match({
+        onNone: () => ({
+          included: Schema.Array(Schema.Void),
+        }),
+        onSome: (x) => ({
+          included: Schema.Array(x),
+        }),
+      }),
+    ),
 
     /** The 'links' object contains pagination links. */
     links: Schema.Struct({
@@ -35,7 +85,7 @@ export const mkPcoCollectionSchema = <A, B>(
       total_count: Schema.Number,
     }),
   })
-
+}
 /**
  * Creates a PCO single resource response schema.
  *

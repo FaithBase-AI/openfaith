@@ -72,6 +72,8 @@ export type DefineGetEndpointInput<
         /** Special query parameters */
         special: QueryableSpecial
       }
+      /** Whether to skip syncing this endpoint */
+      skipSync?: boolean
     }
   : {
       /** Whether this endpoint returns a collection or single resource */
@@ -130,7 +132,7 @@ export type GetEndpointDefinition<
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends boolean,
   Query extends Schema.Schema<any>,
-> = DefineGetEndpointInput<
+> = BaseGetEndpointDefinition<
   Api,
   Fields,
   TModule,
@@ -140,8 +142,9 @@ export type GetEndpointDefinition<
   QueryableFields,
   Includes,
   QueryableSpecial,
-  IsCollection
-> & { response: Response; query: Query; defaultQuery?: Schema.Schema.Type<Query> }
+  IsCollection,
+  Query
+> & { response: Response }
 
 /**
  * Type definition for a POST endpoint configuration.
@@ -192,7 +195,7 @@ export type PostEndpointDefinition<
   TEntity extends string,
   TName extends string,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
-> = DefinePostEndpointInput<Api, Fields, TModule, TEntity, TName, CreatableFields> & {
+> = BasePostEndpointDefinition<Api, Fields, TModule, TEntity, TName, CreatableFields> & {
   response: Response
 }
 
@@ -237,7 +240,7 @@ export type PatchEndpointDefinition<
   TEntity extends string,
   TName extends string,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
-> = DefinePatchEndpointInput<Api, Fields, TModule, TEntity, TName, UpdatableFields> & {
+> = BasePatchEndpointDefinition<Api, Fields, TModule, TEntity, TName, UpdatableFields> & {
   response: Response
 }
 
@@ -277,7 +280,7 @@ export type DeleteEndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
-> = DefineDeleteEndpointInput<Api, Fields, TModule, TEntity, TName> & {
+> = BaseDeleteEndpointDefinition<Api, Fields, TModule, TEntity, TName> & {
   response: Response
 }
 

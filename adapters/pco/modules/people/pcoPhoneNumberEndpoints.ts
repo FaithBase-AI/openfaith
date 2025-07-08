@@ -11,7 +11,6 @@ export const listPhoneNumbersDefinition = pcoApiAdapter({
     per_page: 100,
   },
   entity: 'PhoneNumber',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',

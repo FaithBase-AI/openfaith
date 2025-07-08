@@ -11,7 +11,6 @@ export const listAddressesDefinition = pcoApiAdapter({
     per_page: 100,
   },
   entity: 'Address',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
@@ -42,12 +41,12 @@ export const listAddressesDefinition = pcoApiAdapter({
     ],
     special: ['id'],
   },
+  skipSync: true,
 } as const)
 
 export const getAddressByIdDefinition = pcoApiAdapter({
   apiSchema: PcoAddress,
   entity: 'Address',
-  includes: [],
   isCollection: false,
   method: 'GET',
   module: 'people',
@@ -58,7 +57,6 @@ export const getAddressByIdDefinition = pcoApiAdapter({
 export const listPersonAddressesDefinition = pcoApiAdapter({
   apiSchema: PcoAddress,
   entity: 'Address',
-  includes: [],
   isCollection: true,
   method: 'GET',
   module: 'people',
