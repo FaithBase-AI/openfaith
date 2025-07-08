@@ -55,7 +55,7 @@ export const PcoAddress = mkPcoEntity({
       }),
     }),
   }),
-  type: 'address',
+  type: 'Address',
 }).annotations({ [OfEntity]: 'address', identifier: 'pco-address' })
 
 export type PcoAddress = typeof PcoAddress.Type

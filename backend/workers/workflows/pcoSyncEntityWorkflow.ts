@@ -3,9 +3,8 @@ import { createPaginatedStream, TokenKey } from '@openfaith/adapter-core/server'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { PcoApiLayer, PcoHttpClient } from '@openfaith/pco/server'
 import { OfSkipEntity } from '@openfaith/schema'
-import { pluralize } from '@openfaith/shared'
 import { saveDataE } from '@openfaith/workers/helpers/saveDataE'
-import { Array, Effect, Option, pipe, Record, Schema, SchemaAST, Stream, String } from 'effect'
+import { Array, Effect, Option, pipe, Record, Schema, SchemaAST, Stream } from 'effect'
 
 // Define the PCO sync error
 class PcoSyncEntityError extends Schema.TaggedError<PcoSyncEntityError>('PcoSyncEntityError')(
@@ -64,9 +63,7 @@ export const PcoSyncEntityWorkflowLayer = PcoSyncEntityWorkflow.toLayer(
         if ('list' in entityHttp) {
           const entityOpt = pipe(
             pcoEntityManifest,
-            Record.findFirst(
-              (x) => pipe(x.entity, String.pascalToSnake, pluralize) === payload.entity,
-            ),
+            Record.findFirst((x) => x.entity === payload.entity),
             Option.filter(([, x]) => {
               return !SchemaAST.getAnnotation<boolean>(OfSkipEntity)(x.apiSchema.ast).pipe(
                 Option.getOrElse(() => false),
@@ -99,8 +96,18 @@ export const PcoSyncEntityWorkflowLayer = PcoSyncEntityWorkflow.toLayer(
             } as const),
             (data) =>
               saveDataE(data).pipe(
-                Effect.mapError((error) => new PcoSyncEntityError({ message: error.message })),
+                Effect.mapError((error) => {
+                  console.log(error)
+
+                  return new PcoSyncEntityError({ message: error.message })
+                }),
               ),
+          ).pipe(
+            Effect.mapError((error) => {
+              console.log(error)
+
+              return new PcoSyncEntityError({ message: error.message })
+            }),
           )
         }
       }).pipe(

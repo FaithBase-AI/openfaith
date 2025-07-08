@@ -1,13 +1,13 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { OfCustomField, OfEntity, OfFieldName, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfEntity, OfFieldName } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoCampusAttributes = Schema.Struct({
   avatar_url: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'avatar',
   }),
-  church_center_enabled: Schema.NullOr(Schema.Boolean).annotations({
+  church_center_enabled: Schema.Boolean.annotations({
     [OfFieldName]: 'churchCenterEnabled',
     [OfCustomField]: true,
   }),
@@ -31,17 +31,17 @@ export const PcoCampusAttributes = Schema.Struct({
   description: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'description',
   }),
-  geolocation_set_manually: Schema.NullOr(Schema.Boolean).annotations({
+  geolocation_set_manually: Schema.Boolean.annotations({
     [OfFieldName]: 'geolocationSetManually',
     [OfCustomField]: true,
   }),
-  latitude: Schema.NullOr(Schema.Number).annotations({
+  latitude: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'latitude',
   }),
-  longitude: Schema.NullOr(Schema.Number).annotations({
+  longitude: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'longitude',
   }),
-  name: Schema.String.annotations({
+  name: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'name',
   }),
   phone_number: Schema.NullOr(Schema.String).annotations({
@@ -56,10 +56,6 @@ export const PcoCampusAttributes = Schema.Struct({
   }),
   time_zone: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'timeZone',
-    [OfCustomField]: true,
-  }),
-  time_zone_raw: Schema.NullOr(Schema.String).annotations({
-    [OfFieldName]: 'timeZoneRaw',
     [OfCustomField]: true,
   }),
   twenty_four_hour_time: Schema.NullOr(Schema.Boolean).annotations({
@@ -99,5 +95,5 @@ export const PcoCampus = mkPcoEntity({
     }),
   }),
   type: 'Campus',
-}).annotations({ [OfEntity]: 'campus', [OfSkipEntity]: true, identifier: 'pco-campus' })
+}).annotations({ [OfEntity]: 'campus', identifier: 'pco-campus' })
 export type PcoCampus = typeof PcoCampus.Type

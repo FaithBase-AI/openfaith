@@ -135,6 +135,6 @@ export const PcoPerson = mkPcoEntity({
       ),
     }),
   }),
-  type: 'person',
+  type: 'Person',
 }).annotations({ [OfEntity]: 'person', identifier: 'pco-person' })
 export type PcoPerson = typeof PcoPerson.Type
