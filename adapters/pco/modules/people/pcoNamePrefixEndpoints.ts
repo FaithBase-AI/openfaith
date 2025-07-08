@@ -8,12 +8,7 @@ export const listNamePrefixesDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/name_prefixes',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getNamePrefixByIdDefinition = pcoApiAdapter({

@@ -8,9 +8,8 @@ export const listWorkflowSharesDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/people/:personId/workflow_shares',
-  queryableBy: { fields: ['permission'], special: [] },
+  queryableBy: ['permission'],
 } as const)
 
 export const getWorkflowShareByIdDefinition = pcoApiAdapter({

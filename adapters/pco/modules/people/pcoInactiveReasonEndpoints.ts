@@ -8,12 +8,7 @@ export const listInactiveReasonsDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/inactive_reasons',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getInactiveReasonByIdDefinition = pcoApiAdapter({

@@ -10,7 +10,6 @@ export const listWorkflowCardNotesDefinition = pcoApiAdapter({
   name: 'list',
   orderableBy: ['created_at'],
   path: '/people/v2/people/:personId/workflow_cards/:workflowCardId/notes',
-  queryableBy: { fields: [], special: [] },
 } as const)
 
 export const getWorkflowCardNoteByIdDefinition = pcoApiAdapter({

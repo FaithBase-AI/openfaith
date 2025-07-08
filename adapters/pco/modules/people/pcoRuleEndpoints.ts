@@ -8,12 +8,7 @@ export const listRulesDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/lists/:listId/rules',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getRuleByIdDefinition = pcoApiAdapter({

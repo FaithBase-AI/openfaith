@@ -8,12 +8,7 @@ export const listFormCategoriesDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/form_categories',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getFormCategoryByIdDefinition = pcoApiAdapter({

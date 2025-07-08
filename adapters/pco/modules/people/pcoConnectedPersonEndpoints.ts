@@ -8,12 +8,7 @@ export const listConnectedPeopleDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/people/:personId/connected_people',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getConnectedPersonByIdDefinition = pcoApiAdapter({

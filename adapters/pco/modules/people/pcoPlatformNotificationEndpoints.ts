@@ -8,12 +8,7 @@ export const listPlatformNotificationsDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/people/:personId/platform_notifications',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getPlatformNotificationByIdDefinition = pcoApiAdapter({

@@ -8,12 +8,7 @@ export const listNameSuffixesDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/name_suffixes',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getNameSuffixByIdDefinition = pcoApiAdapter({

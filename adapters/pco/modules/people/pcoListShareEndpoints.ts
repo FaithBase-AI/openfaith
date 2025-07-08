@@ -8,12 +8,7 @@ export const listListSharesDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/lists/:listId/shares',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getListShareByIdDefinition = pcoApiAdapter({

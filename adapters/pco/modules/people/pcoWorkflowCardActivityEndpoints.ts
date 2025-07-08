@@ -8,11 +8,11 @@ export const listWorkflowCardActivitiesDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  // TODO: Add id to orderableBy
-  // orderableBy: ['id'],
-  orderableBy: [],
+  orderableBy: {
+    fields: [],
+    special: ['id'],
+  },
   path: '/people/v2/people/:personId/workflow_cards/:workflowCardId/activities',
-  queryableBy: { fields: [], special: [] },
 } as const)
 
 export const getWorkflowCardActivityByIdDefinition = pcoApiAdapter({

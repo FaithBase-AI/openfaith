@@ -8,12 +8,7 @@ export const listEmailsDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/emails',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getEmailByIdDefinition = pcoApiAdapter({

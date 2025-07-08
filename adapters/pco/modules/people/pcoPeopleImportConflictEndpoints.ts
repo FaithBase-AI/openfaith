@@ -8,12 +8,7 @@ export const listPeopleImportConflictsDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/people_imports/:peopleImportId/conflicts',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getPeopleImportConflictByIdDefinition = pcoApiAdapter({

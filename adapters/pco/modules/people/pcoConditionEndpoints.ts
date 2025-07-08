@@ -20,19 +20,16 @@ export const listConditionsDefinition = pcoApiAdapter({
     'updated_at',
   ],
   path: '/people/v2/lists/:listId/rules/:ruleId/conditions',
-  queryableBy: {
-    fields: [
-      'application',
-      'comparison',
-      'created_at',
-      'definition_class',
-      'definition_identifier',
-      'description',
-      'settings',
-      'updated_at',
-    ],
-    special: [],
-  },
+  queryableBy: [
+    'application',
+    'comparison',
+    'created_at',
+    'definition_class',
+    'definition_identifier',
+    'description',
+    'settings',
+    'updated_at',
+  ],
 } as const)
 
 export const getConditionByIdDefinition = pcoApiAdapter({

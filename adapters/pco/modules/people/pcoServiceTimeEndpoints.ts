@@ -8,12 +8,7 @@ export const listServiceTimesDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/campuses/:campusId/service_times',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getServiceTimeByIdDefinition = pcoApiAdapter({

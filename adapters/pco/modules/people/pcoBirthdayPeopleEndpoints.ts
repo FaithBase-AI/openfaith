@@ -8,10 +8,5 @@ export const listBirthdayPeopleDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/birthday_people',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)

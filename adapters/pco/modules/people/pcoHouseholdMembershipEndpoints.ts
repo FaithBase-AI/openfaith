@@ -8,12 +8,7 @@ export const listHouseholdMembershipsDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/households/:householdId/household_memberships',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getHouseholdMembershipByIdDefinition = pcoApiAdapter({

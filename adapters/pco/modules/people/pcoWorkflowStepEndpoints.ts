@@ -10,7 +10,7 @@ export const listWorkflowStepsDefinition = pcoApiAdapter({
   name: 'list',
   orderableBy: ['created_at', 'name', 'sequence', 'updated_at'],
   path: '/people/v2/workflows/:workflowId/steps',
-  queryableBy: { fields: ['created_at', 'name', 'updated_at'], special: [] },
+  queryableBy: ['created_at', 'name', 'updated_at'],
 } as const)
 
 export const getWorkflowStepByIdDefinition = pcoApiAdapter({

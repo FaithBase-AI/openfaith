@@ -8,12 +8,7 @@ export const listListStarsDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/lists/:listId/star',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getListStarByIdDefinition = pcoApiAdapter({

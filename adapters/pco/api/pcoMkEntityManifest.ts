@@ -107,6 +107,7 @@ export type ConvertPcoEntityManifest<
             infer _OrderableFields,
             infer _QueryableFields,
             infer Includes,
+            infer _OrderableSpecial,
             infer _QueryableSpecial,
             infer IsCollection,
             infer _Query
@@ -196,6 +197,7 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
     infer _OrderableFields,
     infer _QueryableFields,
     infer _Includes,
+    infer _OrderableSpecial,
     infer _QueryableSpecial,
     infer _IsCollection,
     infer _Query

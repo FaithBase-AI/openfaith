@@ -7,7 +7,7 @@ import type {
   DefineGetEndpointInput,
 } from '@openfaith/adapter-core/server'
 import { arrayToCommaSeparatedString } from '@openfaith/shared'
-import { Schema } from 'effect'
+import { Option, pipe, Schema } from 'effect'
 
 /**
  * Creates a reusable `defineEndpoint` adapter for a specific family of APIs
@@ -31,6 +31,7 @@ function createApiAdapter<
     OrderableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     Includes extends ReadonlyArray<string>,
+    OrderableSpecial extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
     IsCollection extends true,
     Query extends ReturnType<
@@ -43,6 +44,7 @@ function createApiAdapter<
         OrderableFields,
         QueryableFields,
         Includes,
+        OrderableSpecial,
         QueryableSpecial,
         IsCollection
       >
@@ -59,13 +61,30 @@ function createApiAdapter<
         OrderableFields,
         QueryableFields,
         Includes,
+        OrderableSpecial,
         QueryableSpecial,
         true,
         never,
         never
       >,
-      'includes'
-    > & { isCollection: true; defaultQuery?: Schema.Schema.Type<Query>; includes?: Includes },
+      'includes' | 'queryableBy' | 'orderableBy'
+    > & {
+      isCollection: true
+      defaultQuery?: Schema.Schema.Type<Query>
+      includes?: Includes
+      queryableBy?:
+        | {
+            fields?: QueryableFields
+            special?: QueryableSpecial
+          }
+        | QueryableFields
+      orderableBy?:
+        | OrderableFields
+        | {
+            fields?: OrderableFields
+            special?: OrderableSpecial
+          }
+    },
   ): BaseGetEndpointDefinition<
     Api,
     Api[TFieldsKey],
@@ -75,6 +94,7 @@ function createApiAdapter<
     OrderableFields,
     QueryableFields,
     Includes,
+    OrderableSpecial,
     QueryableSpecial,
     true,
     Query
@@ -89,6 +109,7 @@ function createApiAdapter<
     OrderableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     Includes extends ReadonlyArray<string>,
+    OrderableSpecial extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
     IsCollection extends false,
     Query extends ReturnType<
@@ -101,6 +122,7 @@ function createApiAdapter<
         OrderableFields,
         QueryableFields,
         Includes,
+        OrderableSpecial,
         QueryableSpecial,
         IsCollection
       >
@@ -117,13 +139,30 @@ function createApiAdapter<
         OrderableFields,
         QueryableFields,
         Includes,
+        OrderableSpecial,
         QueryableSpecial,
         false,
         never,
         never
       >,
-      'includes'
-    > & { isCollection: false; defaultQuery?: Schema.Schema.Type<Query>; includes?: Includes },
+      'includes' | 'queryableBy' | 'orderableBy'
+    > & {
+      isCollection: false
+      defaultQuery?: Schema.Schema.Type<Query>
+      includes?: Includes
+      queryableBy?:
+        | {
+            fields?: QueryableFields
+            special?: QueryableSpecial
+          }
+        | QueryableFields
+      orderableBy?:
+        | OrderableFields
+        | {
+            fields?: OrderableFields
+            special?: OrderableSpecial
+          }
+    },
   ): BaseGetEndpointDefinition<
     Api,
     Api[TFieldsKey],
@@ -133,6 +172,7 @@ function createApiAdapter<
     OrderableFields,
     QueryableFields,
     Includes,
+    OrderableSpecial,
     QueryableSpecial,
     false,
     Query
@@ -153,6 +193,7 @@ function createApiAdapter<
       TModule,
       TEntity,
       TName,
+      never,
       never,
       never,
       never,
@@ -182,6 +223,7 @@ function createApiAdapter<
       never,
       never,
       never,
+      never,
       false,
       never,
       UpdatableFields
@@ -206,6 +248,7 @@ function createApiAdapter<
       never,
       never,
       never,
+      never,
       false,
       never,
       never
@@ -214,15 +257,58 @@ function createApiAdapter<
 
   // Implementation
   function defineEndpoint(params: any) {
-    const isGet = params.method === 'GET'
     const baseParams = {
       ...params,
       includes: params.includes ?? [],
+      orderableBy: pipe(
+        params.orderableBy,
+        Option.fromNullable,
+        Option.match({
+          onNone: () => ({
+            fields: [],
+            special: [],
+          }),
+          onSome: (orderableBy) =>
+            Array.isArray(orderableBy)
+              ? {
+                  fields: orderableBy,
+                  special: [],
+                }
+              : {
+                  fields: orderableBy.fields ?? [],
+                  special: orderableBy.special ?? [],
+                },
+        }),
+      ),
+      queryableBy: pipe(
+        params.queryableBy,
+        Option.fromNullable,
+        Option.match({
+          onNone: () => ({
+            fields: [],
+            special: [],
+          }),
+          onSome: (queryableBy) =>
+            Array.isArray(queryableBy)
+              ? {
+                  fields: queryableBy,
+                  special: [],
+                }
+              : {
+                  fields: queryableBy.fields ?? [],
+                  special: queryableBy.special ?? [],
+                },
+        }),
+      ),
     }
 
     return {
       ...baseParams,
-      ...(isGet ? { query: buildUrlParamsSchema(baseParams) } : {}),
+      ...(params.method === 'GET'
+        ? {
+            query: buildUrlParamsSchema(baseParams),
+          }
+        : {}),
     }
   }
 
@@ -264,6 +350,7 @@ export function buildUrlParamsSchema<
   OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   Includes extends ReadonlyArray<string>,
+  OrderableSpecial extends ReadonlyArray<string>,
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends boolean,
 >(
@@ -277,6 +364,7 @@ export function buildUrlParamsSchema<
       OrderableFields,
       QueryableFields,
       Includes,
+      OrderableSpecial,
       QueryableSpecial,
       IsCollection
     >,
@@ -293,6 +381,7 @@ export function buildUrlParamsSchema<
         OrderableFields,
         QueryableFields,
         Includes,
+        OrderableSpecial,
         QueryableSpecial,
         IsCollection
       >
@@ -307,6 +396,7 @@ export function buildUrlParamsSchema<
         OrderableFields,
         QueryableFields,
         Includes,
+        OrderableSpecial,
         QueryableSpecial,
         false
       >
@@ -327,6 +417,7 @@ export function buildSingleUrlParamsSchema<
   OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   Includes extends ReadonlyArray<string>,
+  OrderableSpecial extends ReadonlyArray<string>,
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends false,
 >(
@@ -340,6 +431,7 @@ export function buildSingleUrlParamsSchema<
       OrderableFields,
       QueryableFields,
       Includes,
+      OrderableSpecial,
       QueryableSpecial,
       IsCollection
     >,
@@ -371,6 +463,7 @@ export function buildCollectionUrlParamsSchema<
   OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   Includes extends ReadonlyArray<string>,
+  OrderableSpecial extends ReadonlyArray<string>,
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends true,
 >(
@@ -384,6 +477,7 @@ export function buildCollectionUrlParamsSchema<
       OrderableFields,
       QueryableFields,
       Includes,
+      OrderableSpecial,
       QueryableSpecial,
       IsCollection
     >,
@@ -416,7 +510,9 @@ export function buildCollectionUrlParamsSchema<
       ),
     ),
     offset: Schema.optional(Schema.NumberFromString),
-    order: Schema.optional(Schema.Literal(...definition.orderableBy)),
+    order: Schema.optional(
+      Schema.Literal(...[...definition.orderableBy.fields, ...definition.orderableBy.special]),
+    ),
     per_page: Schema.optional(Schema.NumberFromString),
   })
 }

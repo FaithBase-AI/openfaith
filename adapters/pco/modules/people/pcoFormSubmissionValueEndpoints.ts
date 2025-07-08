@@ -8,12 +8,7 @@ export const listFormSubmissionValuesDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/forms/:formId/form_submissions/:formSubmissionId/form_submission_values',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getFormSubmissionValueByIdDefinition = pcoApiAdapter({

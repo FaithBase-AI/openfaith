@@ -5,7 +5,7 @@ import type {
   PatchEndpointDefinition,
   PostEndpointDefinition,
 } from '@openfaith/adapter-core/server'
-import { Schema } from 'effect'
+import { Option, pipe, Schema } from 'effect'
 
 /**
  * Creates a CCB collection response schema.
@@ -40,6 +40,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     OrderableFields extends ReadonlyArray<Extract<keyof Api, string>>,
     QueryableFields extends ReadonlyArray<Extract<keyof Api, string>>,
     Includes extends ReadonlyArray<string>,
+    OrderableSpecial extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
     Query extends Schema.Schema<any>,
   >(
@@ -54,13 +55,29 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
         OrderableFields,
         QueryableFields,
         Includes,
+        OrderableSpecial,
         QueryableSpecial,
         true,
         never,
         never
       >,
-      'includes'
-    > & { isCollection: true; includes?: Includes },
+      'includes' | 'queryableBy' | 'orderableBy'
+    > & {
+      isCollection: true
+      includes?: Includes
+      queryableBy?:
+        | {
+            fields?: QueryableFields
+            special?: QueryableSpecial
+          }
+        | QueryableFields
+      orderableBy?:
+        | OrderableFields
+        | {
+            fields?: OrderableFields
+            special?: OrderableSpecial
+          }
+    },
   ): GetEndpointDefinition<
     Api,
     ReturnType<typeof mkCcbCollectionSchema<Api>>,
@@ -71,6 +88,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     OrderableFields,
     QueryableFields,
     Includes,
+    OrderableSpecial,
     QueryableSpecial,
     true,
     Query
@@ -85,6 +103,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     OrderableFields extends ReadonlyArray<Extract<keyof Api, string>>,
     QueryableFields extends ReadonlyArray<Extract<keyof Api, string>>,
     Includes extends ReadonlyArray<string>,
+    OrderableSpecial extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
     Query extends Schema.Schema<any>,
   >(
@@ -99,13 +118,29 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
         OrderableFields,
         QueryableFields,
         Includes,
+        OrderableSpecial,
         QueryableSpecial,
         false,
         never,
         never
       >,
-      'includes'
-    > & { isCollection: false; includes?: Includes },
+      'includes' | 'queryableBy' | 'orderableBy'
+    > & {
+      isCollection: false
+      includes?: Includes
+      queryableBy?:
+        | {
+            fields?: QueryableFields
+            special?: QueryableSpecial
+          }
+        | QueryableFields
+      orderableBy?:
+        | OrderableFields
+        | {
+            fields?: OrderableFields
+            special?: OrderableSpecial
+          }
+    },
   ): GetEndpointDefinition<
     Api,
     ReturnType<typeof mkCcbSingleSchema<Api>>,
@@ -116,6 +151,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     OrderableFields,
     QueryableFields,
     Includes,
+    OrderableSpecial,
     QueryableSpecial,
     false,
     Query
@@ -136,6 +172,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
       TModule,
       TEntity,
       TName,
+      never,
       never,
       never,
       never,
@@ -173,6 +210,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
       never,
       never,
       never,
+      never,
       false,
       never,
       UpdatableFields
@@ -205,6 +243,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
       never,
       never,
       never,
+      never,
       false,
       never,
       never
@@ -224,6 +263,46 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     const baseParams = {
       ...params,
       includes: params.includes ?? [],
+      orderableBy: pipe(
+        params.orderableBy,
+        Option.fromNullable,
+        Option.match({
+          onNone: () => ({
+            fields: [],
+            special: [],
+          }),
+          onSome: (orderableBy) =>
+            Array.isArray(orderableBy)
+              ? {
+                  fields: orderableBy,
+                  special: [],
+                }
+              : {
+                  fields: orderableBy.fields ?? [],
+                  special: orderableBy.special ?? [],
+                },
+        }),
+      ),
+      queryableBy: pipe(
+        params.queryableBy,
+        Option.fromNullable,
+        Option.match({
+          onNone: () => ({
+            fields: [],
+            special: [],
+          }),
+          onSome: (queryableBy) =>
+            Array.isArray(queryableBy)
+              ? {
+                  fields: queryableBy,
+                  special: [],
+                }
+              : {
+                  fields: queryableBy.fields ?? [],
+                  special: queryableBy.special ?? [],
+                },
+        }),
+      ),
     }
 
     return {

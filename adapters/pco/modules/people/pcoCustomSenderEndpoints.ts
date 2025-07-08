@@ -8,12 +8,7 @@ export const listCustomSendersDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/custom_senders',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getCustomSenderByIdDefinition = pcoApiAdapter({

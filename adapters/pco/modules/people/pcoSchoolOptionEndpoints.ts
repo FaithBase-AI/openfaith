@@ -8,12 +8,7 @@ export const listSchoolOptionsDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/school_options',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getSchoolOptionByIdDefinition = pcoApiAdapter({

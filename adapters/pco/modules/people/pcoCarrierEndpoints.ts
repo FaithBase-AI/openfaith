@@ -10,8 +10,4 @@ export const listCarriersDefinition = pcoApiAdapter({
   name: 'list',
   orderableBy: ['international', 'name'],
   path: '/people/v2/carriers',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)

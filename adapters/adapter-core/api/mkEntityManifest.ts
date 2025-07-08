@@ -50,6 +50,7 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
     infer _OrderableFields,
     infer _QueryableFields,
     infer _Includes,
+    infer _OrderableSpecial,
     infer _QueryableSpecial,
     infer _IsCollection,
     infer _Query

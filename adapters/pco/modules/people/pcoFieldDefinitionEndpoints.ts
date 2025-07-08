@@ -14,10 +14,7 @@ export const listFieldDefinitionsDefinition = pcoApiAdapter({
   name: 'list',
   orderableBy: ['config', 'data_type', 'deleted_at', 'name', 'sequence', 'slug', 'tab_id'],
   path: '/people/v2/field_definitions',
-  queryableBy: {
-    fields: ['config', 'data_type', 'deleted_at', 'name', 'sequence', 'slug', 'tab_id'],
-    special: [],
-  },
+  queryableBy: ['config', 'data_type', 'deleted_at', 'name', 'sequence', 'slug', 'tab_id'],
 } as const)
 
 export const getFieldDefinitionByIdDefinition = pcoApiAdapter({

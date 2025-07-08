@@ -8,12 +8,7 @@ export const listMaritalStatusesDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/marital_statuses',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getMaritalStatusByIdDefinition = pcoApiAdapter({

@@ -96,12 +96,7 @@ const listIndividualsDefinition = ccbApiAdapter({
   method: 'GET',
   module: 'individuals',
   name: 'list',
-  orderableBy: [],
   path: '/individuals',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 })
 
 export const ccbEntityManifest = mkEntityManifest({

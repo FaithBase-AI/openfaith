@@ -8,12 +8,7 @@ export const listFieldOptionsDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/field_definitions/:fieldDefinitionId/field_options',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getFieldOptionByIdDefinition = pcoApiAdapter({

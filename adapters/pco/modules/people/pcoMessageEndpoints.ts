@@ -8,12 +8,7 @@ export const listMessagesDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/messages',
-  queryableBy: {
-    fields: [],
-    special: [],
-  },
 } as const)
 
 export const getMessageByIdDefinition = pcoApiAdapter({

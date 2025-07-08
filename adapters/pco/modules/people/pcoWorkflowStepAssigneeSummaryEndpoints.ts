@@ -8,9 +8,7 @@ export const listWorkflowStepAssigneeSummariesDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'people',
   name: 'list',
-  orderableBy: [],
   path: '/people/v2/workflows/:workflowId/steps/:stepId/assignee_summaries',
-  queryableBy: { fields: [], special: [] },
 } as const)
 
 export const getWorkflowStepAssigneeSummaryByIdDefinition = pcoApiAdapter({
