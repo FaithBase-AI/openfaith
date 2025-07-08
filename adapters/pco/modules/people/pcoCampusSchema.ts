@@ -58,6 +58,11 @@ export const PcoCampusAttributes = Schema.Struct({
     [OfFieldName]: 'timeZone',
     [OfCustomField]: true,
   }),
+  time_zone_raw: Schema.String.annotations({
+    description: 'Only available when requested with the `?fields` param',
+    [OfFieldName]: 'timeZoneRaw',
+    [OfCustomField]: true,
+  }).pipe(Schema.optional),
   twenty_four_hour_time: Schema.NullOr(Schema.Boolean).annotations({
     [OfFieldName]: 'twentyFourHourTime',
     [OfCustomField]: true,
