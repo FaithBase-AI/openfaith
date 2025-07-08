@@ -4,7 +4,7 @@ import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { PcoApiLayer, PcoHttpClient } from '@openfaith/pco/server'
 import { OfSkipEntity } from '@openfaith/schema'
 import { pluralize } from '@openfaith/shared'
-import { saveDataE } from '@openfaith/workers/helpers/ofLookup'
+import { saveDataE } from '@openfaith/workers/helpers/saveDataE'
 import { Array, Effect, Option, pipe, Record, Schema, SchemaAST, Stream, String } from 'effect'
 
 // Define the PCO sync error
