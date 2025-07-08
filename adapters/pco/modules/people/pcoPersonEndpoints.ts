@@ -142,7 +142,7 @@ export const updatePersonDefinition = pcoApiAdapter({
   module: 'people',
   name: 'update',
   path: '/people/v2/people/:personId',
-  updatableFields: createPersonDefinition.creatableFields.fields,
+  updatableFields: createPersonDefinition.creatableFields,
 } as const)
 
 export const deletePersonDefinition = pcoApiAdapter({

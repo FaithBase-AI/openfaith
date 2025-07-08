@@ -60,6 +60,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
         true,
         never,
         never,
+        never,
         never
       >,
       'includes' | 'queryableBy' | 'orderableBy'
@@ -124,6 +125,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
         false,
         never,
         never,
+        never,
         never
       >,
       'includes' | 'queryableBy' | 'orderableBy'
@@ -183,6 +185,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
       false,
       CreatableFields,
       CreatableSpecial,
+      never,
       never
     >,
   ): PostEndpointDefinition<
@@ -203,6 +206,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TEntity extends string,
     TName extends string,
     UpdatableFields extends ReadonlyArray<Extract<keyof Api, string>>,
+    UpdatableSpecial extends ReadonlyArray<string>,
   >(
     params: DefineEndpointInput<
       'PATCH',
@@ -219,7 +223,8 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
       false,
       never,
       never,
-      UpdatableFields
+      UpdatableFields,
+      UpdatableSpecial
     >,
   ): PatchEndpointDefinition<
     Api,
@@ -228,7 +233,8 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TModule,
     TEntity,
     TName,
-    UpdatableFields
+    UpdatableFields,
+    UpdatableSpecial
   >
 
   // DELETE overload
@@ -251,6 +257,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
       never,
       never,
       false,
+      never,
       never,
       never,
       never
@@ -307,6 +314,26 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
               : {
                   fields: queryableBy.fields ?? [],
                   special: queryableBy.special ?? [],
+                },
+        }),
+      ),
+      updatableFields: pipe(
+        params.updatableFields,
+        Option.fromNullable,
+        Option.match({
+          onNone: () => ({
+            fields: [],
+            special: [],
+          }),
+          onSome: (updatableFields) =>
+            Array.isArray(updatableFields)
+              ? {
+                  fields: updatableFields,
+                  special: [],
+                }
+              : {
+                  fields: updatableFields.fields ?? [],
+                  special: updatableFields.special ?? [],
                 },
         }),
       ),

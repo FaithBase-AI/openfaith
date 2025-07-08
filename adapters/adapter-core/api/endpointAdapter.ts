@@ -157,6 +157,7 @@ export function toHttpApiEndpoint<
     never,
     never,
     never,
+    never,
     Query
   >,
 ): HttpApiEndpoint.HttpApiEndpoint<
@@ -211,6 +212,7 @@ export function toHttpApiEndpoint<
     CreatableFields,
     CreatableSpecial,
     never,
+    never,
     Query
   >,
 ): HttpApiEndpoint.HttpApiEndpoint<
@@ -238,6 +240,7 @@ export function toHttpApiEndpoint<
   TEntity extends string,
   TName extends string,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  UpdatableSpecial extends ReadonlyArray<string>,
   Query extends Schema.Schema<any>,
 >(
   definition: EndpointDefinition<
@@ -257,6 +260,7 @@ export function toHttpApiEndpoint<
     never,
     never,
     UpdatableFields,
+    UpdatableSpecial,
     Query
   >,
 ): HttpApiEndpoint.HttpApiEndpoint<
@@ -299,6 +303,7 @@ export function toHttpApiEndpoint<
     never,
     never,
     false,
+    never,
     never,
     never,
     never,

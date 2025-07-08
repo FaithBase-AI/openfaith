@@ -49,7 +49,7 @@ export const updateTabDefinition = pcoApiAdapter({
   module: 'people',
   name: 'update',
   path: '/people/v2/tabs/:tabId',
-  updatableFields: createTabDefinition.creatableFields.fields,
+  updatableFields: createTabDefinition.creatableFields,
 } as const)
 
 export const deleteTabDefinition = pcoApiAdapter({

@@ -41,7 +41,7 @@ export const updateListShareDefinition = pcoApiAdapter({
   module: 'people',
   name: 'update',
   path: '/people/v2/lists/:listId/shares/:id',
-  updatableFields: createListShareDefinition.creatableFields.fields,
+  updatableFields: createListShareDefinition.creatableFields,
 } as const)
 
 export const deleteListShareDefinition = pcoApiAdapter({

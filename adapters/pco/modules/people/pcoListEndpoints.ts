@@ -49,7 +49,7 @@ export const updateListDefinition = pcoApiAdapter({
   module: 'people',
   name: 'update',
   path: '/people/v2/lists/:listId',
-  updatableFields: createListDefinition.creatableFields.fields,
+  updatableFields: createListDefinition.creatableFields,
 } as const)
 
 export const deleteListDefinition = pcoApiAdapter({

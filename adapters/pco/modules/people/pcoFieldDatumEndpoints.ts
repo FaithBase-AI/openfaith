@@ -48,9 +48,10 @@ export const updateFieldDatumDefinition = pcoApiAdapter({
   module: 'people',
   name: 'update',
   path: '/people/v2/field_data/:fieldDatumId',
-  // TODO: add field_definition_id
-  //   updatableFields: ['value', 'field_definition_id'],
-  updatableFields: ['value'],
+  updatableFields: {
+    fields: ['value'],
+    special: ['field_definition_id'],
+  },
 } as const)
 
 export const deleteFieldDatumDefinition = pcoApiAdapter({

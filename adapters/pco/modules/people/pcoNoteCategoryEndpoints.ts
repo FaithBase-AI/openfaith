@@ -49,7 +49,7 @@ export const updateNoteCategoryDefinition = pcoApiAdapter({
   module: 'people',
   name: 'update',
   path: '/people/v2/note_categories/:noteCategoryId',
-  updatableFields: createNoteCategoryDefinition.creatableFields.fields,
+  updatableFields: createNoteCategoryDefinition.creatableFields,
 } as const)
 
 export const deleteNoteCategoryDefinition = pcoApiAdapter({

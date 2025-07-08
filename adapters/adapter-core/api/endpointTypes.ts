@@ -230,6 +230,7 @@ export type DefinePatchEndpointInput<
   TEntity extends string,
   TName extends string,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  UpdatableSpecial extends ReadonlyArray<string>,
 > = {
   /** The Effect schema for the API resource */
   apiSchema: Schema.Schema<Api>
@@ -244,7 +245,10 @@ export type DefinePatchEndpointInput<
   /** The operation name for this endpoint */
   name: TName
   /** Array of fields that can be set when updating a resource */
-  updatableFields: UpdatableFields
+  updatableFields: {
+    fields: UpdatableFields
+    special: UpdatableSpecial
+  }
 }
 
 export type BasePatchEndpointDefinition<
@@ -254,7 +258,16 @@ export type BasePatchEndpointDefinition<
   TEntity extends string,
   TName extends string,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
-> = DefinePatchEndpointInput<Api, Fields, TModule, TEntity, TName, UpdatableFields>
+  UpdatableSpecial extends ReadonlyArray<string>,
+> = DefinePatchEndpointInput<
+  Api,
+  Fields,
+  TModule,
+  TEntity,
+  TName,
+  UpdatableFields,
+  UpdatableSpecial
+>
 
 export type PatchEndpointDefinition<
   Api,
@@ -264,7 +277,16 @@ export type PatchEndpointDefinition<
   TEntity extends string,
   TName extends string,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
-> = BasePatchEndpointDefinition<Api, Fields, TModule, TEntity, TName, UpdatableFields> & {
+  UpdatableSpecial extends ReadonlyArray<string>,
+> = BasePatchEndpointDefinition<
+  Api,
+  Fields,
+  TModule,
+  TEntity,
+  TName,
+  UpdatableFields,
+  UpdatableSpecial
+> & {
   response: Response
 }
 
@@ -340,6 +362,7 @@ export type DefineEndpointInput<
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   CreatableSpecial extends ReadonlyArray<string>,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  UpdatableSpecial extends ReadonlyArray<string>,
 > = TMethod extends 'GET'
   ? DefineGetEndpointInput<
       Api,
@@ -365,7 +388,15 @@ export type DefineEndpointInput<
         CreatableSpecial
       >
     : TMethod extends 'PATCH'
-      ? DefinePatchEndpointInput<Api, Fields, TModule, TEntity, TName, UpdatableFields>
+      ? DefinePatchEndpointInput<
+          Api,
+          Fields,
+          TModule,
+          TEntity,
+          TName,
+          UpdatableFields,
+          UpdatableSpecial
+        >
       : TMethod extends 'DELETE'
         ? DefineDeleteEndpointInput<Api, Fields, TModule, TEntity, TName>
         : never
@@ -386,6 +417,7 @@ export type BaseEndpointDefinition<
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   CreatableSpecial extends ReadonlyArray<string>,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  UpdatableSpecial extends ReadonlyArray<string>,
   Query extends Schema.Schema<any>,
 > = TMethod extends 'GET'
   ? BaseGetEndpointDefinition<
@@ -413,7 +445,15 @@ export type BaseEndpointDefinition<
         CreatableSpecial
       >
     : TMethod extends 'PATCH'
-      ? BasePatchEndpointDefinition<Api, Fields, TModule, TEntity, TName, UpdatableFields>
+      ? BasePatchEndpointDefinition<
+          Api,
+          Fields,
+          TModule,
+          TEntity,
+          TName,
+          UpdatableFields,
+          UpdatableSpecial
+        >
       : TMethod extends 'DELETE'
         ? BaseDeleteEndpointDefinition<Api, Fields, TModule, TEntity, TName>
         : never
@@ -435,6 +475,7 @@ export type EndpointDefinition<
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   CreatableSpecial extends ReadonlyArray<string>,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  UpdatableSpecial extends ReadonlyArray<string>,
   Query extends Schema.Schema<any>,
 > = TMethod extends 'GET'
   ? GetEndpointDefinition<
@@ -464,7 +505,16 @@ export type EndpointDefinition<
         CreatableSpecial
       >
     : TMethod extends 'PATCH'
-      ? PatchEndpointDefinition<Api, Response, Fields, TModule, TEntity, TName, UpdatableFields>
+      ? PatchEndpointDefinition<
+          Api,
+          Response,
+          Fields,
+          TModule,
+          TEntity,
+          TName,
+          UpdatableFields,
+          UpdatableSpecial
+        >
       : TMethod extends 'DELETE'
         ? DeleteEndpointDefinition<Api, Response, Fields, TModule, TEntity, TName>
         : never
@@ -473,7 +523,7 @@ export type EntityManifestShape = Record<
   string,
   | GetEndpointDefinition<any, any, any, any, any, any, any, any, any, any, any, any, any>
   | PostEndpointDefinition<any, any, any, any, any, any, any, any>
-  | PatchEndpointDefinition<any, any, any, any, any, any, any>
+  | PatchEndpointDefinition<any, any, any, any, any, any, any, any>
   | DeleteEndpointDefinition<any, any, any, any, any, any>
 >
 
@@ -499,6 +549,7 @@ export type Any = EndpointDefinition<
   any,
   any,
   any,
+  any,
   any
 >
 
@@ -509,6 +560,7 @@ export type Any = EndpointDefinition<
  */
 export type BaseAny = BaseEndpointDefinition<
   Method,
+  any,
   any,
   any,
   any,

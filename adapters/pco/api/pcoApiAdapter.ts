@@ -66,6 +66,7 @@ function createApiAdapter<
         true,
         never,
         never,
+        never,
         never
       >,
       'includes' | 'queryableBy' | 'orderableBy'
@@ -145,6 +146,7 @@ function createApiAdapter<
         false,
         never,
         never,
+        never,
         never
       >,
       'includes' | 'queryableBy' | 'orderableBy'
@@ -205,6 +207,7 @@ function createApiAdapter<
         false,
         CreatableFields,
         CreatableSpecial,
+        never,
         never
       >,
       'creatableFields'
@@ -233,25 +236,45 @@ function createApiAdapter<
     TEntity extends string,
     TName extends string,
     UpdatableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
+    UpdatableSpecial extends ReadonlyArray<string>,
   >(
-    params: DefineEndpointInput<
-      'PATCH',
-      Api,
-      Api[TFieldsKey],
-      TModule,
-      TEntity,
-      TName,
-      never,
-      never,
-      never,
-      never,
-      never,
-      false,
-      never,
-      never,
-      UpdatableFields
-    >,
-  ): BasePatchEndpointDefinition<Api, Api[TFieldsKey], TModule, TEntity, TName, UpdatableFields>
+    params: Omit<
+      DefineEndpointInput<
+        'PATCH',
+        Api,
+        Api[TFieldsKey],
+        TModule,
+        TEntity,
+        TName,
+        never,
+        never,
+        never,
+        never,
+        never,
+        false,
+        never,
+        never,
+        UpdatableFields,
+        UpdatableSpecial
+      >,
+      'updatableFields'
+    > & {
+      updatableFields?:
+        | {
+            fields?: UpdatableFields
+            special?: UpdatableSpecial
+          }
+        | UpdatableFields
+    },
+  ): BasePatchEndpointDefinition<
+    Api,
+    Api[TFieldsKey],
+    TModule,
+    TEntity,
+    TName,
+    UpdatableFields,
+    UpdatableSpecial
+  >
 
   // DELETE overload
   function defineEndpoint<
@@ -273,6 +296,7 @@ function createApiAdapter<
       never,
       never,
       false,
+      never,
       never,
       never,
       never
@@ -341,6 +365,26 @@ function createApiAdapter<
               : {
                   fields: queryableBy.fields ?? [],
                   special: queryableBy.special ?? [],
+                },
+        }),
+      ),
+      updatableFields: pipe(
+        params.updatableFields,
+        Option.fromNullable,
+        Option.match({
+          onNone: () => ({
+            fields: [],
+            special: [],
+          }),
+          onSome: (updatableFields) =>
+            Array.isArray(updatableFields)
+              ? {
+                  fields: updatableFields,
+                  special: [],
+                }
+              : {
+                  fields: updatableFields.fields ?? [],
+                  special: updatableFields.special ?? [],
                 },
         }),
       ),
