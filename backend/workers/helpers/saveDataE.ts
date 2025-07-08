@@ -6,7 +6,7 @@ import type { pcoPersonTransformer } from '@openfaith/pco/server'
 import { EdgeDirectionSchema, getEntityId } from '@openfaith/shared'
 import { ofLookup } from '@openfaith/workers/helpers/ofLookup'
 import { getTableColumns, getTableName, sql } from 'drizzle-orm'
-import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
+import { Array, Effect, Option, pipe, Record, Schema, String } from 'effect'
 
 export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
   D extends ReadonlyArray<PcoBaseEntity>,
@@ -387,8 +387,8 @@ export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* 
         // Extract relationships from the included entity
         x.relationships,
         Option.fromNullable,
-        // Look for relationship to the root entity type
-        Option.flatMap((y) => pipe(y, Record.get(rootEntityType))),
+        // Look for relationship to the root entity type. rootEntityType is Person, but the key in the relationships object is person.
+        Option.flatMap((y) => pipe(y, Record.get(pipe(rootEntityType, String.pascalToSnake)))),
         // Extract the relationship data (the actual related entity)
         Option.flatMapNullable((y) => y.data),
         // Find the corresponding root external link by matching external ID
