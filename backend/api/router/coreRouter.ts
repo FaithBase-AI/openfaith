@@ -15,11 +15,9 @@ export const coreRouter = createTRPCRouter({
         })
 
         console.log('do the thing', workflowClient)
-
         // Call the PcoSyncWorkflow endpoint - WorkflowProxy generates this method
         const result = yield* workflowClient.workflows.PcoSyncWorkflow({
           payload: {
-            entity: 'people',
             tokenKey: 'org_01jww7zkeyfzvsxd20nfjzc21z',
           },
         })

@@ -1,14 +1,13 @@
-import { Chunk, Effect, Option, pipe, Stream } from 'effect'
+import type { mkPcoCollectionSchema, PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
+import { Chunk, Effect, Option, pipe, type Schema, Stream } from 'effect'
 
 export const createPaginatedStream = <
   Req extends {
     urlParams: { offset?: number } & Record<string, any>
   },
-  A extends {
-    meta: {
-      next?: { offset: number }
-    }
-  },
+  A extends Schema.Schema.Type<
+    ReturnType<typeof mkPcoCollectionSchema<PcoBaseEntity, PcoBaseEntity>>
+  >,
   E,
   R,
 >(

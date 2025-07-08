@@ -120,3 +120,14 @@ export function mkPcoSingleSchema(
     ),
   }) as any
 }
+
+export type PcoBaseEntity = {
+  id: string
+  type: string
+  attributes: {
+    created_at: string
+    updated_at?: string | null | undefined
+  }
+
+  relationships?: Record<string, { data: { id: string; type: string } | null }> | undefined
+}

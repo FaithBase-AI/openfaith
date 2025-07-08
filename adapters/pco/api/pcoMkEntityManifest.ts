@@ -180,6 +180,7 @@ export type ConvertPcoEntityManifest<
     module: Extract<Endpoints, { entity: Entity }>['module']
     /** Error configuration for HttpApiGroup */
     errors: Errors
+    skipSync: boolean
   }
 }
 
@@ -420,6 +421,11 @@ export const mkPcoEntityManifest = <
           entity: entity,
           errors: config.errors,
           module: firstEndpoint.module,
+          skipSync: pipe(
+            entityEndpoints,
+            Array.findFirst((x) => (x as { skipSync?: boolean }).skipSync === true),
+            Option.isSome,
+          ),
         },
       ] as const
     }),
@@ -447,18 +453,18 @@ export const mkPcoEntityManifest = <
  */
 export const toPcoHttpApiGroup = <
   Endpoints extends Record<string, Endpoint.Any>,
-  Module extends string,
+  Entity extends string,
   Errors extends ErrorConfig,
 >(entityManifest: {
   readonly endpoints: Endpoints
-  readonly module: Module
+  readonly entity: Entity
   readonly errors: Errors
 }): HttpApiGroup.HttpApiGroup<
-  Module,
+  Entity,
   ConvertPcoHttpApi<Endpoints[keyof Endpoints]>,
   Errors[keyof Errors]
 > => {
-  let group = HttpApiGroup.make(entityManifest.module)
+  let group = HttpApiGroup.make(entityManifest.entity)
 
   const endpoints = Object.values(entityManifest.endpoints)
   for (const endpoint of endpoints) {

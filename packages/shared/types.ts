@@ -56,29 +56,33 @@ export namespace CaseTransform {
       ? 'children'
       : S extends 'person'
         ? 'people'
-        : // Words ending in 'y' preceded by consonant
-          S extends `${infer Base}${infer Consonant}y`
-          ? Consonant extends 'a' | 'e' | 'i' | 'o' | 'u'
-            ? `${S}s`
-            : `${Base}${Consonant}ies`
-          : // Words ending in s, x, z, ch, sh
-            S extends
-                | `${infer Base}s`
-                | `${infer Base}x`
-                | `${infer Base}z`
-                | `${infer Base}ch`
-                | `${
-                    // biome-ignore lint/correctness/noUnusedVariables: this is the way
-                    infer Base
-                  }sh`
-            ? `${S}es`
-            : // Words ending in 'f' or 'fe'
-              S extends `${infer Base}f`
-              ? `${Base}ves`
-              : S extends `${infer Base}fe`
-                ? `${Base}ves`
-                : // Default: add 's'
-                  `${S}s`
+        : S extends 'campus'
+          ? 'campuses'
+          : S extends 'address'
+            ? 'addresses'
+            : // Words ending in 'y' preceded by consonant
+              S extends `${infer Base}${infer Consonant}y`
+              ? Consonant extends 'a' | 'e' | 'i' | 'o' | 'u'
+                ? `${S}s`
+                : `${Base}${Consonant}ies`
+              : // Words ending in s, x, z, ch, sh
+                S extends
+                    | `${infer Base}s`
+                    | `${infer Base}x`
+                    | `${infer Base}z`
+                    | `${infer Base}ch`
+                    | `${
+                        // biome-ignore lint/correctness/noUnusedVariables: this is the way
+                        infer Base
+                      }sh`
+                ? `${S}es`
+                : // Words ending in 'f' or 'fe'
+                  S extends `${infer Base}f`
+                  ? `${Base}ves`
+                  : S extends `${infer Base}fe`
+                    ? `${Base}ves`
+                    : // Default: add 's'
+                      `${S}s`
 
   type Singularize<S extends string> =
     // Irregular singulars
@@ -86,23 +90,27 @@ export namespace CaseTransform {
       ? 'child'
       : S extends 'people'
         ? 'person'
-        : // Regular patterns
-          S extends `${infer Base}ies`
-          ? `${Base}y`
-          : S extends `${infer Base}ves`
-            ? `${Base}f`
-            : S extends `${infer Base}es`
-              ? Base extends
-                  | `${string}s`
-                  | `${string}x`
-                  | `${string}z`
-                  | `${string}ch`
-                  | `${string}sh`
-                ? `${Base}`
-                : `${Base}e`
-              : S extends `${infer Base}s`
-                ? Base
-                : S
+        : S extends 'campuses'
+          ? 'campus'
+          : S extends 'addresses'
+            ? 'address'
+            : // Regular patterns
+              S extends `${infer Base}ies`
+              ? `${Base}y`
+              : S extends `${infer Base}ves`
+                ? `${Base}f`
+                : S extends `${infer Base}es`
+                  ? Base extends
+                      | `${string}s`
+                      | `${string}x`
+                      | `${string}z`
+                      | `${string}ch`
+                      | `${string}sh`
+                    ? `${Base}`
+                    : `${Base}e`
+                  : S extends `${infer Base}s`
+                    ? Base
+                    : S
 
   export type SnakeToPascalPlural<S extends string> = Pluralize<SnakeToPascal<S>>
   export type SnakeToPascalSingular<S extends string> = Singularize<SnakeToPascal<S>>

@@ -21,7 +21,7 @@ const PcoSyncEntityPayload = Schema.Struct({
     ...pipe(
       pcoEntityManifest,
       Record.values,
-      Array.map((x) => x.module),
+      Array.map((x) => x.entity),
     ),
   ),
   tokenKey: Schema.String,
@@ -31,7 +31,7 @@ const PcoSyncEntityPayload = Schema.Struct({
 export const PcoSyncEntityWorkflow = Workflow.make({
   error: PcoSyncEntityError,
   idempotencyKey: ({ tokenKey }) => `pco-sync-${tokenKey}-${new Date().toISOString()}`,
-  name: 'PcoSyncWorkflow',
+  name: 'PcoSyncEntityWorkflow',
   payload: PcoSyncEntityPayload,
   success: Schema.Void,
 })
@@ -95,7 +95,7 @@ export const PcoSyncEntityWorkflowLayer = PcoSyncEntityWorkflow.toLayer(
           yield* Stream.runForEach(
             createPaginatedStream(entityHttp.list, {
               // We have to cast here because the type is too complex for the compiler to infer.
-              urlParams: urlParams as Parameters<typeof entityHttp.list>[0]['urlParams'],
+              urlParams: urlParams as any,
             } as const),
             (data) =>
               saveDataE(data).pipe(

@@ -1,26 +1,15 @@
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { TokenKey } from '@openfaith/adapter-core/server'
 import { EdgeDirectionSchema, edgeTable, externalLinksTable } from '@openfaith/db'
-import type { mkPcoCollectionSchema } from '@openfaith/pco/api/pcoResponseSchemas'
+import type { mkPcoCollectionSchema, PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import type { pcoPersonTransformer } from '@openfaith/pco/server'
 import { getEntityId } from '@openfaith/shared'
 import { ofLookup } from '@openfaith/workers/helpers/ofLookup'
 import { getTableColumns, getTableName, sql } from 'drizzle-orm'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
 
-type BaseEntity = {
-  id: string
-  type: string
-  attributes: {
-    created_at: string
-    updated_at?: string | null | undefined
-  }
-
-  relationships?: Record<string, { data: { id: string; type: string } | null }> | undefined
-}
-
 export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
-  D extends ReadonlyArray<BaseEntity>,
+  D extends ReadonlyArray<PcoBaseEntity>,
 >(data: D) {
   const orgId = yield* TokenKey
 
@@ -118,7 +107,7 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
 })
 
 export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
-  data: ReadonlyArray<BaseEntity>,
+  data: ReadonlyArray<PcoBaseEntity>,
 ) {
   const orgId = yield* TokenKey
   const db = yield* PgDrizzle.PgDrizzle
@@ -273,7 +262,7 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
 })
 
 export const saveDataE = Effect.fn('saveDataE')(function* (
-  data: Schema.Schema.Type<ReturnType<typeof mkPcoCollectionSchema<BaseEntity, BaseEntity>>>,
+  data: Schema.Schema.Type<ReturnType<typeof mkPcoCollectionSchema<PcoBaseEntity, PcoBaseEntity>>>,
 ) {
   const orgId = yield* TokenKey
 
@@ -316,7 +305,7 @@ export const saveDataE = Effect.fn('saveDataE')(function* (
 })
 
 export const saveIncludesE = Effect.fn('saveIncludesE')(function* <
-  D extends { included: ReadonlyArray<BaseEntity> },
+  D extends { included: ReadonlyArray<PcoBaseEntity> },
 >(
   data: D,
   rootExternalLinks: ReadonlyArray<{
@@ -330,7 +319,7 @@ export const saveIncludesE = Effect.fn('saveIncludesE')(function* <
     data.included,
     Array.reduce(
       {} as {
-        [K in string]: ReadonlyArray<BaseEntity>
+        [K in string]: ReadonlyArray<PcoBaseEntity>
       },
       (b, a) => ({
         ...b,
@@ -370,7 +359,7 @@ export const saveIncludesE = Effect.fn('saveIncludesE')(function* <
 })
 
 export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* <
-  I extends ReadonlyArray<BaseEntity>,
+  I extends ReadonlyArray<PcoBaseEntity>,
 >(
   includedData: I,
   rootExternalLinks: ReadonlyArray<{

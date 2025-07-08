@@ -7,6 +7,7 @@ import { WorkflowProxyServer } from '@effect/workflow'
 import { DBLive } from '@openfaith/db'
 import { HealthLive, WorkflowApi, workflows } from '@openfaith/workers/api/workflowApi'
 import { PcoSyncEntityWorkflowLayer } from '@openfaith/workers/workflows/pcoSyncEntityWorkflow'
+import { PcoSyncWorkflowLayer } from '@openfaith/workers/workflows/pcoSyncWorkflow'
 import { TestWorkflowLayer } from '@openfaith/workers/workflows/testWorkflow'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
@@ -36,9 +37,11 @@ const WorkflowApiLive = HttpApiBuilder.api(WorkflowApi).pipe(
 
 const port = 3020
 
-const EnvLayer = Layer.mergeAll(PcoSyncEntityWorkflowLayer, TestWorkflowLayer).pipe(
-  Layer.provide(WorkflowEngineLayer),
-)
+const EnvLayer = Layer.mergeAll(
+  PcoSyncWorkflowLayer,
+  PcoSyncEntityWorkflowLayer,
+  TestWorkflowLayer,
+).pipe(Layer.provide(WorkflowEngineLayer))
 
 // Set up the server using NodeHttpServer on port 3000
 HttpApiBuilder.serve(HttpMiddleware.logger).pipe(

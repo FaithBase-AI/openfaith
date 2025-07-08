@@ -1,6 +1,8 @@
 import { Array, pipe, Record } from 'effect'
 
 const irregularPlurals: Record<string, string> = {
+  address: 'addresses',
+  campus: 'campuses',
   child: 'children',
   person: 'people',
 }
