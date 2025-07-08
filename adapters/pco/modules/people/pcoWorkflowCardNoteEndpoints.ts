@@ -24,9 +24,10 @@ export const getWorkflowCardNoteByIdDefinition = pcoApiAdapter({
 
 export const createWorkflowCardNoteDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowCardNote,
-  // TODO: Add note_category_id to creatableFields
-  // creatableFields: ['note', 'note_category_id'],
-  creatableFields: ['note'],
+  creatableFields: {
+    fields: ['note'],
+    special: ['note_category_id'],
+  },
   entity: 'WorkflowCardNote',
   method: 'POST',
   module: 'people',

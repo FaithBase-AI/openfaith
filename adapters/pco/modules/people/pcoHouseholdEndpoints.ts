@@ -49,7 +49,7 @@ export const updateHouseholdDefinition = pcoApiAdapter({
   module: 'people',
   name: 'update',
   path: '/people/v2/households/:householdId',
-  updatableFields: createHouseholdDefinition.creatableFields,
+  updatableFields: createHouseholdDefinition.creatableFields.fields,
 } as const)
 
 export const deleteHouseholdDefinition = pcoApiAdapter({

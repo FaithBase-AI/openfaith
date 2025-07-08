@@ -133,7 +133,8 @@ export type ConvertPcoEntityManifest<
                 infer _Module,
                 infer _Entity,
                 infer _Name,
-                infer _CreatableFields
+                infer _CreatableFields,
+                infer _CreatableSpecial
               >
             ? E & {
                 response: ReturnType<
@@ -221,7 +222,8 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
           infer _Module,
           infer _Entity,
           infer _Name,
-          infer _CreatableFields
+          infer _CreatableFields,
+          infer _CreatableSpecial
         >
       ? HttpApiEndpoint.HttpApiEndpoint<
           _Name,
@@ -230,6 +232,8 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
           never,
           {
             readonly [K in _CreatableFields[number]]: _Fields[K]
+          } & {
+            readonly [K in _CreatableSpecial[number]]: _Fields[K]
           },
           never,
           _Response['Type'],

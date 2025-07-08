@@ -23,9 +23,9 @@ export const getPersonAppByIdDefinition = pcoApiAdapter({
 
 export const createPersonAppDefinition = pcoApiAdapter({
   apiSchema: PcoPersonApp,
-  // TODO: Add app_id to creatableFields
-  // creatableFields: ['app_id'],
-  creatableFields: [],
+  creatableFields: {
+    special: ['app_id'],
+  },
   entity: 'PersonApp',
   method: 'POST',
   module: 'people',

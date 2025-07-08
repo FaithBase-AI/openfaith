@@ -59,6 +59,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
         QueryableSpecial,
         true,
         never,
+        never,
         never
       >,
       'includes' | 'queryableBy' | 'orderableBy'
@@ -122,6 +123,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
         QueryableSpecial,
         false,
         never,
+        never,
         never
       >,
       'includes' | 'queryableBy' | 'orderableBy'
@@ -164,6 +166,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TEntity extends string,
     TName extends string,
     CreatableFields extends ReadonlyArray<Extract<keyof Api, string>>,
+    CreatableSpecial extends ReadonlyArray<string>,
   >(
     params: DefineEndpointInput<
       'POST',
@@ -179,6 +182,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
       never,
       false,
       CreatableFields,
+      CreatableSpecial,
       never
     >,
   ): PostEndpointDefinition<
@@ -188,7 +192,8 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TModule,
     TEntity,
     TName,
-    CreatableFields
+    CreatableFields,
+    CreatableSpecial
   >
 
   // PATCH overload
@@ -212,6 +217,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
       never,
       never,
       false,
+      never,
       never,
       UpdatableFields
     >,
@@ -245,6 +251,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
       never,
       never,
       false,
+      never,
       never,
       never
     >,

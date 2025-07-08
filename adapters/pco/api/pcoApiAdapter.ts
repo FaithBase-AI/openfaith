@@ -65,6 +65,7 @@ function createApiAdapter<
         QueryableSpecial,
         true,
         never,
+        never,
         never
       >,
       'includes' | 'queryableBy' | 'orderableBy'
@@ -143,6 +144,7 @@ function createApiAdapter<
         QueryableSpecial,
         false,
         never,
+        never,
         never
       >,
       'includes' | 'queryableBy' | 'orderableBy'
@@ -185,24 +187,44 @@ function createApiAdapter<
     TEntity extends string,
     TName extends string,
     CreatableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
+    CreatableSpecial extends ReadonlyArray<string>,
   >(
-    params: DefineEndpointInput<
-      'POST',
-      Api,
-      Api[TFieldsKey],
-      TModule,
-      TEntity,
-      TName,
-      never,
-      never,
-      never,
-      never,
-      never,
-      false,
-      CreatableFields,
-      never
-    >,
-  ): BasePostEndpointDefinition<Api, Api[TFieldsKey], TModule, TEntity, TName, CreatableFields>
+    params: Omit<
+      DefineEndpointInput<
+        'POST',
+        Api,
+        Api[TFieldsKey],
+        TModule,
+        TEntity,
+        TName,
+        never,
+        never,
+        never,
+        never,
+        never,
+        false,
+        CreatableFields,
+        CreatableSpecial,
+        never
+      >,
+      'creatableFields'
+    > & {
+      creatableFields?:
+        | {
+            fields?: CreatableFields
+            special?: CreatableSpecial
+          }
+        | CreatableFields
+    },
+  ): BasePostEndpointDefinition<
+    Api,
+    Api[TFieldsKey],
+    TModule,
+    TEntity,
+    TName,
+    CreatableFields,
+    CreatableSpecial
+  >
 
   // PATCH overload
   function defineEndpoint<
@@ -225,6 +247,7 @@ function createApiAdapter<
       never,
       never,
       false,
+      never,
       never,
       UpdatableFields
     >,
@@ -251,6 +274,7 @@ function createApiAdapter<
       never,
       false,
       never,
+      never,
       never
     >,
   ): BaseDeleteEndpointDefinition<Api, Api[TFieldsKey], TModule, TEntity, TName>
@@ -259,6 +283,26 @@ function createApiAdapter<
   function defineEndpoint(params: any) {
     const baseParams = {
       ...params,
+      creatableFields: pipe(
+        params.creatableFields,
+        Option.fromNullable,
+        Option.match({
+          onNone: () => ({
+            fields: [],
+            special: [],
+          }),
+          onSome: (creatableFields) =>
+            Array.isArray(creatableFields)
+              ? {
+                  fields: creatableFields,
+                  special: [],
+                }
+              : {
+                  fields: creatableFields.fields ?? [],
+                  special: creatableFields.special ?? [],
+                },
+        }),
+      ),
       includes: params.includes ?? [],
       orderableBy: pipe(
         params.orderableBy,

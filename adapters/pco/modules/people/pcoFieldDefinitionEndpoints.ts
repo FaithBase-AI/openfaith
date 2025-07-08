@@ -45,7 +45,7 @@ export const updateFieldDefinitionDefinition = pcoApiAdapter({
   module: 'people',
   name: 'update',
   path: '/people/v2/field_definitions/:fieldDefinitionId',
-  updatableFields: createFieldDefinitionDefinition.creatableFields,
+  updatableFields: createFieldDefinitionDefinition.creatableFields.fields,
 } as const)
 
 export const deleteFieldDefinitionDefinition = pcoApiAdapter({

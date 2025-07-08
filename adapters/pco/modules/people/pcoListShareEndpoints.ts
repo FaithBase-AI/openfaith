@@ -23,9 +23,10 @@ export const getListShareByIdDefinition = pcoApiAdapter({
 
 export const createListShareDefinition = pcoApiAdapter({
   apiSchema: PcoListShare,
-  // TODO: Add person_id to creatableFields
-  // creatableFields: ['permission', 'group', 'person_id'],
-  creatableFields: ['permission', 'group'],
+  creatableFields: {
+    fields: ['permission', 'group'],
+    special: ['person_id'],
+  },
   entity: 'ListShare',
   method: 'POST',
   module: 'people',
@@ -40,7 +41,7 @@ export const updateListShareDefinition = pcoApiAdapter({
   module: 'people',
   name: 'update',
   path: '/people/v2/lists/:listId/shares/:id',
-  updatableFields: createListShareDefinition.creatableFields,
+  updatableFields: createListShareDefinition.creatableFields.fields,
 } as const)
 
 export const deleteListShareDefinition = pcoApiAdapter({

@@ -67,7 +67,7 @@ export const updateCampusDefinition = pcoApiAdapter({
   module: 'people',
   name: 'update',
   path: '/people/v2/campuses/:campusId',
-  updatableFields: createCampusDefinition.creatableFields,
+  updatableFields: createCampusDefinition.creatableFields.fields,
 } as const)
 
 export const deleteCampusDefinition = pcoApiAdapter({

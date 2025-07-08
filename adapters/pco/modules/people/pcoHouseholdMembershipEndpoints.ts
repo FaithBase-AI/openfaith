@@ -23,9 +23,10 @@ export const getHouseholdMembershipByIdDefinition = pcoApiAdapter({
 
 export const createHouseholdMembershipDefinition = pcoApiAdapter({
   apiSchema: PcoHouseholdMembership,
-  // TODO: Add person_id to creatableFields
-  // creatableFields: ['person_id', 'pending'],
-  creatableFields: ['pending'],
+  creatableFields: {
+    fields: ['pending'],
+    special: ['person_id'],
+  },
   entity: 'HouseholdMembership',
   method: 'POST',
   module: 'people',
@@ -40,7 +41,7 @@ export const updateHouseholdMembershipDefinition = pcoApiAdapter({
   module: 'people',
   name: 'update',
   path: '/people/v2/households/:householdId/household_memberships/:id',
-  updatableFields: createHouseholdMembershipDefinition.creatableFields,
+  updatableFields: createHouseholdMembershipDefinition.creatableFields.fields,
 } as const)
 
 export const deleteHouseholdMembershipDefinition = pcoApiAdapter({

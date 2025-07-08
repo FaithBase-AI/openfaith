@@ -56,9 +56,11 @@ export type DefineGetEndpointInput<
       includes: Includes
       /** API endpoint path */
       path: `/${string}`
-      /** Fields that can be used for ordering responses */
+      /** Order configuration */
       orderableBy: {
+        /** Fields that can be ordered */
         fields: OrderableFields
+        /** Special order parameters */
         special: OrderableSpecial
       }
       /** HTTP method for this endpoint */
@@ -169,6 +171,7 @@ export type DefinePostEndpointInput<
   TEntity extends string,
   TName extends string,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  CreatableSpecial extends ReadonlyArray<string>,
 > = {
   /** The Effect schema for the API resource */
   apiSchema: Schema.Schema<Api>
@@ -183,7 +186,10 @@ export type DefinePostEndpointInput<
   /** The operation name for this endpoint */
   name: TName
   /** Array of fields that can be set when creating a new resource */
-  creatableFields: CreatableFields
+  creatableFields: {
+    fields: CreatableFields
+    special: CreatableSpecial
+  }
 }
 
 export type BasePostEndpointDefinition<
@@ -193,7 +199,8 @@ export type BasePostEndpointDefinition<
   TEntity extends string,
   TName extends string,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
-> = DefinePostEndpointInput<Api, Fields, TModule, TEntity, TName, CreatableFields>
+  CreatableSpecial extends ReadonlyArray<string>,
+> = DefinePostEndpointInput<Api, Fields, TModule, TEntity, TName, CreatableFields, CreatableSpecial>
 
 export type PostEndpointDefinition<
   Api,
@@ -203,7 +210,16 @@ export type PostEndpointDefinition<
   TEntity extends string,
   TName extends string,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
-> = BasePostEndpointDefinition<Api, Fields, TModule, TEntity, TName, CreatableFields> & {
+  CreatableSpecial extends ReadonlyArray<string>,
+> = BasePostEndpointDefinition<
+  Api,
+  Fields,
+  TModule,
+  TEntity,
+  TName,
+  CreatableFields,
+  CreatableSpecial
+> & {
   response: Response
 }
 
@@ -322,6 +338,7 @@ export type DefineEndpointInput<
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends boolean,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  CreatableSpecial extends ReadonlyArray<string>,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
 > = TMethod extends 'GET'
   ? DefineGetEndpointInput<
@@ -338,7 +355,15 @@ export type DefineEndpointInput<
       IsCollection
     >
   : TMethod extends 'POST'
-    ? DefinePostEndpointInput<Api, Fields, TModule, TEntity, TName, CreatableFields>
+    ? DefinePostEndpointInput<
+        Api,
+        Fields,
+        TModule,
+        TEntity,
+        TName,
+        CreatableFields,
+        CreatableSpecial
+      >
     : TMethod extends 'PATCH'
       ? DefinePatchEndpointInput<Api, Fields, TModule, TEntity, TName, UpdatableFields>
       : TMethod extends 'DELETE'
@@ -359,6 +384,7 @@ export type BaseEndpointDefinition<
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends boolean,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  CreatableSpecial extends ReadonlyArray<string>,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   Query extends Schema.Schema<any>,
 > = TMethod extends 'GET'
@@ -377,7 +403,15 @@ export type BaseEndpointDefinition<
       Query
     >
   : TMethod extends 'POST'
-    ? BasePostEndpointDefinition<Api, Fields, TModule, TEntity, TName, CreatableFields>
+    ? BasePostEndpointDefinition<
+        Api,
+        Fields,
+        TModule,
+        TEntity,
+        TName,
+        CreatableFields,
+        CreatableSpecial
+      >
     : TMethod extends 'PATCH'
       ? BasePatchEndpointDefinition<Api, Fields, TModule, TEntity, TName, UpdatableFields>
       : TMethod extends 'DELETE'
@@ -399,6 +433,7 @@ export type EndpointDefinition<
   QueryableSpecial extends ReadonlyArray<string>,
   IsCollection extends boolean,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  CreatableSpecial extends ReadonlyArray<string>,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   Query extends Schema.Schema<any>,
 > = TMethod extends 'GET'
@@ -418,7 +453,16 @@ export type EndpointDefinition<
       Query
     >
   : TMethod extends 'POST'
-    ? PostEndpointDefinition<Api, Response, Fields, TModule, TEntity, TName, CreatableFields>
+    ? PostEndpointDefinition<
+        Api,
+        Response,
+        Fields,
+        TModule,
+        TEntity,
+        TName,
+        CreatableFields,
+        CreatableSpecial
+      >
     : TMethod extends 'PATCH'
       ? PatchEndpointDefinition<Api, Response, Fields, TModule, TEntity, TName, UpdatableFields>
       : TMethod extends 'DELETE'
@@ -428,7 +472,7 @@ export type EndpointDefinition<
 export type EntityManifestShape = Record<
   string,
   | GetEndpointDefinition<any, any, any, any, any, any, any, any, any, any, any, any, any>
-  | PostEndpointDefinition<any, any, any, any, any, any, any>
+  | PostEndpointDefinition<any, any, any, any, any, any, any, any>
   | PatchEndpointDefinition<any, any, any, any, any, any, any>
   | DeleteEndpointDefinition<any, any, any, any, any, any>
 >
@@ -454,6 +498,7 @@ export type Any = EndpointDefinition<
   any,
   any,
   any,
+  any,
   any
 >
 
@@ -464,6 +509,7 @@ export type Any = EndpointDefinition<
  */
 export type BaseAny = BaseEndpointDefinition<
   Method,
+  any,
   any,
   any,
   any,

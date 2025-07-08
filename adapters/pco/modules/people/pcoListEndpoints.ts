@@ -36,7 +36,8 @@ export const createListDefinition = pcoApiAdapter({
   apiSchema: PcoList,
   creatableFields: ['name'],
   entity: 'List',
-  method: 'POST',  module: 'people',
+  method: 'POST',
+  module: 'people',
   name: 'create',
   path: '/people/v2/lists',
 } as const)
@@ -48,7 +49,7 @@ export const updateListDefinition = pcoApiAdapter({
   module: 'people',
   name: 'update',
   path: '/people/v2/lists/:listId',
-  updatableFields: createListDefinition.creatableFields,
+  updatableFields: createListDefinition.creatableFields.fields,
 } as const)
 
 export const deleteListDefinition = pcoApiAdapter({

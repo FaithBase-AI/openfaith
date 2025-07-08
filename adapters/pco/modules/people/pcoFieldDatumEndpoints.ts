@@ -30,9 +30,10 @@ export const getFieldDatumByIdDefinition = pcoApiAdapter({
 
 export const createFieldDatumDefinition = pcoApiAdapter({
   apiSchema: PcoFieldDatum,
-  // TODO: add field_definition_id
-  // creatableFields: ['value', 'field_definition_id'],
-  creatableFields: ['value'],
+  creatableFields: {
+    fields: ['value'],
+    special: ['field_definition_id'],
+  },
   entity: 'FieldDatum',
   method: 'POST',
   module: 'people',
