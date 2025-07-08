@@ -6,7 +6,7 @@ import { NodeClusterRunnerSocket, NodeHttpServer, NodeRuntime } from '@effect/pl
 import { WorkflowProxyServer } from '@effect/workflow'
 import { DBLive } from '@openfaith/db'
 import { HealthLive, WorkflowApi, workflows } from '@openfaith/workers/api/workflowApi'
-import { PcoSyncWorkflowLayer } from '@openfaith/workers/workflows/pcoSyncWorkflow'
+import { PcoSyncEntityWorkflowLayer } from '@openfaith/workers/workflows/pcoSyncEntityWorkflow'
 import { TestWorkflowLayer } from '@openfaith/workers/workflows/testWorkflow'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
@@ -36,7 +36,7 @@ const WorkflowApiLive = HttpApiBuilder.api(WorkflowApi).pipe(
 
 const port = 3020
 
-const EnvLayer = Layer.mergeAll(PcoSyncWorkflowLayer, TestWorkflowLayer).pipe(
+const EnvLayer = Layer.mergeAll(PcoSyncEntityWorkflowLayer, TestWorkflowLayer).pipe(
   Layer.provide(WorkflowEngineLayer),
 )
 

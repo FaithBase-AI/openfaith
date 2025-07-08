@@ -21,6 +21,7 @@ export const listPhoneNumbersDefinition = pcoApiAdapter({
     fields: ['carrier', 'created_at', 'location', 'number', 'primary', 'updated_at'],
     special: ['id'],
   },
+  skipSync: true,
 } as const)
 
 export const getPhoneNumberByIdDefinition = pcoApiAdapter({

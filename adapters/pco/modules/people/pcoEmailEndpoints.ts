@@ -3,12 +3,19 @@ import { PcoEmail } from '@openfaith/pco/modules/people/pcoEmailSchema'
 
 export const listEmailsDefinition = pcoApiAdapter({
   apiSchema: PcoEmail,
+  defaultQuery: {
+    order: 'created_at',
+    per_page: 100,
+  },
   entity: 'Email',
   isCollection: true,
   method: 'GET',
   module: 'people',
   name: 'list',
+  orderableBy: ['address', 'created_at', 'location', 'primary', 'updated_at'],
   path: '/people/v2/emails',
+  queryableBy: ['address', 'created_at', 'location', 'primary', 'updated_at'],
+  skipSync: true,
 } as const)
 
 export const getEmailByIdDefinition = pcoApiAdapter({

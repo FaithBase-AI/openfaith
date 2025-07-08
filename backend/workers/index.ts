@@ -1,4 +1,4 @@
 export * from './api/workflowApi'
 export * from './api/workflowClient'
 export * from './runner'
-export * from './workflows/pcoSyncWorkflow'
+export * from './workflows/pcoSyncEntityWorkflow'

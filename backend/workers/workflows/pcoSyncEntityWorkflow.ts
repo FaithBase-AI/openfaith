@@ -8,12 +8,15 @@ import { saveDataE } from '@openfaith/workers/helpers/ofLookup'
 import { Array, Effect, Option, pipe, Record, Schema, SchemaAST, Stream, String } from 'effect'
 
 // Define the PCO sync error
-class PcoSyncError extends Schema.TaggedError<PcoSyncError>('PcoSyncError')('PcoSyncError', {
-  message: Schema.String,
-}) {}
+class PcoSyncEntityError extends Schema.TaggedError<PcoSyncEntityError>('PcoSyncEntityError')(
+  'PcoSyncEntityError',
+  {
+    message: Schema.String,
+  },
+) {}
 
 // Define the workflow payload schema
-const PcoSyncPayload = Schema.Struct({
+const PcoSyncEntityPayload = Schema.Struct({
   entity: Schema.Literal(
     ...pipe(
       pcoEntityManifest,
@@ -25,16 +28,16 @@ const PcoSyncPayload = Schema.Struct({
 })
 
 // Define the PCO sync workflow
-export const PcoSyncWorkflow = Workflow.make({
-  error: PcoSyncError,
+export const PcoSyncEntityWorkflow = Workflow.make({
+  error: PcoSyncEntityError,
   idempotencyKey: ({ tokenKey }) => `pco-sync-${tokenKey}-${new Date().toISOString()}`,
   name: 'PcoSyncWorkflow',
-  payload: PcoSyncPayload,
+  payload: PcoSyncEntityPayload,
   success: Schema.Void,
 })
 
 // Create the workflow implementation layer
-export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
+export const PcoSyncEntityWorkflowLayer = PcoSyncEntityWorkflow.toLayer(
   Effect.fn(function* (payload, executionId) {
     yield* Effect.log(`🔄 Starting PCO sync workflow for token: ${payload.tokenKey}`)
     yield* Effect.log(`🆔 Execution ID: ${executionId}`)
@@ -43,7 +46,7 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
 
     // Create the PCO sync activity
     yield* Activity.make({
-      error: PcoSyncError,
+      error: PcoSyncEntityError,
       execute: Effect.gen(function* () {
         const attempt = yield* Activity.CurrentAttempt
 
@@ -96,7 +99,7 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
             } as const),
             (data) =>
               saveDataE(data).pipe(
-                Effect.mapError((error) => new PcoSyncError({ message: error.message })),
+                Effect.mapError((error) => new PcoSyncEntityError({ message: error.message })),
               ),
           )
         }
@@ -108,7 +111,7 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
       name: 'SyncPcoData',
     }).pipe(
       Activity.retry({ times: 3 }),
-      PcoSyncWorkflow.withCompensation(
+      PcoSyncEntityWorkflow.withCompensation(
         Effect.fn(function* (_value, cause) {
           yield* Effect.log(`🔄 Compensating PCO sync activity for token: ${payload.tokenKey}`)
           yield* Effect.log(`📋 Cause: ${cause}`)
