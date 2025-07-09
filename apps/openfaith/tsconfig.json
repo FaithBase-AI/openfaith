@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@openfaith/openfaith/*": ["./*"]
+      "@openfaith/openfaith/*": ["./src/*"]
     }
   },
   "extends": "@openfaith/tsconfig/base.json",
