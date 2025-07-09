@@ -94,6 +94,220 @@ export const adapterDetailsSchema = table('adapterDetails')
   })
   .primaryKey('orgId', 'adapter')
 
+// Address Table
+export const addressSchema = table('address')
+  .from('openfaith_address')
+  .columns({
+    _tag: enumeration<'address'>(),
+    city: string().optional(),
+    countryCode: string().optional(),
+    countryName: string().optional(),
+    // System fields
+    createdAt: number(),
+    createdBy: string().optional(),
+    customFields: json().optional(),
+    deletedAt: number().optional(),
+    deletedBy: string().optional(),
+    // Identification fields
+    externalIds: json().optional(),
+    id: string(),
+    inactivatedAt: number().optional(),
+    inactivatedBy: string().optional(),
+    location: string().optional(),
+    orgId: string(),
+    primary: boolean(),
+    state: string().optional(),
+    status: enumeration<'active' | 'inactive'>(),
+    streetLine1: string().optional(),
+    streetLine2: string().optional(),
+    tags: json().optional(),
+    type: enumeration<'default'>(),
+    updatedAt: number().optional(),
+    updatedBy: string().optional(),
+    zip: string().optional(),
+  })
+  .primaryKey('id')
+
+// Campus Table
+export const campusSchema = table('campus')
+  .from('openfaith_campus')
+  .columns({
+    _tag: enumeration<'campus'>(),
+    avatarUrl: string().optional(),
+    churchCenterEnabled: boolean().optional(),
+    city: string().optional(),
+    contactEmailAddress: string().optional(),
+    country: string().optional(),
+    // System fields
+    createdAt: number(),
+    createdBy: string().optional(),
+    customFields: json().optional(),
+    dateFormat: number().optional(),
+    deletedAt: number().optional(),
+    deletedBy: string().optional(),
+    description: string().optional(),
+    // Identification fields
+    externalIds: json().optional(),
+    geolocationSetManually: boolean().optional(),
+    id: string(),
+    inactivatedAt: number().optional(),
+    inactivatedBy: string().optional(),
+    latitude: number().optional(),
+    longitude: number().optional(),
+    name: string().optional(),
+    orgId: string(),
+    phoneNumber: string().optional(),
+    state: string().optional(),
+    status: enumeration<'active' | 'inactive'>(),
+    street: string().optional(),
+    tags: json().optional(),
+    timeZone: string().optional(),
+    timeZoneRaw: string().optional(),
+    twentyFourHourTime: boolean().optional(),
+    updatedAt: number().optional(),
+    updatedBy: string().optional(),
+    website: string().optional(),
+    zip: string().optional(),
+  })
+  .primaryKey('id')
+
+// Folder Table
+export const folderSchema = table('folder')
+  .from('openfaith_folder')
+  .columns({
+    _tag: enumeration<'folder'>(),
+    color: string().optional(),
+    // System fields
+    createdAt: number(),
+    createdBy: string().optional(),
+    customFields: json().optional(),
+    deletedAt: number().optional(),
+    deletedBy: string().optional(),
+    description: string().optional(),
+    // Identification fields
+    externalIds: json().optional(),
+    folderType: string().optional(),
+    icon: string().optional(),
+    id: string(),
+    name: string(),
+    orderingKey: string().optional(),
+    orgId: string(),
+    parentFolderId: string().optional(),
+    status: enumeration<'active' | 'inactive'>().optional(),
+    tags: json().optional(),
+    updatedAt: number().optional(),
+    updatedBy: string().optional(),
+  })
+  .primaryKey('id')
+
+// Person Table
+export const personSchema = table('person')
+  .from('openfaith_person')
+  .columns({
+    _tag: enumeration<'person'>(),
+    anniversary: string().optional(),
+    avatar: string().optional(),
+    birthdate: string().optional(),
+    // System fields
+    createdAt: number(),
+    createdBy: string().optional(),
+    customFields: json().optional(),
+    deletedAt: number().optional(),
+    deletedBy: string().optional(),
+    // Identification fields
+    externalIds: json().optional(),
+    firstName: string().optional(),
+    gender: enumeration<'male' | 'female'>().optional(),
+    id: string(),
+    inactivatedAt: number().optional(),
+    inactivatedBy: string().optional(),
+    lastName: string().optional(),
+    membership: string().optional(),
+    middleName: string().optional(),
+    name: string().optional(),
+    orgId: string(),
+    status: enumeration<'active' | 'inactive'>(),
+    tags: json().optional(),
+    type: enumeration<'default'>(),
+    updatedAt: number().optional(),
+    updatedBy: string().optional(),
+  })
+  .primaryKey('id')
+
+// PhoneNumber Table
+export const phoneNumberSchema = table('phoneNumber')
+  .from('openfaith_phoneNumber')
+  .columns({
+    _tag: enumeration<'phoneNumber'>(),
+    countryCode: string(),
+    // System fields
+    createdAt: number(),
+    createdBy: string().optional(),
+    customFields: json().optional(),
+    deletedAt: number().optional(),
+    deletedBy: string().optional(),
+    // Identification fields
+    externalIds: json().optional(),
+    id: string(),
+    inactivatedAt: number().optional(),
+    inactivatedBy: string().optional(),
+    location: string().optional(),
+    number: string(),
+    orgId: string(),
+    primary: boolean(),
+    status: enumeration<'active' | 'inactive'>(),
+    tags: json().optional(),
+    type: enumeration<'default'>(),
+    updatedAt: number().optional(),
+    updatedBy: string().optional(),
+  })
+  .primaryKey('id')
+
+// Edge Table
+export const edgeSchema = table('edge')
+  .from('openfaith_edge')
+  .columns({
+    _tag: enumeration<'edge'>(),
+    // System fields
+    createdAt: number(),
+    createdBy: string().optional(),
+    deletedAt: number().optional(),
+    deletedBy: string().optional(),
+    // Identification fields
+    externalIds: json().optional(),
+    id: string(),
+    inactivatedAt: number().optional(),
+    inactivatedBy: string().optional(),
+    metadata: json().optional(),
+    orgId: string(),
+    relationshipType: string(),
+    sourceEntityId: string(),
+    sourceEntityTypeTag: string(),
+    status: enumeration<'active' | 'inactive'>().optional(),
+    tags: json().optional(),
+    targetEntityId: string(),
+    targetEntityTypeTag: string(),
+    updatedAt: number().optional(),
+    updatedBy: string().optional(),
+  })
+  .primaryKey('id')
+
+// AdapterToken Table
+export const adapterTokenSchema = table('adapterToken')
+  .from('openfaith_adapterToken')
+  .columns({
+    accessToken: string(),
+    adapter: string(),
+    createdAt: number(),
+    expiresIn: number(),
+    // Identification fields
+    externalIds: json().optional(),
+    id: string(),
+    orgId: string(),
+    refreshToken: string(),
+  })
+  .primaryKey('id')
+
 // Relations
 export const usersRelationships = relationships(usersSchema, ({ many }) => ({
   createdInvitations: many({
@@ -126,6 +340,31 @@ export const orgsRelationships = relationships(orgsSchema, ({ one, many }) => ({
     destSchema: adapterDetailsSchema,
     sourceField: ['id'],
   }),
+  adapterTokens: many({
+    destField: ['orgId'],
+    destSchema: adapterTokenSchema,
+    sourceField: ['id'],
+  }),
+  addresses: many({
+    destField: ['orgId'],
+    destSchema: addressSchema,
+    sourceField: ['id'],
+  }),
+  campuses: many({
+    destField: ['orgId'],
+    destSchema: campusSchema,
+    sourceField: ['id'],
+  }),
+  edges: many({
+    destField: ['orgId'],
+    destSchema: edgeSchema,
+    sourceField: ['id'],
+  }),
+  folders: many({
+    destField: ['orgId'],
+    destSchema: folderSchema,
+    sourceField: ['id'],
+  }),
   invitations: many({
     destField: ['orgId'],
     destSchema: invitationsSchema,
@@ -139,6 +378,16 @@ export const orgsRelationships = relationships(orgsSchema, ({ one, many }) => ({
   orgUsers: many({
     destField: ['orgId'],
     destSchema: orgUsersSchema,
+    sourceField: ['id'],
+  }),
+  people: many({
+    destField: ['orgId'],
+    destSchema: personSchema,
+    sourceField: ['id'],
+  }),
+  phoneNumbers: many({
+    destField: ['orgId'],
+    destSchema: phoneNumberSchema,
     sourceField: ['id'],
   }),
   users: many(
@@ -207,6 +456,62 @@ export const adapterDetailsRelationships = relationships(adapterDetailsSchema, (
   }),
 }))
 
+export const addressRelationships = relationships(addressSchema, ({ one }) => ({
+  org: one({
+    destField: ['id'],
+    destSchema: orgsSchema,
+    sourceField: ['orgId'],
+  }),
+}))
+
+export const campusRelationships = relationships(campusSchema, ({ one }) => ({
+  org: one({
+    destField: ['id'],
+    destSchema: orgsSchema,
+    sourceField: ['orgId'],
+  }),
+}))
+
+export const folderRelationships = relationships(folderSchema, ({ one }) => ({
+  org: one({
+    destField: ['id'],
+    destSchema: orgsSchema,
+    sourceField: ['orgId'],
+  }),
+}))
+
+export const personRelationships = relationships(personSchema, ({ one }) => ({
+  org: one({
+    destField: ['id'],
+    destSchema: orgsSchema,
+    sourceField: ['orgId'],
+  }),
+}))
+
+export const phoneNumberRelationships = relationships(phoneNumberSchema, ({ one }) => ({
+  org: one({
+    destField: ['id'],
+    destSchema: orgsSchema,
+    sourceField: ['orgId'],
+  }),
+}))
+
+export const edgeRelationships = relationships(edgeSchema, ({ one }) => ({
+  org: one({
+    destField: ['id'],
+    destSchema: orgsSchema,
+    sourceField: ['orgId'],
+  }),
+}))
+
+export const adapterTokenRelationships = relationships(adapterTokenSchema, ({ one }) => ({
+  org: one({
+    destField: ['id'],
+    destSchema: orgsSchema,
+    sourceField: ['orgId'],
+  }),
+}))
+
 export const schema = createSchema({
   relationships: [
     adapterDetailsRelationships,
@@ -215,6 +520,13 @@ export const schema = createSchema({
     orgsRelationships,
     orgUsersRelationships,
     usersRelationships,
+    addressRelationships,
+    campusRelationships,
+    folderRelationships,
+    personRelationships,
+    phoneNumberRelationships,
+    edgeRelationships,
+    adapterTokenRelationships,
   ],
   tables: [
     adapterDetailsSchema,
@@ -223,6 +535,13 @@ export const schema = createSchema({
     orgsSchema,
     orgUsersSchema,
     usersSchema,
+    addressSchema,
+    campusSchema,
+    folderSchema,
+    personSchema,
+    phoneNumberSchema,
+    edgeSchema,
+    adapterTokenSchema,
   ],
 })
 
@@ -271,6 +590,56 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     )
 
   return {
+    adapterToken: {
+      row: {
+        insert: [allowIfAdmin],
+        select: [allowIfAdmin],
+        update: {
+          postMutation: [allowIfAdmin],
+          preMutation: [allowIfAdmin],
+        },
+      },
+    },
+    address: {
+      row: {
+        insert: [allowIfAdmin],
+        select: ANYONE_CAN,
+        update: {
+          postMutation: [allowIfAdmin],
+          preMutation: [allowIfAdmin],
+        },
+      },
+    },
+    campus: {
+      row: {
+        insert: [allowIfAdmin],
+        select: ANYONE_CAN,
+        update: {
+          postMutation: [allowIfAdmin],
+          preMutation: [allowIfAdmin],
+        },
+      },
+    },
+    edge: {
+      row: {
+        insert: [allowIfAdmin],
+        select: [allowIfAdmin],
+        update: {
+          postMutation: [allowIfAdmin],
+          preMutation: [allowIfAdmin],
+        },
+      },
+    },
+    folder: {
+      row: {
+        insert: [allowIfAdmin],
+        select: ANYONE_CAN,
+        update: {
+          postMutation: [allowIfAdmin],
+          preMutation: [allowIfAdmin],
+        },
+      },
+    },
     orgSettings: {
       row: {
         insert: [allowIfAdmin],
@@ -295,6 +664,26 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
       row: {
         insert: NOBODY_CAN,
         select: ANYONE_CAN,
+      },
+    },
+    person: {
+      row: {
+        insert: [allowIfAdmin],
+        select: ANYONE_CAN,
+        update: {
+          postMutation: [allowIfAdmin],
+          preMutation: [allowIfAdmin],
+        },
+      },
+    },
+    phoneNumber: {
+      row: {
+        insert: [allowIfAdmin],
+        select: ANYONE_CAN,
+        update: {
+          postMutation: [allowIfAdmin],
+          preMutation: [allowIfAdmin],
+        },
       },
     },
     users: {

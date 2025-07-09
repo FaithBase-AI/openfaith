@@ -35,8 +35,8 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   console.log('>>> tRPC Request from', source, 'by', session?.user.email)
 
   return {
-    session,
     db,
+    session,
   }
 }
 
@@ -47,7 +47,6 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
  * transformer
  */
 const t = initTRPC.context<typeof createTRPCContext>().create({
-  transformer: superjson,
   errorFormatter: ({ shape, error }) => ({
     ...shape,
     data: {
@@ -55,6 +54,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
       zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
     },
   }),
+  transformer: superjson,
 })
 
 /**
