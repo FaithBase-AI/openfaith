@@ -1,11 +1,6 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "tasks": {
-    "@openfaith/api#dev": {
-      "cache": false,
-      "dependsOn": ["@openfaith/infra-db#health-check", "^infra"],
-      "persistent": true
-    },
     "@openfaith/db#dev": {
       "cache": false,
       "dependsOn": ["@openfaith/infra-db#health-check"],

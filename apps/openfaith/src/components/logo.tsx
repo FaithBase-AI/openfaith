@@ -30,14 +30,14 @@ export const Logo = ({
         variant === 'wordmark',
         Boolean.match({
           onFalse: () => ({
-            width: '32',
             height: '32',
             viewBox: '0 0 32 32',
+            width: '32',
           }),
           onTrue: () => ({
-            width: '130',
             height: '32',
             viewBox: '0 0 130 32',
+            width: '130',
           }),
         }),
       )}

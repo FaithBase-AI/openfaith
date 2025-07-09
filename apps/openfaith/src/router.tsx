@@ -47,7 +47,14 @@ export function createRouter() {
         <Loader2Icon className='size-8 opacity-0 group-data-[loading=true]:animate-spin group-data-[loading=true]:opacity-100' />
       </div>
     ),
-    defaultPreload: 'intent',
+    defaultPreload: 'viewport',
+    // We don't want TanStack skipping any calls to us. We want to be asked to
+    // preload every link. This is fine because Zero has its own internal
+    // deduping and caching.
+    defaultPreloadGcTime: 0,
+    // It is fine to call Zero multiple times for same query, Zero dedupes the
+    // queries internally.
+    defaultPreloadStaleTime: 0,
     routeTree,
     scrollRestoration: true,
     Wrap: function WrapComponent({ children }) {

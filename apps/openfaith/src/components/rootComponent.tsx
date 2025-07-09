@@ -17,7 +17,7 @@ export const RootComponent: FC<RootComponentProps> = (props) => {
         <HeadContent />
       </head>
       <body className='font-regular tracking-wide antialiased'>
-        <Providers userId={userId} token={token}>
+        <Providers token={token} userId={userId}>
           {children}
         </Providers>
         <Scripts />
