@@ -5,7 +5,7 @@
     "effect": "^3.12.5"
   },
   "devDependencies": {
-    "@openfaith/typescript": "workspace:*"
+    "typescript": "catalog:"
   },
   "exports": {
     ".": "./index.ts"

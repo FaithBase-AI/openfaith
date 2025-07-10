@@ -9,7 +9,7 @@ import {
   type HttpClientResponse,
 } from '@effect/platform'
 import { MemoryRateLimitStoreLive } from '@openfaith/adapter-core/ratelimit/RateLimit'
-import { RateLimiter, TokenKey, TokenManagerLive } from '@openfaith/adapter-core/server'
+import { RateLimiter, TokenKey } from '@openfaith/adapter-core/server'
 import {
   PcoAuthenticationError,
   PcoAuthorizationError,
@@ -198,7 +198,6 @@ export class PcoHttpClient extends Effect.Service<PcoHttpClient>()('PcoHttpClien
 export const PcoApiLayer = Layer.empty.pipe(
   Layer.provideMerge(PcoHttpClient.Default),
   Layer.provideMerge(PcoAuthLive),
-  Layer.provideMerge(TokenManagerLive),
   Layer.provideMerge(RateLimiter.RateLimiterLive),
   Layer.provideMerge(MemoryRateLimitStoreLive),
 )

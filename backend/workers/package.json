@@ -10,6 +10,7 @@
     "@openfaith/db": "workspace:*",
     "@openfaith/pco": "workspace:*",
     "@openfaith/schema": "workspace:*",
+    "@openfaith/server": "workspace:*",
     "@openfaith/shared": "workspace:*",
     "effect": "catalog:"
   },

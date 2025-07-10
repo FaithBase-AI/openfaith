@@ -128,6 +128,7 @@
         "@effect/platform": "catalog:",
         "@effect/sql-drizzle": "catalog:",
         "@openfaith/auth": "workspace:*",
+        "@openfaith/db": "workspace:*",
         "@openfaith/pco": "workspace:*",
         "@openfaith/schema": "workspace:*",
         "@openfaith/shared": "workspace:*",
@@ -166,18 +167,13 @@
     },
     "backend/server": {
       "name": "@openfaith/server",
-      "version": "0.1.0",
+      "version": "0.0.0",
       "dependencies": {
-        "@effect/platform": "catalog:",
-        "@effect/rpc": "catalog:",
-        "@effect/sql-drizzle": "catalog:",
-        "@openfaith/api": "workspace:*",
+        "@effect/platform": "^0.69.28",
+        "@effect/rpc": "^0.43.3",
         "@openfaith/db": "workspace:*",
         "@openfaith/domain": "workspace:*",
-        "@openfaith/pco": "workspace:*",
-        "@openfaith/shared": "workspace:*",
-        "date-fns": "catalog:",
-        "effect": "catalog:",
+        "effect": "^3.12.5",
       },
       "devDependencies": {
         "typescript": "catalog:",
@@ -210,6 +206,7 @@
         "@openfaith/db": "workspace:*",
         "@openfaith/pco": "workspace:*",
         "@openfaith/schema": "workspace:*",
+        "@openfaith/server": "workspace:*",
         "@openfaith/shared": "workspace:*",
         "effect": "catalog:",
       },
@@ -263,6 +260,7 @@
       "dependencies": {
         "@effect/sql-drizzle": "catalog:",
         "@effect/sql-pg": "catalog:",
+        "@openfaith/shared": "workspace:*",
         "drizzle-kit": "catalog:",
         "drizzle-orm": "catalog:",
         "effect": "catalog:",
@@ -273,11 +271,11 @@
     },
     "packages/domain": {
       "name": "@openfaith/domain",
-      "version": "0.1.0",
+      "version": "0.0.0",
       "dependencies": {
-        "@effect/rpc": "catalog:",
-        "effect": "catalog:",
-        "zod": "3.25.42",
+        "@effect/platform": "^0.69.28",
+        "@effect/rpc": "^0.43.3",
+        "effect": "^3.12.5",
       },
       "devDependencies": {
         "typescript": "catalog:",
