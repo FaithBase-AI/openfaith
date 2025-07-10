@@ -4,6 +4,7 @@
     "@effect/platform": "catalog:",
     "@effect/sql-drizzle": "catalog:",
     "@openfaith/auth": "workspace:*",
+    "@openfaith/db": "workspace:*",
     "@openfaith/pco": "workspace:*",
     "@openfaith/schema": "workspace:*",
     "@openfaith/shared": "workspace:*",

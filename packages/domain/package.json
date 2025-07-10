@@ -1,22 +1,16 @@
 {
   "dependencies": {
-    "@effect/rpc": "catalog:",
-    "effect": "catalog:",
-    "zod": "3.25.42"
+    "@effect/platform": "^0.69.28",
+    "@effect/rpc": "^0.43.3",
+    "effect": "^3.12.5"
   },
   "devDependencies": {
-    "typescript": "catalog:"
+    "@openfaith/typescript": "workspace:*"
   },
-  "license": "MIT",
+  "exports": {
+    ".": "./index.ts"
+  },
   "name": "@openfaith/domain",
-  "private": true,
-  "scripts": {
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "format": "biome lint .",
-    "lint:biome": "biome lint .",
-    "test": "bun test",
-    "typecheck": "tsc --noEmit"
-  },
   "type": "module",
-  "version": "0.1.0"
+  "version": "0.0.0"
 }
