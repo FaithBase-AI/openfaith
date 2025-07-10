@@ -1,7 +1,7 @@
 import { Workflow } from '@effect/workflow'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
+import { PcoSyncEntityWorkflow } from '@openfaith/workers/workflows/pcoSyncEntityWorkflow'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
-import { PcoSyncEntityWorkflow } from './pcoSyncEntityWorkflow'
 
 // Define the PCO sync error
 class PcoSyncError extends Schema.TaggedError<PcoSyncError>('PcoSyncError')('PcoSyncError', {
