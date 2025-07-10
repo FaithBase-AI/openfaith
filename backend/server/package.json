@@ -1,0 +1,29 @@
+{
+  "dependencies": {
+    "@effect/platform": "catalog:",
+    "@effect/rpc": "catalog:",
+    "@effect/sql-drizzle": "catalog:",
+    "@openfaith/api": "workspace:*",
+    "@openfaith/db": "workspace:*",
+    "@openfaith/domain": "workspace:*",
+    "@openfaith/pco": "workspace:*",
+    "@openfaith/shared": "workspace:*",
+    "date-fns": "catalog:",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  },
+  "license": "MIT",
+  "name": "@openfaith/server",
+  "private": true,
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "format": "biome lint .",
+    "lint:biome": "biome lint .",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "type": "module",
+  "version": "0.1.0"
+}

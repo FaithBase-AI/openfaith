@@ -164,6 +164,25 @@
         "typescript": "catalog:",
       },
     },
+    "backend/server": {
+      "name": "@openfaith/server",
+      "version": "0.1.0",
+      "dependencies": {
+        "@effect/platform": "catalog:",
+        "@effect/rpc": "catalog:",
+        "@effect/sql-drizzle": "catalog:",
+        "@openfaith/api": "workspace:*",
+        "@openfaith/db": "workspace:*",
+        "@openfaith/domain": "workspace:*",
+        "@openfaith/pco": "workspace:*",
+        "@openfaith/shared": "workspace:*",
+        "date-fns": "catalog:",
+        "effect": "catalog:",
+      },
+      "devDependencies": {
+        "typescript": "catalog:",
+      },
+    },
     "backend/shard-manager": {
       "name": "@openfaith/shard-manager",
       "version": "0.1.0",
@@ -247,6 +266,18 @@
         "drizzle-kit": "catalog:",
         "drizzle-orm": "catalog:",
         "effect": "catalog:",
+      },
+      "devDependencies": {
+        "typescript": "catalog:",
+      },
+    },
+    "packages/domain": {
+      "name": "@openfaith/domain",
+      "version": "0.1.0",
+      "dependencies": {
+        "@effect/rpc": "catalog:",
+        "effect": "catalog:",
+        "zod": "3.25.42",
       },
       "devDependencies": {
         "typescript": "catalog:",
@@ -834,6 +865,8 @@
 
     "@openfaith/db": ["@openfaith/db@workspace:packages/db"],
 
+    "@openfaith/domain": ["@openfaith/domain@workspace:packages/domain"],
+
     "@openfaith/email": ["@openfaith/email@workspace:backend/email"],
 
     "@openfaith/eslint-config": ["@openfaith/eslint-config@workspace:tooling/eslint"],
@@ -849,6 +882,8 @@
     "@openfaith/pco": ["@openfaith/pco@workspace:adapters/pco"],
 
     "@openfaith/schema": ["@openfaith/schema@workspace:packages/schema"],
+
+    "@openfaith/server": ["@openfaith/server@workspace:backend/server"],
 
     "@openfaith/shard-manager": ["@openfaith/shard-manager@workspace:backend/shard-manager"],
 
