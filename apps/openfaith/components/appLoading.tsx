@@ -1,4 +1,4 @@
-import { Logo } from '@openfaith/openfaith/src/components/logo'
+import { Logo } from '@openfaith/openfaith/components/logo'
 import { Loader2Icon } from '@openfaith/ui'
 import type { FC } from 'react'
 

@@ -547,7 +547,7 @@ export const schema = createSchema({
 
 export type ZSchema = typeof schema
 
-type AuthData = {
+export type AuthData = {
   id: string
   name: string
   email: string

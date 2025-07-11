@@ -1,5 +1,5 @@
+import { Logo } from '@openfaith/openfaith/components/logo'
 import { getSession } from '@openfaith/openfaith/server/getSession'
-import { Logo } from '@openfaith/openfaith/src/components/logo'
 import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router'
 import { Option, pipe } from 'effect'
 

@@ -1,10 +1,10 @@
 'use client'
 
 import { authClient } from '@openfaith/auth/authClient'
+import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
+import { QuickActionForm } from '@openfaith/openfaith/features/quickActions/quickActionsComponents'
+import { createOrgIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import { useChangeOrg } from '@openfaith/openfaith/shared/auth/useChangeOrg'
-import { useUserId } from '@openfaith/openfaith/src/data/users/useUserId'
-import { QuickActionForm } from '@openfaith/openfaith/src/features/quickActions/quickActionsComponents'
-import { createOrgIsOpenAtom } from '@openfaith/openfaith/src/features/quickActions/quickActionsState'
 import { asyncNoOp } from '@openfaith/shared'
 import { ArrowRightIcon, Button, useAppForm } from '@openfaith/ui'
 import type { OrgClientShape } from '@openfaith/zero'

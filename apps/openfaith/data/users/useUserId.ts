@@ -1,4 +1,4 @@
-import { useCurrentUserOpt } from '@openfaith/openfaith/src/data/users/userData.app'
+import { useCurrentUserOpt } from '@openfaith/openfaith/data/users/userData.app'
 import { useStableMemo } from '@openfaith/ui'
 import { Equivalence, Option, pipe, String } from 'effect'
 

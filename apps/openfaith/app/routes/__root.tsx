@@ -1,18 +1,19 @@
 /// <reference types="vite/client" />
-import type { TrpcRouter } from '@openfaith/api'
-import { NotFound } from '@openfaith/openfaith/src/components/notFound'
-import { RootComponent } from '@openfaith/openfaith/src/components/rootComponent'
+import { NotFound } from '@openfaith/openfaith/components/notFound'
+import type { SessionContextType } from '@openfaith/openfaith/shared/auth/sessionInit'
 import appCss from '@openfaith/openfaith/styles/app.css?url'
-import type { QueryClient } from '@tanstack/react-query'
-import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
-import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query'
+import type { Mutators, ZSchema } from '@openfaith/zero'
+import type { Zero } from '@rocicorp/zero'
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
+import { Providers } from 'shared/providers'
 
 export interface RouterAppContext {
-  trpc: TRPCOptionsProxy<TrpcRouter>
-  queryClient: QueryClient
   userId: string | null
   orgId: string | null
   token: string | null
+
+  zero: Zero<ZSchema, Mutators>
+  session: SessionContextType
 }
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
@@ -43,8 +44,16 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootDocument() {
   return (
-    <RootComponent token={null} userId={'anon'}>
-      <Outlet />
-    </RootComponent>
+    <html lang='en' suppressHydrationWarning>
+      <head>
+        <HeadContent />
+      </head>
+      <body className='font-regular tracking-wide antialiased'>
+        <Providers>
+          <Outlet />
+        </Providers>
+        <Scripts />
+      </body>
+    </html>
   )
 }

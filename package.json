@@ -65,7 +65,7 @@
       "@effect/sql-drizzle": "0.39.1",
       "@effect/sql-pg": "0.41.1",
       "@effect/workflow": "0.4.2",
-      "@rocicorp/zero": "0.20.2025052100",
+      "@rocicorp/zero": "0.21.2025070200",
       "@trpc/client": "11.1.4",
       "@trpc/server": "11.1.4",
       "@trpc/tanstack-react-query": "11.1.4",

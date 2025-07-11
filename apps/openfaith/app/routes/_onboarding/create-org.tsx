@@ -1,4 +1,4 @@
-import { OrgForm } from '@openfaith/openfaith/src/features/auth/orgForm'
+import { OrgForm } from '@openfaith/openfaith/features/auth/orgForm'
 import { GroupIcon, Separator } from '@openfaith/ui'
 import { createFileRoute } from '@tanstack/react-router'
 import { Schema } from 'effect'

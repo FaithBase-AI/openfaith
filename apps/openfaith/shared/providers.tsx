@@ -1,32 +1,34 @@
 'use client'
 
-import { ZeroProvider } from '@openfaith/openfaith/src/components/zeroProvider'
 import { Toaster } from '@openfaith/ui'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { ThemeProvider } from 'next-themes'
 import { NuqsAdapter } from 'nuqs/adapters/react'
 import type { FC, ReactNode } from 'react'
+import { CookiesProvider } from 'react-cookie'
+import { SessionInit } from 'shared/auth/sessionInit'
+import { ZeroInit } from 'shared/zero/zeroInit'
 
 type ProvidersProps = {
   children: ReactNode
-  userId: string
-  token: string | null
 }
 
 export const Providers: FC<ProvidersProps> = (props) => {
-  const { children, userId, token } = props
+  const { children } = props
 
   return (
     <NuqsAdapter>
       <ThemeProvider attribute='class' defaultTheme='system' disableTransitionOnChange enableSystem>
-        <ZeroProvider token={token} userId={userId}>
-          {children}
+        <CookiesProvider>
+          <SessionInit>
+            <ZeroInit>
+              {children}
 
-          <TanStackRouterDevtools position='bottom-right' />
-          <ReactQueryDevtools buttonPosition='bottom-left' />
-          <Toaster />
-        </ZeroProvider>
+              <TanStackRouterDevtools position='bottom-right' />
+              <Toaster />
+            </ZeroInit>
+          </SessionInit>
+        </CookiesProvider>
       </ThemeProvider>
     </NuqsAdapter>
   )

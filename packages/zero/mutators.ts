@@ -1,4 +1,4 @@
-import type { schema } from '@openfaith/zero/zeroSchema.mts'
+import type { AuthData, schema } from '@openfaith/zero/zeroSchema.mts'
 import type { CustomMutatorDefs, Transaction } from '@rocicorp/zero'
 
 // Define the input type for creating a person (basic fields for now)
@@ -14,10 +14,13 @@ export type CreatePersonInput = {
   // Add more fields as needed
 }
 
-export function createMutators() {
+export function createMutators(authData: Pick<AuthData, 'sub'> | undefined) {
   return {
     person: {
       create: async (tx: Transaction<typeof schema>, input: CreatePersonInput): Promise<void> => {
+        if (!authData) {
+          throw new Error('Not authenticated')
+        }
         // Optionally, add schema validation here
         await tx.mutate.person.insert({
           _tag: 'person',
@@ -27,3 +30,5 @@ export function createMutators() {
     },
   } as const satisfies CustomMutatorDefs<typeof schema>
 }
+
+export type Mutators = ReturnType<typeof createMutators>

@@ -1,5 +1,5 @@
-import { AppLoading } from '@openfaith/openfaith/src/components/appLoading'
-import { PostCodeMessage } from '@openfaith/openfaith/src/components/postCodeMessage'
+import { AppLoading } from '@openfaith/openfaith/components/appLoading'
+import { PostCodeMessage } from '@openfaith/openfaith/components/postCodeMessage'
 import { createFileRoute } from '@tanstack/react-router'
 
 type OAuthSearch = {

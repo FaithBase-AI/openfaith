@@ -1,4 +1,4 @@
-import { Logo } from '@openfaith/openfaith/src/components/logo'
+import { Logo } from '@openfaith/openfaith/components/logo'
 import { ThemeToggle } from '@openfaith/ui'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 

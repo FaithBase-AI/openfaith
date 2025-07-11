@@ -1,4 +1,4 @@
-import SignIn from '@openfaith/openfaith/src/features/auth/signIn'
+import SignIn from '@openfaith/openfaith/features/auth/signIn'
 import { createFileRoute } from '@tanstack/react-router'
 import { Schema } from 'effect'
 

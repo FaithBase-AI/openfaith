@@ -1,44 +1,20 @@
-import type { TrpcRouter } from '@openfaith/api'
-import { DefaultCatchBoundary } from '@openfaith/openfaith/src/components/defaultCatchBoundary'
-import { NotFound } from '@openfaith/openfaith/src/components/notFound'
-import { getApiUrl } from '@openfaith/shared'
+import { DefaultCatchBoundary } from '@openfaith/openfaith/components/defaultCatchBoundary'
+import { NotFound } from '@openfaith/openfaith/components/notFound'
 import { Loader2Icon } from '@openfaith/ui/icons/loader2Icon'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { Mutators, ZSchema } from '@openfaith/zero'
+import type { Zero } from '@rocicorp/zero'
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'
-import { createTRPCClient, httpBatchStreamLink } from '@trpc/client'
-import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query'
-import SuperJSON from 'superjson'
+import type { SessionContextType } from 'shared/auth/sessionInit'
 import { routeTree } from './routeTree.gen'
 
 export function createRouter() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      dehydrate: { serializeData: SuperJSON.serialize },
-      hydrate: { deserializeData: SuperJSON.deserialize },
-    },
-  })
-
-  const trpcClient = createTRPCClient<TrpcRouter>({
-    links: [
-      httpBatchStreamLink({
-        transformer: SuperJSON,
-        url: getApiUrl('/trpc'),
-      }),
-    ],
-  })
-
-  const serverHelpers = createTRPCOptionsProxy<TrpcRouter>({
-    client: trpcClient,
-    queryClient: queryClient,
-  })
-
   const router = createTanStackRouter({
     context: {
       orgId: null,
-      queryClient,
+      session: undefined as unknown as SessionContextType, // populated in SessionProvider
       token: null,
-      trpc: serverHelpers,
       userId: null,
+      zero: undefined as unknown as Zero<ZSchema, Mutators>, // populated in ZeroInit
     },
     defaultErrorComponent: DefaultCatchBoundary,
     defaultNotFoundComponent: () => <NotFound />,
@@ -57,9 +33,6 @@ export function createRouter() {
     defaultPreloadStaleTime: 0,
     routeTree,
     scrollRestoration: true,
-    Wrap: function WrapComponent({ children }) {
-      return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    },
   })
 
   return router

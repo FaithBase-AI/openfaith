@@ -1,5 +1,5 @@
+import type { CommandMenuType } from '@openfaith/openfaith/features/quickActions/quickActionsTypes'
 import { useSignOut } from '@openfaith/openfaith/shared/auth/useSignOut'
-import type { CommandMenuType } from '@openfaith/openfaith/src/features/quickActions/quickActionsTypes'
 import { GroupIcon, SignOutIcon, TerminalIcon, UserPlusIcon } from '@openfaith/ui'
 import { Boolean, pipe } from 'effect'
 import { atom, useSetAtom } from 'jotai'
