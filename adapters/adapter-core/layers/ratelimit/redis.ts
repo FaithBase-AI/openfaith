@@ -1,5 +1,5 @@
-import type { BucketDetails } from '@openfaith/adapter-core/ratelimit/RateLimit'
-import { RateLimitStore } from '@openfaith/adapter-core/ratelimit/RateLimit'
+import type { BucketDetails } from '@openfaith/adapter-core/layers/ratelimit/RateLimit'
+import { RateLimitStore } from '@openfaith/adapter-core/layers/ratelimit/RateLimit'
 import { Data, Effect, Layer, Option } from 'effect'
 import { Redis, type RedisError } from 'effect-redis'
 

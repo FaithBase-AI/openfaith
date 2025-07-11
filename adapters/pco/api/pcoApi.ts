@@ -8,8 +8,7 @@ import {
   HttpClientRequest,
   type HttpClientResponse,
 } from '@effect/platform'
-import { MemoryRateLimitStoreLive } from '@openfaith/adapter-core/ratelimit/RateLimit'
-import { RateLimiter, TokenKey } from '@openfaith/adapter-core/server'
+import { RateLimiter, TokenAuth, TokenKey } from '@openfaith/adapter-core/server'
 import {
   PcoAuthenticationError,
   PcoAuthorizationError,
@@ -22,7 +21,6 @@ import {
   PcoServiceUnavailableError,
   PcoValidationError,
 } from '@openfaith/pco/api/pcoApiErrors'
-import { PcoAuth, PcoAuthLive } from '@openfaith/pco/api/pcoAuthLayer'
 import { toPcoHttpApiGroup } from '@openfaith/pco/api/pcoMkEntityManifest'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { PcoRefreshToken, PcoToken } from '@openfaith/pco/modules/token/pcoTokenSchema'
@@ -135,12 +133,12 @@ const handlePcoError = (
 
 export class PcoHttpClient extends Effect.Service<PcoHttpClient>()('PcoHttpClient', {
   effect: Effect.gen(function* () {
-    const tokenService = yield* PcoAuth
+    const tokenAuth = yield* TokenAuth
     const limiter = yield* RateLimiter.RateLimiter
     const tokenKey = yield* TokenKey
     const getRateLimitedAccessToken = Effect.zipRight(
       limiter.maybeWait(`pco:rate-limit:${tokenKey}`, Duration.seconds(20), 101),
-      tokenService.getValidAccessToken,
+      tokenAuth.getValidAccessToken,
     )
 
     const client = (yield* HttpClient.HttpClient).pipe(
@@ -195,9 +193,4 @@ export class PcoHttpClient extends Effect.Service<PcoHttpClient>()('PcoHttpClien
   }),
 }) {}
 
-export const PcoApiLayer = Layer.empty.pipe(
-  Layer.provideMerge(PcoHttpClient.Default),
-  Layer.provideMerge(PcoAuthLive),
-  Layer.provideMerge(RateLimiter.RateLimiterLive),
-  Layer.provideMerge(MemoryRateLimitStoreLive),
-)
+export const BasePcoApiLayer = Layer.empty.pipe(Layer.provideMerge(PcoHttpClient.Default))

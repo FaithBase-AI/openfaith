@@ -1,7 +1,7 @@
 import type {
   BucketDetails,
   RateLimitStoreService,
-} from '@openfaith/adapter-core/ratelimit/RateLimit'
+} from '@openfaith/adapter-core/layers/ratelimit/RateLimit'
 import { Effect, Option } from 'effect'
 
 interface Counter {

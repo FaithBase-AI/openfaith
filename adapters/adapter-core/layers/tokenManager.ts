@@ -1,6 +1,9 @@
 import { Context, type Effect } from 'effect'
 
-export class TokenKey extends Context.Tag('OpenFaith/TokenKey')<TokenKey, string>() {}
+export class TokenKey extends Context.Tag('@openfaith/adapter-core/layers/tokenManager/TokenKey')<
+  TokenKey,
+  string
+>() {}
 
 // The shape of the token data your library needs to manage.
 export interface TokenState {
@@ -16,7 +19,9 @@ export interface TokenState {
 }
 
 // The service interface the user must implement.
-export class TokenManager extends Context.Tag('OpenFaith/TokenManager')<
+export class TokenManager extends Context.Tag(
+  '@openfaith/adapter-core/layers/tokenManager/TokenManager',
+)<
   TokenManager,
   {
     // How to load the initial token state from the user's storage.

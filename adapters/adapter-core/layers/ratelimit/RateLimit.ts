@@ -1,5 +1,5 @@
-import * as Memory from '@openfaith/adapter-core/ratelimit/memory'
-import { delayFrom } from '@openfaith/adapter-core/ratelimit/utils'
+import * as Memory from '@openfaith/adapter-core/layers/ratelimit/memory'
+import { delayFrom } from '@openfaith/adapter-core/layers/ratelimit/utils'
 import { Context, Duration, Effect, Layer, type Option } from 'effect'
 
 // This is pulled from https://github.com/tim-smart/dfx/blob/main/src/RateLimit.ts
@@ -33,7 +33,7 @@ export interface RateLimitStore {
 }
 
 export const RateLimitStore = Context.GenericTag<RateLimitStore, RateLimitStoreService>(
-  '@OpenFaith/RateLimit/RateLimitStore',
+  '@openfaith/adapter-core/layers/ratelimit/RateLimitStore',
 )
 export const MemoryRateLimitStoreLive = Layer.sync(RateLimitStore, Memory.make)
 
@@ -69,5 +69,5 @@ export interface RateLimiter {
 export const RateLimiter = Context.GenericTag<
   RateLimiter,
   Effect.Effect.Success<typeof makeLimiter>
->('@OpenFaith/RateLimit/RateLimiter')
+>('@openfaith/adapter-core/layers/ratelimit/RateLimiter')
 export const RateLimiterLive = Layer.effect(RateLimiter, makeLimiter)

@@ -1,29 +1,11 @@
-import {
-  HttpApiClient,
-  type HttpClient,
-  HttpClientError,
-  HttpClientRequest,
-} from '@effect/platform'
-import { TokenKey, TokenManager, type TokenState } from '@openfaith/adapter-core/server'
-import { PcoApi } from '@openfaith/pco/api/pcoApi'
+import { HttpApiClient, HttpClientError, HttpClientRequest } from '@effect/platform'
+import { TokenAuth, TokenKey, TokenManager, type TokenState } from '@openfaith/adapter-core/server'
+import { PcoApi } from '@openfaith/pco/server'
 import { env } from '@openfaith/shared'
-import { Clock, Context, Effect, HashMap, Layer, Option, Redacted, Ref } from 'effect'
+import { Clock, Effect, HashMap, Layer, Option, Redacted, Ref } from 'effect'
 
-// Internal service tag
-export class PcoAuth extends Context.Tag('Pco/PcoAuth')<
-  PcoAuth,
-  {
-    readonly getValidAccessToken: Effect.Effect<
-      Redacted.Redacted<string>,
-      HttpClientError.HttpClientError,
-      HttpClient.HttpClient | TokenKey | TokenManager
-    >
-  }
->() {}
-
-// Live implementation of the PcoAuth service
-export const PcoAuthLive = Layer.scoped(
-  PcoAuth,
+export const TokenAuthLive = Layer.scoped(
+  TokenAuth,
   Effect.gen(function* () {
     const tokenManager = yield* TokenManager
     const tokenKey = yield* TokenKey
@@ -132,6 +114,6 @@ export const PcoAuthLive = Layer.scoped(
       ),
     )
 
-    return PcoAuth.of({ getValidAccessToken })
+    return TokenAuth.of({ getValidAccessToken })
   }),
 )
