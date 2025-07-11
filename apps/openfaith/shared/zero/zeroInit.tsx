@@ -30,7 +30,10 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
         pipe(
           session.data,
           Option.fromNullable,
-          Option.map((data) => ({ sub: data.userID })),
+          Option.map((data) => ({
+            activeOrganizationId: data.activeOrganizationId,
+            sub: data.userID,
+          })),
           Option.getOrUndefined,
         ),
       ),

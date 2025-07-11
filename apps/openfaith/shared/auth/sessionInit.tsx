@@ -1,5 +1,6 @@
 import { authClient } from '@openfaith/auth/authClient'
 import { RouterContextProvider, useRouter } from '@tanstack/react-router'
+import { Option, pipe } from 'effect'
 import { useMemo } from 'react'
 import { Cookies, useCookies } from 'react-cookie'
 
@@ -8,6 +9,7 @@ export type SessionContextType = {
     | {
         userID: string
         email: string
+        activeOrganizationId: string | null
       }
     | undefined
   login: () => void
@@ -16,17 +18,22 @@ export type SessionContextType = {
 }
 
 export function SessionInit({ children }: { children: React.ReactNode }) {
-  const [cookies] = useCookies(['userid', 'email', 'jwt'])
+  const [cookies] = useCookies(['userid', 'email', 'jwt', 'activeOrganizationId'])
 
   const data = useMemo(() => {
     if (!cookies.userid || !cookies.email) {
       return undefined
     }
     return {
+      activeOrganizationId: pipe(
+        cookies.activeOrganizationId,
+        Option.fromNullable,
+        Option.getOrNull,
+      ),
       email: cookies.email,
       userID: cookies.userid,
     }
-  }, [cookies.userid, cookies.email])
+  }, [cookies.userid, cookies.email, cookies.activeOrganizationId])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: We want to refresh the session when the cookies change
   const session = useMemo(() => {

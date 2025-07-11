@@ -14,7 +14,9 @@ export type CreatePersonInput = {
   // Add more fields as needed
 }
 
-export function createMutators(authData: Pick<AuthData, 'sub'> | undefined) {
+export function createMutators(
+  authData: Pick<AuthData, 'sub' | 'activeOrganizationId'> | undefined,
+) {
   return {
     person: {
       create: async (tx: Transaction<typeof schema>, input: CreatePersonInput): Promise<void> => {

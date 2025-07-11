@@ -234,6 +234,7 @@
         "@openfaith/db": "workspace:*",
         "@openfaith/email": "workspace:*",
         "better-auth": "catalog:",
+        "cookie": "1.0.2",
         "effect": "catalog:",
         "resend": "catalog:",
         "typeid-js": "catalog:",
