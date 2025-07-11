@@ -6,5 +6,5 @@
     }
   },
   "extends": "@openfaith/tsconfig/base.json",
-  "include": [".", "../adapter-core/api/tokenManager.ts"]
+  "include": ["."]
 }
