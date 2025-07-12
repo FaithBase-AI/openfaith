@@ -1,7 +1,7 @@
 import { SqlError } from '@effect/sql'
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { TokenManager } from '@openfaith/adapter-core/server'
-import { adapterTokenTable } from '@openfaith/db'
+import { adapterTokensTable } from '@openfaith/db'
 import { and, eq } from 'drizzle-orm'
 import { Array, Effect, Layer, pipe } from 'effect'
 
@@ -15,9 +15,9 @@ export const TokenManagerLive = Layer.effect(
         Effect.gen(function* () {
           const tokens = yield* db
             .select()
-            .from(adapterTokenTable)
+            .from(adapterTokensTable)
             .where(
-              and(eq(adapterTokenTable.orgId, lookupKey), eq(adapterTokenTable.adapter, 'pco')),
+              and(eq(adapterTokensTable.orgId, lookupKey), eq(adapterTokensTable.adapter, 'pco')),
             )
 
           const tokenOpt = pipe(tokens, Array.head)
@@ -45,7 +45,7 @@ export const TokenManagerLive = Layer.effect(
       saveTokenState: (state) =>
         Effect.gen(function* () {
           yield* db
-            .update(adapterTokenTable)
+            .update(adapterTokensTable)
             .set({
               accessToken: state.accessToken,
               createdAt: state.createdAt,
@@ -54,9 +54,9 @@ export const TokenManagerLive = Layer.effect(
             })
             .where(
               and(
-                eq(adapterTokenTable.orgId, state.orgId),
-                eq(adapterTokenTable.adapter, state.adapter),
-                eq(adapterTokenTable.userId, state.userId),
+                eq(adapterTokensTable.orgId, state.orgId),
+                eq(adapterTokensTable.adapter, state.adapter),
+                eq(adapterTokensTable.userId, state.userId),
               ),
             )
         }),

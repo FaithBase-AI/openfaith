@@ -2,7 +2,7 @@ import { FetchHttpClient } from '@effect/platform'
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { adaptersApi } from '@openfaith/api/adapters/adaptersApi'
 import { createTRPCRouter, orgProcedure } from '@openfaith/api/trpc'
-import { adapterDetailsTable, adapterTokenTable, DBLive } from '@openfaith/db'
+import { adapterDetailsTable, adapterTokensTable, DBLive } from '@openfaith/db'
 import { asyncNoOp } from '@openfaith/shared'
 import { fromUnixTime } from 'date-fns/fp'
 import { Effect, Option, pipe, Record, Schema } from 'effect'
@@ -51,7 +51,7 @@ export const adapterRouter = createTRPCRouter({
 
                 yield* Effect.all([
                   db
-                    .insert(adapterTokenTable)
+                    .insert(adapterTokensTable)
                     .values({
                       accessToken: token.accessToken,
                       adapter: adapter._tag,
@@ -69,9 +69,9 @@ export const adapterRouter = createTRPCRouter({
                         refreshToken: token.refreshToken,
                       },
                       target: [
-                        adapterTokenTable.adapter,
-                        adapterTokenTable.orgId,
-                        adapterTokenTable.userId,
+                        adapterTokensTable.adapter,
+                        adapterTokensTable.orgId,
+                        adapterTokensTable.userId,
                       ],
                     }),
                   db

@@ -9,6 +9,7 @@ export const campusesTable = pgTable(
     _tag: d
       .char({ enum: ['campus'], length: 6 })
       .default('campus')
+      .$type<'campus'>()
       .notNull(),
     avatar: d.text(),
     city: d.text(),

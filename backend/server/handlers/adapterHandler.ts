@@ -1,7 +1,7 @@
 import { FetchHttpClient } from '@effect/platform'
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { adaptersApi } from '@openfaith/api/adapters/adaptersApi'
-import { adapterDetailsTable, adapterTokenTable, DBLive } from '@openfaith/db'
+import { adapterDetailsTable, adapterTokensTable, DBLive } from '@openfaith/db'
 import { AdapterConnectError, AdapterRpc } from '@openfaith/domain'
 import { fromUnixTime } from 'date-fns/fp'
 import { Effect, Layer, Option, pipe, Record } from 'effect'
@@ -56,7 +56,7 @@ export const AdapterHandlerLive = AdapterRpc.toLayer(
 
           yield* Effect.all([
             db
-              .insert(adapterTokenTable)
+              .insert(adapterTokensTable)
               .values({
                 accessToken: token.accessToken,
                 adapter: adapterImpl._tag,
@@ -74,9 +74,9 @@ export const AdapterHandlerLive = AdapterRpc.toLayer(
                   refreshToken: token.refreshToken,
                 },
                 target: [
-                  adapterTokenTable.adapter,
-                  adapterTokenTable.orgId,
-                  adapterTokenTable.userId,
+                  adapterTokensTable.adapter,
+                  adapterTokensTable.orgId,
+                  adapterTokensTable.userId,
                 ],
               }),
             db

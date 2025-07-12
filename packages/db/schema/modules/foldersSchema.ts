@@ -3,13 +3,14 @@ import { createInsertSchema, createSelectSchema } from '@openfaith/db/drizzleEff
 import type { CustomFieldSchema } from '@openfaith/schema/shared/customFieldsSchema'
 import { index } from 'drizzle-orm/pg-core'
 
-export const folderTable = pgTable(
+export const foldersTable = pgTable(
   'folders',
   (d) => ({
     // Tag field for discriminated union
     _tag: d
       .char({ enum: ['folder'], length: 6 })
       .default('folder')
+      .$type<'folder'>()
       .notNull(),
 
     // Color hint for UI display
@@ -73,8 +74,8 @@ export const folderTable = pgTable(
   }),
 )
 
-export const Folder = createSelectSchema(folderTable)
+export const Folder = createSelectSchema(foldersTable)
 export type Folder = typeof Folder.Type
 
-export const NewFolder = createInsertSchema(folderTable)
+export const NewFolder = createInsertSchema(foldersTable)
 export type NewFolder = typeof NewFolder.Type

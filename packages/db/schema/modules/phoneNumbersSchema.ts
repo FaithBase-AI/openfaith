@@ -9,6 +9,7 @@ export const phoneNumbersTable = pgTable(
     _tag: d
       .char({ enum: ['phoneNumber'], length: 11 })
       .default('phoneNumber')
+      .$type<'phoneNumber'>()
       .notNull(),
     countryCode: d.text(),
     createdAt: d.timestamp().notNull(),

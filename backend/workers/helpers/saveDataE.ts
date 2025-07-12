@@ -1,6 +1,6 @@
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { TokenKey } from '@openfaith/adapter-core/server'
-import { edgeTable, externalLinksTable } from '@openfaith/db'
+import { edgesTable, externalLinksTable } from '@openfaith/db'
 import type { mkPcoCollectionSchema, PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import type { pcoPersonTransformer } from '@openfaith/pco/server'
 import { EdgeDirectionSchema, getEntityId } from '@openfaith/shared'
@@ -481,7 +481,7 @@ export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* 
 
   // Insert edges with conflict handling
   yield* db
-    .insert(edgeTable)
+    .insert(edgesTable)
     .values(edgeValues)
     .onConflictDoUpdate({
       set: {
@@ -489,10 +489,10 @@ export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* 
         updatedAt: sql`EXCLUDED."updatedAt"`,
       },
       target: [
-        edgeTable.orgId,
-        edgeTable.sourceEntityId,
-        edgeTable.targetEntityId,
-        edgeTable.relationshipType,
+        edgesTable.orgId,
+        edgesTable.sourceEntityId,
+        edgesTable.targetEntityId,
+        edgesTable.relationshipType,
       ],
     })
 

@@ -1,5 +1,5 @@
-import { adapterDetailsTable, adapterTokenTable } from '@openfaith/db/schema/adaptersSchema'
-import { edgeTable } from '@openfaith/db/schema/modules/edgeSchema'
+import { adapterDetailsTable, adapterTokensTable } from '@openfaith/db/schema/adaptersSchema'
+import { edgesTable } from '@openfaith/db/schema/modules/edgesSchema'
 import { externalLinksTable } from '@openfaith/db/schema/modules/externalLinksSchema'
 import { peopleTable } from '@openfaith/db/schema/modules/peopleSchema'
 import { phoneNumbersTable } from '@openfaith/db/schema/modules/phoneNumbersSchema'
@@ -14,8 +14,8 @@ import { relations } from 'drizzle-orm'
 
 export const orgsRelations = relations(orgsTable, ({ many, one }) => ({
   adapterDetails: many(adapterDetailsTable),
-  adapterTokens: many(adapterTokenTable),
-  edges: many(edgeTable),
+  adapterTokens: many(adapterTokensTable),
+  edges: many(edgesTable),
   externalLinks: many(externalLinksTable),
   invitations: many(invitationsTable),
   orgUsers: many(orgUsersTable),
@@ -31,6 +31,10 @@ export const orgUsersRelations = relations(orgUsersTable, ({ one, many }) => ({
   org: one(orgsTable, {
     fields: [orgUsersTable.orgId],
     references: [orgsTable.id],
+  }),
+  orgSettings: one(orgSettingsTable, {
+    fields: [orgUsersTable.orgId],
+    references: [orgSettingsTable.orgId],
   }),
   sentInvitations: many(invitationsTable),
   user: one(usersTable, {
@@ -54,9 +58,10 @@ export const invitationsRelations = relations(invitationsTable, ({ one }) => ({
   }),
 }))
 
-export const orgSettingsRelations = relations(orgSettingsTable, ({ one }) => ({
+export const orgSettingsRelations = relations(orgSettingsTable, ({ one, many }) => ({
   org: one(orgsTable, {
     fields: [orgSettingsTable.orgId],
     references: [orgsTable.id],
   }),
+  orgUsers: many(orgUsersTable),
 }))

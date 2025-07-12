@@ -8,10 +8,6 @@ import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanst
 import { Providers } from 'shared/providers'
 
 export interface RouterAppContext {
-  userId: string | null
-  orgId: string | null
-  token: string | null
-
   zero: Zero<ZSchema, Mutators>
   session: SessionContextType
 }

@@ -2,6 +2,7 @@
   "dependencies": {
     "@openfaith/shared": "workspace:*",
     "@rocicorp/zero": "catalog:",
+    "drizzle-zero": "0.12.0",
     "effect": "catalog:"
   },
   "devDependencies": {
@@ -14,6 +15,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "zero-cache-dev -p zeroSchema.mts",
     "format": "biome lint .",
+    "generate": "drizzle-zero generate -s drizzle-zero.config.ts",
     "lint:biome": "biome lint .",
     "typecheck": "tsc --noEmit"
   },

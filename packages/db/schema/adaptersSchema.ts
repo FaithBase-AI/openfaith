@@ -8,6 +8,7 @@ export const adapterDetailsTable = pgTable(
     _tag: d
       .char({ enum: ['adapterDetails'], length: 14 })
       .default('adapterDetails')
+      .$type<'adapterDetails'>()
       .notNull(),
     adapter: d.text().notNull(),
     createdAt: d.timestamp().notNull(),
@@ -23,12 +24,13 @@ export const adapterDetailsTable = pgTable(
   }),
 )
 
-export const adapterTokenTable = pgTable(
+export const adapterTokensTable = pgTable(
   'adapterTokens',
   (d) => ({
     _tag: d
       .char({ enum: ['adapterToken'], length: 12 })
       .default('adapterToken')
+      .$type<'adapterToken'>()
       .notNull(),
     accessToken: d.text().notNull(),
     adapter: d.text().notNull(),

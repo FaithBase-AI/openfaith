@@ -11,13 +11,14 @@ import { index, primaryKey } from 'drizzle-orm/pg-core'
 //
 // This rule must be enforced in all edge creation logic. See docs/EdgeRelationships.md for details and a sample utility function.
 
-export const edgeTable = pgTable(
+export const edgesTable = pgTable(
   'edges',
   (d) => ({
     // Tag field for discriminated union
     _tag: d
       .char({ enum: ['edge'], length: 4 })
       .default('edge')
+      .$type<'edge'>()
       .notNull(),
     createdAt: d.timestamp().notNull(),
     createdBy: d.text(),
@@ -58,8 +59,8 @@ export const edgeTable = pgTable(
   }),
 )
 
-export const Edge = createSelectSchema(edgeTable)
+export const Edge = createSelectSchema(edgesTable)
 export type Edge = typeof Edge.Type
 
-export const NewEdge = createInsertSchema(edgeTable)
+export const NewEdge = createInsertSchema(edgesTable)
 export type NewEdge = typeof NewEdge.Type

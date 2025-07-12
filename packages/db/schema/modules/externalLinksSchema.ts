@@ -9,6 +9,7 @@ export const externalLinksTable = pgTable(
     _tag: d
       .char({ enum: ['externalLink'], length: 12 })
       .default('externalLink')
+      .$type<'externalLink'>()
       .notNull(),
 
     // External system information

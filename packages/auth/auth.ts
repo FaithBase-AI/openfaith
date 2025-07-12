@@ -9,6 +9,7 @@ import {
   bearer,
   createAuthMiddleware,
   emailOTP,
+  getJwtToken,
   jwt,
   organization,
 } from 'better-auth/plugins'
@@ -79,8 +80,6 @@ export const auth = betterAuth({
             where: (x, d) => d.eq(x.userId, session.userId),
           })
 
-          console.log('org', org)
-
           return {
             data: {
               ...session,
@@ -126,51 +125,36 @@ export const auth = betterAuth({
 
       // The Zero team is working on improving this and getting the same perf w/o needing to expose credentials to the client.
 
-      if (
-        pipe(
-          ctx.path,
-          String.indexOf('/callback/'),
-          Option.getOrElse(() => -0),
-        ) !== -1
-      ) {
-        await pipe(
-          ctx.context.responseHeaders,
-          Option.fromNullable,
-          Option.match({
-            onNone: asyncNoOp,
-            onSome: async (x) => {
-              const setCookieHeader = ctx.context.responseHeaders?.get('set-cookie')
-              const cookieVal = setCookieHeader?.split(';')[0]
+      // If we are trying to set the cookie, we need to set the session in the context and add the jwt.
+      await pipe(
+        ctx.context.responseHeaders,
+        Option.fromNullable,
+        Option.flatMapNullable((x) => x.get('set-cookie')),
+        Option.match({
+          onNone: asyncNoOp,
+          onSome: async () => {
+            const session = ctx.context.newSession
+            ctx.context.session = session
+            const token =
+              ctx.context.responseHeaders?.get('set-auth-jwt') || (await getJwtToken(ctx))
 
-              const session = await auth.api.getSession({
-                headers: new Headers({
-                  cookie: cookieVal ?? '',
-                }),
-              })
-              const token = await auth.api.getToken({
-                headers: new Headers({
-                  cookie: cookieVal ?? '',
-                }),
+            if (session && token) {
+              setCookies(ctx.context.responseHeaders as Headers, {
+                activeOrganizationId: pipe(
+                  session.session.activeOrganizationId,
+                  Option.fromNullable,
+                  Option.getOrUndefined,
+                ),
+                email: session.user.email,
+                jwt: token,
+                userid: session.user.id,
               })
 
-              if (session && token) {
-                setCookies(x, {
-                  activeOrganizationId: pipe(
-                    session.session.activeOrganizationId,
-                    Option.fromNullable,
-                    Option.getOrUndefined,
-                  ),
-                  email: session.user.email,
-                  jwt: token.token,
-                  userid: session.user.id,
-                })
-              }
-            },
-          }),
-        )
-
-        return
-      }
+              return
+            }
+          },
+        }),
+      )
 
       if (ctx.path.indexOf('/sign-out') !== -1) {
         pipe(
@@ -184,18 +168,12 @@ export const auth = betterAuth({
             }),
           ),
         )
-
-        return
       }
     }),
   },
   plugins: [
     bearer(),
     jwt({
-      jwks: {
-        // @ts-expect-error - extractable is a valid option for keyPairConfig
-        keyPairConfig: { alg: 'EdDSA', crv: 'Ed25519', extractable: true },
-      },
       jwt: {
         definePayload: ({ user, session }) => ({
           ...user,
@@ -300,7 +278,12 @@ export const auth = betterAuth({
 
 export function setCookies(
   headers: Headers,
-  cookies: { userid: string; email: string; jwt: string; activeOrganizationId?: string },
+  cookies: {
+    userid: string
+    email: string
+    jwt: string
+    activeOrganizationId?: string | undefined
+  },
 ) {
   const opts = {
     // 1 year. Note that it doesn't really matter what this is as the JWT has

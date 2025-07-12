@@ -45,7 +45,11 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
       Match.type<typeof props>(),
       Match.tag('edit', (x) => ({
         name: x.org.name,
-        slug: x.org.slug,
+        slug: pipe(
+          x.org.slug,
+          Option.fromNullable,
+          Option.getOrElse(() => ''),
+        ),
       })),
       Match.orElse(() => ({
         name: '',

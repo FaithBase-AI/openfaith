@@ -48,7 +48,7 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
         }),
       ),
     }
-  }, [session.data?.userID, router, session.zeroAuth])
+  }, [session.data?.userID, router])
 
   return <ZeroProvider {...opts}>{children}</ZeroProvider>
 }

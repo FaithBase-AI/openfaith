@@ -1,23 +1,23 @@
-import { folderTable } from '@openfaith/db/schema/modules/folderSchema'
+import { foldersTable } from '@openfaith/db/schema/modules/foldersSchema'
 import { orgsTable } from '@openfaith/db/schema/orgsSchema'
 import { relations } from 'drizzle-orm'
 
-export const folderRelations = relations(folderTable, ({ one, many }) => ({
+export const folderRelations = relations(foldersTable, ({ one, many }) => ({
   // A folder can have many child folders
-  childFolders: many(folderTable, {
+  childFolders: many(foldersTable, {
     relationName: 'FolderHierarchy',
   }),
   // Folders belong to an organization
   org: one(orgsTable, {
-    fields: [folderTable.orgId],
+    fields: [foldersTable.orgId],
     references: [orgsTable.id],
   }),
 
   // Self-referencing relationship for folder hierarchy
   // A folder can have a parent folder
-  parentFolder: one(folderTable, {
-    fields: [folderTable.parentFolderId],
-    references: [folderTable.id],
+  parentFolder: one(foldersTable, {
+    fields: [foldersTable.parentFolderId],
+    references: [foldersTable.id],
     relationName: 'FolderHierarchy',
   }),
 }))

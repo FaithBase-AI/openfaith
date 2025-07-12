@@ -10,10 +10,7 @@ import { routeTree } from './routeTree.gen'
 export function createRouter() {
   const router = createTanStackRouter({
     context: {
-      orgId: null,
       session: undefined as unknown as SessionContextType, // populated in SessionProvider
-      token: null,
-      userId: null,
       zero: undefined as unknown as Zero<ZSchema, Mutators>, // populated in ZeroInit
     },
     defaultErrorComponent: DefaultCatchBoundary,

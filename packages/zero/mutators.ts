@@ -24,7 +24,7 @@ export function createMutators(
           throw new Error('Not authenticated')
         }
         // Optionally, add schema validation here
-        await tx.mutate.person.insert({
+        await tx.mutate.people.insert({
           _tag: 'person',
           ...input,
         })

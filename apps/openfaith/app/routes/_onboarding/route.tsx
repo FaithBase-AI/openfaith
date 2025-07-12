@@ -1,29 +1,15 @@
 import { Logo } from '@openfaith/openfaith/components/logo'
-import { getSession } from '@openfaith/openfaith/server/getSession'
 import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router'
-import { Option, pipe } from 'effect'
 
 export const Route = createFileRoute('/_onboarding')({
-  beforeLoad: async (ctx) => {
-    // If we have a user, keep going.
-    if (ctx.context.userId) {
-      return
-    }
-
-    const session = await getSession()
-
-    if (!session) {
+  beforeLoad: (ctx) => {
+    if (!ctx.context.session.data) {
       throw redirect({
         search: {
           redirect: ctx.location.href,
         },
         to: '/sign-in',
       })
-    }
-
-    return {
-      orgId: pipe(session.session.activeOrganizationId, Option.fromNullable, Option.getOrNull),
-      userId: session.session.userId,
     }
   },
   component: RouteComponent,
