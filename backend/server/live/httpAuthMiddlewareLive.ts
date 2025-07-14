@@ -3,7 +3,6 @@ import { auth } from '@openfaith/auth/auth'
 import { SessionContext, UnauthorizedError } from '@openfaith/server/auth/sessionContext'
 import { Effect } from 'effect'
 
-// Authorization middleware that provides SessionContext
 export const HttpAuthMiddlewareLive = HttpLayerRouter.middleware<{
   provides: SessionContext
 }>()(

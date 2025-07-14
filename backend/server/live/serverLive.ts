@@ -9,37 +9,27 @@ import { HttpAuthMiddlewareLive } from '@openfaith/server/live/httpAuthMiddlewar
 import { Layer } from 'effect'
 
 // Create the handlers layer with basic dependencies
-const HandlersLayer = Layer.mergeAll(CoreHandlerLive, AdapterHandlerLive).pipe(
-  Layer.provide(DBLive),
-  Layer.provide(FetchHttpClient.layer),
-)
+const HandlersLayer = Layer.mergeAll(
+  CoreHandlerLive,
+  AdapterHandlerLive,
+  ZeroMutatorsHandlerLive,
+).pipe(Layer.provide(DBLive), Layer.provide(FetchHttpClient.layer))
 
 // Create the Core RPC route using HttpLayerRouter
-const CoreRpcRoute = RpcServer.layerHttpRouter({
-  group: CoreRpc,
-  path: '/rpc/core',
+export const RpcRoute = RpcServer.layerHttpRouter({
+  group: CoreRpc.merge(AdapterRpc),
+  path: '/api/api',
   protocol: 'http',
 }).pipe(
   Layer.provide(HandlersLayer),
-  Layer.provide(RpcSerialization.layerJson),
   Layer.provide(HttpAuthMiddlewareLive.layer),
-)
-
-// Create the Adapter RPC route using HttpLayerRouter
-const AdapterRpcRoute = RpcServer.layerHttpRouter({
-  group: AdapterRpc,
-  path: '/rpc/adapter',
-  protocol: 'http',
-}).pipe(
-  Layer.provide(HandlersLayer),
   Layer.provide(RpcSerialization.layerJson),
-  Layer.provide(HttpAuthMiddlewareLive.layer),
 )
 
 // Create the Zero HTTP API route using HttpLayerRouter
-const ZeroApiRoute = HttpLayerRouter.addHttpApi(ZeroMutatorsApi, {
+export const HttpApiRoute = HttpLayerRouter.addHttpApi(ZeroMutatorsApi, {
   openapiPath: '/docs/zero-openapi.json',
-}).pipe(Layer.provide(ZeroMutatorsHandlerLive))
+}).pipe(Layer.provide(HandlersLayer), Layer.provide(HttpAuthMiddlewareLive.layer))
 
 // Main server layer that includes Core, Adapter, and Zero together
-export const ServerLive = Layer.mergeAll(CoreRpcRoute, AdapterRpcRoute, ZeroApiRoute)
+export const ServerLive = Layer.mergeAll(RpcRoute, HttpApiRoute)

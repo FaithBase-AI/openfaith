@@ -1,10 +1,10 @@
 {
   "dependencies": {
-    "@effect/platform": "^0.69.28",
-    "@effect/rpc": "^0.43.3",
+    "@effect/platform": "catalog:",
+    "@effect/rpc": "catalog:",
     "@openfaith/db": "workspace:*",
     "@openfaith/domain": "workspace:*",
-    "effect": "^3.12.5"
+    "effect": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:"
