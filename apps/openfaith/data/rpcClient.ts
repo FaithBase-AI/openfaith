@@ -11,7 +11,7 @@ const ProtocolLayer = RpcClient.layerProtocolHttp({
     // Use fetch for HTTP requests
     FetchHttpClient.layer,
     // Use ndjson for serialization
-    RpcSerialization.layerNdjson,
+    RpcSerialization.layerJson,
   ]),
 )
 

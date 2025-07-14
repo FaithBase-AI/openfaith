@@ -133,8 +133,10 @@ export const auth = betterAuth({
         Option.match({
           onNone: asyncNoOp,
           onSome: async () => {
-            const session = ctx.context.newSession
+            const session = ctx.context.newSession || ctx.context.session
             ctx.context.session = session
+
+            console.log('🚀 session', session)
             const token =
               ctx.context.responseHeaders?.get('set-auth-jwt') || (await getJwtToken(ctx))
 

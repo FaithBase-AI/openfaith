@@ -13,6 +13,9 @@ export const CoreHandlerLive = CoreRpc.toLayer(
 
           console.log('✅ Test function completed')
 
+          return {
+            message: 'Test function completed',
+          }
           // Return void (no explicit return needed)
         }).pipe(
           Effect.catchAll((error) =>

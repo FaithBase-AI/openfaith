@@ -22,6 +22,9 @@ export class ForbiddenError extends Schema.TaggedError<ForbiddenError>()('Forbid
 export class CoreRpc extends RpcGroup.make(
   Rpc.make('testFunction', {
     error: TestFunctionError,
+    success: Schema.Struct({
+      message: Schema.String,
+    }),
   }),
 ) {}
 

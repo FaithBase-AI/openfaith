@@ -75,10 +75,10 @@ export const Route = createFileRoute('/_app/dashboard')({
 })
 
 function RouteComponent() {
-  const { mutate: testFunction, isPending } = useRxMutation(testFunctionRx)
+  const { mutate: testFunction, isPending, status } = useRxMutation(testFunctionRx)
   const { mutate: adapterConnect } = useRxMutation(adapterConnectRx)
 
-  const { onClick, loading, connectResult } = usePlanningCenterConnect({
+  const { onClick, loading } = usePlanningCenterConnect({
     onConnect: (params) => {
       adapterConnect({
         adapter: 'pco',
@@ -88,7 +88,8 @@ function RouteComponent() {
     },
   })
 
-  console.log(connectResult)
+  // console.log(connectResult)
+  console.log(status)
 
   return (
     <div className={'mx-auto flex max-w-3xl flex-col gap-4 p-4'}>

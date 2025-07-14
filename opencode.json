@@ -1,11 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "lsp": {
-    "biome": {
-      "command": "biome",
-      "enabled": true
-    }
-  },
   "mcp": {
     "effect-docs": {
       "command": ["npx", "-y", "effect-mcp"],
