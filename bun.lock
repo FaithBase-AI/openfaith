@@ -70,7 +70,9 @@
       "name": "@openfaith/openfaith",
       "version": "0.1.0",
       "dependencies": {
-        "@openfaith/api": "workspace:*",
+        "@effect-rx/rx-react": "0.38.0",
+        "@effect/platform": "catalog:",
+        "@effect/rpc": "catalog:",
         "@openfaith/auth": "workspace:*",
         "@openfaith/be-shared": "workspace:*",
         "@openfaith/db": "workspace:*",
@@ -94,9 +96,6 @@
         "@tanstack/react-table": "8.21.3",
         "@tanstack/react-virtual": "3.13.12",
         "@tanstack/router-plugin": "1.125.6",
-        "@trpc/client": "catalog:",
-        "@trpc/server": "catalog:",
-        "@trpc/tanstack-react-query": "catalog:",
         "effect": "catalog:",
         "input-otp": "catalog:",
         "jotai": "catalog:",
@@ -119,33 +118,6 @@
         "@vitejs/plugin-react": "4.6.0",
         "typescript": "catalog:",
         "vite-tsconfig-paths": "5.1.4",
-      },
-    },
-    "backend/api": {
-      "name": "@openfaith/api",
-      "version": "0.1.0",
-      "dependencies": {
-        "@effect/opentelemetry": "catalog:",
-        "@effect/platform": "catalog:",
-        "@effect/sql-drizzle": "catalog:",
-        "@openfaith/auth": "workspace:*",
-        "@openfaith/db": "workspace:*",
-        "@openfaith/pco": "workspace:*",
-        "@openfaith/schema": "workspace:*",
-        "@openfaith/shared": "workspace:*",
-        "@openfaith/workers": "workspace:*",
-        "@opentelemetry/sdk-metrics": "2.0.1",
-        "@opentelemetry/sdk-trace-base": "2.0.1",
-        "@opentelemetry/sdk-trace-node": "2.0.1",
-        "@opentelemetry/sdk-trace-web": "2.0.1",
-        "@trpc/server": "catalog:",
-        "date-fns": "catalog:",
-        "drizzle-orm": "catalog:",
-        "effect": "catalog:",
-        "superjson": "catalog:",
-      },
-      "devDependencies": {
-        "typescript": "catalog:",
       },
     },
     "backend/email": {
@@ -414,9 +386,6 @@
     "@effect/sql-pg": "0.41.1",
     "@effect/workflow": "0.4.2",
     "@rocicorp/zero": "0.21.2025070200",
-    "@trpc/client": "11.1.4",
-    "@trpc/server": "11.1.4",
-    "@trpc/tanstack-react-query": "11.1.4",
     "@types/qs": "6.14.0",
     "@types/react": "19.1.6",
     "@types/react-dom": "19.1.5",
@@ -569,6 +538,10 @@
     "@drizzle-team/brocli": ["@drizzle-team/brocli@0.10.2", "", {}, "sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w=="],
 
     "@ecies/ciphers": ["@ecies/ciphers@0.2.3", "", { "peerDependencies": { "@noble/ciphers": "^1.0.0" } }, "sha512-tapn6XhOueMwht3E2UzY0ZZjYokdaw9XtL9kEyjhQ/Fb9vL9xTFbOaI+fV0AWvTpYu4BNloC6getKW6NtSg4mA=="],
+
+    "@effect-rx/rx": ["@effect-rx/rx@0.43.2", "", { "peerDependencies": { "@effect/platform": "^0.87.0", "effect": "^3.16.9" } }, "sha512-jv1G96rwHcjLRVzkuKvJGRTA7WLNgPfl6d1HjpNEYRKJN+7b2p+NIQ+mj5RM4N2rnqz2Zhufs8kDM/EZcYEF9w=="],
+
+    "@effect-rx/rx-react": ["@effect-rx/rx-react@0.38.0", "", { "dependencies": { "@effect-rx/rx": "^0.43.0" }, "peerDependencies": { "effect": "^3.16", "react": ">=18 <20", "scheduler": "*" } }, "sha512-x4V5Fhydpz8JL3YCUvinvWR4f7+WaypHkrGH8HEakhfIkCYtNBLAxjjcPBALrLxRjHtU/EBFeWmHUXaM0W5Meg=="],
 
     "@effect/cluster": ["@effect/cluster@0.41.3", "", { "peerDependencies": { "@effect/platform": "^0.87.1", "@effect/rpc": "^0.64.2", "@effect/sql": "^0.40.1", "@effect/workflow": "^0.4.2", "effect": "^3.16.10" } }, "sha512-J9IYEdyW23ZKSbVs4AV8AZnfBX/mkOtpMAGq7iIKwt+HTblFVTIM0bXT/2/nQ+h5bxywj1wk3yB9oznxvn2uqg=="],
 
@@ -855,8 +828,6 @@
     "@oozcitak/util": ["@oozcitak/util@8.3.8", "", {}, "sha512-T8TbSnGsxo6TDBJx/Sgv/BlVJL3tshxZP7Aq5R1mSnM5OcHY2dQaxLMu2+E8u3gN0MLOzdjurqN4ZRVuzQycOQ=="],
 
     "@openfaith/adapter-core": ["@openfaith/adapter-core@workspace:adapters/adapter-core"],
-
-    "@openfaith/api": ["@openfaith/api@workspace:backend/api"],
 
     "@openfaith/auth": ["@openfaith/auth@workspace:packages/auth"],
 
@@ -1499,12 +1470,6 @@
     "@tanstack/virtual-file-routes": ["@tanstack/virtual-file-routes@1.121.21", "", {}, "sha512-3nuYsTyaq6ZN7jRZ9z6Gj3GXZqBOqOT0yzd/WZ33ZFfv4yVNIvsa5Lw+M1j3sgyEAxKMqGu/FaNi7FCjr3yOdw=="],
 
     "@tootallnate/quickjs-emscripten": ["@tootallnate/quickjs-emscripten@0.23.0", "", {}, "sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA=="],
-
-    "@trpc/client": ["@trpc/client@11.1.4", "", { "peerDependencies": { "@trpc/server": "11.1.4", "typescript": ">=5.7.2" } }, "sha512-QDaIdwhZlHKMhDAr5m4dJNAYkX4ydo63Up0M01mGcdpnOOmGlvGMRWzdVSLIvGc1JasPSvC15RsgrjMzXpElzw=="],
-
-    "@trpc/server": ["@trpc/server@11.1.4", "", { "peerDependencies": { "typescript": ">=5.7.2" } }, "sha512-X3TSLwQQh5+zi+yY7BnnmUUwVNdeBj3BAt580sAJ+Qd5PvDhz1gSNHGOAlOLulCFn6g/JHf8n+DbnPF/Gb63SA=="],
-
-    "@trpc/tanstack-react-query": ["@trpc/tanstack-react-query@11.1.4", "", { "peerDependencies": { "@tanstack/react-query": "^5.67.1", "@trpc/client": "11.1.4", "@trpc/server": "11.1.4", "react": ">=18.2.0", "react-dom": ">=18.2.0", "typescript": ">=5.7.2" } }, "sha512-q4BE8Qi8qq+2Z1lzjR39+33NwphBXd0t/zeayTlgl/OUmHmmZ/v3DcOqLfL1GcNl/Jc+qE/9lc6U/WDoaMyXyw=="],
 
     "@ts-morph/common": ["@ts-morph/common@0.27.0", "", { "dependencies": { "fast-glob": "^3.3.3", "minimatch": "^10.0.1", "path-browserify": "^1.0.1" } }, "sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ=="],
 

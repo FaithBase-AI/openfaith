@@ -1,5 +1,7 @@
+import { testFunctionRx } from '@openfaith/openfaith/data/rpcState'
 import type { CommandMenuType } from '@openfaith/openfaith/features/quickActions/quickActionsTypes'
 import { useSignOut } from '@openfaith/openfaith/shared/auth/useSignOut'
+import { useRxMutation } from '@openfaith/openfaith/shared/hooks/rxHooks'
 import { GroupIcon, SignOutIcon, TerminalIcon, UserPlusIcon } from '@openfaith/ui'
 import { Boolean, pipe } from 'effect'
 import { atom, useSetAtom } from 'jotai'
@@ -17,9 +19,7 @@ export function useCommandMenuOptions() {
   const setInviteMemberIsOpen = useSetAtom(inviteMemberIsOpenAtom)
   const setCreateOrgIsOpen = useSetAtom(createOrgIsOpenAtom)
   const signOut = useSignOut()
-  // const trpc = useTRPC()
-
-  // const { mutate: testFunction } = useMutation(trpc.core.testFunction.mutationOptions())
+  const { mutate: testFunction } = useRxMutation(testFunctionRx)
 
   return useMemo(
     (): ReadonlyArray<CommandMenuType> => [
@@ -57,7 +57,7 @@ export function useCommandMenuOptions() {
               icon: <TerminalIcon />,
               name: 'Test Function',
               onSelect: () => {
-                // testFunction()
+                testFunction()
                 setQuickActionsIsOpen(false)
               },
             },
@@ -65,6 +65,6 @@ export function useCommandMenuOptions() {
         }),
       ),
     ],
-    [setCreateOrgIsOpen, setInviteMemberIsOpen, setQuickActionsIsOpen, signOut],
+    [setCreateOrgIsOpen, setInviteMemberIsOpen, setQuickActionsIsOpen, signOut, testFunction],
   )
 }

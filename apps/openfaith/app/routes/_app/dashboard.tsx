@@ -1,3 +1,6 @@
+import { usePlanningCenterConnect } from '@openfaith/openfaith/adapters/pcoClient'
+import { adapterConnectRx, testFunctionRx } from '@openfaith/openfaith/data/rpcState'
+import { useRxMutation } from '@openfaith/openfaith/shared/hooks/rxHooks'
 import {
   BoxOption,
   Button,
@@ -72,41 +75,34 @@ export const Route = createFileRoute('/_app/dashboard')({
 })
 
 function RouteComponent() {
-  // const trpc = useTRPC()
+  const { mutate: testFunction, isPending } = useRxMutation(testFunctionRx)
+  const { mutate: adapterConnect } = useRxMutation(adapterConnectRx)
 
-  // const { mutate: testFunction } = useMutation({
-  //   ...trpc.core.testFunction.mutationOptions(),
-  //   onSuccess: (data) => {
-  //     console.log(data)
-  //   },
-  // })
+  const { onClick, loading, connectResult } = usePlanningCenterConnect({
+    onConnect: (params) => {
+      adapterConnect({
+        adapter: 'pco',
+        code: params.code,
+        redirectUri: params.redirectUri,
+      })
+    },
+  })
 
-  // const { mutate: adapterConnect } = useMutation({
-  //   ...trpc.adapter.adapterConnect.mutationOptions(),
-  // })
-
-  // const { onClick, loading, connectResult } = usePlanningCenterConnect({
-  //   onConnect: (params) => {
-  //     adapterConnect({
-  //       adapter: 'pco',
-  //       code: params.code,
-  //       redirectUri: params.redirectUri,
-  //     })
-  //   },
-  // })
-  // console.log(connectResult)
+  console.log(connectResult)
 
   return (
     <div className={'mx-auto flex max-w-3xl flex-col gap-4 p-4'}>
-      <Button onClick={() => {}}>Test Function</Button>
+      <Button loading={isPending} onClick={() => testFunction()}>
+        Test Function
+      </Button>
       <Label className={'font-semibold'}>ChMS</Label>
 
       <div className={'flew-row mt-2 mb-4 flex flex-wrap gap-4'}>
         <BoxOption
-          // disabled={loading}
+          disabled={loading}
           icon={<PlanningCenterIcon className={'size-12'} />}
           name={'Planning Center'}
-          // onClick={onClick}
+          onClick={onClick}
         />
 
         {pipe(

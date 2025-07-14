@@ -1,6 +1,8 @@
 {
   "dependencies": {
-    "@openfaith/api": "workspace:*",
+    "@effect-rx/rx-react": "0.38.0",
+    "@effect/platform": "catalog:",
+    "@effect/rpc": "catalog:",
     "@openfaith/auth": "workspace:*",
     "@openfaith/be-shared": "workspace:*",
     "@openfaith/db": "workspace:*",
@@ -24,9 +26,6 @@
     "@tanstack/react-table": "8.21.3",
     "@tanstack/react-virtual": "3.13.12",
     "@tanstack/router-plugin": "1.125.6",
-    "@trpc/client": "catalog:",
-    "@trpc/server": "catalog:",
-    "@trpc/tanstack-react-query": "catalog:",
     "effect": "catalog:",
     "input-otp": "catalog:",
     "jotai": "catalog:",

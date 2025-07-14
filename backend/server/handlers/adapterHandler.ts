@@ -1,8 +1,8 @@
 import { FetchHttpClient } from '@effect/platform'
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
-import { adaptersApi } from '@openfaith/api/adapters/adaptersApi'
 import { adapterDetailsTable, adapterTokensTable, DBLive } from '@openfaith/db'
 import { AdapterConnectError, AdapterRpc } from '@openfaith/domain'
+import { adaptersApi } from '@openfaith/server/adapters/adaptersApi'
 import { fromUnixTime } from 'date-fns/fp'
 import { Effect, Layer, Option, pipe, Record } from 'effect'
 
