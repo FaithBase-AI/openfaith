@@ -1,9 +1,11 @@
 import { HttpApiBuilder, HttpServer } from '@effect/platform'
-import { ServerLive } from '@openfaith/server'
+import { FrontendServerLive } from '@openfaith/server/live/frontendServerLive'
 import { createServerFileRoute } from '@tanstack/react-start/server'
 import { Layer } from 'effect'
 
-const { handler } = HttpApiBuilder.toWebHandler(Layer.mergeAll(ServerLive, HttpServer.layerContext))
+const { handler } = HttpApiBuilder.toWebHandler(
+  Layer.mergeAll(FrontendServerLive, HttpServer.layerContext),
+)
 export const ServerRoute = createServerFileRoute('/api/api/$').methods({
   async DELETE({ request }) {
     return await handler(request)

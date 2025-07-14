@@ -56,8 +56,7 @@
     "build": "bunx --bun vite build",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "bunx --bun vite dev --port 3000",
-    "format": "biome lint .",
-    "lint:biome": "biome lint .",
+    "format": "biome check",
     "start": "bun .output/server/index.mjs",
     "typecheck": "tsc --noEmit"
   },

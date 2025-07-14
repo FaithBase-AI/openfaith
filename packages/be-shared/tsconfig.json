@@ -1,10 +1,10 @@
 {
-  "extends": "@openfaith/tsconfig/base.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
       "@openfaith/be-shared/*": ["./*"]
     }
   },
+  "extends": "@openfaith/tsconfig/base.json",
   "include": ["."]
 }

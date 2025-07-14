@@ -1,5 +1,5 @@
 import { pcoApiAdapter } from '@openfaith/pco/api/pcoApiAdapter'
-import { PcoWorkflowStepAssigneeSummary } from './pcoWorkflowStepAssigneeSummarySchema'
+import { PcoWorkflowStepAssigneeSummary } from '@openfaith/pco/modules/people/pcoWorkflowStepAssigneeSummarySchema'
 
 export const listWorkflowStepAssigneeSummariesDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowStepAssigneeSummary,

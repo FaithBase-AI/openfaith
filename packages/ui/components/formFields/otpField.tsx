@@ -35,19 +35,19 @@ export function OTPField(props: OTPFieldProps) {
 
   return (
     <InputWrapper
-      required={required}
-      label={label}
-      name={field.name}
       className={wrapperClassName}
-      labelClassName={labelClassName}
       errorClassName={errorClassName}
+      label={label}
+      labelClassName={labelClassName}
+      name={field.name}
       processedError={processedError}
+      required={required}
     >
       <InputOTP
         maxLength={6}
+        onChange={(value) => field.handleChange(value)}
         pattern={REGEXP_ONLY_DIGITS}
         value={field.state.value}
-        onChange={(value) => field.handleChange(value)}
         {...domProps}
       >
         <InputOTPGroup>

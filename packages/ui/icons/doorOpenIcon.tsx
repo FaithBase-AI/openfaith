@@ -7,16 +7,16 @@ export const DoorOpenIcon = ({
   ref?: React.RefObject<SVGSVGElement>
 }) => (
   <svg
-    ref={ref}
-    width={'24'}
-    height={'24'}
-    viewBox={'0 0 24 24'}
+    className={'lucide-icon customizable'}
     fill={'none'}
+    height={'24'}
+    ref={ref}
     stroke={'currentColor'}
-    strokeWidth={'2'}
     strokeLinecap={'round'}
     strokeLinejoin={'round'}
-    className={'lucide-icon customizable'}
+    strokeWidth={'2'}
+    viewBox={'0 0 24 24'}
+    width={'24'}
     {...props}
   >
     <path d={'M13 4h3a2 2 0 0 1 2 2v14'} />

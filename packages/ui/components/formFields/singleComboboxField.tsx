@@ -59,30 +59,30 @@ export const SingleComboboxField = (props: SingleComboboxFieldProps) => {
 
   return (
     <InputWrapper
-      required={required}
-      label={label}
-      name={field.name}
       className={wrapperClassName}
-      labelClassName={labelClassName}
       errorClassName={errorClassName}
+      label={label}
+      labelClassName={labelClassName}
+      name={field.name}
       processedError={processedError}
+      required={required}
     >
       <Combobox
-        className={className}
-        options={options}
-        selectedOptions={selectedOptions}
         addItem={(id) => {
           field.handleChange(id)
         }}
+        alignOffset={alignOffset}
+        ComboboxTrigger={SelectComboBoxTrigger}
+        className={className}
+        disabled={disabled}
+        emptyText={placeholder}
+        mode={'single'}
+        options={options}
+        popOverContentClassName={cn('w-(--radix-popover-trigger-width)', popOverContentClassName)}
         removeItem={() => {
           field.handleChange(null)
         }}
-        disabled={disabled}
-        mode={'single'}
-        ComboboxTrigger={SelectComboBoxTrigger}
-        emptyText={placeholder}
-        popOverContentClassName={cn('w-(--radix-popover-trigger-width)', popOverContentClassName)}
-        alignOffset={alignOffset}
+        selectedOptions={selectedOptions}
         {...domProps}
       />
     </InputWrapper>

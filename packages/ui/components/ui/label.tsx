@@ -17,7 +17,7 @@ function Label({
   ...props
 }: React.ComponentProps<typeof LabelPrimitive.Root> & { required?: boolean }) {
   return (
-    <LabelPrimitive.Root data-slot='label' className={cn(labelVariants(), className)} {...props}>
+    <LabelPrimitive.Root className={cn(labelVariants(), className)} data-slot='label' {...props}>
       {children}
       {pipe(required, Boolean.match({ onFalse: nullOp, onTrue: () => '*' }))}
     </LabelPrimitive.Root>

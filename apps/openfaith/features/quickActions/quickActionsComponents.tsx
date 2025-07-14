@@ -109,11 +109,11 @@ export const QuickActionForm: FC<QuickActionFormProps> = (props) => {
       <Separator />
 
       <Form
-        form={form}
         className={cn(
           'flex w-full flex-col items-stretch gap-0 overflow-hidden rounded-[inherit]',
           className,
         )}
+        form={form}
         {...domProps}
       >
         <ScrollArea className='flex flex-col'>

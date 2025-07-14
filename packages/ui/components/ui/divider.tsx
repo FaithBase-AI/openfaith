@@ -4,20 +4,20 @@ import { cva } from 'class-variance-authority'
 import type { ComponentProps } from 'react'
 
 const dividerVariants = cva('shrink-0 bg-border', {
+  defaultVariants: {
+    orientation: 'horizontal',
+    variant: 'primary',
+  },
   variants: {
-    variant: {
-      primary: '',
-      page: 'relative z-10 mx-2 md:mx-4',
-      modal: 'mx-4',
-    },
     orientation: {
       horizontal: 'h-px',
       vertical: 'w-px',
     },
-  },
-  defaultVariants: {
-    variant: 'primary',
-    orientation: 'horizontal',
+    variant: {
+      modal: 'mx-4',
+      page: 'relative z-10 mx-2 md:mx-4',
+      primary: '',
+    },
   },
 })
 
@@ -26,7 +26,7 @@ export const Divider = (props: ComponentProps<'div'> & VariantProps<typeof divid
 
   return (
     <div
-      className={cn(dividerVariants({ variant, orientation }), className)}
+      className={cn(dividerVariants({ orientation, variant }), className)}
       data-slot='divider'
       {...domProps}
     />

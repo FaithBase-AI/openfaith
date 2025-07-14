@@ -23,8 +23,8 @@ export function useUserOpt(userId: string) {
   const [user, info] = useQuery(getBaseUserQuery(z, userId), pipe(userId, String.isNonEmpty))
 
   return {
-    userOpt: pipe(user, Option.fromNullable),
     loading: info.type !== 'complete',
+    userOpt: pipe(user, Option.fromNullable),
   }
 }
 

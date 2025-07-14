@@ -104,23 +104,26 @@ const TagInput = (props: TagInputProps) => {
         <Badge key={item} variant={'secondary'}>
           {item}
           <Button
-            variant={'ghost'}
-            size={'icon'}
             className={'ml-2 size-3'}
             onClick={() => {
               onChange(value.filter((i) => i !== item))
             }}
+            size={'icon'}
+            variant={'ghost'}
           >
             <XIcon className={'w-3'} />
           </Button>
         </Badge>
       ))}
       <input
-        data-1p-ignore
         className={
           'flex-1 bg-inherit outline-hidden placeholder:text-neutral-500 dark:placeholder:text-neutral-400'
         }
-        value={pendingDataPoint}
+        data-1p-ignore
+        onBlur={(e) => {
+          addPendingDataPoint()
+          onBlur?.(e)
+        }}
         onChange={(e) => setPendingDataPoint(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ',') {
@@ -131,10 +134,7 @@ const TagInput = (props: TagInputProps) => {
             onChange(value.slice(0, -1))
           }
         }}
-        onBlur={(e) => {
-          addPendingDataPoint()
-          onBlur?.(e)
-        }}
+        value={pendingDataPoint}
         {...domProps}
         ref={ref}
       />

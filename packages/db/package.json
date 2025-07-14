@@ -20,8 +20,7 @@
     "dev": "drizzle-kit studio",
     "dev:db-down": "docker compose --env-file .env -f ./docker-compose.yml down",
     "dev:db-up": "docker compose --env-file .env -f ./docker-compose.yml up",
-    "format": "biome lint .",
-    "lint:biome": "biome lint .",
+    "format": "biome check",
     "typecheck": "tsc --noEmit"
   },
   "type": "module",

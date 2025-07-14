@@ -36,19 +36,19 @@ export function InputField(props: InputFieldProps) {
 
   return (
     <InputWrapper
-      required={required}
-      label={label}
-      name={field.name}
       className={wrapperClassName}
-      labelClassName={labelClassName}
       errorClassName={errorClassName}
+      label={label}
+      labelClassName={labelClassName}
+      name={field.name}
       processedError={processedError}
+      required={required}
     >
       <Input
         id={field.name}
-        value={field.state.value}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
+        value={field.state.value}
         {...domProps}
       />
     </InputWrapper>
@@ -85,20 +85,20 @@ export function SlugInputField(props: SlugInputFieldProps) {
 
   return (
     <InputWrapper
-      required={required}
-      label={label}
-      name={field.name}
       className={wrapperClassName}
-      labelClassName={labelClassName}
       errorClassName={errorClassName}
+      label={label}
+      labelClassName={labelClassName}
+      name={field.name}
       processedError={processedError}
+      required={required}
     >
       <IMaskInput
+        className={cn(inputClassName, className)}
         id={field.name}
-        value={field.state.value}
-        onBlur={field.handleBlur}
-        onAccept={(value) => field.handleChange(value)}
         mask={/^[a-zA-Z0-9\s-_]*$/}
+        onAccept={(value) => field.handleChange(value)}
+        onBlur={field.handleBlur}
         prepare={(str) => {
           // Convert to lowercase
           str = str.toLowerCase()
@@ -106,7 +106,7 @@ export function SlugInputField(props: SlugInputFieldProps) {
           return str
         }}
         // @ts-ignore
-        className={cn(inputClassName, className)}
+        value={field.state.value}
         {...domProps}
       />
     </InputWrapper>

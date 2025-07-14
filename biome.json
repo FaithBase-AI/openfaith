@@ -9,19 +9,13 @@
       }
     }
   },
+  "files": {
+    "includes": ["**", "!**/.cache", "!**/.turbo", "!**/node_modules"]
+  },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
-    "includes": [
-      "**",
-      "!**/.cache",
-      "!**/.expo",
-      "!**/.turbo",
-      "!**/expo-env.d.ts",
-      "!**/ios",
-      "!**/android",
-      "!**/shared/a5"
-    ],
+    "includes": ["**", "!**/.cache", "!**/.turbo", "!**/node_modules"],
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 100
@@ -40,17 +34,7 @@
       "react": "recommended"
     },
     "enabled": true,
-    "includes": [
-      "**",
-      "!**/.cache",
-      "!**/.expo",
-      "!**/.turbo",
-      "!**/expo-env.d.ts",
-
-      "!**/ios",
-      "!**/android",
-      "!**/shared/a5"
-    ],
+    "includes": ["**", "!**/.cache", "!**/.turbo", "!**/node_modules"],
     "rules": {
       "a11y": {
         "noHeaderScope": "off",

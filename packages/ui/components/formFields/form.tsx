@@ -13,17 +13,17 @@ export const Form: FC<FormProps> = (props) => {
 
   return (
     <form
+      className={cn('flex flex-col gap-4', className)}
       onSubmit={(e) => {
         e.preventDefault()
         e.stopPropagation()
         void form.handleSubmit()
       }}
-      className={cn('flex flex-col gap-4', className)}
       {...domProps}
     >
       {children}
 
-      <input type='submit' hidden />
+      <input hidden type='submit' />
     </form>
   )
 }

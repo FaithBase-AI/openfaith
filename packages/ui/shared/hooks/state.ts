@@ -2,8 +2,7 @@ import { Either, Equivalence, Option } from 'effect'
 import type { Dispatch, SetStateAction } from 'react'
 import { useReducer } from 'react'
 
-const isSetStateFn = <A>(s: SetStateAction<A>): s is (a: A) => A =>
-  typeof s === 'function'
+const isSetStateFn = <A>(s: SetStateAction<A>): s is (a: A) => A => typeof s === 'function'
 
 export const useStable = <A>(
   initState: A,

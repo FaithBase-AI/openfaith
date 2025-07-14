@@ -1,6 +1,6 @@
 import { Rx } from '@effect-rx/rx-react'
+import { AdapterRpcClient, CoreRpcClient, rpcLayer } from '@openfaith/openfaith/data/rpcClient'
 import { Effect } from 'effect'
-import { AdapterRpcClient, CoreRpcClient, rpcLayer } from './rpcClient'
 
 const runtime = Rx.runtime(rpcLayer)
 

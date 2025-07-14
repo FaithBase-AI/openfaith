@@ -13,8 +13,6 @@ import { createFormHook } from '@tanstack/react-form'
 
 // Create and export the form hook with base configuration
 export const { useAppForm, withForm } = createFormHook({
-  fieldContext,
-  formContext,
   // We'll add field components as we convert them
   fieldComponents: {
     ComboboxField,
@@ -29,6 +27,8 @@ export const { useAppForm, withForm } = createFormHook({
     TagInputField,
     TextareaField,
   },
+  fieldContext,
   // We'll add form components as we need them
   formComponents: {},
+  formContext,
 })

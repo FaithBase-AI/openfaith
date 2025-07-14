@@ -7,15 +7,15 @@ export const TithelyIcon = ({
   ref?: React.RefObject<SVGSVGElement>
 }) => (
   <svg
-    xmlns={'http://www.w3.org/2000/svg'}
-    ref={ref}
-    width={'64'}
-    height={'64'}
-    viewBox={'0 0 64 64'}
     fill={'none'}
+    height={'64'}
+    ref={ref}
+    viewBox={'0 0 64 64'}
+    width={'64'}
+    xmlns={'http://www.w3.org/2000/svg'}
     {...props}
   >
-    <rect width={'64'} height={'64'} rx={'12'} fill={'black'} />
+    <rect fill={'black'} height={'64'} rx={'12'} width={'64'} />
     <path
       d={
         'M31.5886 32.682C34.8488 31.3525 37.2692 28.4713 37.5697 25.0914L37.6026 24.3445C37.6026 19.7584 35.2772 15.7039 31.6548 13C28.0324 15.7039 25.5747 19.7826 25.5747 24.3687L25.6077 25.1156C25.9082 28.4955 28.3285 31.3525 31.5886 32.682Z'

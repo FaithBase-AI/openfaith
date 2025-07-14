@@ -14,8 +14,8 @@
  * ------------------------------------------------------------
  */
 
+import type { default as zeroSchema } from '@openfaith/zero/drizzle-zero.config'
 import type { ZeroCustomType } from 'drizzle-zero'
-import type { default as zeroSchema } from './drizzle-zero.config'
 
 /**
  * The Zero schema object.

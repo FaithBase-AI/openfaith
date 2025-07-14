@@ -1,6 +1,6 @@
 import { HttpApiClient } from '@effect/platform'
+import { WorkflowApi } from '@openfaith/workers/api/workflowApi'
 import { Effect } from 'effect'
-import { WorkflowApi } from './workflowApi'
 
 // Create a client service for the WorkflowApi that can be yielded from
 export class WorkflowClient extends Effect.Service<WorkflowClient>()('WorkflowClient', {

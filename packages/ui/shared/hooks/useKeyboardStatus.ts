@@ -57,6 +57,7 @@ export function useKeyboardStatus() {
   }, [checkKeyboardState])
 
   return {
+    checkKeyboardState,
     isKeyboardOpen: pipe(
       isPWA,
       Boolean.match({
@@ -64,6 +65,5 @@ export function useKeyboardStatus() {
         onTrue: () => isKeyboardOpen,
       }),
     ),
-    checkKeyboardState,
   }
 }

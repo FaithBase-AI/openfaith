@@ -7,20 +7,20 @@ export const StopCircleIcon = ({
   ref?: React.RefObject<SVGSVGElement>
 }) => (
   <svg
-    ref={ref}
-    width={'24'}
-    height={'24'}
-    viewBox={'0 0 24 24'}
+    className={'lucide-icon customizable'}
     fill={'none'}
+    height={'24'}
+    ref={ref}
     stroke={'currentColor'}
-    strokeWidth={'2'}
     strokeLinecap={'round'}
     strokeLinejoin={'round'}
-    className={'lucide-icon customizable'}
+    strokeWidth={'2'}
+    viewBox={'0 0 24 24'}
+    width={'24'}
     {...props}
   >
     <circle cx={'12'} cy={'12'} r={'10'}></circle>
-    <rect width={'6'} height={'6'} x={'9'} y={'9'}></rect>
+    <rect height={'6'} width={'6'} x={'9'} y={'9'}></rect>
   </svg>
 )
 StopCircleIcon.displayName = 'StopCircleIcon'

@@ -3,8 +3,21 @@ import {
   AdapterConnectError,
   AdapterConnectInput,
   AdapterConnectOutput,
-} from './core/adapterDomain'
-import { TestFunctionError } from './core/coreDomain'
+} from '@openfaith/domain/core/adapterDomain'
+import { TestFunctionError } from '@openfaith/domain/core/coreDomain'
+import { Schema } from 'effect'
+
+// Auth errors for RPC
+export class UnauthorizedError extends Schema.TaggedError<UnauthorizedError>()(
+  'UnauthorizedError',
+  {
+    message: Schema.String,
+  },
+) {}
+
+export class ForbiddenError extends Schema.TaggedError<ForbiddenError>()('ForbiddenError', {
+  message: Schema.String,
+}) {}
 
 export class CoreRpc extends RpcGroup.make(
   Rpc.make('testFunction', {
@@ -14,7 +27,7 @@ export class CoreRpc extends RpcGroup.make(
 
 export class AdapterRpc extends RpcGroup.make(
   Rpc.make('adapterConnect', {
-    error: AdapterConnectError,
+    error: Schema.Union(AdapterConnectError, UnauthorizedError, ForbiddenError),
     payload: {
       adapter: AdapterConnectInput.fields.adapter,
       code: AdapterConnectInput.fields.code,

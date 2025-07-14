@@ -17,5 +17,5 @@ type OrgAvatarProps = OrgAvatarBaseProps & {
 export const OrgAvatar: FC<OrgAvatarProps> = (props) => {
   const { org, ...domProps } = props
 
-  return <BaseAvatar name={org.name} avatar={org.logo} _tag='org' {...domProps} />
+  return <BaseAvatar _tag='org' avatar={org.logo} name={org.name} {...domProps} />
 }

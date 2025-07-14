@@ -241,9 +241,7 @@
       "schema": "",
       "uniqueConstraints": {
         "openfaith_orgs_slug_unique": {
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "name": "openfaith_orgs_slug_unique",
           "nullsNotDistinct": false
         }
@@ -444,9 +442,7 @@
       "schema": "",
       "uniqueConstraints": {
         "openfaith_users_email_unique": {
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "name": "openfaith_users_email_unique",
           "nullsNotDistinct": false
         }

@@ -1,10 +1,10 @@
 {
-  "extends": "@openfaith/tsconfig/base.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
       "@openfaith/ui/*": ["./*"]
     }
   },
+  "extends": "@openfaith/tsconfig/base.json",
   "include": ["."]
 }

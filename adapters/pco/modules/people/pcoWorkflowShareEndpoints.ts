@@ -1,5 +1,5 @@
 import { pcoApiAdapter } from '@openfaith/pco/api/pcoApiAdapter'
-import { PcoWorkflowShare } from './pcoWorkflowShareSchema'
+import { PcoWorkflowShare } from '@openfaith/pco/modules/people/pcoWorkflowShareSchema'
 
 export const listWorkflowSharesDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowShare,

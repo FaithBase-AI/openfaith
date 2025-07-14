@@ -8,7 +8,7 @@ export const Route = createFileRoute('/')({
 function Home() {
   return (
     <div className='flex flex-col items-start gap-4 p-16'>
-      <ThemeToggle variant={'ghost'} className={'absolute top-4 right-4'} />
+      <ThemeToggle className={'absolute top-4 right-4'} variant={'ghost'} />
 
       <h1 className='font-bold text-4xl'>OpenFaith</h1>
 

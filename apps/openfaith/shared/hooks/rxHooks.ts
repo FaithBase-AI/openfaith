@@ -1,15 +1,15 @@
 /**
  * Enhanced React hooks for Effect-RX that provide a convenient interface
  * for managing asynchronous operations with Effect's type-safe error handling.
- * 
+ *
  * This module extends @effect-rx/rx-react with additional hooks that follow
  * Effect-TS patterns and conventions, providing:
- * 
+ *
  * - Type-safe mutation and query hooks with proper Effect error handling
  * - Consistent status management using Effect's tagged enums
  * - Integration with Effect's Option type for nullable values
  * - Full compatibility with Effect's Exit type for result handling
- * 
+ *
  * @since 1.0.0
  * @module
  */
@@ -121,7 +121,7 @@ export interface RxMutationResult<A, E, W> {
 
 /**
  * A hook that provides a convenient interface for managing mutations with Effect-RX.
- * 
+ *
  * This hook integrates with Effect's Result and Exit types to provide type-safe
  * error handling and state management for asynchronous mutations.
  *
@@ -129,12 +129,12 @@ export interface RxMutationResult<A, E, W> {
  * @category hooks
  * @param rx - A writable Rx that produces a Result
  * @returns An object containing the mutation state and control functions
- * 
+ *
  * @example
  * ```typescript
  * import { Rx } from '@effect-rx/rx'
  * import { Effect } from 'effect'
- * 
+ *
  * const saveUserRx = Rx.family((id: string) =>
  *   Rx.fn((data: UserData) =>
  *     Effect.gen(function* () {
@@ -143,14 +143,14 @@ export interface RxMutationResult<A, E, W> {
  *     })
  *   )
  * )
- * 
+ *
  * function UserForm({ userId }: { userId: string }) {
  *   const mutation = useRxMutation(saveUserRx(userId))
- *   
+ *
  *   const handleSubmit = (data: UserData) => {
  *     mutation.mutate(data)
  *   }
- *   
+ *
  *   return (
  *     <form onSubmit={handleSubmit}>
  *       {mutation.isError && <div>Error saving user</div>}
@@ -164,11 +164,13 @@ export interface RxMutationResult<A, E, W> {
  * ```
  */
 export const useRxMutation = <E, A, W>(
-  rx: Rx.Writable<Result.Result<A, E>, W>
+  rx: Rx.Writable<Result.Result<A, E>, W>,
 ): RxMutationResult<A, E, W> => {
   const mutateAsyncImpl = useRxSetPromise<E, A, W>(rx)
   const [status, setStatus] = React.useState<Status<A, E>>(Status.Idle())
-  const [lastExitOpt, setLastExitOpt] = React.useState<Option.Option<Exit.Exit<A, E>>>(Option.none())
+  const [lastExitOpt, setLastExitOpt] = React.useState<Option.Option<Exit.Exit<A, E>>>(
+    Option.none(),
+  )
   const [variablesOpt, setVariablesOpt] = React.useState<Option.Option<W>>(Option.none())
   const [callCount, setCallCount] = React.useState(0)
   const [submittedAt, setSubmittedAt] = React.useState<number>(0)
@@ -194,11 +196,11 @@ export const useRxMutation = <E, A, W>(
           Exit.match({
             onFailure: (error) => setStatus(Status.Error({ error })),
             onSuccess: (value) => setStatus(Status.Success({ value })),
-          })
+          }),
         )
       })
     },
-    [mutateAsyncImpl]
+    [mutateAsyncImpl],
   )
 
   const mutateAsync = React.useCallback(
@@ -214,11 +216,11 @@ export const useRxMutation = <E, A, W>(
         Exit.match({
           onFailure: (error) => setStatus(Status.Error({ error })),
           onSuccess: (value) => setStatus(Status.Success({ value })),
-        })
+        }),
       )
       return exit
     },
-    [mutateAsyncImpl]
+    [mutateAsyncImpl],
   )
 
   return {
@@ -275,7 +277,7 @@ export interface RxQueryResult<A, E> {
 
 /**
  * A hook that provides a convenient interface for consuming query results with Effect-RX.
- * 
+ *
  * This hook automatically subscribes to an Rx that produces a Result and provides
  * a consistent interface for handling loading, success, and error states.
  *
@@ -283,12 +285,12 @@ export interface RxQueryResult<A, E> {
  * @category hooks
  * @param rx - An Rx that produces a Result
  * @returns An object containing the query state and data
- * 
+ *
  * @example
  * ```typescript
  * import { Rx } from '@effect-rx/rx'
  * import { Effect } from 'effect'
- * 
+ *
  * const userRx = Rx.family((id: string) =>
  *   Rx.fn(() =>
  *     Effect.gen(function* () {
@@ -297,18 +299,18 @@ export interface RxQueryResult<A, E> {
  *     })
  *   )
  * )
- * 
+ *
  * function UserProfile({ userId }: { userId: string }) {
  *   const query = useRxQuery(userRx(userId))
- *   
+ *
  *   if (query.isPending) {
  *     return <div>Loading...</div>
  *   }
- *   
+ *
  *   if (query.isError) {
  *     return <div>Error loading user</div>
  *   }
- *   
+ *
  *   return pipe(
  *     query.dataOpt,
  *     Option.match({
@@ -319,11 +321,9 @@ export interface RxQueryResult<A, E> {
  * }
  * ```
  */
-export const useRxQuery = <E, A>(
-  rx: Rx.Rx<Result.Result<A, E>>
-): RxQueryResult<A, E> => {
+export const useRxQuery = <E, A>(rx: Rx.Rx<Result.Result<A, E>>): RxQueryResult<A, E> => {
   const result = useRxValue(rx)
-  
+
   // Handle initial state
   if (result._tag === 'Initial') {
     return {
@@ -336,7 +336,7 @@ export const useRxQuery = <E, A>(
       status: Status.Idle(),
     }
   }
-  
+
   // Handle loading state
   if (result.waiting) {
     // If we have previous data/error, maintain it while loading
@@ -372,7 +372,7 @@ export const useRxQuery = <E, A>(
       status: Status.Pending(),
     }
   }
-  
+
   // Handle success state
   if (result._tag === 'Success') {
     return {
@@ -385,7 +385,7 @@ export const useRxQuery = <E, A>(
       status: Status.Success({ value: result.value }),
     }
   }
-  
+
   // Handle failure state
   return {
     dataOpt: Option.none(),
@@ -408,11 +408,17 @@ export interface UseRxInfiniteQueryOptions<PageParam> {
   /**
    * Function to get the next page parameter from the current page data.
    */
-  readonly getNextPageParam?: (lastPage: unknown, pages: ReadonlyArray<unknown>) => Option.Option<PageParam>
+  readonly getNextPageParam?: (
+    lastPage: unknown,
+    pages: ReadonlyArray<unknown>,
+  ) => Option.Option<PageParam>
   /**
    * Function to get the previous page parameter from the current page data.
    */
-  readonly getPreviousPageParam?: (firstPage: unknown, pages: ReadonlyArray<unknown>) => Option.Option<PageParam>
+  readonly getPreviousPageParam?: (
+    firstPage: unknown,
+    pages: ReadonlyArray<unknown>,
+  ) => Option.Option<PageParam>
 }
 
 /**
@@ -446,7 +452,6 @@ export interface RxInfiniteQueryResult<A, E> extends RxQueryResult<ReadonlyArray
   readonly isFetchingPreviousPage: boolean
 }
 
-
 /**
  * A utility function to create a Status from an Exit.
  *
@@ -461,7 +466,7 @@ export const statusFromExit = <A, E>(exit: Exit.Exit<A, E>): Status<A, E> =>
     Exit.match({
       onFailure: (error) => Status.Error({ error }),
       onSuccess: (value) => Status.Success({ value }),
-    })
+    }),
   )
 
 /**

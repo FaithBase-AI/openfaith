@@ -6,7 +6,7 @@ export const ChartColumnIcon = ({
 }: IconProps & {
   ref?: React.RefObject<SVGSVGElement>
 }) => (
-  <svg width={'20'} height={'20'} viewBox={'0 0 20 20'} {...props}>
+  <svg height={'20'} viewBox={'0 0 20 20'} width={'20'} {...props}>
     <path
       d={
         'M5.42013 10.1595C5.00237 10.1595 4.6637 10.4981 4.6637 10.9159V14.5797C4.6637 14.9975 5.00237 15.3361 5.42013 15.3361C5.83789 15.3361 6.17655 14.9975 6.17655 14.5797V10.9159C6.17655 10.4981 5.83789 10.1595 5.42013 10.1595Z'

@@ -11,7 +11,7 @@ export interface InputProps extends ComponentProps<'input'> {}
 
 function Input({ className, type, ...props }: InputProps) {
   return (
-    <input type={type} data-slot='input' className={cn(inputClassName, className)} {...props} />
+    <input className={cn(inputClassName, className)} data-slot='input' type={type} {...props} />
   )
 }
 

@@ -4,8 +4,8 @@ import { Schema } from 'effect'
 export class TestFunctionError extends Schema.TaggedError<TestFunctionError>('TestFunctionError')(
   'TestFunctionError',
   {
-    message: Schema.String,
     cause: Schema.optional(Schema.String),
+    message: Schema.String,
   },
 ) {
   get message(): string {

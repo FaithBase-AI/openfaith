@@ -6,7 +6,7 @@ export const MoreVerticalIcon = ({
 }: IconProps & {
   ref?: React.RefObject<SVGSVGElement>
 }) => (
-  <svg width={'20'} height={'20'} viewBox={'0 0 20 20'} {...props}>
+  <svg height={'20'} viewBox={'0 0 20 20'} width={'20'} {...props}>
     <path
       d={
         'M9 15C9 14.4477 9.44771 14 10 14C10.5523 14 11 14.4477 11 15C11 15.5523 10.5523 16 10 16C9.44771 16 9 15.5523 9 15Z'

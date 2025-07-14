@@ -6,14 +6,14 @@ export const TapeMeasureIcon = ({
 }: IconProps & {
   ref?: React.RefObject<SVGSVGElement>
 }) => (
-  <svg ref={ref} width={'20'} height={'20'} viewBox={'0 0 24 24'} fill={'none'} {...props}>
+  <svg fill={'none'} height={'20'} ref={ref} viewBox={'0 0 24 24'} width={'20'} {...props}>
     <path
       d={
         'M5 9.97873C5 11.095 6.79086 12 9 12V9.97873C9 8.98454 9 8.48745 8.60252 8.18419C8.20504 7.88092 7.811 7.99435 7.02292 8.22121C5.81469 8.56902 5 9.2258 5 9.97873Z'
       }
       stroke={'currentColor'}
-      strokeWidth={'1.5'}
       strokeLinejoin={'round'}
+      strokeWidth={'1.5'}
     />
     <path
       d={
@@ -32,9 +32,9 @@ export const TapeMeasureIcon = ({
     <path
       d={'M18 19V17M14 19V17M10 19V17M6 18.5V16.5'}
       stroke={'currentColor'}
-      strokeWidth={'1.5'}
       strokeLinecap={'round'}
       strokeLinejoin={'round'}
+      strokeWidth={'1.5'}
     />
   </svg>
 )

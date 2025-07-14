@@ -1,5 +1,5 @@
 import { pcoApiAdapter } from '@openfaith/pco/api/pcoApiAdapter'
-import { PcoWorkflowCardNote } from './pcoWorkflowCardNoteSchema'
+import { PcoWorkflowCardNote } from '@openfaith/pco/modules/people/pcoWorkflowCardNoteSchema'
 
 export const listWorkflowCardNotesDefinition = pcoApiAdapter({
   apiSchema: PcoWorkflowCardNote,

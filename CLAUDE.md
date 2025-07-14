@@ -115,6 +115,12 @@ OpenFaith uses a **Canonical Data Model (CDM)** approach:
 - Use Effect-RX for React state management instead of traditional state libraries
 - Structure all frontend data fetching and mutations using Effect patterns
 
+**Context Tag Naming Convention:**
+
+- Use the format: `@<package-name>/<path>/<TagName>`
+- Examples: `@openfaith/adapter-core/EntityManifest`, `@openfaith/server/SessionContext`
+- The tag name should match the package path and the tag class name
+
 **General Style:**
 
 - Use **Biome** for formatting and linting (not Prettier/ESLint primarily)

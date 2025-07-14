@@ -19,8 +19,7 @@
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "email dev",
-    "format": "biome lint .",
-    "lint:biome": "biome lint .",
+    "format": "biome check",
     "typecheck": "tsc --noEmit"
   },
   "type": "module",

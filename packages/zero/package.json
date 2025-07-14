@@ -14,9 +14,8 @@
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "zero-cache-dev -p zeroSchema.mts",
-    "format": "biome lint .",
+    "format": "biome check",
     "generate": "drizzle-zero generate -s drizzle-zero.config.ts",
-    "lint:biome": "biome lint .",
     "typecheck": "tsc --noEmit"
   },
   "type": "module",

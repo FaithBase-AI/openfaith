@@ -11,15 +11,14 @@ export class AdapterConnectInput extends Schema.Class<AdapterConnectInput>('Adap
 export const AdapterConnectOutput = Schema.Literal('success')
 
 // Error schema for when adapter connect fails
-export class AdapterConnectError extends Schema.TaggedError<AdapterConnectError>('AdapterConnectError')(
+export class AdapterConnectError extends Schema.TaggedError<AdapterConnectError>(
   'AdapterConnectError',
-  {
-    message: Schema.String,
-    adapter: Schema.optional(Schema.String),
-    cause: Schema.optional(Schema.String),
-  },
-) {
+)('AdapterConnectError', {
+  adapter: Schema.optional(Schema.String),
+  cause: Schema.optional(Schema.String),
+  message: Schema.String,
+}) {
   get message(): string {
     return `Adapter connect failed${this.adapter ? ` for ${this.adapter}` : ''}: ${this.message}${this.cause ? ` (${this.cause})` : ''}`
   }
-} 
+}
