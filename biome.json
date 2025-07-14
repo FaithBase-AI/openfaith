@@ -10,12 +10,12 @@
     }
   },
   "files": {
-    "includes": ["**", "!**/.cache", "!**/.turbo", "!**/node_modules"]
+    "includes": ["**", "!**/.cache", "!**/.turbo", "!**/node_modules", "!**/routeTree.gen.ts"]
   },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
-    "includes": ["**", "!**/.cache", "!**/.turbo", "!**/node_modules"],
+    "includes": ["**", "!**/.cache", "!**/.turbo", "!**/node_modules", "!**/routeTree.gen.ts"],
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 100
@@ -34,7 +34,7 @@
       "react": "recommended"
     },
     "enabled": true,
-    "includes": ["**", "!**/.cache", "!**/.turbo", "!**/node_modules"],
+    "includes": ["**", "!**/.cache", "!**/.turbo", "!**/node_modules", "!**/routeTree.gen.ts"],
     "rules": {
       "a11y": {
         "noHeaderScope": "off",
