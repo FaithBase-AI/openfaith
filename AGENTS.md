@@ -127,9 +127,13 @@ Examples:
 ### Code Style
 
 - **Biome** for formatting and linting (primary)
-- Single quotes for strings
-- Trailing commas required
-- 2-space indentation
+- **Single quotes (`'`) for strings, not double quotes (`"`)**
+- **No semicolons (`;`) at the end of lines**
+- **Trailing commas required**
+- **2-space indentation**
+- **Use direct module imports, not relative imports**
+  - Prefer: `@openfaith/server/live/httpAuthMiddlewareLive`
+  - Avoid: `../live/httpAuthMiddlewareLive`
 - Follow existing Effect-TS patterns
 
 ## Key Components
