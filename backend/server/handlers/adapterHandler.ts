@@ -1,8 +1,7 @@
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { adapterDetailsTable, adapterTokensTable } from '@openfaith/db'
-import { AdapterConnectError, AdapterRpc } from '@openfaith/domain'
+import { AdapterConnectError, AdapterRpc, SessionContext } from '@openfaith/domain'
 import { adaptersApi } from '@openfaith/server/adapters/adaptersApi'
-import { SessionContext } from '@openfaith/server/auth/sessionContext'
 import { fromUnixTime } from 'date-fns/fp'
 import { Effect, Option, pipe, Record } from 'effect'
 

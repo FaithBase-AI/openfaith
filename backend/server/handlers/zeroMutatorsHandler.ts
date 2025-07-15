@@ -2,11 +2,12 @@ import { HttpApiBuilder } from '@effect/platform'
 import {
   MutatorError,
   type PushResponse,
+  SessionContext,
   ValidationError,
   ZeroMutatorsApi,
 } from '@openfaith/domain'
-import { SessionContext } from '@openfaith/server/auth/sessionContext'
-import { Effect } from 'effect'
+import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/httpAuthMiddlewareLive'
+import { Effect, Layer } from 'effect'
 
 // Handler implementation for Zero mutators
 export const ZeroMutatorsHandlerLive = HttpApiBuilder.group(
@@ -72,4 +73,4 @@ export const ZeroMutatorsHandlerLive = HttpApiBuilder.group(
         } satisfies typeof PushResponse.Type
       }),
     ),
-)
+).pipe(Layer.provide(SessionHttpMiddlewareLayer))

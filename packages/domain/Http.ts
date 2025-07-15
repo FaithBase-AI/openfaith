@@ -1,4 +1,5 @@
 import { HttpApi, HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
+import { SessionHttpMiddleware } from '@openfaith/domain/contexts/sessionContext'
 import { Schema } from 'effect'
 
 // Define schemas for Zero's custom mutators
@@ -36,13 +37,15 @@ export class ValidationError extends Schema.TaggedError<ValidationError>()('Vali
 }) {}
 
 // Define the Zero custom mutators HTTP API group
-export const ZeroMutatorsGroup = HttpApiGroup.make('zero-mutators').add(
-  HttpApiEndpoint.post('push', '/push')
-    .setPayload(PushRequest)
-    .addSuccess(PushResponse)
-    .addError(MutatorError, { status: 400 })
-    .addError(ValidationError, { status: 422 }),
-)
+export const ZeroMutatorsGroup = HttpApiGroup.make('zero-mutators')
+  .add(
+    HttpApiEndpoint.post('push', '/push')
+      .setPayload(PushRequest)
+      .addSuccess(PushResponse)
+      .addError(MutatorError, { status: 400 })
+      .addError(ValidationError, { status: 422 }),
+  )
+  .middleware(SessionHttpMiddleware)
 
 // Define the complete HTTP API
 export class ZeroMutatorsApi extends HttpApi.make('zero-mutators-api').add(ZeroMutatorsGroup) {}
