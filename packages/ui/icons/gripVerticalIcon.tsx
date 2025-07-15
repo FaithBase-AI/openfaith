@@ -6,7 +6,7 @@ export const GripVerticalIcon = ({
 }: IconProps & {
   ref?: React.RefObject<SVGSVGElement>
 }) => (
-  <svg width={'20'} height={'20'} viewBox={'0 0 20 20'} {...props}>
+  <svg height={'20'} viewBox={'0 0 20 20'} width={'20'} {...props}>
     <path
       d={
         'M7 15C7 14.4477 7.44771 14 8 14C8.55228 14 9 14.4477 9 15C9 15.5523 8.55228 16 8 16C7.44771 16 7 15.5523 7 15Z'

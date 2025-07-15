@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@openfaith/domain/*": ["./*"]
+    }
+  },
+  "extends": "@openfaith/tsconfig/base.json",
+  "include": ["."]
+}

@@ -1,6 +1,8 @@
 {
   "dependencies": {
-    "@openfaith/api": "workspace:*",
+    "@effect-rx/rx-react": "0.38.0",
+    "@effect/platform": "catalog:",
+    "@effect/rpc": "catalog:",
     "@openfaith/auth": "workspace:*",
     "@openfaith/be-shared": "workspace:*",
     "@openfaith/db": "workspace:*",
@@ -24,9 +26,6 @@
     "@tanstack/react-table": "8.21.3",
     "@tanstack/react-virtual": "3.13.12",
     "@tanstack/router-plugin": "1.125.6",
-    "@trpc/client": "catalog:",
-    "@trpc/server": "catalog:",
-    "@trpc/tanstack-react-query": "catalog:",
     "effect": "catalog:",
     "input-otp": "catalog:",
     "jotai": "catalog:",
@@ -35,6 +34,7 @@
     "postcss": "8.5.6",
     "qs": "catalog:",
     "react": "catalog:",
+    "react-cookie": "8.0.1",
     "react-dom": "catalog:",
     "superjson": "catalog:",
     "tailwindcss": "catalog:",
@@ -56,8 +56,7 @@
     "build": "bunx --bun vite build",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "bunx --bun vite dev --port 3000",
-    "format": "biome lint .",
-    "lint:biome": "biome lint .",
+    "format": "biome check",
     "start": "bun .output/server/index.mjs",
     "typecheck": "tsc --noEmit"
   },

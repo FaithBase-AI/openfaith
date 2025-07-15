@@ -56,8 +56,8 @@ export const BaseAvatar: FC<BaseAvatarProps> = (props) => {
     <Avatar
       {...domProps}
       className={cn(getAvatarClassName(_tag), className)}
-      style={{ ...style, height: size, width: size }}
       ref={ref}
+      style={{ ...style, height: size, width: size }}
     >
       {pipe(
         avatar,
@@ -86,14 +86,14 @@ export const BaseAvatar: FC<BaseAvatarProps> = (props) => {
           ),
           onSome: (x) => (
             <Image
-              height={size}
-              width={size}
-              src={x}
-              sizes={'small'}
               alt={`Avatar image.`}
-              style={{ height: size, width: size }}
               className={'object-cover'}
+              height={size}
               priority
+              sizes={'small'}
+              src={x}
+              style={{ height: size, width: size }}
+              width={size}
             />
           ),
         }),

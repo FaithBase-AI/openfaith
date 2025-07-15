@@ -9,10 +9,12 @@ import {
   bearer,
   createAuthMiddleware,
   emailOTP,
+  getJwtToken,
   jwt,
   organization,
 } from 'better-auth/plugins'
 import { reactStartCookies } from 'better-auth/react-start'
+import cookie from 'cookie'
 import { eq } from 'drizzle-orm'
 import { Boolean, Option, pipe, Record, String } from 'effect'
 import { typeid } from 'typeid-js'
@@ -78,8 +80,6 @@ export const auth = betterAuth({
             where: (x, d) => d.eq(x.userId, session.userId),
           })
 
-          console.log('org', org)
-
           return {
             data: {
               ...session,
@@ -118,21 +118,70 @@ export const auth = betterAuth({
           }),
         )
       }
+
+      // The auth setup is slightly non-standard. We encode the userID, email, and JWT in the browser cookie and make it client-visible. See auth/auth.ts for more information.
+
+      // This is not ideal for security (it would be better to not expose credentials to client JS because of XSS risks), but it is basically required by Zero right now. Doing other things makes the app much slower without improving security significantly.
+
+      // The Zero team is working on improving this and getting the same perf w/o needing to expose credentials to the client.
+
+      // If we are trying to set the cookie, we need to set the session in the context and add the jwt.
+      await pipe(
+        ctx.context.responseHeaders,
+        Option.fromNullable,
+        Option.flatMapNullable((x) => x.get('set-cookie')),
+        Option.match({
+          onNone: asyncNoOp,
+          onSome: async () => {
+            const session = ctx.context.newSession || ctx.context.session
+            ctx.context.session = session
+
+            console.log('🚀 session', session)
+            const token =
+              ctx.context.responseHeaders?.get('set-auth-jwt') || (await getJwtToken(ctx))
+
+            if (session && token) {
+              setCookies(ctx.context.responseHeaders as Headers, {
+                activeOrganizationId: pipe(
+                  session.session.activeOrganizationId,
+                  Option.fromNullable,
+                  Option.getOrUndefined,
+                ),
+                email: session.user.email,
+                jwt: token,
+                userid: session.user.id,
+              })
+
+              return
+            }
+          },
+        }),
+      )
+
+      if (ctx.path.indexOf('/sign-out') !== -1) {
+        pipe(
+          ctx.context.responseHeaders,
+          Option.fromNullable,
+          Option.map((x) =>
+            setCookies(x, {
+              email: '',
+              jwt: '',
+              userid: '',
+            }),
+          ),
+        )
+      }
     }),
   },
   plugins: [
     bearer(),
     jwt({
-      jwks: {
-        // @ts-expect-error - extractable is a valid option for keyPairConfig
-        keyPairConfig: { alg: 'EdDSA', crv: 'Ed25519', extractable: true },
-      },
       jwt: {
         definePayload: ({ user, session }) => ({
           ...user,
           activeOrganizationId: session.activeOrganizationId,
         }),
-        expirationTime: '3y',
+        expirationTime: '1h',
       },
       schema: {
         jwks: {
@@ -228,6 +277,28 @@ export const auth = betterAuth({
     modelName: getTableName('verifications'),
   },
 })
+
+export function setCookies(
+  headers: Headers,
+  cookies: {
+    userid: string
+    email: string
+    jwt: string
+    activeOrganizationId?: string | undefined
+  },
+) {
+  const opts = {
+    // 1 year. Note that it doesn't really matter what this is as the JWT has
+    // its own, much shorter expiry above. It makes sense for it to be long
+    // since by default better auth will extend its own session indefinitely
+    // as long as you keep calling getSession().
+    maxAge: 60 * 60 * 24 * 365,
+    path: '/',
+  }
+  for (const [key, value] of Object.entries(cookies)) {
+    headers.append('Set-Cookie', cookie.serialize(key, value, opts))
+  }
+}
 
 export const modelToType: Record<Models, string> = {
   account: 'account',

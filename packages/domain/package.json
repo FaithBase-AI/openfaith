@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "@effect/platform": "catalog:",
+    "@effect/rpc": "catalog:",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  },
+  "name": "@openfaith/domain",
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "format": "biome check",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "type": "module",
+  "version": "0.0.0"
+}

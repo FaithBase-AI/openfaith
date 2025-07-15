@@ -1,10 +1,10 @@
 {
-  "extends": "@openfaith/tsconfig/base.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
       "@openfaith/adapter-core/*": ["./*"]
     }
   },
+  "extends": "@openfaith/tsconfig/base.json",
   "include": ["."]
 }

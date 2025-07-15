@@ -44,23 +44,23 @@ const transformComboboxItem = <T extends BaseComboboxItem = BaseComboboxItem>(
       return {
         _tag: 'org',
         id: item.id,
+        logo: pipe(item.avatar, Option.fromNullable, Option.getOrNull),
         name: pipe(
           item.name,
           Option.fromNullable,
           Option.getOrElse(() => ''),
         ),
-        logo: pipe(item.avatar, Option.fromNullable, Option.getOrNull),
       }
     case 'user':
       return {
         _tag: 'user',
         id: item.id,
+        image: pipe(item.avatar, Option.fromNullable, Option.getOrNull),
         name: pipe(
           item.name,
           Option.fromNullable,
           Option.getOrElse(() => ''),
         ),
-        image: pipe(item.avatar, Option.fromNullable, Option.getOrNull),
       }
   }
 }
@@ -90,13 +90,13 @@ const ComboboxInput = forwardRef<
     <SearchIcon className={'mr-2 size-4 shrink-0 opacity-50'} />
 
     <input
-      ref={ref}
+      // biome-ignore lint/a11y/noAutofocus: this is the way
+      autoFocus
       className={cn(
         'flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
-      // biome-ignore lint/a11y/noAutofocus: this is the way
-      autoFocus
+      ref={ref}
       {...props}
     />
   </div>
@@ -214,25 +214,27 @@ const Combobox = <T extends BaseComboboxItem = BaseComboboxItem>(
   )
 
   return (
-    <Popover open={open} onOpenChange={setOpen} {...props}>
+    <Popover onOpenChange={setOpen} open={open} {...props}>
       <PopoverTrigger asChild>
         <ComboboxTrigger<T>
-          setOpen={setOpen}
-          open={open}
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-          selectedOptions={selectedOptions}
           className={className}
+          disabled={disabled}
           emptyText={emptyText}
           emptyTextClassName={emptyTextClassName}
           handleUnselect={handleUnselect}
-          ref={ref}
-          disabled={disabled}
           hideAvatar={hideAvatar}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          open={open}
+          ref={ref}
+          selectedOptions={selectedOptions}
+          setOpen={setOpen}
         />
       </PopoverTrigger>
 
       <PopoverContent
+        align={align}
+        alignOffset={alignOffset}
         className={cn(
           'p-[3px]',
           pipe(
@@ -244,26 +246,24 @@ const Combobox = <T extends BaseComboboxItem = BaseComboboxItem>(
           ),
           popOverContentClassName,
         )}
-        side={side}
-        align={align}
-        alignOffset={alignOffset}
-        sideOffset={sideOffset}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
+        side={side}
+        sideOffset={sideOffset}
       >
         <ComboboxContent
-          searchValue={searchValue}
-          setSearchValue={handleSearchChange}
-          matchOptions={matchOptions}
           addItem={addItem}
-          removeItem={removeItem}
-          setOpen={setOpen}
-          selectedOptions={selectedOptions}
-          mode={mode}
-          side={side}
-          hideAvatar={hideAvatar}
           bottomItems={bottomItems}
           createItem={createItem}
+          hideAvatar={hideAvatar}
+          matchOptions={matchOptions}
+          mode={mode}
+          removeItem={removeItem}
+          searchValue={searchValue}
+          selectedOptions={selectedOptions}
+          setOpen={setOpen}
+          setSearchValue={handleSearchChange}
+          side={side}
         />
       </PopoverContent>
     </Popover>
@@ -316,9 +316,9 @@ const ComboboxContent = <T extends BaseComboboxItem = BaseComboboxItem>(
         onSome: (x) => [
           ...items,
           {
+            _tag: 'create',
             id: '__create__',
             name: x.label,
-            _tag: 'create',
           } as unknown as T,
         ],
       }),
@@ -327,7 +327,7 @@ const ComboboxContent = <T extends BaseComboboxItem = BaseComboboxItem>(
 
   const rowVirtualizer = useVirtualizer({
     count: allItems.length,
-    getScrollElement: () => containerRef.current,
+    estimateSize: () => 32,
     getItemKey: (index) =>
       pipe(
         allItems,
@@ -337,16 +337,22 @@ const ComboboxContent = <T extends BaseComboboxItem = BaseComboboxItem>(
           onSome: (x) => x.id,
         }),
       ),
-    estimateSize: () => 32,
+    getScrollElement: () => containerRef.current,
     overscan: 5,
-    scrollPaddingStart: 32,
-    scrollPaddingEnd: 32,
-    paddingStart: 6,
     paddingEnd: 6,
+    paddingStart: 6,
+    scrollPaddingEnd: 32,
+    scrollPaddingStart: 32,
   })
 
   const { getItemProps, getMenuProps, getInputProps, highlightedIndex } = useCombobox<T>({
+    defaultIsOpen: true,
     initialHighlightedIndex: 0,
+    inputValue: searchValue,
+    isOpen: true,
+    items: allItems,
+    itemToString,
+    onInputValueChange: noOp,
     onSelectedItemChange: (x) => {
       pipe(
         x.selectedItem,
@@ -371,12 +377,30 @@ const ComboboxContent = <T extends BaseComboboxItem = BaseComboboxItem>(
         }),
       )
     },
-    onInputValueChange: noOp,
-    items: allItems,
-    itemToString,
-    isOpen: true,
-    defaultIsOpen: true,
-    inputValue: searchValue,
+    onStateChange({ inputValue: newInputValue, type }) {
+      switch (type) {
+        case useCombobox.stateChangeTypes.InputKeyDownEscape:
+          setOpen(false)
+          break
+        case useCombobox.stateChangeTypes.InputKeyDownEnter:
+        case useCombobox.stateChangeTypes.ItemClick:
+          if (mode === 'single') {
+            setOpen(false)
+          }
+          break
+        case useCombobox.stateChangeTypes.InputChange:
+          setSearchValue(
+            pipe(
+              newInputValue,
+              Option.fromNullable,
+              Option.getOrElse(() => ''),
+            ),
+          )
+          break
+        default:
+          break
+      }
+    },
     stateReducer(state, actionAndChanges) {
       const { changes, type } = actionAndChanges
 
@@ -413,30 +437,6 @@ const ComboboxContent = <T extends BaseComboboxItem = BaseComboboxItem>(
           return changes
       }
     },
-    onStateChange({ inputValue: newInputValue, type }) {
-      switch (type) {
-        case useCombobox.stateChangeTypes.InputKeyDownEscape:
-          setOpen(false)
-          break
-        case useCombobox.stateChangeTypes.InputKeyDownEnter:
-        case useCombobox.stateChangeTypes.ItemClick:
-          if (mode === 'single') {
-            setOpen(false)
-          }
-          break
-        case useCombobox.stateChangeTypes.InputChange:
-          setSearchValue(
-            pipe(
-              newInputValue,
-              Option.fromNullable,
-              Option.getOrElse(() => ''),
-            ),
-          )
-          break
-        default:
-          break
-      }
-    },
   })
 
   return (
@@ -445,10 +445,10 @@ const ComboboxContent = <T extends BaseComboboxItem = BaseComboboxItem>(
         placeholder={'Search ...'}
         // eslint-disable-next-line react-compiler/react-compiler
         {...getInputProps({
-          ref: inputRef,
-          value: searchValue,
           onChange: (event) => setSearchValue(event.currentTarget.value),
+          ref: inputRef,
           side,
+          value: searchValue,
         })}
       />
       <ScrollArea
@@ -479,15 +479,15 @@ const ComboboxContent = <T extends BaseComboboxItem = BaseComboboxItem>(
                         transform: `translateY(${x.start}px)`,
                       }}
                       {...getItemProps({
+                        'aria-selected': highlightedIndex === x.index,
                         index: x.index,
                         item: y,
-                        'aria-selected': highlightedIndex === x.index,
                       })}
-                      data-index={x.index}
-                      ref={rowVirtualizer.measureElement}
                       className={
                         'absolute flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-hidden aria-selected:bg-accent aria-selected:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50'
                       }
+                      data-index={x.index}
+                      ref={rowVirtualizer.measureElement}
                     >
                       {!isCreateItem && (
                         <CheckIcon
@@ -521,8 +521,8 @@ const ComboboxContent = <T extends BaseComboboxItem = BaseComboboxItem>(
                             ),
                           onTrue: () => (
                             <EntityAvatar
-                              record={transformComboboxItem(y)}
                               className={'mr-2.5 self-center'}
+                              record={transformComboboxItem(y)}
                               size={24}
                             />
                           ),

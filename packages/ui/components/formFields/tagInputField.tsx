@@ -34,18 +34,18 @@ export function TagInputField(props: TagInputFieldProps) {
 
   return (
     <InputWrapper
-      required={required}
-      label={label}
-      name={field.name}
       className={wrapperClassName}
-      labelClassName={labelClassName}
       errorClassName={errorClassName}
+      label={label}
+      labelClassName={labelClassName}
+      name={field.name}
       processedError={processedError}
+      required={required}
     >
       <TagInput
-        value={field.state.value}
         onBlur={field.handleBlur}
         onChange={field.handleChange}
+        value={field.state.value}
         {...domProps}
       />
     </InputWrapper>

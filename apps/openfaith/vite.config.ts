@@ -8,7 +8,15 @@ export default defineConfig({
     tsconfigPaths({
       projects: ['./tsconfig.json'],
     }),
-    tanstackStart({ target: 'bun' }),
+    tanstackStart({
+      spa: {
+        enabled: true,
+      },
+      target: 'bun',
+      tsr: {
+        srcDirectory: 'app',
+      },
+    }),
     tailwindcss(),
   ],
   server: {

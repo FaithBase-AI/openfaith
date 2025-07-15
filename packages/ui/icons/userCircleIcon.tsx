@@ -6,7 +6,7 @@ export const UserCircleIcon = ({
 }: IconProps & {
   ref?: React.RefObject<SVGSVGElement>
 }) => (
-  <svg ref={ref} width={'20'} height={'20'} viewBox={'0 0 24 24'} fill={'none'} {...props}>
+  <svg fill={'none'} height={'20'} ref={ref} viewBox={'0 0 24 24'} width={'20'} {...props}>
     <path
       d={
         'M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z'
@@ -26,9 +26,9 @@ export const UserCircleIcon = ({
         'M5.49994 19.0001L6.06034 18.0194C6.95055 16.4616 8.60727 15.5001 10.4016 15.5001H13.5983C15.3926 15.5001 17.0493 16.4616 17.9395 18.0194L18.4999 19.0001'
       }
       stroke={'currentColor'}
-      strokeWidth={'1.5'}
       strokeLinecap={'round'}
       strokeLinejoin={'round'}
+      strokeWidth={'1.5'}
     />
   </svg>
 )

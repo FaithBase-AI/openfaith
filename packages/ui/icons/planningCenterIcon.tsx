@@ -8,11 +8,11 @@ export const PlanningCenterIcon = ({
 }) => (
   <svg
     {...props}
-    ref={ref}
-    width={'27'}
-    height={'28'}
-    viewBox={'0 0 27 28'}
     fill={'none'}
+    height={'28'}
+    ref={ref}
+    viewBox={'0 0 27 28'}
+    width={'27'}
     xmlns={'http://www.w3.org/2000/svg'}
   >
     <path

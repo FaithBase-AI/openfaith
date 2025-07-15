@@ -57,28 +57,27 @@ export function SelectField(props: SelectFieldProps) {
 
   return (
     <InputWrapper
-      required={required}
-      label={label}
-      name={field.name}
       className={wrapperClassName}
-      labelClassName={labelClassName}
       errorClassName={errorClassName}
+      label={label}
+      labelClassName={labelClassName}
+      name={field.name}
       processedError={processedError}
+      required={required}
     >
       <Select
         defaultValue={defaultValue}
-        value={field.state.value}
+        disabled={disabled}
         onValueChange={(x) => {
           field.handleChange(x)
           field.handleBlur()
         }}
-        disabled={disabled}
+        value={field.state.value}
         {...domProps}
       >
         <PassedSelectTrigger
           className={cn('w-full', className)}
-          placeholder={placeholder}
-          Icon={Icon}
+          disabled={disabled}
           hasValue={pipe(
             field.state.value,
             Option.fromNullable,
@@ -87,13 +86,14 @@ export function SelectField(props: SelectFieldProps) {
               onSome: (x) => pipe(x, String.isNonEmpty),
             }),
           )}
-          disabled={disabled}
+          Icon={Icon}
+          placeholder={placeholder}
         />
         <SelectContent>
           {pipe(
             options,
             Array.map((x) => (
-              <SelectItem value={x.value} key={x.value} disabled={x.disabled}>
+              <SelectItem disabled={x.disabled} key={x.value} value={x.value}>
                 {x.name}
               </SelectItem>
             )),
@@ -128,8 +128,8 @@ export const GhostSelectTrigger: FC<DefaultSelectProps> = (props) => {
   const { placeholder, ref, className, Icon, hasValue, ...domProps } = props
 
   return (
-    <SelectPrimitive.Trigger ref={ref} asChild {...domProps}>
-      <Button size={'sm'} variant={'ghost'} className={cn('shrink-0 overflow-hidden', className)}>
+    <SelectPrimitive.Trigger asChild ref={ref} {...domProps}>
+      <Button className={cn('shrink-0 overflow-hidden', className)} size={'sm'} variant={'ghost'}>
         {Icon}
         <span
           className={pipe(

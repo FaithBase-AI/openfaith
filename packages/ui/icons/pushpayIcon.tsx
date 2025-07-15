@@ -9,13 +9,13 @@ export const PushpayIcon = ({
   <svg
     xmlns={'http://www.w3.org/2000/svg'}
     {...props}
+    enableBackground={'new 0 0 61.8 61.8'}
     ref={ref}
+    viewBox={'0 0 61.8 61.8'}
     x={'0'}
     y={'0'}
-    enableBackground={'new 0 0 61.8 61.8'}
-    viewBox={'0 0 61.8 61.8'}
   >
-    <circle cx={'30.6'} cy={'30.8'} r={'24'} fill={'#fff'}></circle>
+    <circle cx={'30.6'} cy={'30.8'} fill={'#fff'} r={'24'}></circle>
     <path d={'M38.2 20.9h-3.7l-2.2 11h4.3c3.7 0 6.9-2.1 6.9-6.1.1-3.3-2.3-4.9-5.3-4.9z'} />
     <path
       d={

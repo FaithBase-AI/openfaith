@@ -1,21 +1,21 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "new-york",
+  "aliases": {
+    "components": "@openfaith/ui/components",
+    "hooks": "@openfaith/ui/hooks",
+    "lib": "@openfaith/ui/lib",
+    "ui": "@openfaith/ui/components/ui",
+    "utils": "@openfaith/ui/utils"
+  },
+  "iconLibrary": "lucide",
   "rsc": true,
-  "tsx": true,
+  "style": "new-york",
   "tailwind": {
+    "baseColor": "neutral",
     "config": "",
     "css": "globals.css",
-    "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
   },
-  "aliases": {
-    "components": "@openfaith/ui/components",
-    "utils": "@openfaith/ui/utils",
-    "ui": "@openfaith/ui/components/ui",
-    "lib": "@openfaith/ui/lib",
-    "hooks": "@openfaith/ui/hooks"
-  },
-  "iconLibrary": "lucide"
+  "tsx": true
 }

@@ -49,7 +49,7 @@ export const InviteUserEmail = ({
             <Text className='text-[14px] text-black leading-[24px]'>Hello there,</Text>
             <Text className='text-[14px] text-black leading-[24px]'>
               <strong>{invitedByUsername}</strong> (
-              <Link href={`mailto:${invitedByEmail}`} className='text-blue-600 no-underline'>
+              <Link className='text-blue-600 no-underline' href={`mailto:${invitedByEmail}`}>
                 {invitedByEmail}
               </Link>
               ) has invited you to the <strong>{teamName}</strong> team on{' '}
@@ -61,10 +61,10 @@ export const InviteUserEmail = ({
                   <Column align='left'>
                     <Img
                       className='rounded-full'
+                      fetchPriority='high'
+                      height='64'
                       src={teamImage}
                       width='64'
-                      height='64'
-                      fetchPriority='high'
                     />
                   </Column>
                 </Row>
@@ -80,7 +80,7 @@ export const InviteUserEmail = ({
             </Section>
             <Text className='text-[14px] text-black leading-[24px]'>
               or copy and paste this URL into your browser:{' '}
-              <Link href={inviteLink} className='text-blue-600 no-underline'>
+              <Link className='text-blue-600 no-underline' href={inviteLink}>
                 {inviteLink}
               </Link>
             </Text>

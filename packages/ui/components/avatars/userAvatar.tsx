@@ -29,14 +29,14 @@ export const UserAvatar: FC<UserAvatarProps> = (props) => {
         Option.match({
           onNone: () => (
             <BoringAvatar
-              size={size}
-              variant={'marble'}
               colors={['#0A0310', '#49007E', '#FF005B', '#FF7D10', '#FFB238']}
               name={userId}
+              size={size}
+              variant={'marble'}
             />
           ),
           onSome: (x) => (
-            <BaseAvatar size={size} name={name} avatar={x} _tag='user' {...domProps} />
+            <BaseAvatar _tag='user' avatar={x} name={name} size={size} {...domProps} />
           ),
         }),
       )}

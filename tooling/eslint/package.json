@@ -1,14 +1,4 @@
 {
-  "name": "@openfaith/eslint-config",
-  "private": true,
-  "version": "0.3.0",
-  "type": "module",
-  "scripts": {
-    "clean": "git clean -xdf .cache .turbo node_modules",
-    "format": "biome lint .",
-    "lint:biome": "biome lint .",
-    "typecheck": "tsc --noEmit"
-  },
   "dependencies": {
     "@eslint/compat": "^1.2.8",
     "@next/eslint-plugin-next": "^15.3.1",
@@ -24,5 +14,14 @@
     "@openfaith/tsconfig": "*",
     "eslint": "9.27.0",
     "typescript": "catalog:"
-  }
+  },
+  "name": "@openfaith/eslint-config",
+  "private": true,
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "format": "biome check",
+    "typecheck": "tsc --noEmit"
+  },
+  "type": "module",
+  "version": "0.3.0"
 }

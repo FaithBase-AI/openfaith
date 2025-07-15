@@ -43,23 +43,23 @@ export const DatePickerField = (props: DatePickerFieldProps) => {
 
   return (
     <InputWrapper
-      required={required}
-      label={label}
-      name={field.name}
       className={wrapperClassName}
-      labelClassName={labelClassName}
       errorClassName={errorClassName}
+      label={label}
+      labelClassName={labelClassName}
+      name={field.name}
       processedError={processedError}
+      required={required}
     >
       <Popover>
         <PopoverTrigger asChild>
           <Button
-            variant='outline'
             className={cn(
               'w-full justify-start text-left font-normal',
               !field.state.value && 'text-muted-foreground',
               className,
             )}
+            variant='outline'
           >
             <CalendarIcon className='mr-2 size-4' />
             {field.state.value ? (
@@ -69,12 +69,12 @@ export const DatePickerField = (props: DatePickerFieldProps) => {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className='w-auto p-0' align='start'>
+        <PopoverContent align='start' className='w-auto p-0'>
           <Calendar
-            mode='single'
-            selected={field.state.value ? new Date(field.state.value) : undefined}
-            onSelect={(date) => field.handleChange(date ? getTime(date) : undefined)}
             initialFocus
+            mode='single'
+            onSelect={(date) => field.handleChange(date ? getTime(date) : undefined)}
+            selected={field.state.value ? new Date(field.state.value) : undefined}
           />
         </PopoverContent>
       </Popover>

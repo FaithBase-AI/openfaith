@@ -9,13 +9,13 @@ export const OverflowIcon = ({
   <svg
     xmlns={'http://www.w3.org/2000/svg'}
     {...props}
-    ref={ref}
-    width={'64'}
-    height={'64'}
-    viewBox={'0 0 64 64'}
     fill={'none'}
+    height={'64'}
+    ref={ref}
+    viewBox={'0 0 64 64'}
+    width={'64'}
   >
-    <rect width={'64'} height={'64'} rx={'12'} fill={'#FA4F4F'} />
+    <rect fill={'#FA4F4F'} height={'64'} rx={'12'} width={'64'} />
     <g clipPath={'url(#clip0_444_82)'}>
       <path
         d={
@@ -26,7 +26,7 @@ export const OverflowIcon = ({
     </g>
     <defs>
       <clipPath id={'clip0_444_82'}>
-        <rect width={'40'} height={'41.5331'} fill={'white'} transform={'translate(12 11)'} />
+        <rect fill={'white'} height={'41.5331'} transform={'translate(12 11)'} width={'40'} />
       </clipPath>
     </defs>
   </svg>

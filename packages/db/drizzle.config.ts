@@ -3,14 +3,11 @@ import type { Config } from 'drizzle-kit'
 import { Boolean, pipe } from 'effect'
 
 export default {
-  schema: './schema/*',
-  dialect: 'postgresql',
   dbCredentials: {
+    database: env.DB_NAME,
     host: env.DB_HOST_PRIMARY,
-    user: env.DB_USERNAME,
     password: env.DB_PASSWORD,
     port: env.DB_PORT,
-    database: env.DB_NAME,
     ssl: pipe(
       env.DB_HOST_PRIMARY === '127.0.0.1',
       Boolean.match({
@@ -18,9 +15,12 @@ export default {
         onTrue: () => false,
       }),
     ),
+    user: env.DB_USERNAME,
     // ssl: { rejectUnauthorized: false },
   },
+  dialect: 'postgresql',
   // Pick up all our schema files
   out: './migrations',
+  schema: './schema/drizzleSchema.ts',
   tablesFilter: ['openfaith_*'],
 } satisfies Config

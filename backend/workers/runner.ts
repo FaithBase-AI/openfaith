@@ -5,6 +5,7 @@ import { FetchHttpClient, HttpApiBuilder, HttpMiddleware, HttpServer } from '@ef
 import { NodeClusterRunnerSocket, NodeHttpServer, NodeRuntime } from '@effect/platform-node'
 import { WorkflowProxyServer } from '@effect/workflow'
 import { DBLive } from '@openfaith/db'
+import { TokenManagerLive } from '@openfaith/server'
 import { HealthLive, WorkflowApi, workflows } from '@openfaith/workers/api/workflowApi'
 import { PcoSyncEntityWorkflowLayer } from '@openfaith/workers/workflows/pcoSyncEntityWorkflow'
 import { PcoSyncWorkflowLayer } from '@openfaith/workers/workflows/pcoSyncWorkflow'
@@ -27,7 +28,6 @@ const WorkflowEngineLayer = ClusterWorkflowEngine.layer.pipe(
       storage: 'sql',
     }),
   ),
-  Layer.provideMerge(DBLive),
 )
 
 const WorkflowApiLive = HttpApiBuilder.api(WorkflowApi).pipe(
@@ -41,7 +41,11 @@ const EnvLayer = Layer.mergeAll(
   PcoSyncWorkflowLayer,
   PcoSyncEntityWorkflowLayer,
   TestWorkflowLayer,
-).pipe(Layer.provide(WorkflowEngineLayer))
+).pipe(
+  Layer.provide(WorkflowEngineLayer),
+  Layer.provideMerge(TokenManagerLive),
+  Layer.provideMerge(DBLive),
+)
 
 // Set up the server using NodeHttpServer on port 3000
 HttpApiBuilder.serve(HttpMiddleware.logger).pipe(

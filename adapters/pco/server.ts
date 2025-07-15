@@ -1,7 +1,6 @@
 export * from '@openfaith/pco/api/pcoApi'
 export * from '@openfaith/pco/api/pcoApiAdapter'
 export * from '@openfaith/pco/api/pcoApiErrors'
-export * from '@openfaith/pco/api/pcoAuthLayer'
 export * from '@openfaith/pco/base/pcoEntityManifest'
 export * from '@openfaith/pco/modules/people/pcoAddressSchema'
 export * from '@openfaith/pco/modules/people/pcoCampusSchema'

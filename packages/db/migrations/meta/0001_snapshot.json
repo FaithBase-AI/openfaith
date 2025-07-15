@@ -69,12 +69,8 @@
       "compositePrimaryKeys": {},
       "foreignKeys": {
         "openfaith_invitations_inviterId_openfaith_users_id_fk": {
-          "columnsFrom": [
-            "inviterId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["inviterId"],
+          "columnsTo": ["id"],
           "name": "openfaith_invitations_inviterId_openfaith_users_id_fk",
           "onDelete": "no action",
           "onUpdate": "no action",
@@ -82,12 +78,8 @@
           "tableTo": "openfaith_users"
         },
         "openfaith_invitations_orgId_openfaith_orgs_id_fk": {
-          "columnsFrom": [
-            "orgId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["orgId"],
+          "columnsTo": ["id"],
           "name": "openfaith_invitations_orgId_openfaith_orgs_id_fk",
           "onDelete": "no action",
           "onUpdate": "no action",
@@ -231,9 +223,7 @@
       "schema": "",
       "uniqueConstraints": {
         "openfaith_orgs_slug_unique": {
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "name": "openfaith_orgs_slug_unique",
           "nullsNotDistinct": false
         }
@@ -283,12 +273,8 @@
       "compositePrimaryKeys": {},
       "foreignKeys": {
         "openfaith_orgUsers_orgId_openfaith_orgs_id_fk": {
-          "columnsFrom": [
-            "orgId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["orgId"],
+          "columnsTo": ["id"],
           "name": "openfaith_orgUsers_orgId_openfaith_orgs_id_fk",
           "onDelete": "no action",
           "onUpdate": "no action",
@@ -296,12 +282,8 @@
           "tableTo": "openfaith_orgs"
         },
         "openfaith_orgUsers_userId_openfaith_users_id_fk": {
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["userId"],
+          "columnsTo": ["id"],
           "name": "openfaith_orgUsers_userId_openfaith_users_id_fk",
           "onDelete": "no action",
           "onUpdate": "no action",
@@ -461,9 +443,7 @@
       "schema": "",
       "uniqueConstraints": {
         "openfaith_users_email_unique": {
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "name": "openfaith_users_email_unique",
           "nullsNotDistinct": false
         }

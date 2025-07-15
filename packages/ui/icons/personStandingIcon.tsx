@@ -6,7 +6,7 @@ export const PersonStandingIcon = ({
 }: IconProps & {
   ref?: React.RefObject<SVGSVGElement>
 }) => (
-  <svg width={'20'} height={'20'} viewBox={'0 0 24 24'} {...props}>
+  <svg height={'20'} viewBox={'0 0 24 24'} width={'20'} {...props}>
     <g
       fill={'none'}
       stroke={'currentColor'}

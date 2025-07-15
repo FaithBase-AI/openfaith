@@ -9,6 +9,7 @@ export const orgsTable = pgTable(
     _tag: d
       .char({ enum: ['org'], length: 3 })
       .default('org')
+      .$type<'org'>()
       .notNull(),
     createdAt: d.timestamp().notNull(),
     id: d.text().primaryKey(),
@@ -34,11 +35,12 @@ export const orgUsersTable = pgTable(
     _tag: d
       .char({ enum: ['orgUser'], length: 7 })
       .default('orgUser')
+      .$type<'orgUser'>()
       .notNull(),
     createdAt: d.timestamp().notNull(),
     id: d.text().primaryKey(),
     orgId: d.text().notNull(),
-    role: d.text().notNull(),
+    role: d.text().$type<'admin' | 'member' | 'owner'>().notNull(),
     userId: d.text().notNull(),
   }),
   (x) => ({
@@ -58,6 +60,7 @@ export const invitationsTable = pgTable(
     _tag: d
       .char({ enum: ['invitation'], length: 10 })
       .default('invitation')
+      .$type<'invitation'>()
       .notNull(),
     email: d.text().notNull(),
     expiresAt: d.timestamp().notNull(),
@@ -81,6 +84,7 @@ export const orgSettingsTable = pgTable('orgSettings', (d) => ({
   _tag: d
     .char({ enum: ['orgSettings'], length: 11 })
     .default('orgSettings')
+    .$type<'orgSettings'>()
     .notNull(),
   orgId: d.varchar({ length: 128 }).primaryKey(),
 }))

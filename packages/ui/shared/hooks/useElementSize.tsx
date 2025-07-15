@@ -4,7 +4,7 @@ export function useElementSize<T extends HTMLElement | null>(ref?: RefObject<T>)
   const [size, setSize] = useState<{
     width: number | undefined
     height: number | undefined
-  }>({ width: undefined, height: undefined })
+  }>({ height: undefined, width: undefined })
 
   useEffect(() => {
     if (ref && ref.current) {
@@ -12,8 +12,8 @@ export function useElementSize<T extends HTMLElement | null>(ref?: RefObject<T>)
         if (ref.current) {
           const { offsetWidth, offsetHeight } = ref.current
           setSize({
-            width: offsetWidth,
             height: offsetHeight,
+            width: offsetWidth,
           })
         }
       }

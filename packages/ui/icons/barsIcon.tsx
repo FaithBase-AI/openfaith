@@ -6,7 +6,7 @@ export const BarsIcon = ({
 }: IconProps & {
   ref?: React.RefObject<SVGSVGElement>
 }) => (
-  <svg width={'20'} height={'20'} viewBox={'0 0 20 20'} {...props}>
+  <svg height={'20'} viewBox={'0 0 20 20'} width={'20'} {...props}>
     <path
       d={
         'M0.762338 2C0.342449 2 0 2.33428 0 2.74916C0 3.16403 0.342448 3.49832 0.762338 3.49832L19.2377 3.49832C19.6576 3.49832 20 3.16404 20 2.74916C20 2.33429 19.6576 2 19.2377 2H0.762338Z'

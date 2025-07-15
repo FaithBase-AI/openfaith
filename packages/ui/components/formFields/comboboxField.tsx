@@ -59,21 +59,26 @@ export const ComboboxField = (props: ComboboxFieldProps) => {
 
   return (
     <InputWrapper
-      required={required}
-      label={label}
-      name={field.name}
       className={wrapperClassName}
-      labelClassName={labelClassName}
       errorClassName={errorClassName}
+      label={label}
+      labelClassName={labelClassName}
+      name={field.name}
       processedError={processedError}
+      required={required}
     >
       <Combobox
-        className={className}
-        options={options}
-        selectedOptions={selectedOptions}
         addItem={(id) => {
           field.handleChange([...value, id])
         }}
+        alignOffset={alignOffset}
+        ComboboxTrigger={SelectComboBoxTrigger}
+        className={className}
+        disabled={disabled}
+        emptyText={placeholder}
+        mode={'multiple'}
+        options={options}
+        popOverContentClassName={cn('w-(--radix-popover-trigger-width)', popOverContentClassName)}
         removeItem={(id) => {
           field.handleChange(
             pipe(
@@ -82,12 +87,7 @@ export const ComboboxField = (props: ComboboxFieldProps) => {
             ),
           )
         }}
-        disabled={disabled}
-        mode={'multiple'}
-        ComboboxTrigger={SelectComboBoxTrigger}
-        emptyText={placeholder}
-        popOverContentClassName={cn('w-(--radix-popover-trigger-width)', popOverContentClassName)}
-        alignOffset={alignOffset}
+        selectedOptions={selectedOptions}
         {...domProps}
       />
     </InputWrapper>

@@ -22,8 +22,6 @@ export const ThemeToggle: FC<ButtonProps> = (props) => {
 
   return (
     <Button
-      variant={'ghost'}
-      size={'icon'}
       onClick={() => {
         pipe(
           theme === 'dark',
@@ -33,6 +31,8 @@ export const ThemeToggle: FC<ButtonProps> = (props) => {
           }),
         )
       }}
+      size={'icon'}
+      variant={'ghost'}
       {...props}
     >
       <SunIcon

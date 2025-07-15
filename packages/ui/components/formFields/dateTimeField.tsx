@@ -39,8 +39,8 @@ const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
   const minute = (i % 4) * 15
   const date = pipe(new Date(), setHours(hour), setMinutes(minute))
   return {
-    value: date,
     label: pipe(date, format('h:mm aa')),
+    value: date,
   }
 })
 
@@ -67,23 +67,23 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
 
   return (
     <InputWrapper
-      required={required}
-      label={label}
-      name={field.name}
       className={wrapperClassName}
-      labelClassName={labelClassName}
       errorClassName={errorClassName}
+      label={label}
+      labelClassName={labelClassName}
+      name={field.name}
       processedError={processedError}
+      required={required}
     >
       <ResponsiveMenu>
         <ResponsiveMenuTrigger asChild>
           <Button
-            variant='outline'
             className={cn(
               'w-full justify-start text-left font-normal',
               !field.state.value && 'text-muted-foreground',
               className,
             )}
+            variant='outline'
           >
             <CalendarIcon className='mr-2 size-4' />
             {field.state.value ? (
@@ -94,8 +94,8 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
           </Button>
         </ResponsiveMenuTrigger>
         <ResponsiveMenuContent
-          className='w-(--radix-popper-anchor-width) origin-top p-0'
           align='start'
+          className='w-(--radix-popper-anchor-width) origin-top p-0'
         >
           <ResponsiveMenuLabel>
             {pipe(
@@ -113,8 +113,8 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
           <div className='flex flex-row gap-2 p-2'>
             <div>
               <Calendar
+                initialFocus
                 mode='single'
-                selected={currentDate}
                 onSelect={(date) => {
                   if (!date) {
                     field.handleChange(undefined)
@@ -133,7 +133,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
 
                   field.handleChange(getTime(newDate))
                 }}
-                initialFocus
+                selected={currentDate}
               />
             </div>
             <div className='space-y-1'>

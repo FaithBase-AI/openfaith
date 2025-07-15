@@ -22,26 +22,26 @@ export const EntityAvatar: FC<EntityAvatarProps> = (props) => {
 
     Match.tag('user', (x) => (
       <UserAvatar
+        className={cn('rounded-md', className)}
         name={pipe(
           x.name,
           Option.fromNullable,
           Option.getOrElse(() => ''),
         )}
-        userId={x.id}
         ref={ref}
         size={size}
         style={style}
-        className={cn('rounded-md', className)}
+        userId={x.id}
         {...domProps}
       />
     )),
     Match.tag('org', (x) => (
       <OrgAvatar
+        className={cn('rounded-md', className)}
         org={x}
         ref={ref}
         size={size}
         style={style}
-        className={cn('rounded-md', className)}
         {...domProps}
       />
     )),

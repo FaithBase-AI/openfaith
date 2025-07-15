@@ -7,20 +7,20 @@ export const BotIcon = ({
   ref?: React.RefObject<SVGSVGElement>
 }) => (
   <svg
-    ref={ref}
-    width={'24'}
-    height={'24'}
-    viewBox={'0 0 24 24'}
+    className={'lucide-icon customizable'}
     fill={'none'}
+    height={'24'}
+    ref={ref}
     stroke={'currentColor'}
-    strokeWidth={'2'}
     strokeLinecap={'round'}
     strokeLinejoin={'round'}
-    className={'lucide-icon customizable'}
+    strokeWidth={'2'}
+    viewBox={'0 0 24 24'}
+    width={'24'}
     {...props}
   >
     <path d={'M12 8V4H8'} />
-    <rect width={'16'} height={'12'} x={'4'} y={'8'} rx={'2'}></rect>
+    <rect height={'12'} rx={'2'} width={'16'} x={'4'} y={'8'}></rect>
     <path d={'M2 14h2'} />
     <path d={'M20 14h2'} />
     <path d={'M15 13v2'} />

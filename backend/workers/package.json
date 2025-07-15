@@ -10,6 +10,7 @@
     "@openfaith/db": "workspace:*",
     "@openfaith/pco": "workspace:*",
     "@openfaith/schema": "workspace:*",
+    "@openfaith/server": "workspace:*",
     "@openfaith/shared": "workspace:*",
     "effect": "catalog:"
   },
@@ -22,8 +23,7 @@
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "bun run --watch runner.ts",
-    "format": "biome lint .",
-    "lint:biome": "biome lint .",
+    "format": "biome check",
     "typecheck": "tsc --noEmit"
   },
   "type": "module",

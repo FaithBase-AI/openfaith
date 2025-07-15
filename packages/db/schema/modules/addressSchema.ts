@@ -9,6 +9,7 @@ export const addressesTable = pgTable(
     _tag: d
       .char({ enum: ['address'], length: 7 })
       .default('address')
+      .$type<'address'>()
       .notNull(),
     city: d.text(),
     countryCode: d.text(),

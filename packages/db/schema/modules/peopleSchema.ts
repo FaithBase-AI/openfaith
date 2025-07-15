@@ -9,6 +9,7 @@ export const peopleTable = pgTable(
     _tag: d
       .char({ enum: ['person'], length: 6 })
       .default('person')
+      .$type<'person'>()
       .notNull(),
     anniversary: d.text(),
     avatar: d.text(),

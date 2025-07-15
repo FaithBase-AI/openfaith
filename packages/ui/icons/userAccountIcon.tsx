@@ -6,35 +6,35 @@ export const UserAccountIcon = ({
 }: IconProps & {
   ref?: React.RefObject<SVGSVGElement>
 }) => (
-  <svg ref={ref} width={'20'} height={'20'} viewBox={'0 0 24 24'} fill={'none'} {...props}>
+  <svg fill={'none'} height={'20'} ref={ref} viewBox={'0 0 24 24'} width={'20'} {...props}>
     <path
       d={'M14 8.99988H18'}
       stroke={'currentColor'}
-      strokeWidth={'1.5'}
       strokeLinecap={'round'}
+      strokeWidth={'1.5'}
     />
     <path
       d={'M14 12.4999H17'}
       stroke={'currentColor'}
-      strokeWidth={'1.5'}
       strokeLinecap={'round'}
+      strokeWidth={'1.5'}
     />
     <rect
-      x={'2'}
-      y={'2.99988'}
-      width={'20'}
       height={'18'}
       rx={'5'}
       stroke={'currentColor'}
-      strokeWidth={'1.5'}
       strokeLinejoin={'round'}
+      strokeWidth={'1.5'}
+      width={'20'}
+      x={'2'}
+      y={'2.99988'}
     />
     <path
       d={'M5 15.9999C6.20831 13.4188 10.7122 13.249 12 15.9999'}
       stroke={'currentColor'}
-      strokeWidth={'1.5'}
       strokeLinecap={'round'}
       strokeLinejoin={'round'}
+      strokeWidth={'1.5'}
     />
     <path
       d={

@@ -55,10 +55,7 @@
       "cache": false,
       "persistent": true
     },
-    "lint:biome": {
-      "cache": false
-    },
-    "lint:eslint": {
+    "lint": {
       "dependsOn": ["^topo", "^build"],
       "outputs": [".cache/.eslintcache"]
     },

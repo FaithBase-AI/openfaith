@@ -9,6 +9,7 @@ export const usersTable = pgTable(
     _tag: d
       .char({ enum: ['user'], length: 4 })
       .default('user')
+      .$type<'user'>()
       .notNull(),
     banExpires: d.timestamp(),
     banned: d.boolean(),

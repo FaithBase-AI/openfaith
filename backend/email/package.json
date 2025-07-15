@@ -1,16 +1,4 @@
 {
-  "name": "@openfaith/email",
-  "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "license": "MIT",
-  "scripts": {
-    "dev": "email dev",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "format": "biome lint .",
-    "lint:biome": "biome lint .",
-    "typecheck": "tsc --noEmit"
-  },
   "dependencies": {
     "@openfaith/schema": "workspace:*",
     "@openfaith/shared": "workspace:*",
@@ -24,5 +12,16 @@
     "@types/react-dom": "catalog:",
     "react-email": "4.0.15",
     "typescript": "catalog:"
-  }
+  },
+  "license": "MIT",
+  "name": "@openfaith/email",
+  "private": true,
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "email dev",
+    "format": "biome check",
+    "typecheck": "tsc --noEmit"
+  },
+  "type": "module",
+  "version": "0.1.0"
 }

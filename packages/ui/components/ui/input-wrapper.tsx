@@ -31,11 +31,11 @@ export const InputWrapper: FC<InputWrapperProps> = (props) => {
   return (
     <div className={cn('grid w-full max-w-sm items-center gap-1.5', className)}>
       <InputLabel
-        required={required}
         label={label}
-        processedError={processedError}
         labelClassName={labelClassName}
         name={name}
+        processedError={processedError}
+        required={required}
       />
 
       {children}
@@ -72,8 +72,8 @@ export const InputLabel: FC<InputLabelProps> = (props) => {
       onNone: nullOp,
       onSome: (x) => (
         <Label
-          htmlFor={name as string}
           className={cn(processedError && 'text-destructive', labelClassName)}
+          htmlFor={name as string}
           required={required}
         >
           {x}

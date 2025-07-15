@@ -77,10 +77,10 @@ function SortableList({ children, items, onItemsChange, className }: SortableLis
   return (
     <SortableListContext.Provider value={{ items: actualItems, setItems }}>
       <DndContext
-        sensors={sensors}
         collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
         modifiers={[restrictToVerticalAxis]}
+        onDragEnd={handleDragEnd}
+        sensors={sensors}
       >
         <SortableContext items={actualItems} strategy={verticalListSortingStrategy}>
           <div className={cn('space-y-3', className)}>{children}</div>

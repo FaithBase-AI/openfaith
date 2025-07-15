@@ -23,6 +23,6 @@ export const idToRecordsTag = (id: string): RecordData['_tag'] => {
 }
 
 export const displayEntityType: Record<RecordData['_tag'], string> = {
-  user: 'Users',
   org: 'Organizations',
+  user: 'Users',
 }

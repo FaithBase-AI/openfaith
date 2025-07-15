@@ -1,24 +1,24 @@
 {
-  "name": "@openfaith/auth",
-  "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "license": "MIT",
-  "scripts": {
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "format": "biome lint .",
-    "lint:biome": "biome lint .",
-    "typecheck": "tsc --noEmit"
-  },
   "dependencies": {
     "@openfaith/db": "workspace:*",
     "@openfaith/email": "workspace:*",
     "better-auth": "catalog:",
+    "cookie": "1.0.2",
     "effect": "catalog:",
     "resend": "catalog:",
     "typeid-js": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:"
-  }
+  },
+  "license": "MIT",
+  "name": "@openfaith/auth",
+  "private": true,
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "format": "biome check",
+    "typecheck": "tsc --noEmit"
+  },
+  "type": "module",
+  "version": "0.1.0"
 }
