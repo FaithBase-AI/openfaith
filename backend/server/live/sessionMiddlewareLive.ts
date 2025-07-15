@@ -13,10 +13,11 @@ export const SessionHttpMiddlewareLayer = Layer.effect(
   // biome-ignore lint/correctness/useYield: This is how the layer is defined
   Effect.gen(function* () {
     return Effect.gen(function* () {
-      const request = yield* HttpServerRequest.HttpServerRequest
-      const headers = request.headers
+      const request = yield* Effect.serviceOptional(HttpServerRequest.HttpServerRequest).pipe(
+        Effect.orDie,
+      )
 
-      return yield* setSession(headers)
+      return yield* setSession(request.headers)
     })
   }),
 )

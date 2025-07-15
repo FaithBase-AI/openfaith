@@ -1,4 +1,10 @@
-import { FetchHttpClient, HttpApiBuilder, HttpLayerRouter, HttpServer } from '@effect/platform'
+import {
+  FetchHttpClient,
+  HttpApiBuilder,
+  HttpApiSwagger,
+  HttpLayerRouter,
+  HttpServer,
+} from '@effect/platform'
 import { RpcSerialization, RpcServer } from '@effect/rpc'
 import { DBLive } from '@openfaith/db'
 import { AdapterRpc, CoreRpc, ZeroMutatorsApi } from '@openfaith/domain'
@@ -35,10 +41,9 @@ export const HttpApiRoute = HttpLayerRouter.addHttpApi(ZeroMutatorsApi, {
   openapiPath: '/api/api/openapi.json',
 }).pipe(Layer.provide(HandlersLayer), Layer.provide(HttpServer.layerContext))
 
-export const ApiLive = HttpApiBuilder.api(ZeroMutatorsApi).pipe(
-  Layer.provide(HttpHandlersLayer),
-  Layer.provide(HttpServer.layerContext),
-)
+export const SwaggerLayer = HttpApiSwagger.layer().pipe(Layer.provide(HttpHandlersLayer))
+
+export const ApiLive = HttpApiBuilder.api(ZeroMutatorsApi).pipe(Layer.provide(HttpHandlersLayer))
 
 // Main server layer that includes Core, Adapter, and Zero together
 export const ServerLive = Layer.mergeAll(HttpApiRoute, RpcRoute)
