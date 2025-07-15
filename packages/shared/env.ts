@@ -28,6 +28,7 @@ export const env = createEnv({
     ZERO_LOG_LEVEL: z.string(),
     ZERO_TARGET_CLIENT_ROW_COUNT: z.string().transform((x) => Number.parseInt(x)),
     ZERO_ADMIN_PASSWORD: z.string(),
+    ZERO_PUSH_URL: z.string(),
 
     // Config
 

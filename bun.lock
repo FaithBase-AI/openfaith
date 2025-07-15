@@ -238,6 +238,7 @@
         "drizzle-kit": "catalog:",
         "drizzle-orm": "catalog:",
         "effect": "catalog:",
+        "postgres": "3.4.7",
       },
       "devDependencies": {
         "typescript": "catalog:",

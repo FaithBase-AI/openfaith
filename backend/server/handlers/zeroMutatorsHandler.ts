@@ -1,76 +1,49 @@
-import { HttpApiBuilder } from '@effect/platform'
-import {
-  MutatorError,
-  type PushResponse,
-  SessionContext,
-  ValidationError,
-  ZeroMutatorsApi,
-} from '@openfaith/domain'
-import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/httpAuthMiddlewareLive'
-import { Effect, Layer } from 'effect'
+import { HttpApiBuilder, HttpServerRequest } from '@effect/platform'
+import { pgjsConnection } from '@openfaith/db/postgresJs'
+import { MutatorError, SessionContext, ZeroMutatorsApi as ZeroApi } from '@openfaith/domain'
+import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
+import { createMutators, schema } from '@openfaith/zero'
+import { PostgresJSConnection, PushProcessor, ZQLDatabase } from '@rocicorp/zero/pg'
+import { Effect, Layer, Option, pipe } from 'effect'
+
+const processor = new PushProcessor(
+  new ZQLDatabase(new PostgresJSConnection(pgjsConnection), schema),
+)
 
 // Handler implementation for Zero mutators
-export const ZeroMutatorsHandlerLive = HttpApiBuilder.group(
-  ZeroMutatorsApi,
-  'zero-mutators',
-  (handlers) =>
-    handlers.handle('push', ({ payload }) =>
-      Effect.gen(function* () {
-        // Get authenticated session
+export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) =>
+  handlers.handle('push', (input) =>
+    Effect.gen(function* () {
+      // Get authenticated session
 
-        const session = yield* SessionContext
+      const session = yield* SessionContext
 
-        // Log the incoming push request with user context
-        yield* Effect.log('Processing Zero push request', {
-          mutationCount: payload.mutations.length,
-          orgId: session.session.activeOrganizationId,
-          pushVersion: payload.pushVersion,
-          userId: session.user.id,
-        })
+      // Log the incoming push request with user context
+      yield* Effect.log('Processing Zero push request', input)
 
-        if (payload.mutations.length === 0) {
-          // TODO: Implement the actual mutator processing logic
-          // For now, we'll return a simple success response
+      const request = yield* HttpServerRequest.HttpServerRequest
 
-          // Validate the request
-          return yield* Effect.fail(
-            new ValidationError({
-              field: 'mutations',
-              message: 'No mutations provided',
+      const result = yield* Effect.tryPromise({
+        catch: (error) => {
+          return new MutatorError({ message: `Error processing push request: ${error}` })
+        },
+        try: () =>
+          processor.process(
+            createMutators({
+              activeOrganizationId: pipe(
+                session.session.activeOrganizationId,
+                Option.fromNullable,
+                Option.getOrNull,
+              ),
+              sub: session.user.id,
             }),
-          )
-        }
+            request as unknown as Request,
+          ),
+      })
 
-        // Process each mutation
-        const patchOps: Array<unknown> = []
-        let lastMutationId: string | undefined
+      console.log(result)
 
-        for (const mutation of payload.mutations) {
-          try {
-            // TODO: Apply the actual mutation logic here
-            // For now, we'll just create a simple patch operation
-            patchOps.push({
-              op: 'replace',
-              path: `/mutation-${mutation.id}`,
-              value: { processed: true, timestamp: Date.now() },
-            })
-
-            lastMutationId = mutation.id
-          } catch (error) {
-            return yield* Effect.fail(
-              new MutatorError({
-                message: `Failed to process mutation: ${error}`,
-                mutationId: mutation.id,
-              }),
-            )
-          }
-        }
-
-        // Return successful response
-        return {
-          lastMutationId,
-          patchOps,
-        } satisfies typeof PushResponse.Type
-      }),
-    ),
+      return result
+    }),
+  ),
 ).pipe(Layer.provide(SessionHttpMiddlewareLayer))

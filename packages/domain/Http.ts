@@ -1,5 +1,5 @@
 import { HttpApi, HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
-import { SessionHttpMiddleware } from '@openfaith/domain/contexts/sessionContext'
+import { SessionError, SessionHttpMiddleware } from '@openfaith/domain/contexts/sessionContext'
 import { Schema } from 'effect'
 
 // Define schemas for Zero's custom mutators
@@ -37,18 +37,19 @@ export class ValidationError extends Schema.TaggedError<ValidationError>()('Vali
 }) {}
 
 // Define the Zero custom mutators HTTP API group
-export const ZeroMutatorsGroup = HttpApiGroup.make('zero-mutators')
+export const ZeroMutatorsGroup = HttpApiGroup.make('zero')
   .add(
     HttpApiEndpoint.post('push', '/push')
-      .setPayload(PushRequest)
-      .addSuccess(PushResponse)
+      .setPayload(Schema.Unknown)
+      .addSuccess(Schema.Unknown)
       .addError(MutatorError, { status: 400 })
-      .addError(ValidationError, { status: 422 }),
+      .addError(ValidationError, { status: 422 })
+      .addError(SessionError, { status: 401 }),
   )
   .middleware(SessionHttpMiddleware)
 
 // Define the complete HTTP API
-export class ZeroMutatorsApi extends HttpApi.make('zero-mutators-api').add(ZeroMutatorsGroup) {}
+export class ZeroMutatorsApi extends HttpApi.make('zero').add(ZeroMutatorsGroup) {}
 
 // Type exports for convenience
 export type PushRequestType = typeof PushRequest.Type
