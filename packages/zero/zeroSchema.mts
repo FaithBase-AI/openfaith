@@ -1,5 +1,11 @@
 import { schema, type Schema as ZSchema } from '@openfaith/zero/zero-schema.gen'
-import { ANYONE_CAN, definePermissions, type ExpressionBuilder, NOBODY_CAN } from '@rocicorp/zero'
+import {
+  ANYONE_CAN,
+  ANYONE_CAN_DO_ANYTHING,
+  definePermissions,
+  type ExpressionBuilder,
+  NOBODY_CAN,
+} from '@rocicorp/zero'
 
 export { schema, type ZSchema }
 
@@ -122,16 +128,17 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
         select: ANYONE_CAN,
       },
     },
-    people: {
-      row: {
-        insert: [allowIfAdmin],
-        select: ANYONE_CAN,
-        update: {
-          postMutation: [allowIfAdmin],
-          preMutation: [allowIfAdmin],
-        },
-      },
-    },
+    people: ANYONE_CAN_DO_ANYTHING,
+    // people: {
+    //   row: {
+    //     insert: [allowIfAdmin],
+    //     select: ANYONE_CAN,
+    //     update: {
+    //       postMutation: [allowIfAdmin],
+    //       preMutation: [allowIfAdmin],
+    //     },
+    //   },
+    // },
     phoneNumbers: {
       row: {
         insert: [allowIfAdmin],

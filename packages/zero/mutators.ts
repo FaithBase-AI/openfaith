@@ -1,36 +1,30 @@
-import type { AuthData, schema } from '@openfaith/zero/zeroSchema.mts'
+import type { AuthData, ZSchema } from '@openfaith/zero/zeroSchema.mts'
 import type { CustomMutatorDefs, Transaction } from '@rocicorp/zero'
 
 // Define the input type for creating a person (basic fields for now)
-export type CreatePersonInput = {
+export type UpdatePersonInput = {
   id: string
-  orgId: string
   firstName?: string
-  lastName?: string
-  name?: string
-  status: 'active' | 'inactive'
-  type: 'default'
-  createdAt: number
-  // Add more fields as needed
 }
 
 export function createMutators(
   authData: Pick<AuthData, 'sub' | 'activeOrganizationId'> | undefined,
 ) {
   return {
-    person: {
-      create: async (tx: Transaction<typeof schema>, input: CreatePersonInput): Promise<void> => {
+    people: {
+      update: async (tx: Transaction<ZSchema>, input: UpdatePersonInput): Promise<void> => {
+        console.log('update', input)
+
         if (!authData) {
           throw new Error('Not authenticated')
         }
         // Optionally, add schema validation here
-        await tx.mutate.people.insert({
-          _tag: 'person',
+        await tx.mutate.people.update({
           ...input,
         })
       },
     },
-  } as const satisfies CustomMutatorDefs<typeof schema>
+  } as const satisfies CustomMutatorDefs<ZSchema>
 }
 
 export type Mutators = ReturnType<typeof createMutators>

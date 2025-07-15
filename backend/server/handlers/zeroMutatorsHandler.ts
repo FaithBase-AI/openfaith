@@ -16,6 +16,8 @@ export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) 
     Effect.gen(function* () {
       // Get authenticated session
 
+      console.log('Zero push request', input)
+
       const session = yield* SessionContext
 
       // Log the incoming push request with user context
