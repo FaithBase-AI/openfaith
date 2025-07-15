@@ -126,6 +126,8 @@ export const auth = betterAuth({
       // The Zero team is working on improving this and getting the same perf w/o needing to expose credentials to the client.
 
       // If we are trying to set the cookie, we need to set the session in the context and add the jwt.
+
+      // TODO: Need to deal with this code running for every request.
       await pipe(
         ctx.context.responseHeaders,
         Option.fromNullable,
@@ -136,7 +138,6 @@ export const auth = betterAuth({
             const session = ctx.context.newSession || ctx.context.session
             ctx.context.session = session
 
-            console.log('🚀 session', session)
             const token =
               ctx.context.responseHeaders?.get('set-auth-jwt') || (await getJwtToken(ctx))
 
