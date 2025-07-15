@@ -6,8 +6,30 @@ import {
   type ExpressionBuilder,
   NOBODY_CAN,
 } from '@rocicorp/zero'
+import { Schema } from 'effect'
 
 export { schema, type ZSchema }
+
+export const AuthData = Schema.Struct({
+  activeOrganizationId: Schema.Union(Schema.String, Schema.Null),
+  aud: Schema.String,
+  banExpires: Schema.Union(Schema.Number, Schema.Null),
+  banned: Schema.Union(Schema.Boolean, Schema.Null),
+  banReason: Schema.Union(Schema.String, Schema.Null),
+  createdAt: Schema.String,
+  email: Schema.String,
+  emailVerified: Schema.Boolean,
+  exp: Schema.Number,
+  iat: Schema.Number,
+  id: Schema.String,
+  image: Schema.Union(Schema.String, Schema.Null),
+  isAnonymous: Schema.Union(Schema.Boolean, Schema.Null),
+  iss: Schema.String,
+  name: Schema.String,
+  role: Schema.String,
+  sub: Schema.String,
+  updatedAt: Schema.String,
+})
 
 export type AuthData = {
   id: string

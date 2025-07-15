@@ -1,4 +1,4 @@
-import { type Headers, HttpServerRequest } from '@effect/platform'
+import { Headers, HttpServerRequest } from '@effect/platform'
 import { auth } from '@openfaith/auth/auth'
 import {
   SessionError,
@@ -6,7 +6,9 @@ import {
   SessionRpcMiddleware,
   UnauthorizedError,
 } from '@openfaith/domain'
-import { Effect, Layer } from 'effect'
+import { AuthData } from '@openfaith/zero'
+import { Effect, Layer, Option, pipe, Schema, String } from 'effect'
+import * as jose from 'jose'
 
 export const SessionHttpMiddlewareLayer = Layer.effect(
   SessionHttpMiddleware,
@@ -34,6 +36,55 @@ export const SessionRpcMiddlewareLayer: Layer.Layer<SessionRpcMiddleware> = Laye
 )
 
 const setSession = Effect.fn('setSession')(function* (headers: Headers.Headers) {
+  const authOpt = pipe(headers, Headers.get('authorization'))
+
+  if (authOpt._tag !== 'None') {
+    const prefix = 'Bearer '
+    if (!pipe(authOpt.value, String.startsWith(prefix))) {
+      return yield* Effect.fail(
+        new UnauthorizedError({
+          message: 'Invalid authorization header.',
+        }),
+      )
+    }
+
+    const token = pipe(authOpt.value, String.slice(prefix.length))
+    const set = yield* Effect.tryPromise({
+      catch: (error) => new SessionError({ message: `Failed to get JWKS: ${error}` }),
+      try: () => auth.api.getJwks(),
+    })
+
+    const jwks = jose.createLocalJWKSet(set)
+
+    const authData = yield* Effect.tryPromise({
+      catch: (error) => {
+        return new UnauthorizedError({ message: `Invalid token: ${error}` })
+      },
+      try: async () => {
+        const { payload } = await jose.jwtVerify(token, jwks)
+
+        return payload
+      },
+    }).pipe(
+      Effect.flatMap((payload) => Schema.decodeUnknown(AuthData)(payload)),
+      Effect.mapError((error) => {
+        if (error._tag === 'ParseError') {
+          return new UnauthorizedError({
+            message: `Invalid token: ${error.message}`,
+          })
+        }
+
+        return error
+      }),
+    )
+
+    return {
+      activeOrganizationIdOpt: pipe(authData.activeOrganizationId, Option.fromNullable),
+      roleOpt: Option.fromNullable(authData.role),
+      userId: authData.sub,
+    }
+  }
+
   const session = yield* Effect.tryPromise({
     catch: (error) => {
       return new SessionError({ message: `Failed to get session: ${error}` })
@@ -48,5 +99,9 @@ const setSession = Effect.fn('setSession')(function* (headers: Headers.Headers) 
     return yield* Effect.fail(new UnauthorizedError({ message: 'Unauthorized' }))
   }
 
-  return session
+  return {
+    activeOrganizationIdOpt: pipe(session.session.activeOrganizationId, Option.fromNullable),
+    roleOpt: Option.fromNullable(session.user.role),
+    userId: session.user.id,
+  }
 })

@@ -32,12 +32,8 @@ export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) 
         try: () =>
           processor.process(
             createMutators({
-              activeOrganizationId: pipe(
-                session.session.activeOrganizationId,
-                Option.fromNullable,
-                Option.getOrNull,
-              ),
-              sub: session.user.id,
+              activeOrganizationId: pipe(session.activeOrganizationIdOpt, Option.getOrNull),
+              sub: session.userId,
             }),
             request as unknown as Request,
           ),

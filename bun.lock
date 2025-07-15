@@ -98,6 +98,7 @@
         "@tanstack/router-plugin": "1.125.6",
         "effect": "catalog:",
         "input-otp": "catalog:",
+        "jose": "6.0.11",
         "jotai": "catalog:",
         "next-themes": "catalog:",
         "nuqs": "catalog:",

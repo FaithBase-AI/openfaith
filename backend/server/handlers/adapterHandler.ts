@@ -14,8 +14,17 @@ export const AdapterHandlerLive = AdapterRpc.toLayer(
 
           // Get authenticated user and org from session context
           const session = yield* SessionContext
-          const userId = session.user.id
-          const orgId = session.session.activeOrganizationId!
+          const userId = session.userId
+          const orgId = session.activeOrganizationIdOpt.pipe(Option.getOrNull)
+
+          if (!orgId) {
+            return yield* Effect.fail(
+              new AdapterConnectError({
+                adapter,
+                message: 'No organization found',
+              }),
+            )
+          }
 
           const adapterImpl = yield* pipe(
             adaptersApi,
