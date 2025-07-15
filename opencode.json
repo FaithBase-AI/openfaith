@@ -1,8 +1,13 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
+    "context7": {
+      "command": ["bunx", "-y", "@upstash/context7-mcp@latest"],
+      "enabled": true,
+      "type": "local"
+    },
     "effect-docs": {
-      "command": ["npx", "-y", "effect-mcp"],
+      "command": ["bunx", "-y", "effect-mcp"],
       "enabled": true,
       "type": "local"
     }

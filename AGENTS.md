@@ -19,7 +19,7 @@ OpenFaith is a local-first church management system built with Effect-TS that pr
 ### Code Quality
 
 - `bun run format` - Check code formatting with Biome
-- `bun run format:fix` - Fix code formatting issues automatically
+- `bun run format:fix` - Fix code formatting issues automatically. Run this after all changes before handing back to user
 - `bun run lint:biome` - Run Biome linter
 - `bun run lint:biome:fix` - Fix Biome linting issues
 - `bun run lint:eslint` - Run ESLint with caching
