@@ -20,11 +20,6 @@ const HandlersLayer = Layer.mergeAll(CoreHandlerLive, AdapterHandlerLive, ZeroHa
   Layer.provide(FetchHttpClient.layer),
 )
 
-const HttpHandlersLayer = Layer.mergeAll(ZeroHandlerLive).pipe(
-  Layer.provide(DBLive),
-  Layer.provide(FetchHttpClient.layer),
-)
-
 // Create the Core RPC route using HttpLayerRouter
 export const RpcRoute = RpcServer.layerHttpRouter({
   group: CoreRpc.merge(AdapterRpc),
@@ -41,9 +36,16 @@ export const HttpApiRoute = HttpLayerRouter.addHttpApi(ZeroMutatorsApi, {
   openapiPath: '/api/api/openapi.json',
 }).pipe(Layer.provide(HandlersLayer), Layer.provide(HttpServer.layerContext))
 
-export const SwaggerLayer = HttpApiSwagger.layer().pipe(Layer.provide(HttpHandlersLayer))
+export const ApiLive = HttpApiBuilder.api(ZeroMutatorsApi).pipe(Layer.provide(HandlersLayer))
 
-export const ApiLive = HttpApiBuilder.api(ZeroMutatorsApi).pipe(Layer.provide(HttpHandlersLayer))
+export const SwaggerLayer = HttpApiSwagger.layer({
+  path: '/api/api/docs',
+}).pipe(Layer.provide(ApiLive))
 
-// Main server layer that includes Core, Adapter, and Zero together
-export const ServerLive = Layer.mergeAll(HttpApiRoute, RpcRoute)
+// Main server layer that includes Core, Adapter, Zero, and Swagger together
+export const ServerLive = Layer.mergeAll(
+  HttpApiRoute,
+  RpcRoute,
+  SwaggerLayer,
+  HttpServer.layerContext,
+)
