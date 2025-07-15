@@ -1,4 +1,4 @@
-import { CoreRpc, SessionContext, TestFunctionError } from '@openfaith/domain'
+import { CoreRpc, TestFunctionError } from '@openfaith/domain'
 import { Effect } from 'effect'
 
 export const CoreHandlerLive = CoreRpc.toLayer(
@@ -10,10 +10,6 @@ export const CoreHandlerLive = CoreRpc.toLayer(
 
           // Simulate some work
           yield* Effect.sleep('100 millis')
-
-          const session = yield* SessionContext
-
-          console.log(session)
 
           console.log('✅ Test function completed')
 
