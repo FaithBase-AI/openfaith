@@ -18,6 +18,11 @@ export const PushRequest = Schema.Struct({
   schemaVersion: Schema.String,
 })
 
+export const PushUrlParams = Schema.Struct({
+  appId: Schema.String,
+  schema: Schema.String,
+})
+
 // Push response schema - this represents the result of processing mutations
 export const PushResponse = Schema.Struct({
   error: Schema.String.pipe(Schema.optional), // Patch operations to apply
@@ -40,6 +45,7 @@ export class ValidationError extends Schema.TaggedError<ValidationError>()('Vali
 export const ZeroMutatorsGroup = HttpApiGroup.make('zero')
   .add(
     HttpApiEndpoint.post('push', '/push')
+      .setUrlParams(PushUrlParams)
       .setPayload(Schema.Unknown)
       .addSuccess(Schema.Unknown)
       .addError(MutatorError, { status: 400 })

@@ -1,4 +1,4 @@
-import { FetchHttpClient, HttpLayerRouter, HttpServer } from '@effect/platform'
+import { FetchHttpClient, HttpApiBuilder, HttpLayerRouter, HttpServer } from '@effect/platform'
 import { RpcSerialization, RpcServer } from '@effect/rpc'
 import { DBLive } from '@openfaith/db'
 import { AdapterRpc, CoreRpc, ZeroMutatorsApi } from '@openfaith/domain'
@@ -10,6 +10,11 @@ import { Layer } from 'effect'
 
 // Create the handlers layer with basic dependencies
 const HandlersLayer = Layer.mergeAll(CoreHandlerLive, AdapterHandlerLive, ZeroHandlerLive).pipe(
+  Layer.provide(DBLive),
+  Layer.provide(FetchHttpClient.layer),
+)
+
+const HttpHandlersLayer = Layer.mergeAll(ZeroHandlerLive).pipe(
   Layer.provide(DBLive),
   Layer.provide(FetchHttpClient.layer),
 )
@@ -26,8 +31,12 @@ export const RpcRoute = RpcServer.layerHttpRouter({
 )
 
 // Create the Zero HTTP API route using HttpLayerRouter
-export const HttpApiRoute = HttpLayerRouter.addHttpApi(ZeroMutatorsApi).pipe(
-  Layer.provide(HandlersLayer),
+export const HttpApiRoute = HttpLayerRouter.addHttpApi(ZeroMutatorsApi, {
+  openapiPath: '/api/api/openapi.json',
+}).pipe(Layer.provide(HandlersLayer), Layer.provide(HttpServer.layerContext))
+
+export const ApiLive = HttpApiBuilder.api(ZeroMutatorsApi).pipe(
+  Layer.provide(HttpHandlersLayer),
   Layer.provide(HttpServer.layerContext),
 )
 
