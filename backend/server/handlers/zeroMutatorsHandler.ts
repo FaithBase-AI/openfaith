@@ -1,8 +1,9 @@
-import { HttpApiBuilder, HttpServerRequest } from '@effect/platform'
+import { HttpApiBuilder } from '@effect/platform'
 import { pgjsConnection } from '@openfaith/db/postgresJs'
 import { MutatorError, SessionContext, ZeroMutatorsApi as ZeroApi } from '@openfaith/domain'
 import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
 import { createMutators, schema } from '@openfaith/zero'
+import type { ReadonlyJSONObject } from '@rocicorp/zero'
 import { PostgresJSConnection, PushProcessor, ZQLDatabase } from '@rocicorp/zero/pg'
 import { Effect, Layer, Option, pipe } from 'effect'
 
@@ -14,16 +15,10 @@ const processor = new PushProcessor(
 export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) =>
   handlers.handle('push', (input) =>
     Effect.gen(function* () {
-      // Get authenticated session
-
-      console.log('Zero push request', input)
-
       const session = yield* SessionContext
 
       // Log the incoming push request with user context
-      yield* Effect.log('Processing Zero push request', input)
-
-      const request = yield* HttpServerRequest.HttpServerRequest
+      yield* Effect.log('Processing Zero push request', input.payload.mutations)
 
       const result = yield* Effect.tryPromise({
         catch: (error) => {
@@ -35,11 +30,11 @@ export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) 
               activeOrganizationId: pipe(session.activeOrganizationIdOpt, Option.getOrNull),
               sub: session.userId,
             }),
-            request as unknown as Request,
+            input.urlParams,
+            // Have to cast it to ReadonlyJSONObject because the PushProcessor expects a JSON object
+            input.payload as unknown as ReadonlyJSONObject,
           ),
       })
-
-      console.log(result)
 
       return result
     }),

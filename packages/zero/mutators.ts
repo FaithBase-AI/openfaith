@@ -13,8 +13,6 @@ export function createMutators(
   return {
     people: {
       update: async (tx: Transaction<ZSchema>, input: UpdatePersonInput): Promise<void> => {
-        console.log('update', input)
-
         if (!authData) {
           throw new Error('Not authenticated')
         }

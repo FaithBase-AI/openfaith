@@ -106,7 +106,7 @@ function RouteComponent() {
         onClick={() =>
           z.mutate.people.update({
             id: '105820014',
-            name: `Yeet ${new Date().toISOString()}`,
+            name: `Yeeeeeet ${new Date().toISOString()}`,
           })
         }
         variant={'secondary'}

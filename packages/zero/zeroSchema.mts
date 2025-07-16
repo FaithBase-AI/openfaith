@@ -23,7 +23,6 @@ export const AuthData = Schema.Struct({
   iat: Schema.Number,
   id: Schema.String,
   image: Schema.Union(Schema.String, Schema.Null),
-  isAnonymous: Schema.Union(Schema.Boolean, Schema.Null),
   iss: Schema.String,
   name: Schema.String,
   role: Schema.String,
@@ -39,7 +38,6 @@ export type AuthData = {
   image: string | null
   createdAt: string
   updatedAt: string
-  isAnonymous: boolean | null
   role: string
   banned: boolean | null
   banReason: string | null

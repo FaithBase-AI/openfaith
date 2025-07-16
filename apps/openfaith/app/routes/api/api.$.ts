@@ -16,7 +16,6 @@ export const ServerRoute = createServerFileRoute('/api/api/$').methods({
     return await handler(request)
   },
   async POST({ request }) {
-    console.log('POST', request)
     return await handler(request)
   },
   async PUT({ request }) {
