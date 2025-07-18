@@ -1,10 +1,10 @@
 import type { Primitive } from '@effect/sql/Statement'
-import { PgClient } from '@effect/sql-pg'
+import type { PgClient } from '@effect/sql-pg'
+import type { ZSchema } from '@openfaith/zero/zeroSchema.mjs'
 import type { CustomMutatorDefs, ReadonlyJSONObject } from '@rocicorp/zero'
 import type { DBConnection, DBTransaction, Row } from '@rocicorp/zero/pg'
 import { PushProcessor, ZQLDatabase } from '@rocicorp/zero/pg'
-import { Effect, Runtime } from 'effect'
-import type { ZSchema } from './zeroSchema.mjs'
+import { Context, Effect, Runtime } from 'effect'
 
 /**
  * An adapter that implements the `DBConnection` interface for an `@effect/sql-pg` client.
@@ -76,30 +76,12 @@ class EffectPgTransaction implements DBTransaction<PgClient.PgClient> {
 /**
  * A factory function that creates a `ZQLDatabase` instance backed by `@effect/sql-pg`.
  * This is the main entry point for using the adapter.
- *
- * @example
- * ```ts
- * import { Effect, Layer, Runtime } from "effect"
- * import { PgClient } from "@effect/sql-pg"
- * import { zeroEffectPg } from './effectPgAdapter'
- * import type { ZSchema } from './zeroSchema.mjs'
- *
- * // In your main application setup
- * const ZeroProcessorLive = Layer.effect(
- *   ZeroProcessor,
- *   Effect.gen(function*() {
- *     const pgClient = yield* PgClient.PgClient
- *     const runtime = yield* Effect.runtime<never>()
- *     return zeroEffectPg(pgClient, runtime)
- *   })
- * )
- * ```
  */
 export function zeroEffectPg(
   schema: ZSchema,
   pgClient: PgClient.PgClient,
   runtime: Runtime.Runtime<never>,
-) {
+): ZQLDatabase<ZSchema, PgClient.PgClient> {
   const connection = new EffectPgConnection(pgClient, runtime)
   return new ZQLDatabase(connection, schema)
 }
@@ -111,47 +93,37 @@ export function zeroEffectPgProcessor(
   schema: ZSchema,
   pgClient: PgClient.PgClient,
   runtime: Runtime.Runtime<never>,
-) {
+): PushProcessor<ZQLDatabase<ZSchema, PgClient.PgClient>, CustomMutatorDefs<ZSchema>> {
   const zqlDatabase = zeroEffectPg(schema, pgClient, runtime)
   return new PushProcessor(zqlDatabase)
 }
 
 /**
- * Service tag for the Zero ZQLDatabase
+ * Context tag for the Zero schema configuration
  */
-export class ZeroDatabase extends Effect.Service<ZeroDatabase>()('@openfaith/zero/ZeroDatabase', {
-  effect: Effect.gen(function* () {
-    const pgClient = yield* PgClient.PgClient
-    const runtime = yield* Effect.runtime<never>()
-    // Note: You'll need to provide the schema from your application context
-    // This is just a placeholder - replace with your actual schema
-    const schema = {} as ZSchema
-    return zeroEffectPg(schema, pgClient, runtime)
-  }),
-}) {}
+export class ZeroSchema extends Context.Tag('@openfaith/zero/ZeroSchema')<ZeroSchema, ZSchema>() {}
 
 /**
- * Service tag for the Zero PushProcessor
+ * Service interface for Zero database operations
  */
-export class ZeroProcessor extends Effect.Service<ZeroProcessor>()(
-  '@openfaith/zero/ZeroProcessor',
-  {
-    effect: Effect.gen(function* () {
-      const pgClient = yield* PgClient.PgClient
-      const runtime = yield* Effect.runtime<never>()
-      // Note: You'll need to provide the schema from your application context
-      // This is just a placeholder - replace with your actual schema
-      const schema = {} as ZSchema
-      return zeroEffectPgProcessor(schema, pgClient, runtime)
-    }),
-  },
-) {}
+export class ZeroDatabase extends Context.Tag('@openfaith/zero/ZeroDatabase')<
+  ZeroDatabase,
+  ZQLDatabase<ZSchema, PgClient.PgClient>
+>() {}
+
+/**
+ * Service interface for Zero push processor operations
+ */
+export class ZeroProcessor extends Context.Tag('@openfaith/zero/ZeroProcessor')<
+  ZeroProcessor,
+  PushProcessor<ZQLDatabase<ZSchema, PgClient.PgClient>, CustomMutatorDefs<ZSchema>>
+>() {}
 
 /**
  * Helper function to process Zero mutations using Effect patterns
  */
 export const processZeroMutations = (
-  mutators: CustomMutatorDefs<any>,
+  mutators: CustomMutatorDefs<ZSchema>,
   urlParams: Record<string, string>,
   payload: ReadonlyJSONObject,
 ) =>

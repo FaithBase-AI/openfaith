@@ -49,6 +49,7 @@ const setSession = Effect.fn('setSession')(function* (headers: Headers.Headers) 
     }
 
     const token = pipe(authOpt.value, String.slice(prefix.length))
+
     const set = yield* Effect.tryPromise({
       catch: (error) => new SessionError({ message: `Failed to get JWKS: ${error}` }),
       try: () => auth.api.getJwks(),

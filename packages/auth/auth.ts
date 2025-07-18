@@ -139,7 +139,16 @@ export const auth = betterAuth({
             ctx.context.session = session
 
             const token =
-              ctx.context.responseHeaders?.get('set-auth-jwt') || (await getJwtToken(ctx))
+              ctx.context.responseHeaders?.get('set-auth-jwt') ||
+              (await getJwtToken(ctx, {
+                jwt: {
+                  definePayload: ({ user, session }) => ({
+                    ...user,
+                    activeOrganizationId: session.activeOrganizationId,
+                  }),
+                  expirationTime: '1h',
+                },
+              }))
 
             if (session && token) {
               setCookies(ctx.context.responseHeaders as Headers, {
