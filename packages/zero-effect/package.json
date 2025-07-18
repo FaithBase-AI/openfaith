@@ -1,22 +1,19 @@
 {
   "dependencies": {
-    "@openfaith/shared": "workspace:*",
-    "@openfaith/zero-effect": "workspace:*",
+    "@effect/sql": "catalog:",
+    "@effect/sql-pg": "catalog:",
     "@rocicorp/zero": "catalog:",
-    "drizzle-zero": "0.12.0",
     "effect": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:"
   },
   "license": "MIT",
-  "name": "@openfaith/zero",
+  "name": "@openfaith/zero-effect",
   "private": true,
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "zero-cache-dev -p zeroSchema.mts",
     "format": "biome check",
-    "generate": "drizzle-zero generate -s drizzle-zero.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "type": "module",

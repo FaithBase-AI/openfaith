@@ -1,1 +1,1 @@
-export * from '@openfaith/zero/layers/zeroLayer'
+export * from '@openfaith/zero-effect/zeroLayer'

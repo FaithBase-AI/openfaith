@@ -1,11 +1,11 @@
 import type { Primitive } from '@effect/sql/Statement'
 import { PgClient } from '@effect/sql-pg'
+import type { CustomMutatorEfDefs } from '@openfaith/zero-effect/effectMutatorDefs'
+import { convertEffectMutatorsToPromise } from '@openfaith/zero-effect/effectMutatorDefs'
 import type { CustomMutatorDefs, ReadonlyJSONObject, Schema } from '@rocicorp/zero'
 import type { DBConnection, DBTransaction, Row } from '@rocicorp/zero/pg'
 import { PushProcessor, ZQLDatabase } from '@rocicorp/zero/pg'
 import { Context, Effect, Layer, Runtime } from 'effect'
-import type { CustomMutatorEfDefs } from '../effectMutatorDefs'
-import { convertEffectMutatorsToPromise } from '../effectMutatorDefs'
 
 /**
  * An adapter that implements the `DBConnection` interface for an `@effect/sql-pg` client.
@@ -205,17 +205,16 @@ export const make: (pgClient: PgClient.PgClient, runtime: Runtime.Runtime<never>
       [ZeroSchemaStoreTypeId]: ZeroSchemaStoreTypeId,
       database,
       processor,
-      processZeroEffectMutations: (effectMutators, urlParams, payload) =>
-        Effect.gen(function* () {
-          // Convert Effect-based mutators to Promise-based mutators
-          const promiseMutators = convertEffectMutatorsToPromise(effectMutators, runtime)
+      processZeroEffectMutations: (effectMutators, urlParams, payload) => {
+        // Convert Effect-based mutators to Promise-based mutators
+        const promiseMutators = convertEffectMutatorsToPromise(effectMutators, runtime)
 
-          // Process using the converted mutators
-          return yield* Effect.tryPromise({
-            catch: (error) => new Error(`Zero Effect mutation processing failed: ${error}`),
-            try: () => processor.process(promiseMutators, urlParams, payload),
-          })
-        }),
+        // Process using the converted mutators - processor.process already returns a Promise
+        return Effect.tryPromise({
+          catch: (error) => new Error(`Zero Effect mutation processing failed: ${error}`),
+          try: () => processor.process(promiseMutators, urlParams, payload),
+        })
+      },
       processZeroMutations: (mutators, urlParams, payload) =>
         Effect.tryPromise({
           catch: (error) => new Error(`Zero mutation processing failed: ${error}`),

@@ -1,7 +1,7 @@
 import type { AuthData, ZSchema } from '@openfaith/zero/zeroSchema.mts'
+import type { CustomMutatorEfDefs } from '@openfaith/zero-effect'
 import type { Transaction } from '@rocicorp/zero'
 import { Effect, Schema } from 'effect'
-import type { CustomMutatorEfDefs } from './effectMutatorDefs'
 
 // Define the input type for creating a person (basic fields for now)
 export const UpdatePersonInput = Schema.Struct({
