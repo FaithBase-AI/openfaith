@@ -1,36 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "experimental": {
-    "hook": {
-      "file_edited": {
-        "*.js": [
-          {
-            "command": ["bun", "biome", "format", "--write", "{file}"]
-          }
-        ],
-        "*.json": [
-          {
-            "command": ["bun", "biome", "format", "--write", "{file}"]
-          }
-        ],
-        "*.jsx": [
-          {
-            "command": ["bun", "biome", "format", "--write", "{file}"]
-          }
-        ],
-        "*.ts": [
-          {
-            "command": ["bun", "biome", "format", "--write", "{file}"]
-          }
-        ],
-        "*.tsx": [
-          {
-            "command": ["bun", "biome", "format", "--write", "{file}"]
-          }
-        ]
-      }
-    }
-  },
   "layout": "stretch",
   "mcp": {
     "context7": {

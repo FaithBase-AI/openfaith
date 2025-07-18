@@ -1,6 +1,10 @@
 import type { AuthData, ZSchema } from '@openfaith/zero/zeroSchema.mts'
-import type { CustomMutatorEfDefs } from '@openfaith/zero-effect'
-import type { Transaction } from '@rocicorp/zero'
+import {
+  type CustomMutatorEfDefs,
+  type EffectTransaction,
+  MutatorAuthError,
+  MutatorValidationError,
+} from '@openfaith/zero-effect'
 import { Effect, Schema } from 'effect'
 
 // Define the input type for creating a person (basic fields for now)
@@ -11,20 +15,6 @@ export const UpdatePersonInput = Schema.Struct({
 
 export type UpdatePersonInput = Schema.Schema.Type<typeof UpdatePersonInput>
 
-// Define authentication error
-export class MutatorAuthError extends Schema.TaggedError<MutatorAuthError>()('MutatorAuthError', {
-  message: Schema.String,
-}) {}
-
-// Define validation error
-export class MutatorValidationError extends Schema.TaggedError<MutatorValidationError>()(
-  'MutatorValidationError',
-  {
-    field: Schema.String.pipe(Schema.optional),
-    message: Schema.String,
-  },
-) {}
-
 /**
  * This is the clean API you wanted - pure Effect.fn mutators!
  */
@@ -34,7 +24,7 @@ export function createMutatorsEf(
   return {
     people: {
       update: Effect.fn('updatePerson')(function* (
-        tx: Transaction<ZSchema>,
+        tx: EffectTransaction<ZSchema>,
         input: UpdatePersonInput,
       ) {
         // Authentication check
@@ -56,13 +46,9 @@ export function createMutatorsEf(
           ),
         )
 
-        // Database operation - this will be wrapped in Effect.tryPromise by Zero's bridge
-        yield* Effect.tryPromise({
-          catch: (error) => new Error(`Failed to update person: ${String(error)}`),
-          try: () =>
-            tx.mutate.people.update({
-              ...validatedInput,
-            }),
+        // Database operation using Effect transaction
+        yield* tx.mutate.people.update({
+          ...validatedInput,
         })
 
         yield* Effect.log('Person updated successfully', {
@@ -84,7 +70,7 @@ export function createAdvancedMutatorsEf(
   return {
     people: {
       bulkUpdate: Effect.fn('bulkUpdatePeople')(function* (
-        tx: Transaction<ZSchema>,
+        tx: EffectTransaction<ZSchema>,
         inputs: Array<UpdatePersonInput>,
       ) {
         if (!authData) {
@@ -97,19 +83,15 @@ export function createAdvancedMutatorsEf(
 
         // Process all updates in sequence
         yield* Effect.forEach(inputs, (input) =>
-          Effect.tryPromise({
-            catch: (error) => new Error(`Failed to update person ${input.id}: ${String(error)}`),
-            try: () =>
-              tx.mutate.people.update({
-                ...input,
-              }),
+          tx.mutate.people.update({
+            ...input,
           }),
         )
 
         yield* Effect.log('Bulk update completed', { count: inputs.length })
       }),
       updateWithHistory: Effect.fn('updatePersonWithHistory')(function* (
-        tx: Transaction<ZSchema>,
+        tx: EffectTransaction<ZSchema>,
         input: UpdatePersonInput & { reason: string },
       ) {
         if (!authData) {
@@ -121,13 +103,9 @@ export function createAdvancedMutatorsEf(
         }
 
         // Update the person
-        yield* Effect.tryPromise({
-          catch: (error) => new Error(`Failed to update person: ${String(error)}`),
-          try: () =>
-            tx.mutate.people.update({
-              id: input.id,
-              name: input.name,
-            }),
+        yield* tx.mutate.people.update({
+          id: input.id,
+          name: input.name,
         })
 
         // Log the change (example of multiple operations)

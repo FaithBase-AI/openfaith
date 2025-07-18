@@ -1,5 +1,5 @@
 import { env } from '@openfaith/shared'
-import { createMutators, type Mutators, schema, type ZSchema } from '@openfaith/zero'
+import { createClientMutators, type Mutators, schema, type ZSchema } from '@openfaith/zero'
 import type { Zero } from '@rocicorp/zero'
 import { ZeroProvider } from '@rocicorp/zero/react'
 import { useRouter } from '@tanstack/react-router'
@@ -26,7 +26,7 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
 
         preload(zero)
       },
-      mutators: createMutators(
+      mutators: createClientMutators(
         pipe(
           session.data,
           Option.fromNullable,
