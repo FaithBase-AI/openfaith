@@ -1,24 +1,31 @@
-import { PgClient } from '@effect/sql-pg'
 import { schema } from '@openfaith/zero'
-import { ZeroProcessor, zeroEffectPgProcessor } from '@openfaith/zero/layers/zeroLayer'
-import { Effect, Layer } from 'effect'
-
-// export const ZeroSchemaLive = Effect.provideService(ZeroSchema, schema)
+import {
+  type ZeroSchemaStore,
+  ZeroStore,
+  layer as ZeroStoreLayer,
+} from '@openfaith/zero/layers/zeroLayer'
+import { Context, Effect, Layer } from 'effect'
 
 /**
- * Live implementation of ZeroProcessor service
- * Requires ZeroSchema and PgClient to be provided
+ * Schema-specific Zero store tag for the application schema
  */
-export const ZeroProcessorLive = Layer.effect(
-  ZeroProcessor,
+export class AppZeroStore extends Context.Tag('@openfaith/server/AppZeroStore')<
+  AppZeroStore,
+  ZeroSchemaStore<typeof schema>
+>() {}
+
+/**
+ * Live implementation that creates a schema-specific Zero store
+ */
+export const AppZeroStoreLive = Layer.effect(
+  AppZeroStore,
   Effect.gen(function* () {
-    const pgClient = yield* PgClient.PgClient
-    const runtime = yield* Effect.runtime<never>()
-    return zeroEffectPgProcessor(schema, pgClient, runtime)
+    const zeroStore = yield* ZeroStore
+    return zeroStore.forSchema(schema)
   }),
 )
 
 /**
- * Combined layer that provides both ZeroDatabase and ZeroProcessor
+ * Combined layer that provides the schema-specific Zero store
  */
-export const ZeroLive = ZeroProcessorLive
+export const ZeroLive = Layer.provide(AppZeroStoreLive, ZeroStoreLayer)

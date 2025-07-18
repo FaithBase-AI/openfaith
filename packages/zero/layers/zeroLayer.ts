@@ -1,10 +1,9 @@
 import type { Primitive } from '@effect/sql/Statement'
-import type { PgClient } from '@effect/sql-pg'
-import type { ZSchema } from '@openfaith/zero/zeroSchema.mjs'
-import type { CustomMutatorDefs, ReadonlyJSONObject } from '@rocicorp/zero'
+import { PgClient } from '@effect/sql-pg'
+import type { CustomMutatorDefs, ReadonlyJSONObject, Schema } from '@rocicorp/zero'
 import type { DBConnection, DBTransaction, Row } from '@rocicorp/zero/pg'
 import { PushProcessor, ZQLDatabase } from '@rocicorp/zero/pg'
-import { Context, Effect, Runtime } from 'effect'
+import { Context, Effect, Layer, Runtime } from 'effect'
 
 /**
  * An adapter that implements the `DBConnection` interface for an `@effect/sql-pg` client.
@@ -77,11 +76,11 @@ class EffectPgTransaction implements DBTransaction<PgClient.PgClient> {
  * A factory function that creates a `ZQLDatabase` instance backed by `@effect/sql-pg`.
  * This is the main entry point for using the adapter.
  */
-export function zeroEffectPg(
-  schema: ZSchema,
+export function zeroEffectPg<TSchema extends Schema>(
+  schema: TSchema,
   pgClient: PgClient.PgClient,
   runtime: Runtime.Runtime<never>,
-): ZQLDatabase<ZSchema, PgClient.PgClient> {
+): ZQLDatabase<TSchema, PgClient.PgClient> {
   const connection = new EffectPgConnection(pgClient, runtime)
   return new ZQLDatabase(connection, schema)
 }
@@ -89,48 +88,131 @@ export function zeroEffectPg(
 /**
  * A factory function that creates a `PushProcessor` instance backed by `@effect/sql-pg`.
  */
-export function zeroEffectPgProcessor(
-  schema: ZSchema,
+export function zeroEffectPgProcessor<TSchema extends Schema>(
+  schema: TSchema,
   pgClient: PgClient.PgClient,
   runtime: Runtime.Runtime<never>,
-): PushProcessor<ZQLDatabase<ZSchema, PgClient.PgClient>, CustomMutatorDefs<ZSchema>> {
+): PushProcessor<ZQLDatabase<TSchema, PgClient.PgClient>, CustomMutatorDefs<TSchema>> {
   const zqlDatabase = zeroEffectPg(schema, pgClient, runtime)
   return new PushProcessor(zqlDatabase)
 }
 
 /**
- * Context tag for the Zero schema configuration
+ * @since 1.0.0
+ * @category type id
  */
-export class ZeroSchema extends Context.Tag('@openfaith/zero/ZeroSchema')<ZeroSchema, ZSchema>() {}
+export const TypeId: unique symbol = Symbol.for('@openfaith/zero/ZeroStore')
 
 /**
- * Service interface for Zero database operations
+ * @since 1.0.0
+ * @category type id
  */
-export class ZeroDatabase extends Context.Tag('@openfaith/zero/ZeroDatabase')<
-  ZeroDatabase,
-  ZQLDatabase<ZSchema, PgClient.PgClient>
->() {}
+export type TypeId = typeof TypeId
 
 /**
- * Service interface for Zero push processor operations
+ * @since 1.0.0
+ * @category models
  */
-export class ZeroProcessor extends Context.Tag('@openfaith/zero/ZeroProcessor')<
-  ZeroProcessor,
-  PushProcessor<ZQLDatabase<ZSchema, PgClient.PgClient>, CustomMutatorDefs<ZSchema>>
->() {}
+export interface ZeroStore {
+  readonly [TypeId]: TypeId
+  /**
+   * Create a schema-specific Zero database and processor
+   */
+  readonly forSchema: <TSchema extends Schema>(schema: TSchema) => ZeroSchemaStore<TSchema>
+}
 
 /**
- * Helper function to process Zero mutations using Effect patterns
+ * @since 1.0.0
  */
-export const processZeroMutations = (
-  mutators: CustomMutatorDefs<ZSchema>,
-  urlParams: Record<string, string>,
-  payload: ReadonlyJSONObject,
-) =>
+export declare namespace ZeroStore {
+  /**
+   * @since 1.0.0
+   */
+  export type AnyStore = ZeroStore | ZeroSchemaStore<any>
+}
+
+/**
+ * @since 1.0.0
+ * @category type id
+ */
+export const ZeroSchemaStoreTypeId: unique symbol = Symbol.for('@openfaith/zero/ZeroSchemaStore')
+
+/**
+ * @since 1.0.0
+ * @category type id
+ */
+export type ZeroSchemaStoreTypeId = typeof ZeroSchemaStoreTypeId
+
+/**
+ * @since 1.0.0
+ * @category models
+ */
+export interface ZeroSchemaStore<TSchema extends Schema> {
+  readonly [ZeroSchemaStoreTypeId]: ZeroSchemaStoreTypeId
+  /**
+   * The Zero database instance for this schema
+   */
+  readonly database: ZQLDatabase<TSchema, PgClient.PgClient>
+  /**
+   * The Zero push processor for this schema
+   */
+  readonly processor: PushProcessor<
+    ZQLDatabase<TSchema, PgClient.PgClient>,
+    CustomMutatorDefs<TSchema>
+  >
+  /**
+   * Process Zero mutations using Effect patterns
+   */
+  readonly processZeroMutations: (
+    mutators: CustomMutatorDefs<TSchema>,
+    urlParams: Record<string, string>,
+    payload: ReadonlyJSONObject,
+  ) => Effect.Effect<any, Error>
+}
+
+/**
+ * @since 1.0.0
+ * @category tags
+ */
+export const ZeroStore: Context.Tag<ZeroStore, ZeroStore> = Context.GenericTag<ZeroStore>(
+  '@openfaith/zero/ZeroStore',
+)
+
+/**
+ * @since 1.0.0
+ * @category constructors
+ */
+export const make: (pgClient: PgClient.PgClient, runtime: Runtime.Runtime<never>) => ZeroStore = (
+  pgClient,
+  runtime,
+) => ({
+  [TypeId]: TypeId,
+  forSchema: <TSchema extends Schema>(schema: TSchema): ZeroSchemaStore<TSchema> => {
+    const database = zeroEffectPg(schema, pgClient, runtime)
+    const processor = zeroEffectPgProcessor(schema, pgClient, runtime)
+
+    return {
+      [ZeroSchemaStoreTypeId]: ZeroSchemaStoreTypeId,
+      database,
+      processor,
+      processZeroMutations: (mutators, urlParams, payload) =>
+        Effect.tryPromise({
+          catch: (error) => new Error(`Zero mutation processing failed: ${error}`),
+          try: () => processor.process(mutators, urlParams, payload),
+        }),
+    }
+  },
+})
+
+/**
+ * @since 1.0.0
+ * @category layers
+ */
+export const layer = Layer.effect(
+  ZeroStore,
   Effect.gen(function* () {
-    const processor = yield* ZeroProcessor
-    return yield* Effect.tryPromise({
-      catch: (error) => new Error(`Zero mutation processing failed: ${error}`),
-      try: () => processor.process(mutators, urlParams, payload),
-    })
-  })
+    const pgClient = yield* PgClient.PgClient
+    const runtime = yield* Effect.runtime<never>()
+    return make(pgClient, runtime)
+  }),
+)
