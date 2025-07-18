@@ -1,4 +1,6 @@
 import { HttpApiBuilder } from '@effect/platform'
+import { TokenKey } from '@openfaith/adapter-core/server'
+
 import { MutatorError, SessionContext, ZeroMutatorsApi as ZeroApi } from '@openfaith/domain'
 import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
 import { AppZeroStore, ZeroLive } from '@openfaith/server/live/zeroLive'
@@ -27,6 +29,7 @@ export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) 
           input.payload as unknown as ReadonlyJSONObject,
         )
         .pipe(
+          Effect.provideService(TokenKey, 'test'),
           Effect.mapError(
             (error) =>
               new MutatorError({

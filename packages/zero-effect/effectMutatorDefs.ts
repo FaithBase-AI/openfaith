@@ -3,15 +3,16 @@ import { type Effect, Runtime } from 'effect'
 import { createEffectTransaction, type EffectTransaction } from './effectTransaction'
 
 /**
- * Effect-based version of CustomMutatorDefs where mutators return Effects instead of Promises
- * and receive EffectTransaction instead of Transaction
+ * Effect-based version of CustomMutatorDefs
+ * Mutators return Effects instead of Promises
+ * R represents the requirements/dependencies that the mutators need
  */
-export type CustomMutatorEfDefs<TSchema extends Schema> = {
-  readonly [TableName in keyof TSchema['tables']]?: {
-    readonly [MutatorName: string]: (
+export type CustomMutatorEfDefs<TSchema extends Schema, R = never> = {
+  [TableName in keyof TSchema['tables']]?: {
+    [MutatorName: string]: (
       tx: EffectTransaction<TSchema>,
       ...args: ReadonlyArray<any>
-    ) => Effect.Effect<any, any, any>
+    ) => Effect.Effect<any, any, R>
   }
 }
 
@@ -19,9 +20,9 @@ export type CustomMutatorEfDefs<TSchema extends Schema> = {
  * Converts Effect-based mutators to Promise-based mutators for Zero compatibility
  * Wraps the Transaction in an EffectTransaction before passing to the mutator
  */
-export function convertEffectMutatorsToPromise<TSchema extends Schema>(
-  effectMutators: CustomMutatorEfDefs<TSchema>,
-  _runtime: Runtime.Runtime<never>,
+export function convertEffectMutatorsToPromise<TSchema extends Schema, R>(
+  effectMutators: CustomMutatorEfDefs<TSchema, R>,
+  runtime: Runtime.Runtime<R>,
 ): CustomMutatorDefs<TSchema> {
   const promiseMutators: any = {}
 

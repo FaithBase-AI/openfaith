@@ -1,5 +1,6 @@
 import type { Primitive } from '@effect/sql/Statement'
 import { PgClient } from '@effect/sql-pg'
+
 import type { CustomMutatorEfDefs } from '@openfaith/zero-effect/effectMutatorDefs'
 import { convertEffectMutatorsToPromise } from '@openfaith/zero-effect/effectMutatorDefs'
 import type { CustomMutatorDefs, ReadonlyJSONObject, Schema } from '@rocicorp/zero'
@@ -12,11 +13,11 @@ import { Context, Effect, Layer, Runtime } from 'effect'
  * This acts as a bridge between the Promise-based world of `PushProcessor` and the
  * Effect-based world of `@effect/sql`.
  */
-export class EffectPgConnection implements DBConnection<PgClient.PgClient> {
+export class EffectPgConnection<R = never> implements DBConnection<PgClient.PgClient> {
   readonly #pgClient: PgClient.PgClient
-  readonly #runtime: Runtime.Runtime<never>
+  readonly #runtime: Runtime.Runtime<R>
 
-  constructor(pgClient: PgClient.PgClient, runtime: Runtime.Runtime<never>) {
+  constructor(pgClient: PgClient.PgClient, runtime: Runtime.Runtime<R>) {
     this.#pgClient = pgClient
     this.#runtime = runtime
   }
@@ -28,7 +29,7 @@ export class EffectPgConnection implements DBConnection<PgClient.PgClient> {
    */
   transaction<TRet>(fn: (tx: DBTransaction<PgClient.PgClient>) => Promise<TRet>): Promise<TRet> {
     // Create an instance of our DBTransaction adapter.
-    const transactionAdapter = new EffectPgTransaction(this.#pgClient, this.#runtime)
+    const transactionAdapter = new EffectPgTransaction<R>(this.#pgClient, this.#runtime)
 
     // Create an Effect that will execute the user's promise-based callback.
     // Effect.promise() converts the Promise into an Effect.
@@ -48,16 +49,16 @@ export class EffectPgConnection implements DBConnection<PgClient.PgClient> {
  * An adapter that implements the `DBTransaction` interface. An instance of this
  * class is passed to the transaction callback.
  */
-class EffectPgTransaction implements DBTransaction<PgClient.PgClient> {
+class EffectPgTransaction<R = never> implements DBTransaction<PgClient.PgClient> {
   /**
    * Exposes the underlying `PgClient` as the "wrapped transaction".
    * This allows custom mutators to access the client if they need to perform
    * more complex operations or use specific helpers like `sql.json()`.
    */
   readonly wrappedTransaction: PgClient.PgClient
-  readonly #runtime: Runtime.Runtime<never>
+  readonly #runtime: Runtime.Runtime<R>
 
-  constructor(pgClient: PgClient.PgClient, runtime: Runtime.Runtime<never>) {
+  constructor(pgClient: PgClient.PgClient, runtime: Runtime.Runtime<R>) {
     this.wrappedTransaction = pgClient
     this.#runtime = runtime
   }
@@ -78,24 +79,24 @@ class EffectPgTransaction implements DBTransaction<PgClient.PgClient> {
  * A factory function that creates a `ZQLDatabase` instance backed by `@effect/sql-pg`.
  * This is the main entry point for using the adapter.
  */
-export function zeroEffectPg<TSchema extends Schema>(
+export function zeroEffectPg<TSchema extends Schema, R = never>(
   schema: TSchema,
   pgClient: PgClient.PgClient,
-  runtime: Runtime.Runtime<never>,
+  runtime: Runtime.Runtime<R>,
 ): ZQLDatabase<TSchema, PgClient.PgClient> {
-  const connection = new EffectPgConnection(pgClient, runtime)
+  const connection = new EffectPgConnection<R>(pgClient, runtime)
   return new ZQLDatabase(connection, schema)
 }
 
 /**
  * A factory function that creates a `PushProcessor` instance backed by `@effect/sql-pg`.
  */
-export function zeroEffectPgProcessor<TSchema extends Schema>(
+export function zeroEffectPgProcessor<TSchema extends Schema, R = never>(
   schema: TSchema,
   pgClient: PgClient.PgClient,
-  runtime: Runtime.Runtime<never>,
+  runtime: Runtime.Runtime<R>,
 ): PushProcessor<ZQLDatabase<TSchema, PgClient.PgClient>, CustomMutatorDefs<TSchema>> {
-  const zqlDatabase = zeroEffectPg(schema, pgClient, runtime)
+  const zqlDatabase = zeroEffectPg<TSchema, R>(schema, pgClient, runtime)
   return new PushProcessor(zqlDatabase)
 }
 
@@ -173,11 +174,11 @@ export interface ZeroSchemaStore<TSchema extends Schema> {
   /**
    * Process Zero mutations using Effect-based mutators
    */
-  readonly processZeroEffectMutations: (
-    effectMutators: CustomMutatorEfDefs<TSchema>,
+  readonly processZeroEffectMutations: <R>(
+    effectMutators: CustomMutatorEfDefs<TSchema, R>,
     urlParams: Record<string, string>,
     payload: ReadonlyJSONObject,
-  ) => Effect.Effect<any, Error>
+  ) => Effect.Effect<any, Error, R>
 }
 
 /**
@@ -205,14 +206,21 @@ export const make: (pgClient: PgClient.PgClient, runtime: Runtime.Runtime<never>
       [ZeroSchemaStoreTypeId]: ZeroSchemaStoreTypeId,
       database,
       processor,
-      processZeroEffectMutations: (effectMutators, urlParams, payload) => {
-        // Convert Effect-based mutators to Promise-based mutators
-        const promiseMutators = convertEffectMutatorsToPromise(effectMutators, runtime)
+      processZeroEffectMutations: <R>(
+        effectMutators: CustomMutatorEfDefs<TSchema, R>,
+        urlParams: Record<string, string>,
+        payload: ReadonlyJSONObject,
+      ): Effect.Effect<any, Error, R> => {
+        // Get the current runtime and convert Effect-based mutators to Promise-based mutators
+        return Effect.gen(function* () {
+          const currentRuntime = yield* Effect.runtime<R>()
+          const promiseMutators = convertEffectMutatorsToPromise(effectMutators, currentRuntime)
 
-        // Process using the converted mutators - processor.process already returns a Promise
-        return Effect.tryPromise({
-          catch: (error) => new Error(`Zero Effect mutation processing failed: ${error}`),
-          try: () => processor.process(promiseMutators, urlParams, payload),
+          // Process using the converted mutators - processor.process already returns a Promise
+          return yield* Effect.tryPromise({
+            catch: (error) => new Error(`Zero Effect mutation processing failed: ${error}`),
+            try: () => processor.process(promiseMutators, urlParams, payload),
+          })
         })
       },
       processZeroMutations: (mutators, urlParams, payload) =>
