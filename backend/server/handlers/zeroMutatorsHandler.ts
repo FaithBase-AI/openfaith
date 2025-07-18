@@ -2,7 +2,7 @@ import { HttpApiBuilder } from '@effect/platform'
 import { MutatorError, SessionContext, ZeroMutatorsApi as ZeroApi } from '@openfaith/domain'
 import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
 import { AppZeroStore, ZeroLive } from '@openfaith/server/live/zeroLive'
-import { createMutators } from '@openfaith/zero'
+import { createEffectMutators } from '@openfaith/zero/effectMutators'
 import type { ReadonlyJSONObject } from '@rocicorp/zero'
 import { Effect, Layer, Option, pipe } from 'effect'
 
@@ -18,7 +18,7 @@ export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) 
 
       const result = yield* appZeroStore
         .processZeroMutations(
-          createMutators({
+          createEffectMutators({
             activeOrganizationId: pipe(session.activeOrganizationIdOpt, Option.getOrNull),
             sub: session.userId,
           }),
