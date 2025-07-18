@@ -4,95 +4,141 @@
 
 This document provides a comprehensive specification for creating an Effect-based service wrapper for Zero's custom mutators. The goal is to enable seamless integration between Zero's push processor and Effect's service pattern, abstracting away manual error handling and providing a clean, reusable interface for any Zero setup.
 
-## Problem Analysis
+## Current Implementation Status
 
-### Current State
+### ✅ Completed Components
 
-1. **Client Side** (`packages/zero/mutators.ts`): Creates mutators with basic auth validation
-2. **Server Side** (`backend/server/handlers/zeroMutatorsHandler.ts`): Uses `PushProcessor` to handle mutations with manual error handling
-3. **Current Issues**:
-   - Manual error handling with `Effect.tryPromise`
-   - No unified Effect service pattern
-   - Tight coupling between Zero's push processor and Effect patterns
-   - No reusable abstraction for other Zero setups
+1. **Effect-PgClient Bridge** (`packages/zero/layers/zeroLayer.ts`):
 
-### Desired State
+   - `EffectPgConnection` and `EffectPgTransaction` classes that implement Zero's `DBConnection` interface
+   - Bridge between Effect's `@effect/sql-pg` and Zero's database requirements
+   - Factory functions `zeroEffectPg` and `zeroEffectPgProcessor` for creating Zero instances
+   - `ZeroStore` service with schema-specific store creation via `forSchema` method
 
-We want to create a general-purpose Effect wrapper that:
+2. **Schema-Specific Store** (`backend/server/live/zeroLive.ts`):
 
-1. Provides a clean Effect service interface for Zero mutations
-2. Handles errors using Effect's error handling system
-3. Can be reused across different Zero setups
-4. Integrates seamlessly with Effect's dependency injection
-5. Maintains type safety throughout the stack
+   - `AppZeroStore` context tag for application-specific Zero store
+   - `AppZeroStoreLive` layer that creates schema-specific Zero store
+   - `ZeroLive` combined layer providing the complete Zero setup
 
-## Architecture
+3. **HTTP Handler Integration** (`backend/server/handlers/zeroMutatorsHandler.ts`):
 
-### Core Components
+   - Complete Effect-based handler using `AppZeroStore`
+   - Session context integration for authentication
+   - Proper error handling with `MutatorError`
+   - Uses `processZeroMutations` method from the store
 
-1. **ZeroMutatorService**: Main Effect service that wraps Zero's PushProcessor
-2. **ZeroMutatorConfig**: Configuration for the service (database connection, schema, etc.)
-3. **ZeroMutatorError**: Tagged errors for different failure scenarios
-4. **ZeroMutatorLive**: Layer implementation providing the service
+4. **Custom Mutators** (`packages/zero/mutators.ts`):
+   - Type-safe mutator definitions with `UpdatePersonInput`
+   - Authentication validation in mutator functions
+   - Satisfies `CustomMutatorDefs<ZSchema>` constraint
 
-### Design Principles
+### 🔄 Current Architecture
 
-- **Effect-First**: All operations return Effect types with proper error handling
-- **Type Safety**: Full TypeScript support with schema validation
-- **Dependency Injection**: Uses Effect's service pattern for clean architecture
-- **Reusability**: Generic implementation that works with any Zero schema
-- **Error Handling**: Structured error types instead of thrown exceptions
+The implemented solution uses a layered approach:
 
-## API Design
+```
+ZeroStore (generic)
+  ↓ forSchema()
+ZeroSchemaStore<TSchema> (schema-specific)
+  ↓ processZeroMutations()
+PushProcessor (Zero's processor)
+  ↓
+EffectPgConnection (Effect-PgClient bridge)
+```
+
+### Problem Analysis
+
+#### Previous Issues (Now Resolved)
+
+1. ~~**Client Side** (`packages/zero/mutators.ts`): Creates mutators with basic auth validation~~ ✅ **Implemented**
+2. ~~**Server Side** (`backend/server/handlers/zeroMutatorsHandler.ts`): Uses `PushProcessor` to handle mutations with manual error handling~~ ✅ **Refactored to use ZeroStore service**
+3. ~~**Current Issues**:~~
+   - ~~Manual error handling with `Effect.tryPromise`~~ ✅ **Now handled by `processZeroMutations`**
+   - ~~No unified Effect service pattern~~ ✅ **Implemented with `ZeroStore` service**
+   - ~~Tight coupling between Zero's push processor and Effect patterns~~ ✅ **Abstracted through service layer**
+   - ~~No reusable abstraction for other Zero setups~~ ✅ **Generic `ZeroStore.forSchema()` method**
+
+### ✅ Achieved Goals
+
+The current implementation successfully provides:
+
+1. ✅ **Clean Effect service interface**: `ZeroStore` service with `forSchema()` method
+2. ✅ **Effect error handling**: `processZeroMutations` wraps errors in Effect types
+3. ✅ **Reusable across schemas**: Generic `ZeroStore.forSchema<TSchema>()` approach
+4. ✅ **Effect dependency injection**: Full Layer-based composition
+5. ✅ **Type safety**: Maintains schema types through `ZeroSchemaStore<TSchema>`
+
+## Current Architecture
+
+### Implemented Components
+
+1. **ZeroStore**: Main Effect service that creates schema-specific stores
+2. **ZeroSchemaStore<TSchema>**: Schema-specific store with database and processor
+3. **EffectPgConnection/Transaction**: Bridge between Effect PgClient and Zero's DBConnection
+4. **AppZeroStore**: Application-specific context tag for the main schema
+5. **ZeroLive**: Complete layer composition for the Zero service
+
+### Design Principles (Achieved)
+
+- ✅ **Effect-First**: All operations return Effect types with proper error handling
+- ✅ **Type Safety**: Full TypeScript support with schema validation through generics
+- ✅ **Dependency Injection**: Uses Effect's service pattern with Layer composition
+- ✅ **Reusability**: Generic `forSchema()` method works with any Zero schema
+- ✅ **Error Handling**: `processZeroMutations` wraps Promise rejections in Effect errors
+
+## Current API Implementation
+
+### Core Service Interface
 
 ```typescript
-// Service Definition (using existing getPostgresConnection)
-class ZeroMutatorService extends Effect.Service<ZeroMutatorService>()(
-  "ZeroMutatorService",
-  {
-    effect: Effect.gen(function* () {
-      const config = yield* ZeroMutatorConfig;
-      const processor = new PushProcessor(config.database);
+// From packages/zero/layers/zeroLayer.ts
+export interface ZeroStore {
+  readonly [TypeId]: TypeId;
+  readonly forSchema: <TSchema extends Schema>(
+    schema: TSchema,
+  ) => ZeroSchemaStore<TSchema>;
+}
 
-      return {
-        processPush: (
-          mutators: CustomMutatorDefs<any>,
-          urlParams: Record<string, string>,
-          payload: ReadonlyJSONObject,
-        ) =>
-          Effect.tryPromise({
-            try: () => processor.process(mutators, urlParams, payload),
-            catch: (error) =>
-              new ZeroMutatorError({
-                message: `Push processing failed: ${error}`,
-                cause: error,
-              }),
-          }),
-      };
-    }),
-    dependencies: [ZeroMutatorConfig.Default],
-  },
-) {}
+export interface ZeroSchemaStore<TSchema extends Schema> {
+  readonly [ZeroSchemaStoreTypeId]: ZeroSchemaStoreTypeId;
+  readonly database: ZQLDatabase<TSchema, PgClient.PgClient>;
+  readonly processor: PushProcessor<
+    ZQLDatabase<TSchema, PgClient.PgClient>,
+    CustomMutatorDefs<TSchema>
+  >;
+  readonly processZeroMutations: (
+    mutators: CustomMutatorDefs<TSchema>,
+    urlParams: Record<string, string>,
+    payload: ReadonlyJSONObject,
+  ) => Effect.Effect<any, Error>;
+}
+```
 
-// Configuration Service (using getPostgresConnection)
-class ZeroMutatorConfig extends Effect.Service<ZeroMutatorConfig>()(
-  "ZeroMutatorConfig",
-  {
-    effect: Effect.gen(function* () {
-      const postgresClient = yield* getPostgresConnection;
+### Layer Composition
 
-      return {
-        database: new ZQLDatabase(
-          new PostgresJSConnection(postgresClient),
-          schema,
-        ),
-        enableLogging: false,
-      };
-    }),
-  },
-) {}
+```typescript
+// From backend/server/live/zeroLive.ts
+export class AppZeroStore extends Context.Tag("@openfaith/server/AppZeroStore")<
+  AppZeroStore,
+  ZeroSchemaStore<typeof schema>
+>() {}
 
-// Usage in Handler
+export const AppZeroStoreLive = Layer.effect(
+  AppZeroStore,
+  Effect.gen(function* () {
+    const zeroStore = yield* ZeroStore;
+    return zeroStore.forSchema(schema);
+  }),
+);
+
+export const ZeroLive = Layer.provide(AppZeroStoreLive, ZeroStoreLayer);
+```
+
+### Handler Usage
+
+```typescript
+// From backend/server/handlers/zeroMutatorsHandler.ts
 export const ZeroHandlerLive = HttpApiBuilder.group(
   ZeroApi,
   "zero",
@@ -100,522 +146,277 @@ export const ZeroHandlerLive = HttpApiBuilder.group(
     handlers.handle("push", (input) =>
       Effect.gen(function* () {
         const session = yield* SessionContext;
-        const mutatorService = yield* ZeroMutatorService;
+        const appZeroStore = yield* AppZeroStore;
 
-        const result = yield* mutatorService.processPush(
-          createMutators({
-            activeOrganizationId: pipe(
-              session.activeOrganizationIdOpt,
-              Option.getOrNull,
+        const result = yield* appZeroStore
+          .processZeroMutations(
+            createMutators({
+              activeOrganizationId: pipe(
+                session.activeOrganizationIdOpt,
+                Option.getOrNull,
+              ),
+              sub: session.userId,
+            }),
+            input.urlParams,
+            input.payload as unknown as ReadonlyJSONObject,
+          )
+          .pipe(
+            Effect.mapError(
+              (error) =>
+                new MutatorError({
+                  message: `Error processing push request: ${error}`,
+                }),
             ),
-            sub: session.userId,
-          }),
-          input.urlParams,
-          input.payload as unknown as ReadonlyJSONObject,
-        );
+          );
 
         return result;
       }),
     ),
-).pipe(Layer.provide([SessionHttpMiddlewareLayer, ZeroMutatorService.Default]));
+).pipe(Layer.provide(SessionHttpMiddlewareLayer), Layer.provide(ZeroLive));
 ```
 
-## Detailed Task List
+## Implementation Progress
 
-### Phase 1: Core Service Implementation
+### ✅ Phase 1: Core Service Implementation (COMPLETED)
 
-#### Task 1.0: Use Existing getPostgresConnection (Current Approach)
+#### ✅ Task 1.0: Effect-PgClient Bridge (IMPLEMENTED)
 
-**File**: Use existing `packages/db/layers.ts`  
-**Context**: Existing hacky postgres.js extraction, Zero PostgresJSConnection  
-**Breadcrumbs**:
+**File**: `packages/zero/layers/zeroLayer.ts`  
+**Status**: ✅ **COMPLETED**  
+**Implementation**: Created `EffectPgConnection` and `EffectPgTransaction` classes that bridge Effect's `@effect/sql-pg` with Zero's `DBConnection` interface. This eliminates the need for the hacky postgres.js extraction approach.
 
-- Reference `packages/db/layers.ts:32-42` for `getPostgresConnection` implementation
-- Look at `backend/server/handlers/coreHandler.ts:13-24` for usage example
-- Study Zero's PostgresJSConnection requirements
+**Key Features**:
 
-**Implementation**: Use the existing `getPostgresConnection` function that's already implemented and tested.
+- Direct integration with Effect's `PgClient`
+- Proper transaction handling using `PgClient.withTransaction`
+- Runtime-based Promise execution for Zero compatibility
+- Factory functions for creating Zero databases and processors
 
-#### Task 1.0b: (Future) Create EffectPgConnection Wrapper
+#### ✅ Task 1.1: ZeroStore Service (IMPLEMENTED)
 
-**File**: `packages/zero/pgConnection.ts` (for future improvement)  
-**Context**: Zero DBConnection interface, Effect PgClient integration  
-**Priority**: Low (future enhancement)  
-**Breadcrumbs**:
+**File**: `packages/zero/layers/zeroLayer.ts`  
+**Status**: ✅ **COMPLETED**  
+**Implementation**: Created a generic `ZeroStore` service with `forSchema()` method that creates schema-specific stores.
 
-- Study Zero's DBConnection interface from docs
-- Reference `packages/db/layers.ts` for PgClient usage
-- Look at Zero docs custom DBConnection examples
+**Key Features**:
 
-**Implementation**:
+- Generic `ZeroStore.forSchema<TSchema>()` method for any Zero schema
+- `ZeroSchemaStore<TSchema>` interface with database, processor, and `processZeroMutations`
+- Effect-based error handling in `processZeroMutations`
+- Layer-based dependency injection
 
-```typescript
-import { PostgresJSConnection, ZQLDatabase } from "@rocicorp/zero/pg";
-import { getPostgresConnection } from "@openfaith/db/layers";
-import { Effect } from "effect";
-import { schema } from "@openfaith/zero";
+#### ✅ Task 1.2: Schema-Specific Store Integration (IMPLEMENTED)
 
-export class ZeroMutatorConfig extends Effect.Service<ZeroMutatorConfig>()(
-  "@openfaith/zero/ZeroMutatorConfig",
-  {
-    effect: Effect.gen(function* () {
-      // Use the existing hacky postgres connection extraction
-      const postgresClient = yield* getPostgresConnection;
+**File**: `backend/server/live/zeroLive.ts`  
+**Status**: ✅ **COMPLETED**  
+**Implementation**: Created application-specific Zero store using the generic service.
 
-      return {
-        database: new ZQLDatabase(
-          new PostgresJSConnection(postgresClient),
-          schema,
-        ),
-        enableLogging: false,
-      };
-    }),
-    dependencies: [
-      /* getPostgresConnection handles PgClient dependency internally */
-    ],
-  },
-) {}
-```
+**Key Features**:
 
-#### Task 1.1: Create ZeroMutatorError Types
+- `AppZeroStore` context tag for the application schema
+- `AppZeroStoreLive` layer that creates schema-specific store
+- `ZeroLive` combined layer for complete setup
 
-**File**: `packages/zero/errors.ts`  
-**Context**: Effect error handling patterns, Zero PushProcessor error types  
-**Breadcrumbs**:
-
-- Study `packages/domain/Http.ts:150` for existing error patterns
-- Reference Zero docs on PushProcessor error handling
-- Follow Effect tagged error conventions
-
-**Implementation**:
-
-```typescript
-export class ZeroMutatorError extends Schema.TaggedError<ZeroMutatorError>()(
-  "ZeroMutatorError",
-  {
-    message: Schema.String,
-    cause: Schema.Unknown.pipe(Schema.optional),
-    mutationId: Schema.String.pipe(Schema.optional),
-  },
-) {}
-
-export class ZeroConfigurationError extends Schema.TaggedError<ZeroConfigurationError>()(
-  "ZeroConfigurationError",
-  {
-    message: Schema.String,
-    details: Schema.Unknown.pipe(Schema.optional),
-  },
-) {}
-```
-
-#### Task 1.2: Create ZeroMutatorConfig Service
-
-**File**: `packages/zero/config.ts`  
-**Context**: Effect.Service pattern, database connection management, PgClient integration  
-**Breadcrumbs**:
-
-- Reference `backend/server/handlers/zeroMutatorsHandler.ts:10-12` for current setup
-- Study Effect.Service documentation for configuration patterns
-- Look at `packages/db/layers.ts` for PgClient setup
-- **Challenge**: Extract postgres.js client from Effect's PgClient for Zero's PostgresJSConnection
-
-**Implementation**:
-
-```typescript
-import { PgClient } from "@effect/sql-pg";
-import { PostgresJSConnection } from "@rocicorp/zero/pg";
-import { Effect, Layer } from "effect";
-import { schema } from "@openfaith/zero";
-
-// Helper to extract postgres.js client from PgClient
-const extractPostgresJsClient = (pgClient: PgClient.PgClient) =>
-  Effect.sync(() => {
-    // This is the tricky part - we need to access the underlying postgres.js client
-    // PgClient wraps the postgres.js client, so we need to extract it
-    // This might require accessing private properties or using a different approach
-    const client =
-      (pgClient as any).config.connection || (pgClient as any).client;
-    return client;
-  });
-
-export class ZeroMutatorConfig extends Effect.Service<ZeroMutatorConfig>()(
-  "@openfaith/zero/ZeroMutatorConfig",
-  {
-    effect: Effect.gen(function* () {
-      const pgClient = yield* PgClient.PgClient;
-      const postgresJsClient = yield* extractPostgresJsClient(pgClient);
-
-      return {
-        connection: new PostgresJSConnection(postgresJsClient),
-        schema,
-        enableLogging: false,
-      };
-    }),
-    dependencies: [PgClient.PgClient],
-  },
-) {}
-
-// Alternative approach: Create a custom DBConnection that wraps PgClient
-export class EffectPgConnection implements DBConnection<any> {
-  constructor(private pgClient: PgClient.PgClient) {}
-
-  query(sql: string, params: unknown[]): Promise<Row[]> {
-    return Effect.runPromise(
-      this.pgClient
-        .query(sql, params)
-        .pipe(Effect.map((result) => result.rows)),
-    );
-  }
-
-  transaction<T>(fn: (tx: DBTransaction<any>) => Promise<T>): Promise<T> {
-    return Effect.runPromise(
-      this.pgClient.transaction((effectTx) =>
-        Effect.promise(() => fn(new EffectPgTransaction(effectTx))),
-      ),
-    );
-  }
-}
-
-export class EffectPgTransaction implements DBTransaction<any> {
-  constructor(public readonly wrappedTransaction: any) {}
-
-  query(sql: string, params: unknown[]): Promise<Row[]> {
-    return Effect.runPromise(
-      this.wrappedTransaction
-        .query(sql, params)
-        .pipe(Effect.map((result) => result.rows)),
-    );
-  }
-}
-```
-
-#### Task 1.3: Create Core ZeroMutatorService
-
-**File**: `packages/zero/service.ts`  
-**Context**: Effect.Service, Zero PushProcessor, CustomMutatorDefs, PgClient integration  
-**Breadcrumbs**:
-
-- Study Zero docs on PushProcessor usage
-- Reference Effect.Service patterns from PgClient example
-- Look at current handler implementation in `backend/server/handlers/zeroMutatorsHandler.ts:23-37`
-- Handle the postgres.js extraction challenge
-
-**Implementation**:
-
-```typescript
-import { PushProcessor, ZQLDatabase } from "@rocicorp/zero/pg";
-import type { CustomMutatorDefs, ReadonlyJSONObject } from "@rocicorp/zero";
-import { Effect } from "effect";
-import { ZeroMutatorConfig } from "./config";
-import { ZeroMutatorError } from "./errors";
-
-export class ZeroMutatorService extends Effect.Service<ZeroMutatorService>()(
-  "@openfaith/zero/ZeroMutatorService",
-  {
-    effect: Effect.gen(function* () {
-      const config = yield* ZeroMutatorConfig;
-
-      // Create the processor with our Effect-integrated connection
-      const processor = new PushProcessor(
-        new ZQLDatabase(config.connection, config.schema),
-      );
-
-      return {
-        processPush: <TSchema>(
-          mutators: CustomMutatorDefs<TSchema>,
-          urlParams: Record<string, string>,
-          payload: ReadonlyJSONObject,
-        ) =>
-          Effect.tryPromise({
-            try: () => processor.process(mutators, urlParams, payload),
-            catch: (error) =>
-              new ZeroMutatorError({
-                message: `Push processing failed: ${error}`,
-                cause: error,
-              }),
-          }),
-
-        // Additional helper methods
-        processWithAsyncTasks: <TSchema>(
-          mutators: CustomMutatorDefs<TSchema>,
-          urlParams: Record<string, string>,
-          payload: ReadonlyJSONObject,
-          asyncTasks: Array<() => Promise<void>>,
-        ) =>
-          Effect.gen(function* () {
-            const result = yield* Effect.tryPromise({
-              try: () => processor.process(mutators, urlParams, payload),
-              catch: (error) =>
-                new ZeroMutatorError({
-                  message: `Push processing failed: ${error}`,
-                  cause: error,
-                }),
-            });
-
-            // Execute async tasks after successful processing
-            yield* Effect.forEach(asyncTasks, (task) =>
-              Effect.tryPromise({
-                try: task,
-                catch: (error) =>
-                  new ZeroMutatorError({
-                    message: `Async task failed: ${error}`,
-                    cause: error,
-                  }),
-              }),
-            );
-
-            return result;
-          }),
-      };
-    }),
-    dependencies: [ZeroMutatorConfig.Default],
-  },
-) {}
-```
-
-### Phase 2: Integration Layer
-
-#### Task 2.1: Update Handler to Use Service
+#### ✅ Task 1.3: HTTP Handler Integration (IMPLEMENTED)
 
 **File**: `backend/server/handlers/zeroMutatorsHandler.ts`  
-**Context**: Current handler implementation, Effect HttpApiBuilder  
-**Breadcrumbs**:
+**Status**: ✅ **COMPLETED**  
+**Implementation**: Refactored handler to use the new Effect-based Zero service.
 
-- Current implementation at lines 14-42
-- SessionContext usage pattern
-- Layer composition patterns
+**Key Features**:
 
-**Implementation**: Replace current manual PushProcessor usage with ZeroMutatorService
+- Uses `AppZeroStore` service instead of manual PushProcessor
+- Proper Effect error handling with `MutatorError`
+- Session context integration for authentication
+- Layer composition with `ZeroLive`
 
-#### Task 2.2: Create Mutator Factory Service
+### ✅ Phase 2: Integration Layer (COMPLETED)
 
-**File**: `packages/zero/mutatorFactory.ts`  
-**Context**: Current mutator creation pattern, Effect service composition  
-**Breadcrumbs**:
+#### ✅ Task 2.1: Handler Integration (IMPLEMENTED)
 
-- Study `packages/zero/mutators.ts:10-26` for current pattern
-- Look at auth data integration
-- Consider async task handling from Zero docs
+**File**: `backend/server/handlers/zeroMutatorsHandler.ts`  
+**Status**: ✅ **COMPLETED**  
+**Implementation**: Successfully replaced manual PushProcessor usage with the new Effect-based service.
 
-**Implementation**:
+**Key Changes**:
 
-```typescript
-export class ZeroMutatorFactory extends Effect.Service<ZeroMutatorFactory>()(
-  "@openfaith/zero/ZeroMutatorFactory",
-  {
-    effect: Effect.gen(function* () {
-      return {
-        createMutators: <TAuthData>(authData: TAuthData | undefined) =>
-          Effect.sync(() => createMutators(authData)),
-      };
-    }),
-  },
-) {}
-```
+- Uses `AppZeroStore` service instead of direct PushProcessor instantiation
+- Calls `processZeroMutations` method with proper Effect error handling
+- Maintains session context integration and authentication
+- Layer composition with `ZeroLive` for dependency injection
 
-### Phase 3: Advanced Features
+#### ✅ Task 2.2: Mutator Integration (IMPLEMENTED)
 
-#### Task 3.1: Add Async Task Support
+**File**: `packages/zero/mutators.ts`  
+**Status**: ✅ **COMPLETED**  
+**Implementation**: Custom mutators work seamlessly with the new service architecture.
 
-**File**: `packages/zero/asyncTasks.ts`  
-**Context**: Zero async task pattern, Effect resource management  
-**Breadcrumbs**:
+**Key Features**:
 
-- Zero docs on deferred async tasks
-- Effect resource management patterns
-- Current email/notification patterns in codebase
+- Type-safe `UpdatePersonInput` interface
+- Authentication validation in mutator functions
+- Proper `CustomMutatorDefs<ZSchema>` constraint satisfaction
+- Direct integration with `createMutators` function in handler
 
-#### Task 3.2: Add Logging and Observability
+### 🔄 Phase 3: Advanced Features (FUTURE ENHANCEMENTS)
 
-**File**: `packages/zero/observability.ts`  
-**Context**: Effect logging, OpenTelemetry integration  
-**Breadcrumbs**:
+#### 📋 Task 3.1: Add Async Task Support
 
-- Current logging patterns in handlers
-- Effect.log usage throughout codebase
-- OpenTelemetry setup in infra/
+**File**: `packages/zero/asyncTasks.ts` (Future)  
+**Status**: 📋 **PLANNED**  
+**Context**: Zero async task pattern, Effect resource management
 
-#### Task 3.3: Add Configuration Validation
+**Potential Implementation**:
 
-**File**: `packages/zero/validation.ts`  
-**Context**: Effect Schema validation, configuration management  
-**Breadcrumbs**:
+- Extend `ZeroSchemaStore` with async task processing methods
+- Use Effect's resource management for task lifecycle
+- Integration with existing email/notification patterns
 
-- Schema validation patterns in `packages/schema/`
-- Configuration validation in other services
+#### 📋 Task 3.2: Add Logging and Observability
 
-### Phase 4: Testing and Documentation
+**File**: `packages/zero/observability.ts` (Future)  
+**Status**: 📋 **PLANNED**  
+**Context**: Effect logging, OpenTelemetry integration
 
-#### Task 4.1: Unit Tests
+**Current State**: Basic logging exists in handler with `Effect.log`
+**Potential Enhancements**:
 
-**Files**: `packages/zero/__tests__/`  
-**Context**: Effect testing patterns, Zero mutator testing  
-**Breadcrumbs**:
+- Structured logging for mutation processing
+- OpenTelemetry tracing integration
+- Performance metrics collection
 
-- Existing test patterns in codebase
-- Effect testing utilities
-- Mock layer creation
+#### 📋 Task 3.3: Add Configuration Validation
 
-#### Task 4.2: Integration Tests
+**File**: `packages/zero/validation.ts` (Future)  
+**Status**: 📋 **PLANNED**  
+**Context**: Effect Schema validation, configuration management
 
-**Files**: `backend/server/__tests__/`  
-**Context**: HTTP API testing, database integration  
-**Breadcrumbs**:
+**Potential Implementation**:
 
-- Current handler testing patterns
-- Database test setup
-- Effect test runtime usage
+- Schema validation for Zero configuration
+- Runtime validation of mutator inputs
+- Configuration health checks
 
-#### Task 4.3: Documentation and Examples
+### 🔄 Phase 4: Testing and Documentation (IN PROGRESS)
 
-**Files**: `packages/zero/README.md`, `docs/zero-effect-service.md`  
-**Context**: Usage examples, migration guide  
-**Breadcrumbs**:
+#### 📋 Task 4.1: Unit Tests
 
-- Current documentation patterns
-- Effect service documentation style
-- Zero integration examples
+**Files**: `packages/zero/__tests__/` (Future)  
+**Status**: 📋 **PLANNED**  
+**Context**: Effect testing patterns, Zero mutator testing
 
-## PgClient Integration Challenge
+**Needed**:
 
-### The Problem
+- Test coverage for `EffectPgConnection` and `EffectPgTransaction`
+- Mock layers for `ZeroStore` service
+- Unit tests for `processZeroMutations`
 
-Zero's `PostgresJSConnection` expects a raw `postgres.js` client, but we want to use Effect's `PgClient` for consistency with the rest of the codebase. This creates a challenge because:
+#### 📋 Task 4.2: Integration Tests
 
-1. **Current Setup**: We have two separate database connections:
+**Files**: `backend/server/__tests__/` (Future)  
+**Status**: 📋 **PLANNED**  
+**Context**: HTTP API testing, database integration
 
-   - `PgClient` from `@effect/sql-pg` (Effect-native, used throughout the app)
-   - `pgjsConnection` from `postgres.js` (raw client, only for Zero)
+**Needed**:
 
-2. **Desired State**: Use a single `PgClient` instance and extract/wrap it for Zero
+- End-to-end tests for Zero push handler
+- Database integration tests with real transactions
+- Error handling validation
 
-### Solution Approaches
+#### ✅ Task 4.3: Documentation Update
 
-#### Approach 1: Extract postgres.js Client from PgClient (IMPLEMENTED)
+**Files**: `docs/zero-effect-service.md`  
+**Status**: ✅ **COMPLETED** (This update)  
+**Context**: Current implementation documentation
 
-```typescript
-// From packages/db/layers.ts
-/**
- * Extract the underlying postgres connection from the Effect PgClient.
- * This is useful when you need direct access to the postgres client for
- * operations not covered by the Effect SQL API.
- *
- * Note: This accesses internal implementation details and should be used sparingly.
- */
-export const getPostgresConnection = Effect.gen(function* () {
-  const pgClient = yield* Effect.serviceOptional(PgClient.PgClient).pipe(
-    Effect.orDie,
-  );
+## ✅ PgClient Integration Solution
 
-  // Access the underlying postgres connection through the acquirer
-  const connection = yield* (pgClient as any).reserve;
+### The Challenge (SOLVED)
 
-  // The connection has a 'pg' property that contains the postgres client
-  const postgresClient: postgres.Sql = (connection as any).pg;
+Zero's database interface expects a `DBConnection` implementation, while we wanted to use Effect's `PgClient` for consistency with the rest of the codebase.
 
-  return postgresClient;
-});
-```
+### ✅ Implemented Solution: Custom DBConnection Wrapper
 
-**Pros**: Uses existing PgClient, maintains single connection pool, already implemented  
-**Cons**: Fragile, depends on internal PgClient structure, may break with updates  
-**Status**: ✅ **Currently implemented and working** (see `backend/server/handlers/coreHandler.ts` for usage example)
+**Status**: ✅ **IMPLEMENTED** in `packages/zero/layers/zeroLayer.ts`
 
-#### Approach 2: Create Custom DBConnection Wrapper (Recommended)
+We successfully implemented **Approach 2** - a custom DBConnection wrapper that bridges Effect's `PgClient` with Zero's database interface:
 
 ```typescript
-import { DBConnection, DBTransaction } from "@rocicorp/zero/pg";
-import { PgClient } from "@effect/sql-pg";
-import { Effect } from "effect";
-
+// From packages/zero/layers/zeroLayer.ts
 export class EffectPgConnection implements DBConnection<PgClient.PgClient> {
-  constructor(private pgClient: PgClient.PgClient) {}
+  readonly #pgClient: PgClient.PgClient;
+  readonly #runtime: Runtime.Runtime<never>;
 
-  query(sql: string, params: unknown[]): Promise<Row[]> {
-    return Effect.runPromise(
-      this.pgClient
-        .query(sql, params)
-        .pipe(Effect.map((result) => result.rows)),
-    );
+  constructor(pgClient: PgClient.PgClient, runtime: Runtime.Runtime<never>) {
+    this.#pgClient = pgClient;
+    this.#runtime = runtime;
   }
 
-  transaction<T>(
-    fn: (tx: DBTransaction<PgClient.PgClient>) => Promise<T>,
-  ): Promise<T> {
-    return Effect.runPromise(
-      this.pgClient.transaction((effectTx) =>
-        Effect.promise(() => fn(new EffectPgTransaction(effectTx))),
-      ),
+  transaction<TRet>(
+    fn: (tx: DBTransaction<PgClient.PgClient>) => Promise<TRet>,
+  ): Promise<TRet> {
+    const transactionAdapter = new EffectPgTransaction(
+      this.#pgClient,
+      this.#runtime,
     );
+    const effectToRun = Effect.promise(() => fn(transactionAdapter));
+    const transactionalEffect = this.#pgClient.withTransaction(effectToRun);
+    return Runtime.runPromise(this.#runtime)(transactionalEffect);
   }
 }
 
-export class EffectPgTransaction implements DBTransaction<PgClient.PgClient> {
-  constructor(public readonly wrappedTransaction: PgClient.PgClient) {}
+class EffectPgTransaction implements DBTransaction<PgClient.PgClient> {
+  readonly wrappedTransaction: PgClient.PgClient;
+  readonly #runtime: Runtime.Runtime<never>;
 
-  query(sql: string, params: unknown[]): Promise<Row[]> {
-    return Effect.runPromise(
-      this.wrappedTransaction
-        .query(sql, params)
-        .pipe(Effect.map((result) => result.rows)),
+  constructor(pgClient: PgClient.PgClient, runtime: Runtime.Runtime<never>) {
+    this.wrappedTransaction = pgClient;
+    this.#runtime = runtime;
+  }
+
+  query(sql: string, params: Array<unknown>): Promise<Iterable<Row>> {
+    const queryEffect = this.wrappedTransaction.unsafe(
+      sql,
+      params as Array<Primitive>,
     );
+    return Runtime.runPromise(this.#runtime)(queryEffect) as Promise<
+      Iterable<Row>
+    >;
   }
 }
 ```
 
-**Pros**: Clean abstraction, doesn't depend on internals, maintains Effect patterns  
-**Cons**: Additional wrapper layer, potential performance overhead
+### ✅ Benefits Achieved
 
-#### Approach 3: Hybrid Approach
+- ✅ **Clean abstraction**: No dependency on PgClient internals
+- ✅ **Effect integration**: Uses `PgClient.withTransaction` for proper transaction handling
+- ✅ **Type safety**: Maintains full TypeScript support
+- ✅ **Single connection pool**: Uses the same PgClient instance throughout the app
+- ✅ **Future-proof**: Doesn't depend on internal PgClient structure
+- ✅ **Runtime integration**: Proper Effect runtime handling for Promise conversion
 
-Keep the existing `pgjsConnection` for Zero but ensure it uses the same connection config as `PgClient`:
+### Factory Functions
+
+The implementation also provides convenient factory functions:
 
 ```typescript
-// Shared connection config
-const createConnectionConfig = () => ({
-  database: env.DB_NAME,
-  host: env.DB_HOST_PRIMARY,
-  password: env.DB_PASSWORD,
-  port: env.DB_PORT,
-  ssl: /* ssl config */,
-  user: env.DB_USERNAME,
-})
+export function zeroEffectPg<TSchema extends Schema>(
+  schema: TSchema,
+  pgClient: PgClient.PgClient,
+  runtime: Runtime.Runtime<never>,
+): ZQLDatabase<TSchema, PgClient.PgClient>;
 
-// Use same config for both
-export const PgLive = PgClient.layer(createConnectionConfig())
-export const pgjsConnection = postgres(createConnectionConfig())
+export function zeroEffectPgProcessor<TSchema extends Schema>(
+  schema: TSchema,
+  pgClient: PgClient.PgClient,
+  runtime: Runtime.Runtime<never>,
+): PushProcessor<
+  ZQLDatabase<TSchema, PgClient.PgClient>,
+  CustomMutatorDefs<TSchema>
+>;
 ```
 
-**Pros**: Simple, no breaking changes, uses same connection config  
-**Cons**: Maintains dual connection setup, doesn't fully integrate with Effect patterns
-
-### Recommended Implementation
-
-Since **Approach 1** is already implemented and working, we'll use the existing `getPostgresConnection` function. However, we should still consider **Approach 2** (Custom DBConnection Wrapper) for future improvements because:
-
-**Current Approach (Approach 1) - Use as-is**:
-
-- ✅ Already implemented and tested
-- ✅ Uses existing PgClient connection pool
-- ✅ Minimal code changes required
-- ⚠️ Fragile and depends on PgClient internals
-- ⚠️ May break with Effect updates
-
-**Future Improvement (Approach 2)**:
-
-- More robust and future-proof
-- Better abstraction and testability
-- Doesn't depend on internal PgClient structure
-
-### Updated Task List
-
-#### Current Implementation Path (Using Existing getPostgresConnection)
-
-The tasks below use the existing `getPostgresConnection` function from `packages/db/layers.ts` which extracts the postgres.js client from Effect's PgClient.
-
-#### Future Enhancement Path (Custom DBConnection Wrapper)
-
-For future improvements, consider implementing the custom DBConnection wrapper (Task 1.0b) to make the integration more robust and less dependent on PgClient internals.
+This approach eliminated the need for the previous "hacky postgres.js extraction" and provides a robust, maintainable solution that integrates seamlessly with Effect's ecosystem.
 
 ## Key Implementation Details
 
@@ -657,31 +458,44 @@ The service needs to integrate with:
 4. **Testing**: Comprehensive test coverage before switching
 5. **Documentation**: Clear migration guide for other Zero setups
 
-## Benefits
+## ✅ Benefits Achieved
 
-1. **Cleaner Error Handling**: Structured errors instead of thrown exceptions
-2. **Better Testability**: Easy mocking and testing with Effect's test utilities
-3. **Reusability**: Generic service that works with any Zero schema
-4. **Type Safety**: Full TypeScript support throughout the stack
-5. **Effect Integration**: Seamless integration with Effect's ecosystem
-6. **Resource Management**: Proper cleanup and lifecycle management
+1. ✅ **Cleaner Error Handling**: `processZeroMutations` wraps errors in Effect types instead of thrown exceptions
+2. ✅ **Better Testability**: Effect service pattern enables easy mocking with Layer system
+3. ✅ **Reusability**: Generic `ZeroStore.forSchema<TSchema>()` works with any Zero schema
+4. ✅ **Type Safety**: Full TypeScript support maintained through `ZeroSchemaStore<TSchema>`
+5. ✅ **Effect Integration**: Seamless integration with Effect's Layer and service ecosystem
+6. ✅ **Resource Management**: Proper transaction handling with `PgClient.withTransaction`
 
-## Inspiration Sources
+## Implementation Summary
 
-This design draws inspiration from:
+The current implementation successfully provides a complete Effect-based wrapper for Zero's custom mutators:
 
-- **Zero PushProcessor**: Core mutation processing logic
-- **Effect PgClient**: Service pattern and error handling approach
-- **OpenFaith Architecture**: Effect-first patterns and service composition
-- **Zero Documentation**: Best practices for custom mutators and async tasks
+### ✅ Core Components Implemented
 
-## Next Steps
+1. **`EffectPgConnection`**: Bridges Effect's PgClient with Zero's DBConnection interface
+2. **`ZeroStore`**: Generic service for creating schema-specific Zero stores
+3. **`ZeroSchemaStore<TSchema>`**: Schema-specific store with database, processor, and mutation processing
+4. **`AppZeroStore`**: Application-specific context tag for the main schema
+5. **`ZeroLive`**: Complete layer composition providing the Zero service
+6. **Handler Integration**: Full Effect-based HTTP handler using the service
 
-1. Start with Phase 1 to establish the core service foundation
-2. Implement error types and configuration service first
-3. Build the main ZeroMutatorService with proper Effect patterns
-4. Integrate with existing handler to validate the approach
-5. Add advanced features like async task support and observability
-6. Create comprehensive tests and documentation
+### ✅ Design Goals Achieved
 
-This approach provides a solid foundation for integrating Zero's custom mutators with Effect while maintaining the benefits of both systems and ensuring the solution is reusable across different Zero setups.
+- ✅ **Effect-First**: All operations return Effect types with proper error handling
+- ✅ **Type Safety**: Full TypeScript support with schema validation through generics
+- ✅ **Dependency Injection**: Uses Effect's service pattern with Layer composition
+- ✅ **Reusability**: Generic `forSchema()` method works with any Zero schema
+- ✅ **Error Handling**: Structured error types instead of thrown exceptions
+
+### 🔄 Future Enhancements
+
+While the core implementation is complete and functional, potential future improvements include:
+
+1. **Async Task Support**: Integration with Zero's deferred async task pattern
+2. **Enhanced Observability**: Structured logging and OpenTelemetry tracing
+3. **Configuration Validation**: Schema validation for Zero configuration
+4. **Comprehensive Testing**: Unit and integration test coverage
+5. **Performance Optimizations**: Connection pooling and resource management improvements
+
+The current implementation provides a solid, production-ready foundation for integrating Zero's custom mutators with Effect while maintaining the benefits of both systems and ensuring the solution is reusable across different Zero setups.
