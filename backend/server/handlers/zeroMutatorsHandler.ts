@@ -29,7 +29,7 @@ export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) 
           input.payload as unknown as ReadonlyJSONObject,
         )
         .pipe(
-          Effect.provideService(TokenKey, 'test'),
+          Effect.provideService(TokenKey, 'server-token-key'),
           Effect.mapError(
             (error) =>
               new MutatorError({

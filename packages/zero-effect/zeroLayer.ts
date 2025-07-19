@@ -122,7 +122,10 @@ export const make: (pgClient: PgClient.PgClient, runtime: Runtime.Runtime<never>
       ): Effect.Effect<any, Error, R> => {
         return Effect.gen(function* () {
           const currentRuntime = yield* Effect.runtime<R>()
-          const promiseMutators = convertEffectMutatorsToPromise(effectMutators, currentRuntime)
+          const promiseMutators = convertEffectMutatorsToPromise<TSchema, R>(
+            effectMutators,
+            currentRuntime,
+          )
 
           return yield* Effect.tryPromise({
             catch: (error) => new Error(`Zero Effect mutation processing failed: ${error}`),

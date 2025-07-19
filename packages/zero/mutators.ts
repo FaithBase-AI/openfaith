@@ -1,7 +1,6 @@
 import { TokenKey } from '@openfaith/adapter-core/layers/tokenManager'
 import type { AuthData, ZSchema } from '@openfaith/zero/zeroSchema.mts'
 import {
-  type CustomMutatorEfDefs,
   type EffectTransaction,
   ZeroMutatorAuthError,
   ZeroMutatorValidationError,
@@ -19,13 +18,10 @@ export type UpdatePersonInput = Schema.Schema.Type<typeof UpdatePersonInput>
 
 export function createMutators(
   authData: Pick<AuthData, 'sub' | 'activeOrganizationId'> | undefined,
-): CustomMutatorEfDefs<ZSchema, TokenKey> {
+) {
   return {
     people: {
-      update: (
-        tx: EffectTransaction<ZSchema>,
-        input: UpdatePersonInput,
-      ): Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError, TokenKey> =>
+      update: (tx: EffectTransaction<ZSchema>, input: UpdatePersonInput) =>
         Effect.gen(function* () {
           const tokenKey = yield* TokenKey
 
@@ -41,14 +37,13 @@ export function createMutators(
 
           const validatedInput = yield* Schema.decodeUnknown(UpdatePersonInput)(input).pipe(
             Effect.mapError(
-              (_error): ZeroMutatorValidationError =>
+              (error) =>
                 new ZeroMutatorValidationError({
-                  message: `Invalid input: ${String(_error)}`,
+                  message: `Invalid input: ${String(error)}`,
                 }),
             ),
           )
 
-          // Database operation using Effect transaction
           yield* tx.mutate.people.update({
             ...validatedInput,
           })
@@ -58,7 +53,7 @@ export function createMutators(
           })
         }) as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError, TokenKey>,
     },
-  } as const
+  }
 }
 
 export function createClientMutators(

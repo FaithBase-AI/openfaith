@@ -1,15 +1,20 @@
 import { createEffectTransaction } from '@openfaith/zero-effect/effectTransaction'
-import type { CustomMutatorEfDefs } from '@openfaith/zero-effect/types'
 import type { CustomMutatorDefs, Schema, Transaction } from '@rocicorp/zero'
-import { Runtime } from 'effect'
+import { type Effect, Runtime } from 'effect'
+
+// Type for Effect-based mutators that preserves the dependency information
+type EffectMutators<_TSchema extends Schema, R> = Record<
+  string,
+  Record<string, (tx: any, ...args: Array<any>) => Effect.Effect<any, any, R>> | undefined
+>
 
 export function convertEffectMutatorsToPromise<TSchema extends Schema, R>(
-  effectMutators: CustomMutatorEfDefs<TSchema, R>,
+  effectMutators: EffectMutators<TSchema, R>,
   runtime: Runtime.Runtime<R>,
 ): CustomMutatorDefs<TSchema> {
   const promiseMutators: any = {}
 
-  for (const [tableName, tableMutators] of Object.entries(effectMutators)) {
+  for (const [tableName, tableMutators] of Object.entries(effectMutators as Record<string, any>)) {
     if (tableMutators) {
       promiseMutators[tableName] = {}
 
