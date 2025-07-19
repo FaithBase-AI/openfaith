@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "layout": "stretch",
   "mcp": {
     "context7": {
       "command": ["bunx", "-y", "@upstash/context7-mcp@latest"],
