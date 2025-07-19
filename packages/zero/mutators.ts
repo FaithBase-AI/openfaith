@@ -12,6 +12,7 @@ import { Effect, Runtime, Schema } from 'effect'
 export const UpdatePersonInput = Schema.Struct({
   firstName: Schema.String.pipe(Schema.optional),
   id: Schema.String,
+  name: Schema.String.pipe(Schema.optional),
 })
 
 export type UpdatePersonInput = Schema.Schema.Type<typeof UpdatePersonInput>
