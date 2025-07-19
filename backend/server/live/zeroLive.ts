@@ -1,5 +1,9 @@
 import { schema } from '@openfaith/zero'
-import { type ZeroSchemaStore, ZeroStore, layer as ZeroStoreLayer } from '@openfaith/zero-effect'
+import {
+  type ZeroSchemaStore,
+  ZeroStore,
+  layer as ZeroStoreLayer,
+} from '@openfaith/zero-effect/server'
 import { Context, Effect, Layer } from 'effect'
 
 /**

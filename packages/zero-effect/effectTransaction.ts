@@ -1,24 +1,14 @@
+import { ZeroMutatorDatabaseError } from '@openfaith/zero-effect/types'
 import type { Schema, Transaction } from '@rocicorp/zero'
 import { Effect } from 'effect'
-import { MutatorDatabaseError } from './effectMutatorBridge'
 
-/**
- * Effect-based wrapper around Zero Transaction
- * Converts Promise-based transaction operations to Effect operations
- */
 export class EffectTransaction<TSchema extends Schema> {
   constructor(private tx: Transaction<TSchema>) {}
 
-  /**
-   * Wraps transaction mutate operations in Effect
-   */
   get mutate() {
     return this.createMutateProxy(this.tx.mutate)
   }
 
-  /**
-   * Wraps transaction query operations in Effect
-   */
   get query() {
     return this.createQueryProxy(this.tx.query)
   }
@@ -34,7 +24,7 @@ export class EffectTransaction<TSchema extends Schema> {
           return (...args: Array<any>) =>
             Effect.tryPromise({
               catch: (error) =>
-                new MutatorDatabaseError({
+                new ZeroMutatorDatabaseError({
                   cause: error,
                   message: `Database mutation failed: ${String(error)}`,
                 }),
@@ -57,7 +47,7 @@ export class EffectTransaction<TSchema extends Schema> {
           return (...args: Array<any>) =>
             Effect.tryPromise({
               catch: (error) =>
-                new MutatorDatabaseError({
+                new ZeroMutatorDatabaseError({
                   cause: error,
                   message: `Database query failed: ${String(error)}`,
                 }),
@@ -70,8 +60,5 @@ export class EffectTransaction<TSchema extends Schema> {
   }
 }
 
-/**
- * Creates an Effect-based transaction wrapper
- */
 export const createEffectTransaction = <TSchema extends Schema>(tx: Transaction<TSchema>) =>
   new EffectTransaction(tx)
