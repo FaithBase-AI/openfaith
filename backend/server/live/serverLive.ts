@@ -1,19 +1,24 @@
-import { FetchHttpClient, HttpLayerRouter, HttpServer } from '@effect/platform'
+import {
+  FetchHttpClient,
+  HttpApiBuilder,
+  HttpApiSwagger,
+  HttpLayerRouter,
+  HttpServer,
+} from '@effect/platform'
 import { RpcSerialization, RpcServer } from '@effect/rpc'
 import { DBLive } from '@openfaith/db'
 import { AdapterRpc, CoreRpc, ZeroMutatorsApi } from '@openfaith/domain'
 import { AdapterHandlerLive } from '@openfaith/server/handlers/adapterHandler'
 import { CoreHandlerLive } from '@openfaith/server/handlers/coreHandler'
-import { ZeroMutatorsHandlerLive } from '@openfaith/server/handlers/zeroMutatorsHandler'
-import { SessionRpcMiddlewareLayer } from '@openfaith/server/live/httpAuthMiddlewareLive'
+import { ZeroHandlerLive } from '@openfaith/server/handlers/zeroMutatorsHandler'
+import { SessionRpcMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
 import { Layer } from 'effect'
 
 // Create the handlers layer with basic dependencies
-const HandlersLayer = Layer.mergeAll(
-  CoreHandlerLive,
-  AdapterHandlerLive,
-  ZeroMutatorsHandlerLive,
-).pipe(Layer.provide(DBLive), Layer.provide(FetchHttpClient.layer))
+const HandlersLayer = Layer.mergeAll(CoreHandlerLive, AdapterHandlerLive, ZeroHandlerLive).pipe(
+  Layer.provide(DBLive),
+  Layer.provide(FetchHttpClient.layer),
+)
 
 // Create the Core RPC route using HttpLayerRouter
 export const RpcRoute = RpcServer.layerHttpRouter({
@@ -27,10 +32,20 @@ export const RpcRoute = RpcServer.layerHttpRouter({
 )
 
 // Create the Zero HTTP API route using HttpLayerRouter
-export const HttpApiRoute = HttpLayerRouter.addHttpApi(ZeroMutatorsApi).pipe(
-  Layer.provide(HandlersLayer),
-  Layer.provide(HttpServer.layerContext),
-)
+export const HttpApiRoute = HttpLayerRouter.addHttpApi(ZeroMutatorsApi, {
+  openapiPath: '/api/api/openapi.json',
+}).pipe(Layer.provide(HandlersLayer), Layer.provide(HttpServer.layerContext))
 
-// Main server layer that includes Core, Adapter, and Zero together
-export const ServerLive = Layer.mergeAll(HttpApiRoute, RpcRoute)
+export const ApiLive = HttpApiBuilder.api(ZeroMutatorsApi).pipe(Layer.provide(HandlersLayer))
+
+export const SwaggerLayer = HttpApiSwagger.layer({
+  path: '/api/api/docs',
+}).pipe(Layer.provide(ApiLive))
+
+// Main server layer that includes Core, Adapter, Zero, and Swagger together
+export const ServerLive = Layer.mergeAll(
+  HttpApiRoute,
+  RpcRoute,
+  SwaggerLayer,
+  HttpServer.layerContext,
+)

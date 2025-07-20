@@ -1,13 +1,15 @@
 import { HttpApiMiddleware } from '@effect/platform'
 import { RpcMiddleware } from '@effect/rpc'
-import type { auth } from '@openfaith/auth/auth'
-import type { AsyncReturnType } from '@openfaith/shared'
-import { Context, Schema } from 'effect'
+import { Context, type Option, Schema } from 'effect'
 
 // Session context tag - provides authenticated user and session data
 export class SessionContext extends Context.Tag('@openfaith/server/SessionContext')<
   SessionContext,
-  NonNullable<AsyncReturnType<typeof auth.api.getSession>>
+  {
+    readonly userId: string
+    readonly activeOrganizationIdOpt: Option.Option<string>
+    readonly roleOpt: Option.Option<string>
+  }
 >() {}
 
 export class UnauthorizedError extends Schema.TaggedError<UnauthorizedError>()(

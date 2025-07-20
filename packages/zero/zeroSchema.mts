@@ -1,7 +1,34 @@
 import { schema, type Schema as ZSchema } from '@openfaith/zero/zero-schema.gen'
-import { ANYONE_CAN, definePermissions, type ExpressionBuilder, NOBODY_CAN } from '@rocicorp/zero'
+import {
+  ANYONE_CAN,
+  ANYONE_CAN_DO_ANYTHING,
+  definePermissions,
+  type ExpressionBuilder,
+  NOBODY_CAN,
+} from '@rocicorp/zero'
+import { Schema } from 'effect'
 
 export { schema, type ZSchema }
+
+export const AuthData = Schema.Struct({
+  activeOrganizationId: Schema.Union(Schema.String, Schema.Null),
+  aud: Schema.String,
+  banExpires: Schema.Union(Schema.Number, Schema.Null),
+  banned: Schema.Union(Schema.Boolean, Schema.Null),
+  banReason: Schema.Union(Schema.String, Schema.Null),
+  createdAt: Schema.String,
+  email: Schema.String,
+  emailVerified: Schema.Boolean,
+  exp: Schema.Number,
+  iat: Schema.Number,
+  id: Schema.String,
+  image: Schema.Union(Schema.String, Schema.Null),
+  iss: Schema.String,
+  name: Schema.String,
+  role: Schema.String,
+  sub: Schema.String,
+  updatedAt: Schema.String,
+})
 
 export type AuthData = {
   id: string
@@ -11,7 +38,6 @@ export type AuthData = {
   image: string | null
   createdAt: string
   updatedAt: string
-  isAnonymous: boolean | null
   role: string
   banned: boolean | null
   banReason: string | null
@@ -122,16 +148,17 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
         select: ANYONE_CAN,
       },
     },
-    people: {
-      row: {
-        insert: [allowIfAdmin],
-        select: ANYONE_CAN,
-        update: {
-          postMutation: [allowIfAdmin],
-          preMutation: [allowIfAdmin],
-        },
-      },
-    },
+    people: ANYONE_CAN_DO_ANYTHING,
+    // people: {
+    //   row: {
+    //     insert: [allowIfAdmin],
+    //     select: ANYONE_CAN,
+    //     update: {
+    //       postMutation: [allowIfAdmin],
+    //       preMutation: [allowIfAdmin],
+    //     },
+    //   },
+    // },
     phoneNumbers: {
       row: {
         insert: [allowIfAdmin],

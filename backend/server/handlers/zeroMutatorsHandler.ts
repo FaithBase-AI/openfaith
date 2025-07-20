@@ -1,76 +1,44 @@
 import { HttpApiBuilder } from '@effect/platform'
-import {
-  MutatorError,
-  type PushResponse,
-  SessionContext,
-  ValidationError,
-  ZeroMutatorsApi,
-} from '@openfaith/domain'
-import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/httpAuthMiddlewareLive'
-import { Effect, Layer } from 'effect'
+import { TokenKey } from '@openfaith/adapter-core/server'
+
+import { MutatorError, SessionContext, ZeroMutatorsApi as ZeroApi } from '@openfaith/domain'
+import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
+import { AppZeroStore, ZeroLive } from '@openfaith/server/live/zeroLive'
+import { createMutators } from '@openfaith/zero'
+import type { ReadonlyJSONObject } from '@rocicorp/zero'
+import { Effect, Layer, Option, pipe } from 'effect'
 
 // Handler implementation for Zero mutators
-export const ZeroMutatorsHandlerLive = HttpApiBuilder.group(
-  ZeroMutatorsApi,
-  'zero-mutators',
-  (handlers) =>
-    handlers.handle('push', ({ payload }) =>
-      Effect.gen(function* () {
-        // Get authenticated session
+export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) =>
+  handlers.handle('push', (input) =>
+    Effect.gen(function* () {
+      const session = yield* SessionContext
+      const appZeroStore = yield* AppZeroStore
 
-        const session = yield* SessionContext
+      // Log the incoming push request with user context
+      yield* Effect.log('Processing Zero push request', input.payload.mutations)
 
-        // Log the incoming push request with user context
-        yield* Effect.log('Processing Zero push request', {
-          mutationCount: payload.mutations.length,
-          orgId: session.session.activeOrganizationId,
-          pushVersion: payload.pushVersion,
-          userId: session.user.id,
-        })
-
-        if (payload.mutations.length === 0) {
-          // TODO: Implement the actual mutator processing logic
-          // For now, we'll return a simple success response
-
-          // Validate the request
-          return yield* Effect.fail(
-            new ValidationError({
-              field: 'mutations',
-              message: 'No mutations provided',
-            }),
-          )
-        }
-
-        // Process each mutation
-        const patchOps: Array<unknown> = []
-        let lastMutationId: string | undefined
-
-        for (const mutation of payload.mutations) {
-          try {
-            // TODO: Apply the actual mutation logic here
-            // For now, we'll just create a simple patch operation
-            patchOps.push({
-              op: 'replace',
-              path: `/mutation-${mutation.id}`,
-              value: { processed: true, timestamp: Date.now() },
-            })
-
-            lastMutationId = mutation.id
-          } catch (error) {
-            return yield* Effect.fail(
+      const result = yield* appZeroStore
+        .processMutations(
+          createMutators({
+            activeOrganizationId: pipe(session.activeOrganizationIdOpt, Option.getOrNull),
+            sub: session.userId,
+          }),
+          input.urlParams,
+          // Have to cast it to ReadonlyJSONObject because the PushProcessor expects a JSON object
+          input.payload as unknown as ReadonlyJSONObject,
+        )
+        .pipe(
+          Effect.provideService(TokenKey, 'server-token-key'),
+          Effect.mapError(
+            (error) =>
               new MutatorError({
-                message: `Failed to process mutation: ${error}`,
-                mutationId: mutation.id,
+                message: `Error processing push request: ${error}`,
               }),
-            )
-          }
-        }
+          ),
+        )
 
-        // Return successful response
-        return {
-          lastMutationId,
-          patchOps,
-        } satisfies typeof PushResponse.Type
-      }),
-    ),
-).pipe(Layer.provide(SessionHttpMiddlewareLayer))
+      return result
+    }),
+  ),
+).pipe(Layer.provide(SessionHttpMiddlewareLayer), Layer.provide(ZeroLive))

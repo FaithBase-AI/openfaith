@@ -98,6 +98,7 @@
         "@tanstack/router-plugin": "1.125.6",
         "effect": "catalog:",
         "input-otp": "catalog:",
+        "jose": "6.0.11",
         "jotai": "catalog:",
         "next-themes": "catalog:",
         "nuqs": "catalog:",
@@ -238,6 +239,7 @@
         "drizzle-kit": "catalog:",
         "drizzle-orm": "catalog:",
         "effect": "catalog:",
+        "postgres": "3.4.7",
       },
       "devDependencies": {
         "typescript": "catalog:",
@@ -322,8 +324,22 @@
       "version": "0.1.0",
       "dependencies": {
         "@openfaith/shared": "workspace:*",
+        "@openfaith/zero-effect": "workspace:*",
         "@rocicorp/zero": "catalog:",
         "drizzle-zero": "0.12.0",
+        "effect": "catalog:",
+      },
+      "devDependencies": {
+        "typescript": "catalog:",
+      },
+    },
+    "packages/zero-effect": {
+      "name": "@openfaith/zero-effect",
+      "version": "0.1.0",
+      "dependencies": {
+        "@effect/sql": "catalog:",
+        "@effect/sql-pg": "catalog:",
+        "@rocicorp/zero": "catalog:",
         "effect": "catalog:",
       },
       "devDependencies": {
@@ -561,7 +577,7 @@
 
     "@effect/rpc": ["@effect/rpc@0.65.0", "", { "peerDependencies": { "@effect/platform": "^0.88.0", "effect": "^3.16.13" } }, "sha512-L2ClFG7EKu0PDrsi2t5vYmUUE7f+CDz05sQiZFy05sDINXWw7mZ4y6SwvcDe8A8a00w/BPmqyHdYWnIascMWDw=="],
 
-    "@effect/sql": ["@effect/sql@0.37.2", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.33.0", "uuid": "^11.0.3" }, "peerDependencies": { "@effect/experimental": "^0.48.2", "@effect/platform": "^0.84.2", "effect": "^3.16.2" } }, "sha512-Ti2HKjpTWx+yUAoHemr94o36NRIEHpbMGxRhb7NA6Ny+zd9MFzPsRKrSTY62fOsVZTdXJt4Bx+ipAE5YPhWn7g=="],
+    "@effect/sql": ["@effect/sql@0.41.0", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.33.0", "uuid": "^11.0.3" }, "peerDependencies": { "@effect/experimental": "^0.52.0", "@effect/platform": "^0.88.0", "effect": "^3.16.13" } }, "sha512-P3RuRm/PHEYInkFE0VUijWCWGyCviq2rnLLcTpdIRCy9quwGTh53kOnh9Go1pL+owGkq3WrP1T1hiAr5LzeNfg=="],
 
     "@effect/sql-drizzle": ["@effect/sql-drizzle@0.40.0", "", { "peerDependencies": { "@effect/sql": "^0.41.0", "drizzle-orm": ">=0.43.1 <0.50", "effect": "^3.16.13" } }, "sha512-/1oNqhYguO2pXqH67dNNZWsxdsiXgWd7hgvKtOkq/tFVLekhqtYssaykTm+sww+j3wTqJNtWlad7tHronkDmAA=="],
 
@@ -868,6 +884,8 @@
     "@openfaith/workers": ["@openfaith/workers@workspace:backend/workers"],
 
     "@openfaith/zero": ["@openfaith/zero@workspace:packages/zero"],
+
+    "@openfaith/zero-effect": ["@openfaith/zero-effect@workspace:packages/zero-effect"],
 
     "@opentelemetry/api": ["@opentelemetry/api@1.9.0", "", {}, "sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg=="],
 

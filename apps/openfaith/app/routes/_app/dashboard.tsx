@@ -12,6 +12,8 @@ import {
   SubsplashIcon,
   TithelyIcon,
 } from '@openfaith/ui'
+import { useZero } from '@openfaith/zero'
+import { useQuery } from '@rocicorp/zero/react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Array, pipe } from 'effect'
 
@@ -91,11 +93,28 @@ function RouteComponent() {
   // console.log(connectResult)
   console.log(status)
 
+  const z = useZero()
+
+  const [person] = useQuery(z.query.people.where('id', '105820014').one())
+
   return (
     <div className={'mx-auto flex max-w-3xl flex-col gap-4 p-4'}>
       <Button loading={isPending} onClick={() => testFunction()}>
         Test Function
       </Button>
+      <Button
+        onClick={() =>
+          z.mutate.people.update({
+            id: '105820014',
+            name: `Yeeeeeet ${new Date().toISOString()}`,
+          })
+        }
+        variant={'secondary'}
+      >
+        Test Mutator
+      </Button>
+
+      <pre>{JSON.stringify(person, null, 2)}</pre>
       <Label className={'font-semibold'}>ChMS</Label>
 
       <div className={'flew-row mt-2 mb-4 flex flex-wrap gap-4'}>

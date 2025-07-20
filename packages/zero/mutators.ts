@@ -1,36 +1,72 @@
-import type { AuthData, schema } from '@openfaith/zero/zeroSchema.mts'
-import type { CustomMutatorDefs, Transaction } from '@rocicorp/zero'
+import { TokenKey } from '@openfaith/adapter-core/layers/tokenManager'
+import type { AuthData, ZSchema } from '@openfaith/zero/zeroSchema.mts'
+import {
+  convertEffectMutatorsToPromise,
+  type EffectTransaction,
+  ZeroMutatorAuthError,
+  ZeroMutatorValidationError,
+} from '@openfaith/zero-effect/client'
+import type { CustomMutatorDefs } from '@rocicorp/zero'
+import { Effect, Runtime, Schema } from 'effect'
 
-// Define the input type for creating a person (basic fields for now)
-export type CreatePersonInput = {
-  id: string
-  orgId: string
-  firstName?: string
-  lastName?: string
-  name?: string
-  status: 'active' | 'inactive'
-  type: 'default'
-  createdAt: number
-  // Add more fields as needed
-}
+export const UpdatePersonInput = Schema.Struct({
+  firstName: Schema.String.pipe(Schema.optional),
+  id: Schema.String,
+  name: Schema.String.pipe(Schema.optional),
+})
+
+export type UpdatePersonInput = Schema.Schema.Type<typeof UpdatePersonInput>
 
 export function createMutators(
   authData: Pick<AuthData, 'sub' | 'activeOrganizationId'> | undefined,
 ) {
   return {
-    person: {
-      create: async (tx: Transaction<typeof schema>, input: CreatePersonInput): Promise<void> => {
-        if (!authData) {
-          throw new Error('Not authenticated')
-        }
-        // Optionally, add schema validation here
-        await tx.mutate.people.insert({
-          _tag: 'person',
-          ...input,
-        })
-      },
+    people: {
+      update: (tx: EffectTransaction<ZSchema>, input: UpdatePersonInput) =>
+        Effect.gen(function* () {
+          const tokenKey = yield* TokenKey
+
+          console.log(tokenKey)
+
+          if (!authData) {
+            return yield* Effect.fail(
+              new ZeroMutatorAuthError({
+                message: 'Not authenticated',
+              }),
+            )
+          }
+
+          const validatedInput = yield* Schema.decodeUnknown(UpdatePersonInput)(input).pipe(
+            Effect.mapError(
+              (error) =>
+                new ZeroMutatorValidationError({
+                  message: `Invalid input: ${String(error)}`,
+                }),
+            ),
+          )
+
+          yield* tx.mutate.people.update({
+            ...validatedInput,
+          })
+
+          yield* Effect.log('Person updated successfully', {
+            id: validatedInput.id,
+          })
+        }) as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError, TokenKey>,
     },
-  } as const satisfies CustomMutatorDefs<typeof schema>
+  }
 }
 
-export type Mutators = ReturnType<typeof createMutators>
+export function createClientMutators(
+  authData: Pick<AuthData, 'sub' | 'activeOrganizationId'> | undefined,
+): CustomMutatorDefs<ZSchema> {
+  const effectMutators = createMutators(authData)
+
+  const clientRuntime = Runtime.defaultRuntime.pipe(
+    Runtime.provideService(TokenKey, 'client-token-key'),
+  )
+
+  return convertEffectMutatorsToPromise(effectMutators, clientRuntime)
+}
+
+export type Mutators = ReturnType<typeof createClientMutators>
