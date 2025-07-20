@@ -2,6 +2,7 @@ import type { Primitive } from '@effect/sql/Statement'
 import { PgClient } from '@effect/sql-pg'
 import { convertEffectMutatorsToPromise } from '@openfaith/zero-effect/effectMutatorConverter'
 import type { CustomMutatorEfDefs } from '@openfaith/zero-effect/types'
+import { ZeroMutationProcessingError } from '@openfaith/zero-effect/types'
 import type { CustomMutatorDefs, ReadonlyJSONObject, Schema } from '@rocicorp/zero'
 import type { DBConnection, DBTransaction, Row } from '@rocicorp/zero/pg'
 import { PushProcessor, ZQLDatabase } from '@rocicorp/zero/pg'
@@ -86,16 +87,11 @@ export interface ZeroSchemaStore<TSchema extends Schema> {
     ZQLDatabase<TSchema, PgClient.PgClient>,
     CustomMutatorDefs<TSchema>
   >
-  readonly processZeroMutations: (
-    mutators: CustomMutatorDefs<TSchema>,
-    urlParams: Record<string, string>,
-    payload: ReadonlyJSONObject,
-  ) => Effect.Effect<any, Error>
-  readonly processZeroEffectMutations: <R>(
+  readonly processMutations: <R>(
     effectMutators: CustomMutatorEfDefs<TSchema, R>,
     urlParams: Record<string, string>,
     payload: ReadonlyJSONObject,
-  ) => Effect.Effect<any, Error, R>
+  ) => Effect.Effect<any, ZeroMutationProcessingError, R>
 }
 
 export const ZeroStore: Context.Tag<ZeroStore, ZeroStore> = Context.GenericTag<ZeroStore>(
@@ -114,12 +110,11 @@ export const make: (pgClient: PgClient.PgClient, runtime: Runtime.Runtime<never>
     return {
       [ZeroSchemaStoreTypeId]: ZeroSchemaStoreTypeId,
       database,
-      processor,
-      processZeroEffectMutations: <R>(
+      processMutations: <R>(
         effectMutators: CustomMutatorEfDefs<TSchema, R>,
         urlParams: Record<string, string>,
         payload: ReadonlyJSONObject,
-      ): Effect.Effect<any, Error, R> => {
+      ): Effect.Effect<any, ZeroMutationProcessingError, R> => {
         return Effect.gen(function* () {
           const currentRuntime = yield* Effect.runtime<R>()
           const promiseMutators = convertEffectMutatorsToPromise<TSchema, R>(
@@ -128,16 +123,16 @@ export const make: (pgClient: PgClient.PgClient, runtime: Runtime.Runtime<never>
           )
 
           return yield* Effect.tryPromise({
-            catch: (error) => new Error(`Zero Effect mutation processing failed: ${error}`),
+            catch: (error) =>
+              new ZeroMutationProcessingError({
+                cause: error,
+                message: `Zero mutation processing failed: ${String(error)}`,
+              }),
             try: () => processor.process(promiseMutators, urlParams, payload),
           })
         })
       },
-      processZeroMutations: (mutators, urlParams, payload) =>
-        Effect.tryPromise({
-          catch: (error) => new Error(`Zero mutation processing failed: ${error}`),
-          try: () => processor.process(mutators, urlParams, payload),
-        }),
+      processor,
     }
   },
 })

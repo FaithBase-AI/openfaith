@@ -33,3 +33,11 @@ export class ZeroMutatorDatabaseError extends Schema.TaggedError<ZeroMutatorData
     message: Schema.String,
   },
 ) {}
+
+export class ZeroMutationProcessingError extends Schema.TaggedError<ZeroMutationProcessingError>()(
+  'ZeroMutationProcessingError',
+  {
+    cause: Schema.Unknown.pipe(Schema.optional),
+    message: Schema.String,
+  },
+) {}

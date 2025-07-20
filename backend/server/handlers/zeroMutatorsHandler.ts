@@ -19,7 +19,7 @@ export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) 
       yield* Effect.log('Processing Zero push request', input.payload.mutations)
 
       const result = yield* appZeroStore
-        .processZeroEffectMutations(
+        .processMutations(
           createMutators({
             activeOrganizationId: pipe(session.activeOrganizationIdOpt, Option.getOrNull),
             sub: session.userId,
