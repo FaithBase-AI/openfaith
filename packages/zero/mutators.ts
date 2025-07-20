@@ -1,11 +1,11 @@
 import { TokenKey } from '@openfaith/adapter-core/layers/tokenManager'
 import type { AuthData, ZSchema } from '@openfaith/zero/zeroSchema.mts'
 import {
+  convertEffectMutatorsToPromise,
   type EffectTransaction,
   ZeroMutatorAuthError,
   ZeroMutatorValidationError,
 } from '@openfaith/zero-effect/client'
-import { convertEffectMutatorsToPromise } from '@openfaith/zero-effect/effectMutatorConverter'
 import type { CustomMutatorDefs } from '@rocicorp/zero'
 import { Effect, Runtime, Schema } from 'effect'
 

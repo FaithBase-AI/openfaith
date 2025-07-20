@@ -1,9 +1,5 @@
 import { schema } from '@openfaith/zero'
-import {
-  type ZeroSchemaStore,
-  ZeroStore,
-  layer as ZeroStoreLayer,
-} from '@openfaith/zero-effect/server'
+import { type ZeroSchemaStore, ZeroStore, ZeroStoreLive } from '@openfaith/zero-effect/server'
 import { Context, Effect, Layer } from 'effect'
 
 /**
@@ -28,4 +24,4 @@ export const AppZeroStoreLive = Layer.effect(
 /**
  * Combined layer that provides the schema-specific Zero store
  */
-export const ZeroLive = Layer.provide(AppZeroStoreLive, ZeroStoreLayer)
+export const ZeroLive = Layer.provide(AppZeroStoreLive, ZeroStoreLive)
