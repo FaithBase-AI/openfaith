@@ -2,16 +2,16 @@
  * @since 1.0.0
  */
 
-import * as PgDrizzle from "@effect/sql-drizzle/Pg";
+import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import {
   ExternalLinkConflictError,
   ExternalLinkManager,
   ExternalLinkNotFoundError,
   TokenKey,
-} from "@openfaith/adapter-core/server";
-import { externalLinksTable } from "@openfaith/db";
-import { and, eq, inArray, isNull } from "drizzle-orm";
-import { Array, Effect, Layer, Option, pipe } from "effect";
+} from '@openfaith/adapter-core/server'
+import { externalLinksTable } from '@openfaith/db'
+import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { Array, Effect, Layer, Option, pipe } from 'effect'
 
 /**
  * PostgreSQL implementation of the ExternalLinkManager service.
@@ -33,8 +33,8 @@ import { Array, Effect, Layer, Option, pipe } from "effect";
 export const ExternalLinkManagerLive = Layer.effect(
   ExternalLinkManager,
   Effect.gen(function* () {
-    const db = yield* PgDrizzle.PgDrizzle;
-    const orgId = yield* TokenKey;
+    const db = yield* PgDrizzle.PgDrizzle
+    const orgId = yield* TokenKey
 
     return ExternalLinkManager.of({
       /**
@@ -46,14 +46,14 @@ export const ExternalLinkManagerLive = Layer.effect(
        */
       createExternalLink: (link) =>
         Effect.gen(function* () {
-          const now = new Date();
+          const now = new Date()
           yield* db.insert(externalLinksTable).values({
-            _tag: "externalLink",
+            _tag: 'externalLink',
             ...link,
             createdAt: now,
             orgId,
             updatedAt: now,
-          });
+          })
         }).pipe(
           Effect.mapError(
             (error) =>
@@ -77,29 +77,29 @@ export const ExternalLinkManagerLive = Layer.effect(
       createExternalLinks: (links) =>
         Effect.gen(function* () {
           if (links.length === 0) {
-            return;
+            return
           }
 
-          const now = new Date();
+          const now = new Date()
           yield* db.insert(externalLinksTable).values(
             pipe(
               links,
               Array.map((link) => ({
-                _tag: "externalLink" as const,
+                _tag: 'externalLink' as const,
                 ...link,
                 createdAt: now,
                 orgId,
                 updatedAt: now,
               })),
             ),
-          );
+          )
         }).pipe(
           Effect.mapError(
             (error) =>
               new ExternalLinkConflictError({
-                adapter: links[0]?.adapter || "",
+                adapter: links[0]?.adapter || '',
                 cause: error,
-                externalId: links[0]?.externalId || "",
+                externalId: links[0]?.externalId || '',
                 message: `Failed to create external links: ${error}`,
                 orgId,
               }),
@@ -128,7 +128,7 @@ export const ExternalLinkManagerLive = Layer.effect(
                 eq(externalLinksTable.externalId, externalId),
                 isNull(externalLinksTable.deletedAt),
               ),
-            );
+            )
         }).pipe(
           Effect.mapError(
             (error) =>
@@ -161,9 +161,9 @@ export const ExternalLinkManagerLive = Layer.effect(
                 isNull(externalLinksTable.deletedAt),
               ),
             )
-            .limit(1);
+            .limit(1)
 
-          return pipe(links, Array.head, Option.getOrNull);
+          return pipe(links, Array.head, Option.getOrNull)
         }).pipe(
           Effect.mapError(
             (error) =>
@@ -186,7 +186,7 @@ export const ExternalLinkManagerLive = Layer.effect(
       getExternalLinksForEntities: (entityType, entityIds) =>
         Effect.gen(function* () {
           if (entityIds.length === 0) {
-            return {};
+            return {}
           }
 
           const links = yield* db
@@ -198,18 +198,18 @@ export const ExternalLinkManagerLive = Layer.effect(
                 inArray(externalLinksTable.entityId, entityIds),
                 isNull(externalLinksTable.deletedAt),
               ),
-            );
+            )
 
           return pipe(
             links,
             Array.groupBy((link) => link.entityId),
-          );
+          )
         }).pipe(
           Effect.mapError(
             (error) =>
               new ExternalLinkNotFoundError({
                 cause: error,
-                entityId: entityIds[0] || "",
+                entityId: entityIds[0] || '',
                 entityType,
                 message: `Failed to get external links for entities: ${error}`,
               }),
@@ -234,7 +234,7 @@ export const ExternalLinkManagerLive = Layer.effect(
                 eq(externalLinksTable.entityId, entityId),
                 isNull(externalLinksTable.deletedAt),
               ),
-            );
+            )
         }).pipe(
           Effect.mapError(
             (error) =>
@@ -257,10 +257,10 @@ export const ExternalLinkManagerLive = Layer.effect(
       markMultipleSyncCompleted: (links) =>
         Effect.gen(function* () {
           if (links.length === 0) {
-            return;
+            return
           }
 
-          const now = new Date();
+          const now = new Date()
           yield* Effect.forEach(
             links,
             (link) =>
@@ -278,15 +278,15 @@ export const ExternalLinkManagerLive = Layer.effect(
                     isNull(externalLinksTable.deletedAt),
                   ),
                 ),
-            { concurrency: "unbounded" },
-          );
+            { concurrency: 'unbounded' },
+          )
         }).pipe(
           Effect.mapError(
             (error) =>
               new ExternalLinkNotFoundError({
                 cause: error,
-                entityId: links[0]?.externalId || "",
-                entityType: links[0]?.adapter || "",
+                entityId: links[0]?.externalId || '',
+                entityType: links[0]?.adapter || '',
                 message: `Failed to mark multiple sync completed: ${error}`,
               }),
           ),
@@ -302,7 +302,7 @@ export const ExternalLinkManagerLive = Layer.effect(
       markMultipleSyncInProgress: (links) =>
         Effect.gen(function* () {
           if (links.length === 0) {
-            return;
+            return
           }
 
           yield* Effect.forEach(
@@ -322,15 +322,15 @@ export const ExternalLinkManagerLive = Layer.effect(
                     isNull(externalLinksTable.deletedAt),
                   ),
                 ),
-            { concurrency: "unbounded" },
-          );
+            { concurrency: 'unbounded' },
+          )
         }).pipe(
           Effect.mapError(
             (error) =>
               new ExternalLinkNotFoundError({
                 cause: error,
-                entityId: links[0]?.externalId || "",
-                entityType: links[0]?.adapter || "",
+                entityId: links[0]?.externalId || '',
+                entityType: links[0]?.adapter || '',
                 message: `Failed to mark multiple sync in progress: ${error}`,
               }),
           ),
@@ -358,7 +358,7 @@ export const ExternalLinkManagerLive = Layer.effect(
                 eq(externalLinksTable.externalId, externalId),
                 isNull(externalLinksTable.deletedAt),
               ),
-            );
+            )
         }).pipe(
           Effect.mapError(
             (error) =>
@@ -393,7 +393,7 @@ export const ExternalLinkManagerLive = Layer.effect(
                 eq(externalLinksTable.externalId, externalId),
                 isNull(externalLinksTable.deletedAt),
               ),
-            );
+            )
         }).pipe(
           Effect.mapError(
             (error) =>
@@ -428,7 +428,7 @@ export const ExternalLinkManagerLive = Layer.effect(
                 eq(externalLinksTable.externalId, externalId),
                 isNull(externalLinksTable.deletedAt),
               ),
-            );
+            )
         }).pipe(
           Effect.mapError(
             (error) =>
@@ -440,6 +440,6 @@ export const ExternalLinkManagerLive = Layer.effect(
               }),
           ),
         ),
-    });
+    })
   }),
-);
+)
