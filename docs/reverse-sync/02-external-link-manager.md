@@ -398,13 +398,27 @@ Optimized bulk operations for performance:
 - `getExternalLinksForEntities` for fetching multiple entity links
 - Bulk sync state management with unbounded concurrency
 
-### **Error Handling**
+### **Specific Error Types**
 
-Comprehensive error types for common scenarios:
+Each method specifies exactly which errors it can throw for precise error handling:
 
-- `ExternalLinkNotFoundError` for missing entities
-- `ExternalLinkConflictError` for duplicate external IDs
-- Proper Effect error propagation for retry logic
+**Read Operations** → `ExternalLinkNotFoundError`:
+
+- `getExternalLinksForEntity` - When entity type/ID not found
+- `findEntityByExternalId` - When external link doesn't exist
+- `getExternalLinksForEntities` - When querying non-existent entities
+
+**Write Operations** → `ExternalLinkConflictError`:
+
+- `createExternalLink` - When external link already exists (unique constraint violation)
+- `createExternalLinks` - When any external link in batch already exists
+
+**Update/Delete Operations** → `ExternalLinkNotFoundError`:
+
+- `updateExternalLink` - When trying to update non-existent link
+- `deleteExternalLink` - When trying to delete non-existent link
+- `markSyncInProgress` / `markSyncCompleted` - When link doesn't exist
+- `markMultipleSyncInProgress` / `markMultipleSyncCompleted` - When any link doesn't exist
 
 ## Database Schema Integration
 
