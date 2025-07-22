@@ -98,6 +98,13 @@
       "tag": "0013_safe_madelyne_pryor",
       "version": "7",
       "when": 1751984039696
+    },
+    {
+      "breakpoints": true,
+      "idx": 14,
+      "tag": "0014_ordinary_black_widow",
+      "version": "7",
+      "when": 1753179931084
     }
   ],
   "version": "7"

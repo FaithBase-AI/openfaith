@@ -45,6 +45,7 @@ A typical `ExternalLink` record would include:
 - `adapter` (A unique identifier for the external system, e.g., "pco", "ccb", "breeze")
 - `externalId` (The unique identifier of the record _within_ the external system)
 - `lastProcessedAt` (Timestamp indicating when this link was last involved in a successful sync operation)
+- `syncing` (Boolean flag indicating whether this external link is currently being synchronized)
 - `updatedAt` (Timestamp from the external system indicating when the record was last modified)
 - **Soft Delete:** `deletedAt`, `deletedBy`
 

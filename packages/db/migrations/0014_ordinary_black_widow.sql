@@ -1,0 +1,1 @@
+ALTER TABLE "openfaith_externalLinks" ADD COLUMN "syncing" boolean DEFAULT false NOT NULL;

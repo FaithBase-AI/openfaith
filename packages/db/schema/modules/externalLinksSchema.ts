@@ -32,6 +32,7 @@ export const externalLinksTable = pgTable(
 
     // Organization this link belongs to
     orgId: d.text().notNull(),
+    syncing: d.boolean().notNull().default(false),
     updatedAt: d.timestamp(),
   }),
   (x) => ({
