@@ -1,24 +1,49 @@
-/**
- * External sync functions for reverse sync operations
- *
- * Uses the same manifest-driven approach as import workflows (pcoSyncWorkflow.ts → pcoSyncEntityWorkflow.ts)
- * but in reverse direction to push changes from OpenFaith to external ChMS systems.
- *
- * @since 1.0.0
- */
-
+import { Activity, Workflow } from '@effect/workflow'
 import { ExternalLinkManager } from '@openfaith/adapter-core/layers/externalLinkManager'
-import type { PushRequest } from '@openfaith/domain/Http'
+import { TokenKey } from '@openfaith/adapter-core/server'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { pcoPersonTransformer } from '@openfaith/pco/modules/people/pcoPersonSchema'
-import { Effect, pipe, Record, Schema, String } from 'effect'
+import { ExternalLinkManagerLive } from '@openfaith/server/live/externalLinkManagerLive'
+import { PcoApiLayer } from '@openfaith/server/live/pcoApiLive'
+import { Effect, pipe, Record, Schema } from 'effect'
 
-// Use the actual types from the domain
-type CrudOperation = Extract<
-  PushRequest['mutations'][number],
-  { type: 'crud' }
->['args'][0]['ops'][number]
+// Define the external sync entity error
+class ExternalSyncEntityError extends Schema.TaggedError<ExternalSyncEntityError>(
+  'ExternalSyncEntityError',
+)('ExternalSyncEntityError', {
+  message: Schema.String,
+}) {}
+
+// Define the workflow payload schema
+const ExternalSyncEntityPayload = Schema.Struct({
+  entityName: Schema.String,
+  mutations: Schema.Array(
+    Schema.Struct({
+      mutation: Schema.Unknown,
+      op: Schema.Unknown,
+    }),
+  ),
+  tokenKey: Schema.String,
+})
+
+// Define the external sync entity workflow
+export const ExternalSyncEntityWorkflow = Workflow.make({
+  error: ExternalSyncEntityError,
+  idempotencyKey: ({ tokenKey, entityName }) =>
+    `external-sync-entity-${tokenKey}-${entityName}-${new Date().toISOString()}`,
+  name: 'ExternalSyncEntityWorkflow',
+  payload: ExternalSyncEntityPayload,
+  success: Schema.Void,
+})
+
+// Types from the original externalSync.ts
+type CrudOperation = {
+  op: 'insert' | 'update' | 'upsert' | 'delete'
+  tableName: string
+  primaryKey: { id: string }
+  value: unknown
+}
 
 type ExternalLink = {
   readonly adapter: string
@@ -38,10 +63,12 @@ type EntityClient = {
 
 /**
  * Converts table name to entity name (people -> Person, addresses -> Address)
- * Same pattern as pcoSyncEntityWorkflow.ts
  */
 const mkEntityNameE = Effect.fn('mkEntityNameE')(function* (tableName: string) {
-  return pipe(tableName, String.snakeToPascal, (name) => {
+  const pascalName = tableName
+    .replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
+    .replace(/^[a-z]/, (letter) => letter.toUpperCase())
+  return pipe(pascalName, (name) => {
     // Handle special cases for pluralization
     if (name.endsWith('ies')) {
       return name.slice(0, -3) + 'y' // companies -> Company
@@ -112,14 +139,14 @@ const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
       if (!entityClient.create) {
         return yield* Effect.fail(new Error(`Create not supported for ${entityName}`))
       }
-      return entityClient.create({ body: encodedData })
+      return yield* entityClient.create({ body: encodedData })
 
     case 'update':
     case 'upsert':
       if (!entityClient.update) {
         return yield* Effect.fail(new Error(`Update not supported for ${entityName}`))
       }
-      return entityClient.update({
+      return yield* entityClient.update({
         body: encodedData,
         urlParams: { id: externalId },
       })
@@ -128,7 +155,7 @@ const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
       if (!entityClient.delete) {
         return yield* Effect.fail(new Error(`Delete not supported for ${entityName}`))
       }
-      return entityClient.delete({
+      return yield* entityClient.delete({
         urlParams: { id: externalId },
       })
 
@@ -175,15 +202,7 @@ const syncToPcoE = Effect.fn('syncToPcoE')(function* (
   })
 
   // Create and execute sync effect
-  const syncEffect = yield* mkCrudEffectE(
-    op.op,
-    entityClient,
-    entityName,
-    encodedData,
-    link.externalId,
-  )
-
-  yield* syncEffect.pipe(
+  yield* mkCrudEffectE(op.op, entityClient, entityName, encodedData, link.externalId).pipe(
     Effect.tap(() =>
       Effect.log('PCO sync completed successfully', {
         entityName,
@@ -276,51 +295,60 @@ const processCrudOperationE = Effect.fn('processCrudOperationE')(function* (op: 
   yield* syncToExternalSystemsE(op, entityName, externalLinks)
 })
 
-/**
- * Processes CRUD mutations
- */
-const processCrudMutationE = Effect.fn('processCrudMutationE')(function* (
-  mutation: Extract<PushRequest['mutations'][number], { type: 'crud' }>,
-) {
-  const [crudArg] = mutation.args
+// Create the workflow implementation layer
+export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLayer(
+  Effect.fn(function* (payload, executionId) {
+    yield* Effect.log(`🔄 Starting external sync entity workflow for: ${payload.entityName}`)
+    yield* Effect.log(`🆔 Execution ID: ${executionId}`)
 
-  yield* Effect.log('Processing CRUD mutation', {
-    mutationId: mutation.id,
-    operationCount: crudArg.ops.length,
-  })
+    const { entityName, mutations, tokenKey } = payload
 
-  yield* Effect.forEach(crudArg.ops, (op) => processCrudOperationE(op))
-})
+    // Create the external sync activity
+    yield* Activity.make({
+      error: ExternalSyncEntityError,
+      execute: Effect.gen(function* () {
+        const attempt = yield* Activity.CurrentAttempt
 
-/**
- * Creates external sync functions using the SAME manifest-driven approach
- * as our proven import workflows (pcoSyncWorkflow.ts → pcoSyncEntityWorkflow.ts)
- *
- * @since 1.0.0
- * @category External Sync
- */
-export const externalSyncFunction = Effect.fn('externalSyncFunction')(function* (
-  mutations: PushRequest['mutations'],
-) {
-  yield* Effect.log('Starting external sync', {
-    mutationCount: mutations.length,
-  })
+        yield* Effect.annotateLogs(
+          Effect.log(`📊 Syncing external data for entity: ${entityName}`),
+          {
+            attempt,
+            entityName,
+            executionId,
+            mutationCount: mutations.length,
+            tokenKey,
+          },
+        )
 
-  // Process each mutation for external sync
-  yield* Effect.forEach(mutations, (mutation) =>
-    Effect.gen(function* () {
-      if (mutation.type === 'crud') {
-        yield* processCrudMutationE(mutation)
-      } else {
-        yield* Effect.log('Skipping non-CRUD mutation', {
-          mutationName: mutation.name,
-          mutationType: mutation.type,
-        })
-      }
-    }),
-  )
+        // Process each mutation for this entity
+        yield* Effect.forEach(mutations, ({ op }) =>
+          processCrudOperationE(op as CrudOperation).pipe(
+            Effect.mapError(
+              (error) =>
+                new ExternalSyncEntityError({
+                  message: error instanceof Error ? error.message : `${error}`,
+                }),
+            ),
+          ),
+        )
+      }).pipe(
+        Effect.withSpan('external-sync-entity-activity'),
+        Effect.provide(ExternalLinkManagerLive),
+        Effect.provide(PcoApiLayer),
+        Effect.provideService(TokenKey, tokenKey),
+      ),
+      name: 'SyncExternalEntityData',
+    }).pipe(
+      Activity.retry({ times: 3 }),
+      ExternalSyncEntityWorkflow.withCompensation(
+        Effect.fn(function* (_value, cause) {
+          yield* Effect.log(`🔄 Compensating external sync entity activity for: ${entityName}`)
+          yield* Effect.log(`📋 Cause: ${cause}`)
+          // Add any cleanup logic here if needed
+        }),
+      ),
+    )
 
-  yield* Effect.log('External sync completed', {
-    mutationCount: mutations.length,
-  })
-})
+    yield* Effect.log(`✅ Completed external sync entity workflow for: ${entityName}`)
+  }),
+)
