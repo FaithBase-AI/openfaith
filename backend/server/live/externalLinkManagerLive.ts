@@ -1,5 +1,5 @@
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
-import { ExternalLinkManager } from '@openfaith/adapter-core/server'
+import { ExternalLinkManager, TokenKey } from '@openfaith/adapter-core/server'
 import { type ExternalLink, externalLinksTable, type NewExternalLink } from '@openfaith/db'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { Array, Effect, Layer, Option, pipe } from 'effect'
@@ -8,6 +8,7 @@ export const ExternalLinkManagerLive = Layer.effect(
   ExternalLinkManager,
   Effect.gen(function* () {
     const db = yield* PgDrizzle.PgDrizzle
+    const orgId = yield* TokenKey
 
     return ExternalLinkManager.of({
       createExternalLink: (link: Omit<NewExternalLink, 'createdAt' | 'updatedAt' | '_tag'>) =>
@@ -43,7 +44,7 @@ export const ExternalLinkManagerLive = Layer.effect(
           )
         }),
 
-      deleteExternalLink: (orgId: string, adapter: string, externalId: string) =>
+      deleteExternalLink: (adapter: string, externalId: string) =>
         Effect.gen(function* () {
           yield* db
             .update(externalLinksTable)
@@ -56,12 +57,12 @@ export const ExternalLinkManagerLive = Layer.effect(
                 eq(externalLinksTable.orgId, orgId),
                 eq(externalLinksTable.adapter, adapter),
                 eq(externalLinksTable.externalId, externalId),
-                isNull(externalLinksTable.deletedAt), // Only delete active links
+                isNull(externalLinksTable.deletedAt),
               ),
             )
         }),
 
-      findEntityByExternalId: (adapter: string, externalId: string, orgId: string) =>
+      findEntityByExternalId: (adapter: string, externalId: string) =>
         Effect.gen(function* () {
           const links = yield* db
             .select()
@@ -115,9 +116,7 @@ export const ExternalLinkManagerLive = Layer.effect(
             )
         }),
 
-      markMultipleSyncCompleted: (
-        links: Array<{ orgId: string; adapter: string; externalId: string }>,
-      ) =>
+      markMultipleSyncCompleted: (links: Array<{ adapter: string; externalId: string }>) =>
         Effect.gen(function* () {
           if (links.length === 0) {
             return
@@ -135,7 +134,7 @@ export const ExternalLinkManagerLive = Layer.effect(
                 })
                 .where(
                   and(
-                    eq(externalLinksTable.orgId, link.orgId),
+                    eq(externalLinksTable.orgId, orgId),
                     eq(externalLinksTable.adapter, link.adapter),
                     eq(externalLinksTable.externalId, link.externalId),
                     isNull(externalLinksTable.deletedAt),
@@ -145,9 +144,7 @@ export const ExternalLinkManagerLive = Layer.effect(
           )
         }),
 
-      markMultipleSyncInProgress: (
-        links: Array<{ orgId: string; adapter: string; externalId: string }>,
-      ) =>
+      markMultipleSyncInProgress: (links: Array<{ adapter: string; externalId: string }>) =>
         Effect.gen(function* () {
           if (links.length === 0) {
             return
@@ -166,7 +163,7 @@ export const ExternalLinkManagerLive = Layer.effect(
                 })
                 .where(
                   and(
-                    eq(externalLinksTable.orgId, link.orgId),
+                    eq(externalLinksTable.orgId, orgId),
                     eq(externalLinksTable.adapter, link.adapter),
                     eq(externalLinksTable.externalId, link.externalId),
                     isNull(externalLinksTable.deletedAt),
@@ -176,7 +173,7 @@ export const ExternalLinkManagerLive = Layer.effect(
           )
         }),
 
-      markSyncCompleted: (orgId: string, adapter: string, externalId: string) =>
+      markSyncCompleted: (adapter: string, externalId: string) =>
         Effect.gen(function* () {
           yield* db
             .update(externalLinksTable)
@@ -194,7 +191,7 @@ export const ExternalLinkManagerLive = Layer.effect(
             )
         }),
 
-      markSyncInProgress: (orgId: string, adapter: string, externalId: string) =>
+      markSyncInProgress: (adapter: string, externalId: string) =>
         Effect.gen(function* () {
           yield* db
             .update(externalLinksTable)
@@ -213,7 +210,6 @@ export const ExternalLinkManagerLive = Layer.effect(
         }),
 
       updateExternalLink: (
-        orgId: string,
         adapter: string,
         externalId: string,
         updates: Partial<Pick<ExternalLink, 'syncing' | 'lastProcessedAt' | 'updatedAt'>>,

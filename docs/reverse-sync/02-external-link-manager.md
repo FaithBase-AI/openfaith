@@ -2,44 +2,35 @@
 
 ## Overview
 
-The `ExternalLinkManager` service provides server-side access to external links between OpenFaith entities and external ChMS systems. Unlike other services in the reverse sync system, this service only needs a Postgres implementation since external links are stored in the main database and are only accessed during server-side async task execution.
+The `ExternalLinkManager` service provides server-side access to external links between OpenFaith entities and external ChMS systems. This service manages the mapping between internal OpenFaith entities and their corresponding external system identifiers, enabling bi-directional sync operations.
 
-## Context Files Required
+## Implementation Files
 
-Before implementing, review these files to understand the patterns:
-
-### **Abstraction Pattern Reference**
-
-- `adapters/adapter-core/layers/tokenManager.ts` - Interface definition pattern
-- `backend/server/live/tokenManagerLive.ts` - Postgres implementation pattern
-
-### **Database Schema**
-
-- `packages/db/schema/` - Database table definitions (need to locate external links table)
-
-### **Server-Side Integration**
-
-- `docs/reverse-sync/01-client-server-abstraction.md` - Client-server service abstraction patterns
-- `backend/server/live/` - Server-side service implementation patterns
-
-## Service Interface Definition
+### **Service Interface**
 
 **File**: `adapters/adapter-core/layers/externalLinkManager.ts`
 
-```typescript
-import { Context, type Effect } from "effect";
+The service interface defines the contract for managing external links with comprehensive CRUD operations and sync state management:
 
-export interface ExternalLink {
+```typescript
+import type { ExternalLink, NewExternalLink } from "@openfaith/db";
+import { Context, Data, type Effect } from "effect";
+
+// Error types for ExternalLinkManager
+export class ExternalLinkNotFoundError extends Data.TaggedError(
+  "ExternalLinkNotFound",
+)<{
   readonly entityId: string;
   readonly entityType: string;
-  readonly externalSystem: string;
-  readonly externalId: string;
+}> {}
+
+export class ExternalLinkConflictError extends Data.TaggedError(
+  "ExternalLinkConflict",
+)<{
   readonly orgId: string;
-  readonly userId: string;
-  readonly syncing: boolean; // Track if sync is in progress
-  readonly createdAt: Date;
-  readonly updatedAt: Date;
-}
+  readonly adapter: string;
+  readonly externalId: string;
+}> {}
 
 export class ExternalLinkManager extends Context.Tag(
   "@openfaith/adapter-core/layers/externalLinkManager/ExternalLinkManager",
@@ -50,53 +41,84 @@ export class ExternalLinkManager extends Context.Tag(
     readonly getExternalLinksForEntity: (
       entityType: string,
       entityId: string,
-    ) => Effect.Effect<ExternalLink[], unknown>;
+    ) => Effect.Effect<Array<ExternalLink>, unknown>;
 
     readonly findEntityByExternalId: (
-      externalSystem: string,
+      adapter: string,
       externalId: string,
+      orgId: string,
     ) => Effect.Effect<ExternalLink | null, unknown>;
+
+    readonly getExternalLinksForEntities: (
+      entityType: string,
+      entityIds: ReadonlyArray<string>,
+    ) => Effect.Effect<Record<string, ReadonlyArray<ExternalLink>>, unknown>;
 
     // Core write operations
     readonly createExternalLink: (
-      link: Omit<ExternalLink, "createdAt" | "updatedAt">,
+      link: Omit<NewExternalLink, "createdAt" | "updatedAt" | "_tag">,
     ) => Effect.Effect<void, unknown>;
 
     readonly updateExternalLink: (
-      entityId: string,
-      externalSystem: string,
-      updates: Partial<Pick<ExternalLink, "externalId" | "syncing">>,
+      orgId: string,
+      adapter: string,
+      externalId: string,
+      updates: Partial<
+        Pick<ExternalLink, "syncing" | "lastProcessedAt" | "updatedAt">
+      >,
     ) => Effect.Effect<void, unknown>;
 
     readonly deleteExternalLink: (
-      entityId: string,
-      externalSystem: string,
+      orgId: string,
+      adapter: string,
+      externalId: string,
     ) => Effect.Effect<void, unknown>;
 
-    // Bulk operations for sync efficiency
-    readonly getExternalLinksForEntities: (
-      entityType: string,
-      entityIds: string[],
-    ) => Effect.Effect<Record<string, ExternalLink[]>, unknown>;
-
     readonly createExternalLinks: (
-      links: Array<Omit<ExternalLink, "createdAt" | "updatedAt">>,
+      links: Array<Omit<NewExternalLink, "createdAt" | "updatedAt" | "_tag">>,
+    ) => Effect.Effect<void, unknown>;
+
+    // Sync state management
+    readonly markSyncInProgress: (
+      orgId: string,
+      adapter: string,
+      externalId: string,
+    ) => Effect.Effect<void, unknown>;
+
+    readonly markSyncCompleted: (
+      orgId: string,
+      adapter: string,
+      externalId: string,
+    ) => Effect.Effect<void, unknown>;
+
+    // Bulk sync state operations
+    readonly markMultipleSyncInProgress: (
+      links: Array<{ orgId: string; adapter: string; externalId: string }>,
+    ) => Effect.Effect<void, unknown>;
+
+    readonly markMultipleSyncCompleted: (
+      links: Array<{ orgId: string; adapter: string; externalId: string }>,
     ) => Effect.Effect<void, unknown>;
   }
 >() {}
 ```
 
-## Postgres Implementation (Server-Side Only)
+### **Postgres Implementation**
 
 **File**: `backend/server/live/externalLinkManagerLive.ts`
 
+The Postgres implementation provides full database operations with proper error handling and soft deletion support:
+
 ```typescript
-import { SqlError } from "@effect/sql";
 import * as PgDrizzle from "@effect/sql-drizzle/Pg";
 import { ExternalLinkManager } from "@openfaith/adapter-core/server";
-import { externalLinksTable } from "@openfaith/db"; // Need to locate this table
-import { and, eq, inArray } from "drizzle-orm";
-import { Array, Effect, Layer, pipe, Record } from "effect";
+import {
+  type ExternalLink,
+  externalLinksTable,
+  type NewExternalLink,
+} from "@openfaith/db";
+import { and, eq, inArray, isNull } from "drizzle-orm";
+import { Array, Effect, Layer, Option, pipe } from "effect";
 
 export const ExternalLinkManagerLive = Layer.effect(
   ExternalLinkManager,
@@ -104,72 +126,235 @@ export const ExternalLinkManagerLive = Layer.effect(
     const db = yield* PgDrizzle.PgDrizzle;
 
     return ExternalLinkManager.of({
-      getExternalLinksForEntity: (entityType, entityId) =>
-        Effect.gen(function* () {
-          const links = yield* db
-            .select()
-            .from(externalLinksTable)
-            .where(
-              and(
-                eq(externalLinksTable.entityType, entityType),
-                eq(externalLinksTable.entityId, entityId),
-              ),
-            );
-
-          return links.map((link) => ({
-            entityId: link.entityId,
-            entityType: link.entityType,
-            externalSystem: link.externalSystem,
-            externalId: link.externalId,
-            orgId: link.orgId,
-            userId: link.userId,
-            createdAt: link.createdAt,
-            updatedAt: link.updatedAt,
-          }));
-        }),
-
-      findEntityByExternalId: (externalSystem, externalId) =>
-        Effect.gen(function* () {
-          const links = yield* db
-            .select()
-            .from(externalLinksTable)
-            .where(
-              and(
-                eq(externalLinksTable.externalSystem, externalSystem),
-                eq(externalLinksTable.externalId, externalId),
-              ),
-            )
-            .limit(1);
-
-          const linkOpt = pipe(links, Array.head);
-
-          if (linkOpt._tag === "None") {
-            return null;
-          }
-
-          return {
-            entityId: linkOpt.value.entityId,
-            entityType: linkOpt.value.entityType,
-            externalSystem: linkOpt.value.externalSystem,
-            externalId: linkOpt.value.externalId,
-            orgId: linkOpt.value.orgId,
-            userId: linkOpt.value.userId,
-            createdAt: linkOpt.value.createdAt,
-            updatedAt: linkOpt.value.updatedAt,
-          };
-        }),
-
-      createExternalLink: (link) =>
+      // Create single external link
+      createExternalLink: (
+        link: Omit<NewExternalLink, "createdAt" | "updatedAt" | "_tag">,
+      ) =>
         Effect.gen(function* () {
           const now = new Date();
           yield* db.insert(externalLinksTable).values({
+            _tag: "externalLink",
             ...link,
             createdAt: now,
             updatedAt: now,
           });
         }),
 
-      updateExternalLink: (entityId, externalSystem, updates) =>
+      // Bulk create external links
+      createExternalLinks: (
+        links: Array<Omit<NewExternalLink, "createdAt" | "updatedAt" | "_tag">>,
+      ) =>
+        Effect.gen(function* () {
+          if (links.length === 0) return;
+
+          const now = new Date();
+          yield* db.insert(externalLinksTable).values(
+            pipe(
+              links,
+              Array.map((link) => ({
+                _tag: "externalLink" as const,
+                ...link,
+                createdAt: now,
+                updatedAt: now,
+              })),
+            ),
+          );
+        }),
+
+      // Soft delete external link
+      deleteExternalLink: (
+        orgId: string,
+        adapter: string,
+        externalId: string,
+      ) =>
+        Effect.gen(function* () {
+          yield* db
+            .update(externalLinksTable)
+            .set({
+              deletedAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(externalLinksTable.orgId, orgId),
+                eq(externalLinksTable.adapter, adapter),
+                eq(externalLinksTable.externalId, externalId),
+                isNull(externalLinksTable.deletedAt), // Only delete active links
+              ),
+            );
+        }),
+
+      // Find entity by external ID
+      findEntityByExternalId: (
+        adapter: string,
+        externalId: string,
+        orgId: string,
+      ) =>
+        Effect.gen(function* () {
+          const links = yield* db
+            .select()
+            .from(externalLinksTable)
+            .where(
+              and(
+                eq(externalLinksTable.adapter, adapter),
+                eq(externalLinksTable.externalId, externalId),
+                eq(externalLinksTable.orgId, orgId),
+                isNull(externalLinksTable.deletedAt), // Only active links
+              ),
+            )
+            .limit(1);
+
+          return pipe(links, Array.head, Option.getOrNull);
+        }),
+
+      // Get external links for multiple entities (bulk operation)
+      getExternalLinksForEntities: (
+        entityType: string,
+        entityIds: ReadonlyArray<string>,
+      ) =>
+        Effect.gen(function* () {
+          if (entityIds.length === 0) return {};
+
+          const links = yield* db
+            .select()
+            .from(externalLinksTable)
+            .where(
+              and(
+                eq(externalLinksTable.entityType, entityType),
+                inArray(externalLinksTable.entityId, entityIds),
+                isNull(externalLinksTable.deletedAt), // Only active links
+              ),
+            );
+
+          return pipe(
+            links,
+            Array.groupBy((link) => link.entityId),
+          );
+        }),
+
+      // Get external links for single entity
+      getExternalLinksForEntity: (entityType: string, entityId: string) =>
+        Effect.gen(function* () {
+          return yield* db
+            .select()
+            .from(externalLinksTable)
+            .where(
+              and(
+                eq(externalLinksTable.entityType, entityType),
+                eq(externalLinksTable.entityId, entityId),
+                isNull(externalLinksTable.deletedAt), // Only active links
+              ),
+            );
+        }),
+
+      // Bulk mark sync completed
+      markMultipleSyncCompleted: (
+        links: Array<{ orgId: string; adapter: string; externalId: string }>,
+      ) =>
+        Effect.gen(function* () {
+          if (links.length === 0) return;
+
+          const now = new Date();
+          yield* Effect.forEach(
+            links,
+            (link) =>
+              db
+                .update(externalLinksTable)
+                .set({
+                  syncing: false,
+                  updatedAt: now,
+                })
+                .where(
+                  and(
+                    eq(externalLinksTable.orgId, link.orgId),
+                    eq(externalLinksTable.adapter, link.adapter),
+                    eq(externalLinksTable.externalId, link.externalId),
+                    isNull(externalLinksTable.deletedAt),
+                  ),
+                ),
+            { concurrency: "unbounded" },
+          );
+        }),
+
+      // Bulk mark sync in progress
+      markMultipleSyncInProgress: (
+        links: Array<{ orgId: string; adapter: string; externalId: string }>,
+      ) =>
+        Effect.gen(function* () {
+          if (links.length === 0) return;
+
+          yield* Effect.forEach(
+            links,
+            (link) =>
+              db
+                .update(externalLinksTable)
+                .set({
+                  syncing: true,
+                  updatedAt: new Date(),
+                })
+                .where(
+                  and(
+                    eq(externalLinksTable.orgId, link.orgId),
+                    eq(externalLinksTable.adapter, link.adapter),
+                    eq(externalLinksTable.externalId, link.externalId),
+                    isNull(externalLinksTable.deletedAt),
+                  ),
+                ),
+            { concurrency: "unbounded" },
+          );
+        }),
+
+      // Mark single sync completed
+      markSyncCompleted: (orgId: string, adapter: string, externalId: string) =>
+        Effect.gen(function* () {
+          yield* db
+            .update(externalLinksTable)
+            .set({
+              syncing: false,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(externalLinksTable.orgId, orgId),
+                eq(externalLinksTable.adapter, adapter),
+                eq(externalLinksTable.externalId, externalId),
+                isNull(externalLinksTable.deletedAt),
+              ),
+            );
+        }),
+
+      // Mark single sync in progress
+      markSyncInProgress: (
+        orgId: string,
+        adapter: string,
+        externalId: string,
+      ) =>
+        Effect.gen(function* () {
+          yield* db
+            .update(externalLinksTable)
+            .set({
+              syncing: true,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(externalLinksTable.orgId, orgId),
+                eq(externalLinksTable.adapter, adapter),
+                eq(externalLinksTable.externalId, externalId),
+                isNull(externalLinksTable.deletedAt),
+              ),
+            );
+        }),
+
+      // Update external link with partial data
+      updateExternalLink: (
+        orgId: string,
+        adapter: string,
+        externalId: string,
+        updates: Partial<
+          Pick<ExternalLink, "syncing" | "lastProcessedAt" | "updatedAt">
+        >,
+      ) =>
         Effect.gen(function* () {
           yield* db
             .update(externalLinksTable)
@@ -179,160 +364,254 @@ export const ExternalLinkManagerLive = Layer.effect(
             })
             .where(
               and(
-                eq(externalLinksTable.entityId, entityId),
-                eq(externalLinksTable.externalSystem, externalSystem),
+                eq(externalLinksTable.orgId, orgId),
+                eq(externalLinksTable.adapter, adapter),
+                eq(externalLinksTable.externalId, externalId),
+                isNull(externalLinksTable.deletedAt), // Only update active links
               ),
             );
-        }),
-
-      deleteExternalLink: (entityId, externalSystem) =>
-        Effect.gen(function* () {
-          yield* db
-            .delete(externalLinksTable)
-            .where(
-              and(
-                eq(externalLinksTable.entityId, entityId),
-                eq(externalLinksTable.externalSystem, externalSystem),
-              ),
-            );
-        }),
-
-      getExternalLinksForEntities: (entityType, entityIds) =>
-        Effect.gen(function* () {
-          const links = yield* db
-            .select()
-            .from(externalLinksTable)
-            .where(
-              and(
-                eq(externalLinksTable.entityType, entityType),
-                inArray(externalLinksTable.entityId, entityIds),
-              ),
-            );
-
-          return pipe(
-            links,
-            Array.groupBy((link) => link.entityId),
-            Record.map(
-              Array.map((link) => ({
-                entityId: link.entityId,
-                entityType: link.entityType,
-                externalSystem: link.externalSystem,
-                externalId: link.externalId,
-                orgId: link.orgId,
-                userId: link.userId,
-                createdAt: link.createdAt,
-                updatedAt: link.updatedAt,
-              })),
-            ),
-          );
-        }),
-
-      createExternalLinks: (links) =>
-        Effect.gen(function* () {
-          const now = new Date();
-          yield* db.insert(externalLinksTable).values(
-            links.map((link) => ({
-              ...link,
-              createdAt: now,
-              updatedAt: now,
-            })),
-          );
         }),
     });
   }),
 );
 ```
 
-## Why Only Postgres Implementation?
+## Key Features
 
-The ExternalLinkManager only needs a Postgres implementation because:
+### **Soft Deletion Support**
 
-1. **External links are stored in the main database** - They represent relationships between OpenFaith entities and external ChMS systems
-2. **Server-side only access** - External links are only accessed during async task execution on the server
-3. **No client-side need** - Client-side mutators don't need to know about external links; they just update local data
-4. **Simplifies architecture** - Removes unnecessary abstraction layer
+All delete operations use soft deletion (`deletedAt` timestamp) rather than hard deletion, preserving audit trails and enabling recovery.
+
+### **Sync State Management**
+
+The service provides comprehensive sync state tracking:
+
+- `markSyncInProgress` / `markSyncCompleted` for individual links
+- `markMultipleSyncInProgress` / `markMultipleSyncCompleted` for bulk operations
+- `syncing` boolean flag to prevent concurrent sync operations
+
+### **Bulk Operations**
+
+Optimized bulk operations for performance:
+
+- `createExternalLinks` for batch creation
+- `getExternalLinksForEntities` for fetching multiple entity links
+- Bulk sync state management with unbounded concurrency
+
+### **Error Handling**
+
+Comprehensive error types for common scenarios:
+
+- `ExternalLinkNotFoundError` for missing entities
+- `ExternalLinkConflictError` for duplicate external IDs
+- Proper Effect error propagation for retry logic
+
+## Database Schema Integration
+
+The service integrates with the `externalLinksTable` from `@openfaith/db` which includes:
+
+- Entity identification (`entityId`, `entityType`)
+- External system mapping (`adapter`, `externalId`)
+- Organization scoping (`orgId`)
+- Sync state tracking (`syncing`, `lastProcessedAt`)
+- Audit fields (`createdAt`, `updatedAt`, `deletedAt`)
+- Tagged union support (`_tag: 'externalLink'`)
 
 ## Usage Patterns
 
-### **In Async Task Execution (Server-Side)**
+### **In Temporal Workflows (Server-Side)**
 
 ```typescript
-// Used during async task execution after Zero transaction commits
-asyncTasks.push(async () => {
-  await Effect.runPromise(
+// Used in Temporal workflows for durable sync operations
+export const syncEntityToExternalSystems = async (
+  entityType: string,
+  entityId: string,
+  operation: "create" | "update" | "delete",
+) => {
+  return await Effect.runPromise(
     Effect.gen(function* () {
       const externalLinkManager = yield* ExternalLinkManager;
       const syncOrchestrator = yield* SyncOrchestrator;
 
       // Get external links for the entity
       const links = yield* externalLinkManager.getExternalLinksForEntity(
-        "person",
-        "person-123",
+        entityType,
+        entityId,
+      );
+
+      // Mark all links as syncing
+      yield* externalLinkManager.markMultipleSyncInProgress(
+        links.map((link) => ({
+          orgId: link.orgId,
+          adapter: link.adapter,
+          externalId: link.externalId,
+        })),
       );
 
       // Sync to each external system
       yield* Effect.forEach(links, (link) =>
-        syncOrchestrator.syncToExternalSystem(link, entityData, "update"),
+        syncOrchestrator.syncToExternalSystem(link, entityData, operation),
+      );
+
+      // Mark all links as completed
+      yield* externalLinkManager.markMultipleSyncCompleted(
+        links.map((link) => ({
+          orgId: link.orgId,
+          adapter: link.adapter,
+          externalId: link.externalId,
+        })),
       );
     }).pipe(
       Effect.provide(ExternalLinkManagerLive),
       Effect.provide(SyncOrchestratorLive),
     ),
   );
-});
+};
 ```
 
-### **In SyncOrchestrator Service**
+### **In Adapter Services**
 
 ```typescript
-export const SyncOrchestratorLive = Layer.effect(
-  SyncOrchestrator,
+// Used by adapters to create/update external links during sync
+export const PcoAdapterLive = Layer.effect(
+  PcoAdapter,
   Effect.gen(function* () {
     const externalLinkManager = yield* ExternalLinkManager;
+    const pcoClient = yield* PcoClient;
 
-    return SyncOrchestrator.of({
-      pushToExternalSystems: (entityType, entityData, operation) =>
+    return PcoAdapter.of({
+      syncPersonFromPco: (pcoPersonId: string, orgId: string) =>
         Effect.gen(function* () {
-          // Get all external links for this entity
-          const links = yield* externalLinkManager.getExternalLinksForEntity(
-            entityType,
-            (entityData as any).id,
-          );
+          // Fetch person data from PCO
+          const pcoPerson = yield* pcoClient.getPerson(pcoPersonId);
 
-          // Sync to each external system
-          return yield* Effect.forEach(links, (link) =>
-            syncToSpecificSystem(link, entityData, operation),
-          );
+          // Check if external link exists
+          const existingLink =
+            yield* externalLinkManager.findEntityByExternalId(
+              "pco",
+              pcoPersonId,
+              orgId,
+            );
+
+          if (existingLink) {
+            // Update existing person
+            yield* updatePersonInOpenFaith(existingLink.entityId, pcoPerson);
+          } else {
+            // Create new person and external link
+            const newPersonId = yield* createPersonInOpenFaith(pcoPerson);
+            yield* externalLinkManager.createExternalLink({
+              entityId: newPersonId,
+              entityType: "person",
+              adapter: "pco",
+              externalId: pcoPersonId,
+              orgId,
+              lastProcessedAt: new Date(),
+              syncing: false,
+            });
+          }
         }),
     });
   }),
 );
 ```
 
+### **Bulk Operations for Performance**
+
+```typescript
+// Efficient bulk sync operations
+export const bulkSyncEntities = (
+  entityType: string,
+  entityIds: string[]
+) =>
+  Effect.gen(function* () {
+    const externalLinkManager = yield* ExternalLinkManager
+
+    // Get all external links for multiple entities at once
+    const linksByEntity = yield* externalLinkManager.getExternalLinksForEntities(
+      entityType,
+      entityIds
+    )
+
+    // Process each entity's links
+    yield* Effect.forEach(
+      Object.entries(linksByEntity),
+      ([entityId, links]) =>
+        Effect.gen(function* () {
+          // Mark all links for this entity as syncing
+          yield* externalLinkManager.markMultipleSyncInProgress(
+            links.map(link => ({
+              orgId: link.orgId,
+              adapter: link.adapter,
+              externalId: link.externalId,
+            }))
+          )
+
+          // Perform sync operations...
+
+          // Mark completed
+          yield* externalLinkManager.markMultipleSyncCompleted(
+            links.map(link => ({
+              orgId: link.orgId,
+              adapter: link.adapter,
+              externalId: link.externalId,
+            }))
+          )
+        }),
+      { concurrency: 5 } // Limit concurrent entity processing
+    )
+  })
+
 ## Error Handling
 
-The service should handle common error scenarios:
+The service implements comprehensive error handling:
 
-- **Entity not found**: Return empty array for `getExternalLinksForEntity`
-- **Duplicate external links**: Handle unique constraint violations gracefully
-- **Database connection issues**: Propagate as Effect errors for retry logic
-- **Invalid entity types**: Validate entity types against known CDM entities
+- **Entity not found**: Returns `null` for `findEntityByExternalId`, empty arrays for entity queries
+- **Duplicate external links**: Uses database constraints and tagged errors (`ExternalLinkConflictError`)
+- **Database connection issues**: Propagates as Effect errors for Temporal retry logic
+- **Soft deletion**: All queries filter out deleted links using `isNull(deletedAt)`
+- **Concurrent sync protection**: Uses `syncing` flag to prevent race conditions
 
-## Testing Strategy
+## Performance Considerations
 
-1. **Unit Tests**: Test each method with mock data
-2. **Integration Tests**: Test Postgres implementation with real database
-3. **Error Scenarios**: Test database failures, constraint violations
-4. **Performance Tests**: Test bulk operations with large datasets
-5. **Async Task Integration**: Test usage within async task execution
+### **Bulk Operations**
+- `createExternalLinks` for batch inserts
+- `getExternalLinksForEntities` with `Array.groupBy` for efficient grouping
+- Bulk sync state management with `{ concurrency: 'unbounded' }`
 
-## Next Steps
+### **Database Optimization**
+- Proper indexing on `(orgId, adapter, externalId)` for fast lookups
+- Soft deletion with `deletedAt` index for active link queries
+- `limit(1)` on single entity lookups
 
-1. Locate the external links table schema in `packages/db/schema/`
-2. Implement the Postgres version for server-side usage
-3. Add comprehensive error handling and validation
-4. Create integration tests for the Postgres implementation
-5. Test integration with SyncOrchestrator service
-6. Test usage within async task execution pattern
+### **Effect Patterns**
+- Uses `Option.getOrNull` for clean null handling
+- `pipe` operations for functional composition
+- Proper Effect error propagation for retry mechanisms
 
-This service provides the foundation for routing reverse sync operations to the correct external systems based on entity relationships, and only needs to run on the server side during async task execution.
+## Integration Points
+
+### **Database Layer**
+- Integrates with `@openfaith/db` schema definitions
+- Uses Drizzle ORM with Effect integration
+- Supports tagged union types with `_tag: 'externalLink'`
+
+### **Adapter Layer**
+- Provides service interface in `@openfaith/adapter-core`
+- Implements Postgres layer in `@backend/server/live`
+- Supports dependency injection through Effect's Layer system
+
+### **Temporal Workflows**
+- Enables durable sync operations with state tracking
+- Supports bulk operations for performance
+- Provides proper error handling for workflow retry logic
+
+## Status
+
+✅ **Service Interface Defined** - Complete with comprehensive CRUD operations and sync state management
+✅ **Postgres Implementation** - Full implementation with soft deletion, bulk operations, and error handling
+✅ **Error Types** - Tagged errors for common failure scenarios
+✅ **Performance Optimizations** - Bulk operations and proper database patterns
+✅ **Effect Integration** - Proper Effect patterns throughout
+
+This service provides the foundation for routing reverse sync operations to the correct external systems based on entity relationships, with robust state management and performance optimizations for production use.
+```

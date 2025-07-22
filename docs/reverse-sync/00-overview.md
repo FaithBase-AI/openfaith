@@ -26,7 +26,7 @@ OpenFaith already has **90% of the infrastructure** needed for reverse sync:
 
 ### **Phase 1: Core Services** (High Priority)
 
-- [ ] **ExternalLinkManager Service** - Abstract data access layer for external links
+- [x] **ExternalLinkManager Service** - Abstract data access layer for external links
   - Postgres implementation (direct DB access for server-side operations)
 - [ ] **External Sync Functions** - Main reverse sync orchestration
   - Auto-discovery of transformers and API clients

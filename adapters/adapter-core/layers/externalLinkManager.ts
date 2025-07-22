@@ -44,17 +44,15 @@ export class ExternalLinkManager extends Context.Tag(
     ) => Effect.Effect<void, unknown>
 
     readonly updateExternalLink: (
-      orgId: string,
       adapter: string,
       externalId: string,
       updates: Partial<Pick<ExternalLink, 'syncing' | 'lastProcessedAt' | 'updatedAt'>>,
     ) => Effect.Effect<void, unknown>
 
     readonly deleteExternalLink: (
-      orgId: string,
       adapter: string,
       externalId: string,
-    ) => Effect.Effect<void, unknown>
+    ) => Effect.Effect<void, unknown, any>
 
     readonly createExternalLinks: (
       links: Array<Omit<NewExternalLink, 'createdAt' | 'updatedAt' | '_tag'>>,
@@ -62,24 +60,22 @@ export class ExternalLinkManager extends Context.Tag(
 
     // Sync state management
     readonly markSyncInProgress: (
-      orgId: string,
       adapter: string,
       externalId: string,
     ) => Effect.Effect<void, unknown>
 
     readonly markSyncCompleted: (
-      orgId: string,
       adapter: string,
       externalId: string,
     ) => Effect.Effect<void, unknown>
 
     // Bulk sync state operations
     readonly markMultipleSyncInProgress: (
-      links: Array<{ orgId: string; adapter: string; externalId: string }>,
+      links: Array<{ adapter: string; externalId: string }>,
     ) => Effect.Effect<void, unknown>
 
     readonly markMultipleSyncCompleted: (
-      links: Array<{ orgId: string; adapter: string; externalId: string }>,
+      links: Array<{ adapter: string; externalId: string }>,
     ) => Effect.Effect<void, unknown>
   }
 >() {}

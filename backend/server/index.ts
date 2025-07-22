@@ -1,5 +1,6 @@
 export * from '@openfaith/server/handlers/adapterHandler'
 export * from '@openfaith/server/handlers/coreHandler'
+export * from '@openfaith/server/live/externalLinkManagerLive'
 export * from '@openfaith/server/live/frontendServerLive'
 export * from '@openfaith/server/live/pcoApiLive'
 export * from '@openfaith/server/live/serverLive'
