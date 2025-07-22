@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@openfaith/bun-test/*": ["./*"]
+    }
+  },
+  "extends": "@openfaith/tsconfig/base.json",
+  "include": ["."]
+}

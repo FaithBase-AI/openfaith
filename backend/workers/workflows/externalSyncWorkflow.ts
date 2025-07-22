@@ -44,7 +44,7 @@ export const ExternalSyncWorkflowLayer = ExternalSyncWorkflow.toLayer(
     // Group operations by entity name for efficient processing
     const entityGroups: Record<string, Array<{ mutation: any; op: any }>> = {}
 
-    for (const mutation of crudMutations as any[]) {
+    for (const mutation of crudMutations as Array<any>) {
       const [crudArg] = mutation.args
       for (const op of crudArg.ops) {
         const entityName = op.tableName

@@ -3,19 +3,19 @@
     "@emnapi/core": "^1.4.3",
     "@emnapi/runtime": "^1.4.3",
     "@emnapi/wasi-threads": "^1.0.2",
-    "@testcontainers/postgresql": "11.3.2",
     "@tybys/wasm-util": "^0.9.0",
     "tailwind-merge": "3.3.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.6",
-    "@turbo/gen": "2.5.4",
+    "@testcontainers/postgresql": "11.3.2",
+    "@turbo/gen": "2.5.5",
     "@types/bun": "latest",
-    "turbo": "2.5.4",
+    "turbo": "2.5.5",
     "typescript": "5.8.3"
   },
   "name": "openfaith",
-  "packageManager": "bun@1.2.13",
+  "packageManager": "bun@1.2.19",
   "private": true,
   "resolutions": {
     "@effect/cluster": "0.42.0",
@@ -40,7 +40,7 @@
     "db:migrate": "bun run --filter '@openfaith/db' db:migrate",
     "dev": "turbo run infra dev --continue",
     "format": "turbo run format --ui=stream --continue",
-    "format:fix": "turbo run format --ui=stream --continue -- --write",
+    "format:fix": "turbo run format --ui=stream --continue -- --write --unsafe",
     "infra": "turbo run infra --continue",
     "lint": "turbo run lint --continue  --ui=stream -- --cache --cache-location .cache/.eslintcache",
     "lint:fix": "turbo run lint --continue --ui=stream -- --fix --cache --cache-location .cache/.eslintcache",
