@@ -107,7 +107,7 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
 })
 
 export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
-  data: ReadonlyArray<PcoBaseEntity>,
+  data: ReadonlyArray<readonly [entityId: string, entity: PcoBaseEntity]>,
 ) {
   const orgId = yield* TokenKey
   const db = yield* PgDrizzle.PgDrizzle
@@ -115,7 +115,7 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
   const entityTypeOpt = pipe(
     data[0],
     Option.fromNullable,
-    Option.map((x) => x.type),
+    Option.map(([, x]) => x.type),
   )
 
   if (entityTypeOpt._tag === 'None') {
@@ -141,7 +141,7 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
   const entityValues = yield* Effect.all(
     pipe(
       data,
-      Array.map((entity) =>
+      Array.map(([id, entity]) =>
         Schema.decodeUnknown(transformer as unknown as typeof pcoPersonTransformer, {
           errors: 'all',
         })(entity.attributes).pipe(
@@ -158,7 +158,7 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
                     onSome: (x) => new Date(x),
                   }),
                 ),
-                id: entity.id,
+                id,
                 inactivatedAt: pipe(
                   inactivatedAt,
                   Option.fromNullable,
@@ -296,6 +296,7 @@ export const saveDataE = Effect.fn('saveDataE')(function* (
         pipe(
           data.data,
           Array.findFirst((y) => y.id === x.externalId),
+          Option.map((y) => [x.entityId, y] as const),
         ),
       ),
     ),
@@ -347,6 +348,7 @@ export const saveIncludesE = Effect.fn('saveIncludesE')(function* <
                 pipe(
                   x,
                   Array.findFirst((z) => z.id === y.externalId),
+                  Option.map((z) => [y.entityId, z] as const),
                 ),
               ),
             ),
