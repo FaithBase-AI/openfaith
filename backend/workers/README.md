@@ -24,24 +24,28 @@ The workers package implements a **continuous workflow runner** pattern using Ef
 ## Development Workflow
 
 ### 1. Start Infrastructure
+
 ```bash
 # From project root - starts database and observability
 bun run infra
 ```
 
 ### 2. Start Shard Manager
+
 ```bash
 # From project root - starts cluster shard manager
 cd backend/shard-manager && bun run dev
 ```
 
 ### 3. Start Workflow Runner
+
 ```bash
 # From project root - starts workflow engine with HTTP API
 cd backend/workers && bun run dev
 ```
 
 The workflow runner will:
+
 - Start the Effect Cluster workflow engine
 - Launch HTTP API server on `http://localhost:3001`
 - Register all workflows with the cluster
@@ -67,23 +71,24 @@ Other services can use the `WorkflowClient` service to trigger workflows:
 ```typescript
 // In your service code
 const program = Effect.gen(function* () {
-  const workflowClient = yield* WorkflowClient
+  const workflowClient = yield* WorkflowClient;
 
   // Trigger PCO sync workflow
   const result = yield* workflowClient.workflows.PcoSyncWorkflow({
-    payload: { tokenKey: 'your-token-key' }
-  })
+    payload: { tokenKey: "your-token-key" },
+  });
 
-  return result
+  return result;
 }).pipe(
   Effect.provide(WorkflowClient.Default),
   Effect.provide(FetchHttpClient.layer)
-)
+);
 ```
 
 ## Available Workflows
 
 ### PcoSyncWorkflow
+
 - **Purpose**: Synchronizes data from Planning Center Online
 - **Payload**: `{ tokenKey: string }`
 - **HTTP Endpoint**: `POST /workflows/PcoSyncWorkflow`
@@ -96,59 +101,69 @@ The main API triggers workflows using the `WorkflowClient` service:
 ```typescript
 // In coreRouter.ts
 const program = Effect.gen(function* () {
-  const workflowClient = yield* WorkflowClient
+  const workflowClient = yield* WorkflowClient;
 
   const result = yield* workflowClient.workflows.PcoSyncWorkflow({
-    payload: { tokenKey: 'your-token-key' }
-  })
+    payload: { tokenKey: "your-token-key" },
+  });
 
-  return result
+  return result;
 }).pipe(
   Effect.provide(WorkflowClient.Default),
   Effect.provide(FetchHttpClient.layer)
-)
+);
 ```
 
 ## Modular Architecture
 
 ### WorkflowApi Definition
+
 ```typescript
 // api/workflowApi.ts
-export class WorkflowApi extends HttpApi.make('workflow-api')
-  .add(WorkflowProxy.toHttpApiGroup('workflows', workflows))
-{}
+export class WorkflowApi extends HttpApi.make("workflow-api").add(
+  WorkflowProxy.toHttpApiGroup("workflows", workflows)
+) {}
 ```
 
 ### WorkflowClient Service
+
 ```typescript
 // api/workflowClient.ts
-export class WorkflowClient extends Effect.Service<WorkflowClient>()('WorkflowClient', {
-  effect: HttpApiClient.make(WorkflowApi, {
-    baseUrl: 'http://localhost:3001'
-  })
-}) {}
+export class WorkflowClient extends Effect.Service<WorkflowClient>()(
+  "WorkflowClient",
+  {
+    dependencies: [FetchHttpClient.layer],
+    effect: HttpApiClient.make(WorkflowApi, {
+      baseUrl: "http://localhost:3001",
+    }),
+  }
+) {}
 ```
 
 ### Runner Implementation
+
 ```typescript
 // runner.ts
 const WorkflowApiLive = HttpApiBuilder.api(WorkflowApi).pipe(
-  Layer.provide(WorkflowProxyServer.layerHttpApi(WorkflowApi, 'workflows', workflows)),
+  Layer.provide(
+    WorkflowProxyServer.layerHttpApi(WorkflowApi, "workflows", workflows)
+  ),
   Layer.provide(WorkflowEngineLive),
   Layer.provide(RunnerLive)
-)
+);
 
 const apiProgram = HttpApiBuilder.serve().pipe(
   Layer.provide(WorkflowApiLive),
   HttpServer.withLogAddress,
   Layer.provide(HttpServerLive),
-  Layer.launch,
-)
+  Layer.launch
+);
 ```
 
 ## Troubleshooting
 
 ### Socket Errors
+
 ```
 Error: Failed to listen at localhost
 errno: 48, code: "EADDRINUSE"
@@ -157,16 +172,19 @@ errno: 48, code: "EADDRINUSE"
 **Solution**: Make sure the shard manager is running first. The workflow runner needs the shard manager to coordinate cluster operations.
 
 ### Port Conflicts
+
 - Workflow HTTP API: `3001`
 - Shard Manager: Dynamic port assignment
 - Database: `5430`
 
 ### Database Connection Issues
+
 - Ensure PostgreSQL is running: `bun run infra`
 - Check database credentials in shared environment
 - Verify cluster tables are created (automatic on first run)
 
 ### WorkflowClient Connection Issues
+
 - Verify workflow runner is running on `http://localhost:3001`
 - Check that `WorkflowClient.Default` and `FetchHttpClient.layer` are provided
 - Ensure the WorkflowApi is properly exposed in the runner
@@ -174,8 +192,9 @@ errno: 48, code: "EADDRINUSE"
 ## Environment Variables
 
 Uses shared environment from `@openfaith/shared`:
+
 - `DB_HOST_PRIMARY` - Database host
-- `DB_PORT` - Database port  
+- `DB_PORT` - Database port
 - `DB_USERNAME` - Database username
 - `DB_PASSWORD` - Database password
 - `DB_NAME` - Database name
@@ -190,9 +209,10 @@ Uses shared environment from `@openfaith/shared`:
 ## Production Deployment
 
 For production:
+
 1. Set `NODE_ENV=production` for JSON logging
 2. Configure proper database connection strings
 3. Set up load balancing for HTTP API endpoints
 4. Monitor shard manager health
 5. Scale runners horizontally as needed
-6. Configure WorkflowClient base URLs for different environments 
+6. Configure WorkflowClient base URLs for different environments

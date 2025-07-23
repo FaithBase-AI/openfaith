@@ -1,0 +1,1 @@
+ALTER TABLE "openfaith_people" ADD COLUMN "firstName" text;

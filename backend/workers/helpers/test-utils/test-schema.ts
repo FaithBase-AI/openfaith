@@ -40,6 +40,7 @@ export const createTestTables = Effect.gen(function* () {
       "birthdate" date,
       "customFields" jsonb DEFAULT '[]',
       "externalIds" jsonb DEFAULT '[]',
+      "firstName" text,
       "gender" text,
       "inactivatedAt" timestamp,
       "inactivatedBy" text,

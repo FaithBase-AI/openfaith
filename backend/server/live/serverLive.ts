@@ -12,12 +12,14 @@ import { AdapterHandlerLive } from '@openfaith/server/handlers/adapterHandler'
 import { CoreHandlerLive } from '@openfaith/server/handlers/coreHandler'
 import { ZeroHandlerLive } from '@openfaith/server/handlers/zeroMutatorsHandler'
 import { SessionRpcMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
+import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
 import { Layer } from 'effect'
 
 // Create the handlers layer with basic dependencies
 const HandlersLayer = Layer.mergeAll(CoreHandlerLive, AdapterHandlerLive, ZeroHandlerLive).pipe(
   Layer.provide(DBLive),
   Layer.provide(FetchHttpClient.layer),
+  Layer.provide(WorkflowClient.Default),
 )
 
 // Create the Core RPC route using HttpLayerRouter

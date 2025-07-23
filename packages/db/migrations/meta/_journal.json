@@ -105,6 +105,13 @@
       "tag": "0014_ordinary_black_widow",
       "version": "7",
       "when": 1753179931084
+    },
+    {
+      "breakpoints": true,
+      "idx": 15,
+      "tag": "0015_thin_excalibur",
+      "version": "7",
+      "when": 1753269119186
     }
   ],
   "version": "7"

@@ -24,6 +24,7 @@ export const peopleTable = pgTable(
       .$type<ReadonlyArray<{ id: string; type: string }>>()
       .notNull()
       .default([]),
+    firstName: d.text(),
     gender: d.text({ enum: ['male', 'female'] }),
     id: d.text().primaryKey(),
     inactivatedAt: d.timestamp(),
