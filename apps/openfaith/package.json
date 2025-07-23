@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@effect-rx/rx-react": "0.38.0",
+    "@effect-rx/rx-react": "0.40.0",
     "@effect/platform": "catalog:",
     "@effect/rpc": "catalog:",
     "@openfaith/auth": "workspace:*",
