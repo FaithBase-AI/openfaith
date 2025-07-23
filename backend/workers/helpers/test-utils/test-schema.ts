@@ -1,9 +1,9 @@
-import { SqlClient } from '@effect/sql'
-import { Effect } from 'effect'
+import { SqlClient } from "@effect/sql";
+import { Effect } from "effect";
 
 // Helper to create all necessary tables for testing based on real schema
 export const createTestTables = Effect.gen(function* () {
-  const sql = yield* SqlClient.SqlClient
+  const sql = yield* SqlClient.SqlClient;
 
   // Create tables in dependency order based on real database structure
   yield* sql`
@@ -18,7 +18,7 @@ export const createTestTables = Effect.gen(function* () {
       "createdBy" text,
       "updatedBy" text
     )
-  `
+  `;
 
   yield* sql`
     CREATE TABLE IF NOT EXISTS "openfaith_people" (
@@ -47,7 +47,7 @@ export const createTestTables = Effect.gen(function* () {
       "middleName" text,
       "tags" jsonb DEFAULT '"[]"'
     )
-  `
+  `;
 
   yield* sql`
     CREATE TABLE IF NOT EXISTS "openfaith_externalLinks" (
@@ -62,9 +62,10 @@ export const createTestTables = Effect.gen(function* () {
       "lastProcessedAt" timestamp DEFAULT now() NOT NULL,
       "deletedAt" timestamp,
       "deletedBy" text,
+      "syncing" boolean DEFAULT false NOT NULL,
       UNIQUE("orgId", "adapter", "externalId")
     )
-  `
+  `;
 
   yield* sql`
     CREATE TABLE IF NOT EXISTS "openfaith_edges" (
@@ -84,7 +85,7 @@ export const createTestTables = Effect.gen(function* () {
       "metadata" jsonb DEFAULT '"{}"',
       UNIQUE("orgId", "sourceEntityId", "targetEntityId", "relationshipType")
     )
-  `
+  `;
 
   yield* sql`
     CREATE TABLE IF NOT EXISTS "openfaith_folders" (
@@ -103,7 +104,7 @@ export const createTestTables = Effect.gen(function* () {
       "tags" jsonb DEFAULT '"[]"',
       "type" text DEFAULT 'default'
     )
-  `
+  `;
 
   yield* sql`
     CREATE TABLE IF NOT EXISTS "openfaith_addresses" (
@@ -111,22 +112,29 @@ export const createTestTables = Effect.gen(function* () {
       "id" text PRIMARY KEY NOT NULL,
       "orgId" text NOT NULL,
       "createdAt" timestamp DEFAULT now() NOT NULL,
-      "updatedAt" timestamp DEFAULT now() NOT NULL,
+      "updatedAt" timestamp DEFAULT now(),
       "deletedAt" timestamp,
       "deletedBy" text,
       "createdBy" text,
       "updatedBy" text,
+      "inactivatedAt" timestamp,
+      "inactivatedBy" text,
       "city" text,
-      "country" text,
+      "countryCode" text,
+      "countryName" text,
+      "location" text,
+      "primary" boolean DEFAULT false NOT NULL,
+      "state" text,
+      "status" text DEFAULT 'active' NOT NULL,
+      "streetLine1" text,
+      "streetLine2" text,
       "customFields" jsonb DEFAULT '[]',
       "externalIds" jsonb DEFAULT '[]',
-      "state" text,
-      "street" text,
-      "tags" jsonb DEFAULT '"[]"',
-      "type" text DEFAULT 'default',
+      "tags" jsonb DEFAULT '[]',
+      "type" text DEFAULT 'default' NOT NULL,
       "zip" text
     )
-  `
+  `;
 
   yield* sql`
     CREATE TABLE IF NOT EXISTS "openfaith_phoneNumbers" (
@@ -145,7 +153,7 @@ export const createTestTables = Effect.gen(function* () {
       "tags" jsonb DEFAULT '"[]"',
       "type" text DEFAULT 'default'
     )
-  `
+  `;
 
   yield* sql`
     CREATE TABLE IF NOT EXISTS "openfaith_campuses" (
@@ -164,5 +172,5 @@ export const createTestTables = Effect.gen(function* () {
       "tags" jsonb DEFAULT '"[]"',
       "type" text DEFAULT 'default'
     )
-  `
-})
+  `;
+});

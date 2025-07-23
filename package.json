@@ -8,13 +8,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.6",
-    "@effect/vitest": "^0.25.0",
-    "@testcontainers/postgresql": "10.24.2",
+    "@testcontainers/postgresql": "11.3.2",
     "@turbo/gen": "2.5.5",
     "@types/bun": "latest",
     "turbo": "2.5.5",
-    "typescript": "5.8.3",
-    "vitest": "^3.2.4"
+    "typescript": "5.8.3"
   },
   "name": "openfaith",
   "packageManager": "bun@1.2.19",
@@ -46,7 +44,7 @@
     "infra": "turbo run infra --continue",
     "lint": "turbo run lint --continue  --ui=stream -- --cache --cache-location .cache/.eslintcache",
     "lint:fix": "turbo run lint --continue --ui=stream -- --fix --cache --cache-location .cache/.eslintcache",
-    "test": "turbo run test",
+    "test": "TESTCONTAINERS_RYUK_DISABLED=true turbo run test --ui=stream",
     "typecheck": "turbo run typecheck --ui=stream",
     "ui-add": "turbo run ui-add"
   },

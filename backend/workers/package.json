@@ -24,6 +24,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "bun run --watch runner.ts",
     "format": "biome check",
+    "test": "TESTCONTAINERS_RYUK_DISABLED=true bun test",
     "typecheck": "tsc --noEmit"
   },
   "type": "module",
