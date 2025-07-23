@@ -59,7 +59,8 @@
           "fix": "safe",
           "level": "error"
         },
-        "useExhaustiveDependencies": "error"
+        "useExhaustiveDependencies": "error",
+        "useYield": "off"
       },
       "nursery": {
         "useSortedClasses": {

@@ -12,7 +12,6 @@ import * as jose from 'jose'
 
 export const SessionHttpMiddlewareLayer = Layer.effect(
   SessionHttpMiddleware,
-  // biome-ignore lint/correctness/useYield: This is how the layer is defined
   Effect.gen(function* () {
     return Effect.gen(function* () {
       const request = yield* HttpServerRequest.HttpServerRequest
