@@ -2,6 +2,7 @@ import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { adapterDetailsTable, adapterTokensTable } from '@openfaith/db'
 import { AdapterConnectError, AdapterRpc, SessionContext } from '@openfaith/domain'
 import { adaptersApi } from '@openfaith/server/adapters/adaptersApi'
+import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
 import { fromUnixTime } from 'date-fns/fp'
 import { Effect, Option, pipe, Record } from 'effect'
 
@@ -115,6 +116,28 @@ export const AdapterHandlerLive = AdapterRpc.toLayer(
           )
 
           console.log('✅ Adapter connect completed:', adapter)
+
+          // Kick off sync workflow for PCO adapter
+          if (adapterImpl._tag === 'pco') {
+            const workflowClient = yield* WorkflowClient
+            console.log('🚀 Starting PCO sync workflow for org:', orgId)
+
+            const result = yield* workflowClient.workflows
+              .PcoSyncWorkflow({
+                payload: {
+                  tokenKey: orgId,
+                },
+              })
+              .pipe(
+                Effect.catchAll((error) => {
+                  console.error('❌ Failed to start PCO sync workflow:', error)
+                  // Don't fail the adapter connection if workflow fails to start
+                  return Effect.succeed(undefined)
+                }),
+              )
+
+            console.log('✅ PCO sync workflow started:', result)
+          }
 
           return 'success' as const
         }),
