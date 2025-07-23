@@ -19,14 +19,12 @@ export type ExternalLink = {
 }
 
 export type EntityClient = {
-  readonly create?: (params: { body: unknown }) => Effect.Effect<unknown, unknown, never>
+  readonly create?: (params: { payload: unknown }) => Effect.Effect<unknown, unknown, any>
   readonly update?: (params: {
-    body: unknown
+    payload: unknown
     urlParams: { id: string }
-  }) => Effect.Effect<unknown, unknown, never>
-  readonly delete?: (params: {
-    urlParams: { id: string }
-  }) => Effect.Effect<unknown, unknown, never>
+  }) => Effect.Effect<unknown, unknown, any>
+  readonly delete?: (params: { urlParams: { id: string } }) => Effect.Effect<unknown, unknown, any>
 }
 
 /**
@@ -98,7 +96,7 @@ export const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
       if (!entityClient.create) {
         return yield* Effect.fail(new Error(`Create not supported for ${entityName}`))
       }
-      return yield* entityClient.create({ body: encodedData })
+      return yield* entityClient.create({ payload: encodedData })
 
     case 'update':
     case 'upsert':
@@ -106,7 +104,7 @@ export const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
         return yield* Effect.fail(new Error(`Update not supported for ${entityName}`))
       }
       return yield* entityClient.update({
-        body: encodedData,
+        payload: encodedData,
         urlParams: { id: externalId },
       })
 

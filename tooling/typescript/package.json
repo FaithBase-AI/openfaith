@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "@effect/language-service": "0.26.0"
+    "@effect/language-service": "0.28.3"
   },
   "files": [
     "*.json"

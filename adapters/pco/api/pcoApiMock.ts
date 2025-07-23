@@ -9,32 +9,40 @@ export const makeMockPcoHttpClient = Effect.gen(function* () {
   return {
     _tag: 'PcoHttpClient' as const,
     Address: {
-      create: () => Effect.succeed({ attributes: {}, id: 'new_addr_123' }),
+      create: ({ payload }: { payload: unknown }) =>
+        Effect.succeed({ attributes: {}, id: 'new_addr_123' }),
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: () => Effect.succeed({ attributes: {}, id: 'addr_123' }),
+      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
+        Effect.succeed({ attributes: {}, id: urlParams.id }),
     },
     Campus: {
-      create: () => Effect.succeed({ attributes: {}, id: 'new_campus_123' }),
+      create: ({ payload }: { payload: unknown }) =>
+        Effect.succeed({ attributes: {}, id: 'new_campus_123' }),
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: () => Effect.succeed({ attributes: {}, id: 'campus_123' }),
+      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
+        Effect.succeed({ attributes: {}, id: urlParams.id }),
     },
     Person: {
-      create: () => Effect.succeed({ attributes: {}, id: 'new_pco_123' }),
+      create: ({ payload }: { payload: unknown }) =>
+        Effect.succeed({ attributes: {}, id: 'new_pco_123' }),
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: () => Effect.succeed({ attributes: {}, id: 'pco_123' }),
+      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
+        Effect.succeed({ attributes: {}, id: urlParams.id }),
     },
     PhoneNumber: {
-      create: () => Effect.succeed({ attributes: {}, id: 'new_phone_123' }),
+      create: ({ payload }: { payload: unknown }) =>
+        Effect.succeed({ attributes: {}, id: 'new_phone_123' }),
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: () => Effect.succeed({ attributes: {}, id: 'phone_123' }),
+      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
+        Effect.succeed({ attributes: {}, id: urlParams.id }),
     },
     token: 'test-token',
   } as unknown as PcoHttpClient
@@ -47,32 +55,39 @@ export const makeMockPcoHttpClientWithErrors = Effect.gen(function* () {
   return {
     _tag: 'PcoHttpClient' as const,
     Address: {
-      create: () => Effect.succeed({ attributes: {}, id: 'new_addr_123' }),
+      create: ({ payload }: { payload: unknown }) =>
+        Effect.succeed({ attributes: {}, id: 'new_addr_123' }),
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: () => Effect.succeed({ attributes: {}, id: 'addr_123' }),
+      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
+        Effect.succeed({ attributes: {}, id: urlParams.id }),
     },
     Campus: {
-      create: () => Effect.succeed({ attributes: {}, id: 'new_campus_123' }),
+      create: ({ payload }: { payload: unknown }) =>
+        Effect.succeed({ attributes: {}, id: 'new_campus_123' }),
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: () => Effect.succeed({ attributes: {}, id: 'campus_123' }),
+      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
+        Effect.succeed({ attributes: {}, id: urlParams.id }),
     },
     Person: {
-      create: () => Effect.fail(new Error('PCO API error')),
+      create: ({ payload }: { payload: unknown }) => Effect.fail(new Error('PCO API error')),
       delete: () => Effect.fail(new Error('PCO API error')),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: () => Effect.fail(new Error('PCO API error')),
+      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
+        Effect.fail(new Error('PCO API error')),
     },
     PhoneNumber: {
-      create: () => Effect.succeed({ attributes: {}, id: 'new_phone_123' }),
+      create: ({ payload }: { payload: unknown }) =>
+        Effect.succeed({ attributes: {}, id: 'new_phone_123' }),
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: () => Effect.succeed({ attributes: {}, id: 'phone_123' }),
+      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
+        Effect.succeed({ attributes: {}, id: urlParams.id }),
     },
     token: 'test-token',
   } as unknown as PcoHttpClient
