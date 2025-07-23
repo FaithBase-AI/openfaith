@@ -3,10 +3,11 @@ import { ExternalLinkManager } from '@openfaith/adapter-core/layers/externalLink
 import { TokenKey } from '@openfaith/adapter-core/server'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
-import { pcoPersonTransformer } from '@openfaith/pco/modules/people/pcoPersonSchema'
 import { ExternalLinkManagerLive } from '@openfaith/server/live/externalLinkManagerLive'
 import { PcoApiLayer } from '@openfaith/server/live/pcoApiLive'
+import { singularize } from '@openfaith/shared/string'
 import { Effect, pipe, Record, Schema } from 'effect'
+import { ofLookup } from '../helpers/ofLookup'
 
 // Define the external sync entity error
 class ExternalSyncEntityError extends Schema.TaggedError<ExternalSyncEntityError>(
@@ -64,23 +65,31 @@ type EntityClient = {
 /**
  * Converts table name to entity name (people -> Person, addresses -> Address)
  */
-const mkEntityNameE = Effect.fn('mkEntityNameE')(function* (tableName: string) {
+const mkEntityName = (tableName: string): string => {
+  // Convert snake_case to PascalCase, then singularize
   const pascalName = tableName
     .replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
     .replace(/^[a-z]/, (letter) => letter.toUpperCase())
-  return pipe(pascalName, (name) => {
-    // Handle special cases for pluralization
-    if (name.endsWith('ies')) {
-      return name.slice(0, -3) + 'y' // companies -> Company
-    }
-    if (name.endsWith('ses')) {
-      return name.slice(0, -2) // addresses -> Address
-    }
-    if (name.endsWith('s')) {
-      return name.slice(0, -1) // people -> Person
-    }
-    return name
+
+  return singularize(pascalName)
+}
+/**
+ * Transforms entity data using appropriate transformer
+ */
+const transformEntityDataE = Effect.fn('transformEntityDataE')(function* (
+  entityName: string,
+  data: unknown,
+) {
+  const entityConfig = ofLookup[entityName as keyof typeof ofLookup]
+
+  if (entityConfig?.transformer) {
+    return yield* Schema.encode(entityConfig.transformer as any)(data as any)
+  }
+
+  yield* Effect.logWarning('No transformer found for entity - using raw data', {
+    entityName,
   })
+  return data
 })
 
 /**
@@ -104,24 +113,6 @@ const getExternalLinksE = Effect.fn('getExternalLinksE')(function* (
   const entityType = tableName.slice(0, -1) // people -> person
 
   return yield* externalLinkManager.getExternalLinksForEntity(entityType, entityId)
-})
-
-/**
- * Transforms entity data using appropriate transformer
- */
-const transformEntityDataE = Effect.fn('transformEntityDataE')(function* (
-  entityName: string,
-  data: unknown,
-) {
-  switch (entityName) {
-    case 'Person':
-      return yield* Schema.encode(pcoPersonTransformer)(data as any)
-    default:
-      yield* Effect.logWarning('No transformer found for entity - using raw data', {
-        entityName,
-      })
-      return data
-  }
 })
 
 /**
@@ -253,7 +244,7 @@ const syncToExternalSystemsE = Effect.fn('syncToExternalSystemsE')(function* (
  * Processes a single CRUD operation
  */
 const processCrudOperationE = Effect.fn('processCrudOperationE')(function* (op: CrudOperation) {
-  const entityName = yield* mkEntityNameE(op.tableName)
+  const entityName = mkEntityName(op.tableName)
   const entityId = op.primaryKey.id as string
 
   yield* Effect.log('Processing CRUD operation', {
