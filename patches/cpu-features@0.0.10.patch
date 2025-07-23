@@ -1,0 +1,23 @@
+diff --git a/node_modules/cpu-features/disabled.js b/disabled.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..4d2d18c14a2f3334ce0227d2b9eabad3cb28e41c
+--- /dev/null
++++ b/disabled.js
+@@ -0,0 +1 @@
++throw new Error(`cpu-features not available on Bun`)
+diff --git a/package.json b/package.json
+index 6cc12c3c7703ea17995be61c5accc331e7e35014..da299bcca20a1a0654f6910c19d613ee776be478 100644
+--- a/package.json
++++ b/package.json
+@@ -3,10 +3,8 @@
+   "version": "0.0.10",
+   "author": "Brian White <mscdex@mscdex.net>",
+   "description": "A simple binding to Google's cpu_features library for obtaining information about installed CPU(s)",
+-  "main": "./lib/index",
++  "main": "./disabled.js",
+   "dependencies": {
+-    "buildcheck": "~0.0.6",
+-    "nan": "^2.19.0"
+   },
+   "devDependencies": {
+     "@mscdex/eslint-config": "^1.1.0",

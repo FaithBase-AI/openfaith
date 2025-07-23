@@ -8,11 +8,13 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.6",
+    "@effect/vitest": "^0.25.0",
     "@testcontainers/postgresql": "11.3.2",
     "@turbo/gen": "2.5.5",
     "@types/bun": "latest",
     "turbo": "2.5.5",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "vitest": "^3.2.4"
   },
   "name": "openfaith",
   "packageManager": "bun@1.2.19",
