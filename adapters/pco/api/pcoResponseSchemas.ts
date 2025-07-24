@@ -6,45 +6,6 @@ import { Option, pipe, Schema } from 'effect'
  * A GET request for a collection (e.g., `/people/v2/people`) returns a
  * comprehensive object with pagination and metadata following JSON:API spec.
  */
-// export function mkPcoCollectionSchema<A>(resourceSchema: Schema.Schema<A>): Schema.Struct<{
-//   data: Schema.Array$<Schema.Schema<A, A, never>>
-//   links: Schema.Struct<{
-//     next: Schema.optional<typeof Schema.String>
-//     self: typeof Schema.String
-//   }>
-//   included: Schema.Array$<typeof Schema.Void>
-//   meta: Schema.Struct<{
-//     can_include: Schema.optional<Schema.Array$<typeof Schema.String>>
-//     can_order_by: Schema.optional<Schema.Array$<typeof Schema.String>>
-//     can_query_by: Schema.optional<Schema.Array$<typeof Schema.String>>
-//     count: typeof Schema.Number
-//     next: Schema.optional<Schema.Struct<{ offset: typeof Schema.Number }>>
-//     parent: Schema.optional<Schema.Struct<{ id: typeof Schema.String; type: typeof Schema.String }>>
-//     prev: Schema.optional<Schema.Struct<{ offset: typeof Schema.Number }>>
-//     total_count: typeof Schema.Number
-//   }>
-// }>
-// export function mkPcoCollectionSchema<A, B>(
-//   resourceSchema: Schema.Schema<A>,
-//   entityRegistry: Schema.Schema<B>,
-// ): Schema.Struct<{
-//   data: Schema.Array$<Schema.Schema<A, A, never>>
-//   included: Schema.Array$<Schema.Schema<B, B, never>>
-//   links: Schema.Struct<{
-//     next: Schema.optional<typeof Schema.String>
-//     self: typeof Schema.String
-//   }>
-//   meta: Schema.Struct<{
-//     can_include: Schema.optional<Schema.Array$<typeof Schema.String>>
-//     can_order_by: Schema.optional<Schema.Array$<typeof Schema.String>>
-//     can_query_by: Schema.optional<Schema.Array$<typeof Schema.String>>
-//     count: typeof Schema.Number
-//     next: Schema.optional<Schema.Struct<{ offset: typeof Schema.Number }>>
-//     parent: Schema.optional<Schema.Struct<{ id: typeof Schema.String; type: typeof Schema.String }>>
-//     prev: Schema.optional<Schema.Struct<{ offset: typeof Schema.Number }>>
-//     total_count: typeof Schema.Number
-//   }>
-// }>
 export function mkPcoCollectionSchema<A, B>(
   resourceSchema: Schema.Schema<A>,
   entityRegistry?: Schema.Schema<B>,
@@ -119,6 +80,35 @@ export function mkPcoSingleSchema(
       }),
     ),
   }) as any
+}
+
+/**
+ * Creates a PCO payload schema for POST/PATCH requests.
+ *
+ * PCO expects JSON:API format for requests:
+ * - POST: { data: { type: "EntityName", attributes: {...} } }
+ * - PATCH: { data: { type: "EntityName", id: "123", attributes: {...} } }
+ */
+export function mkPcoPayloadSchema<Fields extends Record<string, any>>(
+  attributesSchema: Schema.Struct<Fields>,
+  keys: ReadonlyArray<string>,
+  entityType: string,
+  makeOptional?: boolean,
+) {
+  let pickedSchema: any = attributesSchema.pick(...(keys as any))
+
+  // For PATCH operations, make all fields optional since we're doing partial updates
+  if (makeOptional) {
+    pickedSchema = Schema.partial(pickedSchema)
+  }
+
+  return Schema.Struct({
+    data: Schema.Struct({
+      attributes: pickedSchema,
+      id: Schema.optional(Schema.String), // Optional for POST, required for PATCH
+      type: Schema.Literal(entityType),
+    }),
+  })
 }
 
 export type PcoBaseEntity = {
