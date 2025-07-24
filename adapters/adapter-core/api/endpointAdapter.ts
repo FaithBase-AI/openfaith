@@ -53,6 +53,16 @@ export function generatePathParamsSchema(
 }
 
 /**
+ * Type helper to extract path parameter types from a path string
+ */
+export type ExtractPathParams<TPath extends string> =
+  TPath extends `${string}:${infer ParamAndRest}`
+    ? ParamAndRest extends `${infer Param}/${infer Rest}`
+      ? { [K in Param]: string } & ExtractPathParams<Rest>
+      : { [K in ParamAndRest]: string }
+    : never
+
+/**
  * Builds the comprehensive URL parameter schema for a GET endpoint
  * from our high-level, declarative definition.
  */
@@ -216,7 +226,7 @@ export function toHttpApiEndpoint<
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
-  TPath,
+  ExtractPathParams<TPath>,
   IsCollection extends true
     ? {
         readonly include?: Includes[number] | (Includes[number] & Includes) | undefined
@@ -274,7 +284,7 @@ export function toHttpApiEndpoint<
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
-  TPath,
+  ExtractPathParams<TPath>,
   never,
   BuildPayloadSchemaType<Fields, CreatableFields>,
   never,
@@ -323,8 +333,8 @@ export function toHttpApiEndpoint<
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
+  ExtractPathParams<TPath>,
   never,
-  TPath,
   BuildPayloadSchemaType<Fields, UpdatableFields>,
   never,
   Schema.Schema.Type<Response>,
@@ -370,7 +380,7 @@ export function toHttpApiEndpoint<
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
-  TPath,
+  ExtractPathParams<TPath>,
   never,
   never,
   never,
@@ -387,8 +397,10 @@ export function toHttpApiEndpoint(definition: any, fieldsKey?: keyof any): any
 export function toHttpApiEndpoint(definition: any, fieldsKey?: keyof any) {
   switch (definition.method) {
     case 'GET': {
-      // Use the query property if present
+      const pathParamsSchema = generatePathParamsSchema(definition.path)
+
       return HttpApiEndpoint.get(definition.name, definition.path)
+        .setPath(pathParamsSchema)
         .setUrlParams(definition.query)
         .addSuccess(definition.response)
     }
@@ -424,7 +436,7 @@ export function toHttpApiEndpoint(definition: any, fieldsKey?: keyof any) {
       const pathParamsSchema = generatePathParamsSchema(definition.path)
 
       return HttpApiEndpoint.post(definition.name, definition.path)
-        .setUrlParams(pathParamsSchema)
+        .setPath(pathParamsSchema)
         .setPayload(payloadSchema)
         .addSuccess(definition.response) as any
     }
@@ -460,7 +472,7 @@ export function toHttpApiEndpoint(definition: any, fieldsKey?: keyof any) {
       const pathParamsSchema = generatePathParamsSchema(definition.path)
 
       return HttpApiEndpoint.patch(definition.name, definition.path)
-        .setUrlParams(pathParamsSchema)
+        .setPath(pathParamsSchema)
         .setPayload(payloadSchema)
         .addSuccess(definition.response) as any
     }
@@ -468,7 +480,7 @@ export function toHttpApiEndpoint(definition: any, fieldsKey?: keyof any) {
       const pathParamsSchema = generatePathParamsSchema(definition.path)
 
       return HttpApiEndpoint.del(definition.name, definition.path)
-        .setUrlParams(pathParamsSchema)
+        .setPath(pathParamsSchema)
         .addSuccess(Schema.Void, {
           status: 204,
         }) as any

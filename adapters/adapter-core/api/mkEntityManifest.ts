@@ -1,5 +1,8 @@
 import { type HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
-import { toHttpApiEndpoint } from '@openfaith/adapter-core/api/endpointAdapter'
+import {
+  type ExtractPathParams,
+  toHttpApiEndpoint,
+} from '@openfaith/adapter-core/api/endpointAdapter'
 import type * as Endpoint from '@openfaith/adapter-core/api/endpointTypes'
 import { Array, pipe, type Schema } from 'effect'
 import type { NonEmptyReadonlyArray } from 'effect/Array'
@@ -47,7 +50,7 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
     infer _Module,
     infer _Entity,
     infer _Name,
-    infer _Path,
+    infer _TPath,
     infer _OrderableFields,
     infer _QueryableFields,
     infer _Includes,
@@ -59,7 +62,7 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
     ? HttpApiEndpoint.HttpApiEndpoint<
         _Name,
         'GET',
-        never,
+        ExtractPathParams<_TPath>,
         Schema.Schema.Type<_Query>,
         never,
         never,
@@ -75,14 +78,14 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
           infer _Module,
           infer _Entity,
           infer _Name,
-          infer _Path,
+          infer _TPath,
           infer _CreatableFields,
           infer _CreatableSpecial
         >
       ? HttpApiEndpoint.HttpApiEndpoint<
           _Name,
           'POST',
-          never,
+          ExtractPathParams<_TPath>,
           never,
           {
             readonly [K in _CreatableFields[number]]: _Fields[K]
@@ -102,14 +105,14 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
             infer _Module,
             infer _Entity,
             infer _Name,
-            infer _Path,
+            infer _TPath,
             infer _UpdatableFields,
             infer _UpdatableSpecial
           >
         ? HttpApiEndpoint.HttpApiEndpoint<
             _Name,
             'PATCH',
-            never,
+            ExtractPathParams<_TPath>,
             never,
             {
               readonly [K in _UpdatableFields[number]]: _Fields[K]
@@ -129,12 +132,12 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
               infer _Module,
               infer _Entity,
               infer _Name,
-              infer _Path
+              infer _TPath
             >
           ? HttpApiEndpoint.HttpApiEndpoint<
               _Name,
               'DELETE',
-              never,
+              ExtractPathParams<_TPath>,
               never,
               never,
               never,

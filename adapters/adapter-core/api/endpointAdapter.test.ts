@@ -4,6 +4,7 @@ import { Effect, Schema } from 'effect'
 import {
   type BuildPayloadSchemaType,
   buildPayloadSchema,
+  type ExtractPathParams,
   extractPathParams,
   generatePathParamsSchema,
   toHttpApiEndpoint,
@@ -37,6 +38,164 @@ live('generatePathParamsSchema should generate schema for single parameter', () 
     const schema = generatePathParamsSchema('/people/:personId')
     const result = Schema.decodeUnknownSync(schema)({ personId: 'test-id' })
     expect(result).toEqual({ personId: 'test-id' })
+  }),
+)
+
+// Tests for ExtractPathParams type helper
+live('ExtractPathParams should extract single path parameter type', () =>
+  Effect.sync(() => {
+    // Test single parameter extraction
+    type SingleParam = ExtractPathParams<'/people/:personId'>
+
+    // This should compile with the correct type
+    const singleParamObj: SingleParam = { personId: 'test-id' }
+    expect(singleParamObj.personId).toBe('test-id')
+
+    // TypeScript should prevent accessing non-existent parameters
+    // @ts-expect-error - eventId should not exist in single param type
+    const _nonExistent = singleParamObj.eventId
+  }),
+)
+
+live('ExtractPathParams should extract multiple path parameters type', () =>
+  Effect.sync(() => {
+    // Test multiple parameter extraction
+    type MultipleParams = ExtractPathParams<'/people/:personId/events/:eventId'>
+
+    // This should compile with both parameters
+    const multipleParamsObj: MultipleParams = {
+      eventId: 'event-456',
+      personId: 'person-123',
+    }
+    expect(multipleParamsObj.personId).toBe('person-123')
+    expect(multipleParamsObj.eventId).toBe('event-456')
+
+    // TypeScript should prevent accessing non-existent parameters
+    // @ts-expect-error - groupId should not exist
+    const _nonExistent = multipleParamsObj.groupId
+  }),
+)
+
+live('ExtractPathParams should handle complex nested paths', () =>
+  Effect.sync(() => {
+    // Test complex path with multiple segments
+    type ComplexParams =
+      ExtractPathParams<'/organizations/:orgId/people/:personId/events/:eventId/attendances/:attendanceId'>
+
+    const complexParamsObj: ComplexParams = {
+      attendanceId: 'attendance-4',
+      eventId: 'event-3',
+      orgId: 'org-1',
+      personId: 'person-2',
+    }
+
+    expect(complexParamsObj.orgId).toBe('org-1')
+    expect(complexParamsObj.personId).toBe('person-2')
+    expect(complexParamsObj.eventId).toBe('event-3')
+    expect(complexParamsObj.attendanceId).toBe('attendance-4')
+  }),
+)
+
+live('ExtractPathParams should return never type for paths without parameters', () =>
+  Effect.sync(() => {
+    // Test path without parameters
+    type NoParams = ExtractPathParams<'/people'>
+
+    // This should be never type - no path parameters are expected
+    // @ts-expect-error - cannot assign anything to never type
+    const noParamsObj: NoParams = {}
+
+    // TypeScript should prevent accessing any parameters since type is never
+    // @ts-expect-error - no parameters should be accessible on never type
+    const _nonExistent = noParamsObj.personId
+
+    // The test passes if TypeScript correctly prevents these assignments
+    expect(true).toBe(true)
+  }),
+)
+
+live('ExtractPathParams should handle paths with mixed static and dynamic segments', () =>
+  Effect.sync(() => {
+    // Test path with static segments between parameters
+    type MixedParams = ExtractPathParams<'/organizations/:orgId/members/:memberId'>
+
+    const mixedParamsObj: MixedParams = {
+      memberId: 'member-456',
+      orgId: 'org-123',
+    }
+
+    expect(mixedParamsObj.orgId).toBe('org-123')
+    expect(mixedParamsObj.memberId).toBe('member-456')
+  }),
+)
+
+live('ExtractPathParams should handle parameter at the end of path', () =>
+  Effect.sync(() => {
+    // Test path ending with parameter (no trailing slash)
+    type EndParam = ExtractPathParams<'/people/:personId'>
+
+    const endParamObj: EndParam = { personId: 'final-param' }
+    expect(endParamObj.personId).toBe('final-param')
+  }),
+)
+
+live('ExtractPathParams should handle parameter at the beginning of path', () =>
+  Effect.sync(() => {
+    // Test path starting with parameter
+    type StartParam = ExtractPathParams<'/:rootId'>
+
+    const startParamObj: StartParam = { rootId: 'root-123' }
+    expect(startParamObj.rootId).toBe('root-123')
+  }),
+)
+
+live('ExtractPathParams should work with realistic PCO-style paths', () =>
+  Effect.sync(() => {
+    // Test realistic PCO API paths
+    type PcoPersonPath = ExtractPathParams<'/people/v2/people/:id'>
+    type PcoEventPath =
+      ExtractPathParams<'/calendar/v2/event_instances/:event_instance_id/attendances/:id'>
+    type PcoGroupPath = ExtractPathParams<'/groups/v2/groups/:group_id/memberships/:id'>
+
+    const personParams: PcoPersonPath = { id: 'person-123' }
+    const eventParams: PcoEventPath = {
+      event_instance_id: 'event-instance-456',
+      id: 'attendance-789',
+    }
+    const groupParams: PcoGroupPath = {
+      group_id: 'group-101',
+      id: 'membership-202',
+    }
+
+    expect(personParams.id).toBe('person-123')
+    expect(eventParams.event_instance_id).toBe('event-instance-456')
+    expect(eventParams.id).toBe('attendance-789')
+    expect(groupParams.group_id).toBe('group-101')
+    expect(groupParams.id).toBe('membership-202')
+  }),
+)
+
+live('ExtractPathParams should ensure all parameter values are strings', () =>
+  Effect.sync(() => {
+    // Test that all extracted parameters are typed as strings
+    type ParamTypes = ExtractPathParams<'/users/:userId/posts/:postId'>
+
+    const params: ParamTypes = {
+      postId: '456', // Must be string
+      userId: '123', // Must be string
+    }
+
+    // Verify they are strings at runtime
+    expect(typeof params.userId).toBe('string')
+    expect(typeof params.postId).toBe('string')
+
+    // TypeScript should prevent non-string values
+    // This should cause a type error if uncommented:
+    // const invalidParams: ParamTypes = { userId: 123, postId: '456' }
+
+    // Verify type safety by checking that only string assignments work
+    const validStringAssignment: ParamTypes['userId'] = '123'
+    expect(typeof validStringAssignment).toBe('string')
   }),
 )
 

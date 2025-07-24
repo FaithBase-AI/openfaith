@@ -1,6 +1,7 @@
 import { type HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
 import {
   type BuildPayloadSchemaType,
+  type ExtractPathParams,
   toHttpApiEndpoint,
 } from '@openfaith/adapter-core/api/endpointAdapter'
 import type * as Endpoint from '@openfaith/adapter-core/api/endpointTypes'
@@ -216,7 +217,7 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
     ? HttpApiEndpoint.HttpApiEndpoint<
         _Name,
         'GET',
-        _TPath,
+        ExtractPathParams<_TPath>,
         Schema.Schema.Type<_Query>,
         never,
         never,
@@ -239,7 +240,7 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
       ? HttpApiEndpoint.HttpApiEndpoint<
           _Name,
           'POST',
-          _TPath,
+          ExtractPathParams<_TPath>,
           never,
           BuildPayloadSchemaType<_Fields, [..._CreatableFields, ..._CreatableSpecial]>,
           never,
@@ -263,7 +264,7 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
             _Name,
             'PATCH',
             never,
-            _TPath,
+            ExtractPathParams<_TPath>,
             BuildPayloadSchemaType<_Fields, [..._UpdatableFields, ..._UpdatableSpecial]>,
             never,
             _Response['Type'],
@@ -283,7 +284,7 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
           ? HttpApiEndpoint.HttpApiEndpoint<
               _Name,
               'DELETE',
-              _TPath,
+              ExtractPathParams<_TPath>,
               never,
               never,
               never,
