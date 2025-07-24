@@ -1,5 +1,8 @@
 import { type HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
-import { toHttpApiEndpoint } from '@openfaith/adapter-core/api/endpointAdapter'
+import {
+  type BuildPayloadSchemaType,
+  toHttpApiEndpoint,
+} from '@openfaith/adapter-core/api/endpointAdapter'
 import type * as Endpoint from '@openfaith/adapter-core/api/endpointTypes'
 import { mkPcoCollectionSchema, mkPcoSingleSchema } from '@openfaith/pco/api/pcoResponseSchemas'
 import { mkEntityName, mkTableName } from '@openfaith/shared/string'
@@ -213,7 +216,7 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
     ? HttpApiEndpoint.HttpApiEndpoint<
         _Name,
         'GET',
-        never,
+        _TPath,
         Schema.Schema.Type<_Query>,
         never,
         never,
@@ -236,13 +239,9 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
       ? HttpApiEndpoint.HttpApiEndpoint<
           _Name,
           'POST',
+          _TPath,
           never,
-          never,
-          {
-            readonly [K in _CreatableFields[number]]: _Fields[K]
-          } & {
-            readonly [K in _CreatableSpecial[number]]: _Fields[K]
-          },
+          BuildPayloadSchemaType<_Fields, [..._CreatableFields, ..._CreatableSpecial]>,
           never,
           _Response['Type'],
           never,
@@ -264,12 +263,8 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
             _Name,
             'PATCH',
             never,
-            never,
-            {
-              readonly [K in _UpdatableFields[number]]: _Fields[K]
-            } & {
-              readonly [K in _UpdatableSpecial[number]]: _Fields[K]
-            },
+            _TPath,
+            BuildPayloadSchemaType<_Fields, [..._UpdatableFields, ..._UpdatableSpecial]>,
             never,
             _Response['Type'],
             never,
@@ -288,7 +283,7 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
           ? HttpApiEndpoint.HttpApiEndpoint<
               _Name,
               'DELETE',
-              never,
+              _TPath,
               never,
               never,
               never,
@@ -476,7 +471,7 @@ export const toPcoHttpApiGroup = <
 
   const endpoints = Object.values(entityManifest.endpoints)
   for (const endpoint of endpoints) {
-    group = group.add(toHttpApiEndpoint(endpoint as any)) as any
+    group = group.add(toHttpApiEndpoint(endpoint as any, 'attributes')) as any
   }
 
   // Apply error configuration - errors are now always present

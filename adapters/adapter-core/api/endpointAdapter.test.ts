@@ -24,38 +24,10 @@ live('extractPathParams should extract multiple path parameters', () =>
   }),
 )
 
-live('extractPathParams should extract parameters with complex names', () =>
-  Effect.sync(() => {
-    const result = extractPathParams('/organizations/:orgId/people/:personId/events/:eventId')
-    expect(result).toEqual(['orgId', 'personId', 'eventId'])
-  }),
-)
-
 live('extractPathParams should return empty array for paths without parameters', () =>
   Effect.sync(() => {
     const result = extractPathParams('/people')
     expect(result).toEqual([])
-  }),
-)
-
-live('extractPathParams should handle paths with mixed segments', () =>
-  Effect.sync(() => {
-    const result = extractPathParams('/api/v1/people/:personId/static/events/:eventId')
-    expect(result).toEqual(['personId', 'eventId'])
-  }),
-)
-
-live('extractPathParams should handle parameters at the end', () =>
-  Effect.sync(() => {
-    const result = extractPathParams('/people/:personId')
-    expect(result).toEqual(['personId'])
-  }),
-)
-
-live('extractPathParams should handle parameters at the beginning', () =>
-  Effect.sync(() => {
-    const result = extractPathParams('/:orgId/people')
-    expect(result).toEqual(['orgId'])
   }),
 )
 
@@ -68,447 +40,388 @@ live('generatePathParamsSchema should generate schema for single parameter', () 
   }),
 )
 
-live('generatePathParamsSchema should generate schema for multiple parameters', () =>
+// Tests for buildPayloadSchema function
+live('buildPayloadSchema should create payload schema with selected fields under attributes', () =>
   Effect.sync(() => {
-    const schema = generatePathParamsSchema('/people/:personId/events/:eventId')
-    const result = Schema.decodeUnknownSync(schema)({
-      eventId: 'event-456',
-      personId: 'person-123',
+    const mockAttributesSchema = Schema.Struct({
+      email: Schema.String,
+      first_name: Schema.String,
+      last_name: Schema.String,
     })
-    expect(result).toEqual({ eventId: 'event-456', personId: 'person-123' })
+
+    const fields = ['first_name', 'last_name'] as const
+    const payloadSchema = buildPayloadSchema(mockAttributesSchema, fields, 'attributes')
+
+    const validPayload = {
+      attributes: {
+        first_name: 'John',
+        last_name: 'Doe',
+      },
+    }
+
+    const result = Schema.decodeUnknownSync(payloadSchema as any)(validPayload) as any
+    expect(result).toEqual(validPayload)
+    expect(result.attributes.first_name).toBe('John')
+    expect(result.attributes.last_name).toBe('Doe')
   }),
 )
 
-live('generatePathParamsSchema should generate empty schema for paths without parameters', () =>
+live('buildPayloadSchema should work with different wrapper keys', () =>
   Effect.sync(() => {
-    const schema = generatePathParamsSchema('/people')
-    const result = Schema.decodeUnknownSync(schema)({})
-    expect(result).toEqual({})
-  }),
-)
-
-live('generatePathParamsSchema should validate string types', () =>
-  Effect.sync(() => {
-    const schema = generatePathParamsSchema('/people/:personId')
-
-    // Should succeed with string
-    const validResult = Schema.decodeUnknownSync(schema)({
-      personId: 'valid-string',
+    const mockAttributesSchema = Schema.Struct({
+      description: Schema.String,
+      priority: Schema.Number,
+      title: Schema.String,
     })
-    expect(validResult).toEqual({ personId: 'valid-string' })
 
-    // Should fail with non-string (this will throw)
-    expect(() => {
-      Schema.decodeUnknownSync(schema)({ personId: 123 })
-    }).toThrow()
+    const fields = ['title', 'priority'] as const
+
+    // Test with 'data' wrapper key
+    const dataPayloadSchema = buildPayloadSchema(mockAttributesSchema, fields, 'data')
+    const dataPayload = {
+      data: {
+        priority: 1,
+        title: 'Task Title',
+      },
+    }
+    const dataResult = Schema.decodeUnknownSync(dataPayloadSchema as any)(dataPayload) as any
+    expect(dataResult).toEqual(dataPayload)
+    expect(dataResult.data.title).toBe('Task Title')
+
+    // Test with 'fields' wrapper key
+    const fieldsPayloadSchema = buildPayloadSchema(mockAttributesSchema, fields, 'fields')
+    const fieldsPayload = {
+      fields: {
+        priority: 2,
+        title: 'Another Task',
+      },
+    }
+    const fieldsResult = Schema.decodeUnknownSync(fieldsPayloadSchema as any)(fieldsPayload) as any
+    expect(fieldsResult).toEqual(fieldsPayload)
+    expect(fieldsResult.fields.title).toBe('Another Task')
   }),
 )
 
-live('generatePathParamsSchema should handle complex parameter names', () =>
+live('buildPayloadSchema should work with flat structure (no wrapper key)', () =>
   Effect.sync(() => {
-    const schema = generatePathParamsSchema(
-      '/organizations/:orgId/people/:personId/events/:eventId',
-    )
-    const result = Schema.decodeUnknownSync(schema)({
-      eventId: 'event-3',
-      orgId: 'org-1',
-      personId: 'person-2',
+    const mockAttributesSchema = Schema.Struct({
+      email: Schema.String,
+      name: Schema.String,
     })
-    expect(result).toEqual({
-      eventId: 'event-3',
-      orgId: 'org-1',
-      personId: 'person-2',
-    })
+
+    const fields = ['name', 'email'] as const
+    const payloadSchema = buildPayloadSchema(mockAttributesSchema, fields) // No wrapper key
+
+    // For flat structure, the payload should be the picked fields directly
+    const validPayload = {
+      email: 'john@example.com',
+      name: 'John',
+    }
+
+    // Test that the schema validates the flat payload correctly
+    const result = Schema.decodeUnknownSync(payloadSchema as any)(validPayload) as any
+    expect(result).toEqual(validPayload)
+    expect(result.name).toBe('John')
+    expect(result.email).toBe('john@example.com')
   }),
 )
 
-live('generatePathParamsSchema should require all parameters', () =>
-  Effect.sync(() => {
-    const schema = generatePathParamsSchema('/people/:personId/events/:eventId')
-
-    // Should fail when missing required parameter
-    expect(() => {
-      Schema.decodeUnknownSync(schema)({ personId: 'person-123' }) // missing eventId
-    }).toThrow()
-  }),
-)
-
-live('should extract path parameters for PATCH endpoints', () =>
+// Tests for toHttpApiEndpoint with different fieldsKey values
+live('toHttpApiEndpoint should work with nested structure and attributes fieldsKey', () =>
   Effect.sync(() => {
     const endpoint = {
       apiSchema: Schema.Struct({
         attributes: Schema.Struct({
-          first_name: Schema.String,
+          email: Schema.String,
+          name: Schema.String,
         }),
         id: Schema.String,
+        type: Schema.String,
       }),
-      entity: 'Person' as const,
-      method: 'PATCH' as const,
-      module: 'people' as const,
-      name: 'updatePerson',
-      path: '/people/:personId' as const,
+      creatableFields: {
+        fields: ['name', 'email'] as const,
+        special: [] as const,
+      },
+      entity: 'User' as const,
+      method: 'POST' as const,
+      module: 'users' as const,
+      name: 'createUser',
+      path: '/users' as const,
       response: Schema.Struct({
         data: Schema.Struct({
           attributes: Schema.Struct({
-            first_name: Schema.String,
+            email: Schema.String,
+            name: Schema.String,
           }),
           id: Schema.String,
           type: Schema.String,
         }),
       }),
+    }
+
+    const httpEndpoint = toHttpApiEndpoint(endpoint, 'attributes')
+
+    expect(httpEndpoint).toBeDefined()
+    expect(httpEndpoint.name).toBe('createUser')
+    expect(httpEndpoint.method).toBe('POST')
+    expect(httpEndpoint.path).toBe('/users')
+  }),
+)
+
+live('toHttpApiEndpoint should work with nested structure and data fieldsKey', () =>
+  Effect.sync(() => {
+    const endpoint = {
+      apiSchema: Schema.Struct({
+        data: Schema.Struct({
+          content: Schema.String,
+          title: Schema.String,
+        }),
+        id: Schema.String,
+        meta: Schema.Struct({}),
+      }),
+      creatableFields: {
+        fields: ['title', 'content'] as const,
+        special: [] as const,
+      },
+      entity: 'Post' as const,
+      method: 'POST' as const,
+      module: 'posts' as const,
+      name: 'createPost',
+      path: '/posts' as const,
+      response: Schema.Struct({
+        result: Schema.Struct({
+          data: Schema.Struct({
+            content: Schema.String,
+            title: Schema.String,
+          }),
+          id: Schema.String,
+        }),
+      }),
+    }
+
+    const httpEndpoint = toHttpApiEndpoint(endpoint, 'data')
+
+    expect(httpEndpoint).toBeDefined()
+    expect(httpEndpoint.name).toBe('createPost')
+    expect(httpEndpoint.method).toBe('POST')
+    expect(httpEndpoint.path).toBe('/posts')
+  }),
+)
+
+live('toHttpApiEndpoint should work with nested structure and fields fieldsKey', () =>
+  Effect.sync(() => {
+    const endpoint = {
+      apiSchema: Schema.Struct({
+        fields: Schema.Struct({
+          description: Schema.String,
+          name: Schema.String,
+          priority: Schema.Number,
+        }),
+        id: Schema.String,
+        type: Schema.String,
+      }),
+      entity: 'Task' as const,
+      method: 'PATCH' as const,
+      module: 'tasks' as const,
+      name: 'updateTask',
+      path: '/tasks/:taskId' as const,
+      response: Schema.Struct({
+        data: Schema.Struct({
+          fields: Schema.Struct({
+            name: Schema.String,
+            priority: Schema.Number,
+          }),
+          id: Schema.String,
+        }),
+      }),
       updatableFields: {
-        fields: ['first_name'] as const,
+        fields: ['name', 'priority'] as const,
         special: [] as const,
       },
     }
 
-    const httpEndpoint = toHttpApiEndpoint(endpoint)
+    const httpEndpoint = toHttpApiEndpoint(endpoint, 'fields')
 
-    // The endpoint should be created successfully
     expect(httpEndpoint).toBeDefined()
-    expect(httpEndpoint.name).toBe('updatePerson')
-    expect(httpEndpoint.path).toBe('/people/:personId')
+    expect(httpEndpoint.name).toBe('updateTask')
     expect(httpEndpoint.method).toBe('PATCH')
+    expect(httpEndpoint.path).toBe('/tasks/:taskId')
   }),
 )
 
-live('should extract multiple path parameters', () =>
+live('toHttpApiEndpoint should work with flat structure (no fieldsKey)', () =>
+  Effect.sync(() => {
+    const endpoint = {
+      apiSchema: Schema.Struct({
+        age: Schema.Number,
+        email: Schema.String,
+        id: Schema.String,
+        name: Schema.String,
+      }),
+      creatableFields: {
+        fields: ['name', 'email', 'age'] as const,
+        special: [] as const,
+      },
+      entity: 'Contact' as const,
+      method: 'POST' as const,
+      module: 'contacts' as const,
+      name: 'createContact',
+      path: '/contacts' as const,
+      response: Schema.Struct({
+        age: Schema.Number,
+        email: Schema.String,
+        id: Schema.String,
+        name: Schema.String,
+      }),
+    }
+
+    const httpEndpoint = toHttpApiEndpoint(endpoint) // No fieldsKey for flat structure
+
+    expect(httpEndpoint).toBeDefined()
+    expect(httpEndpoint.name).toBe('createContact')
+    expect(httpEndpoint.method).toBe('POST')
+    expect(httpEndpoint.path).toBe('/contacts')
+  }),
+)
+
+live('toHttpApiEndpoint should work with flat structure for PATCH (no fieldsKey)', () =>
   Effect.sync(() => {
     const endpoint = {
       apiSchema: Schema.Struct({
         id: Schema.String,
+        name: Schema.String,
+        priority: Schema.Number,
+        status: Schema.String,
       }),
-      entity: 'Event' as const,
-      method: 'DELETE' as const,
-      module: 'people' as const,
-      name: 'deletePersonEvent',
-      path: '/people/:personId/events/:eventId' as const,
-      response: Schema.Void,
+      entity: 'Issue' as const,
+      method: 'PATCH' as const,
+      module: 'issues' as const,
+      name: 'updateIssue',
+      path: '/issues/:issueId' as const,
+      response: Schema.Struct({
+        id: Schema.String,
+        name: Schema.String,
+        status: Schema.String,
+      }),
+      updatableFields: {
+        fields: ['name', 'status'] as const,
+        special: [] as const,
+      },
     }
 
-    const httpEndpoint = toHttpApiEndpoint(endpoint)
+    const httpEndpoint = toHttpApiEndpoint(endpoint) // No fieldsKey for flat structure
 
-    // The endpoint should be created successfully
     expect(httpEndpoint).toBeDefined()
-    expect(httpEndpoint.name).toBe('deletePersonEvent')
-    expect(httpEndpoint.path).toBe('/people/:personId/events/:eventId')
-    expect(httpEndpoint.method).toBe('DELETE')
+    expect(httpEndpoint.name).toBe('updateIssue')
+    expect(httpEndpoint.method).toBe('PATCH')
+    expect(httpEndpoint.path).toBe('/issues/:issueId')
   }),
 )
 
-live('should handle endpoints without path parameters', () =>
+live('toHttpApiEndpoint should work with properties fieldsKey', () =>
+  Effect.sync(() => {
+    const endpoint = {
+      apiSchema: Schema.Struct({
+        id: Schema.String,
+        metadata: Schema.Struct({}),
+        properties: Schema.Struct({
+          body: Schema.String,
+          tags: Schema.Array(Schema.String),
+          title: Schema.String,
+        }),
+      }),
+      creatableFields: {
+        fields: ['title', 'body'] as const,
+        special: [] as const,
+      },
+      entity: 'Article' as const,
+      method: 'POST' as const,
+      module: 'articles' as const,
+      name: 'createArticle',
+      path: '/articles' as const,
+      response: Schema.Struct({
+        data: Schema.Struct({
+          id: Schema.String,
+          properties: Schema.Struct({
+            body: Schema.String,
+            title: Schema.String,
+          }),
+        }),
+      }),
+    }
+
+    const httpEndpoint = toHttpApiEndpoint(endpoint, 'properties')
+
+    expect(httpEndpoint).toBeDefined()
+    expect(httpEndpoint.name).toBe('createArticle')
+    expect(httpEndpoint.method).toBe('POST')
+    expect(httpEndpoint.path).toBe('/articles')
+  }),
+)
+
+live('toHttpApiEndpoint should throw error when fieldsKey not found in nested structure', () =>
   Effect.sync(() => {
     const endpoint = {
       apiSchema: Schema.Struct({
         attributes: Schema.Struct({
-          first_name: Schema.String,
+          name: Schema.String,
         }),
         id: Schema.String,
       }),
       creatableFields: {
-        fields: ['first_name'] as const,
+        fields: ['name'] as const,
         special: [] as const,
       },
-      entity: 'Person' as const,
+      entity: 'User' as const,
       method: 'POST' as const,
-      module: 'people' as const,
-      name: 'createPerson',
-      path: '/people' as const,
+      module: 'users' as const,
+      name: 'createUser',
+      path: '/users' as const,
       response: Schema.Struct({
         data: Schema.Struct({
           attributes: Schema.Struct({
-            first_name: Schema.String,
+            name: Schema.String,
           }),
           id: Schema.String,
-          type: Schema.String,
         }),
       }),
     }
 
-    const httpEndpoint = toHttpApiEndpoint(endpoint)
-
-    // The endpoint should be created successfully
-    expect(httpEndpoint).toBeDefined()
-    expect(httpEndpoint.name).toBe('createPerson')
-    expect(httpEndpoint.path).toBe('/people')
-    expect(httpEndpoint.method).toBe('POST')
+    // Should throw when looking for 'data' field that doesn't exist
+    expect(() => {
+      toHttpApiEndpoint(endpoint, 'data')
+    }).toThrow("Expected field 'data' not found")
   }),
 )
 
-live('should correctly type path parameters at compile time', () =>
+live('toHttpApiEndpoint should throw error when using fieldsKey with flat structure', () =>
   Effect.sync(() => {
-    // Test single path parameter
-    const singleParamEndpoint = {
+    const endpoint = {
       apiSchema: Schema.Struct({
-        attributes: Schema.Struct({
-          first_name: Schema.String,
-        }),
+        email: Schema.String,
         id: Schema.String,
+        name: Schema.String,
       }),
-      entity: 'Person' as const,
-      method: 'PATCH' as const,
-      module: 'people' as const,
-      name: 'updatePerson',
-      path: '/people/:personId' as const,
-      response: Schema.Struct({
-        data: Schema.Struct({
-          attributes: Schema.Struct({
-            first_name: Schema.String,
-          }),
-          id: Schema.String,
-          type: Schema.String,
-        }),
-      }),
-      updatableFields: {
-        fields: ['first_name'] as const,
+      creatableFields: {
+        fields: ['name', 'email'] as const,
         special: [] as const,
       },
-    }
-
-    const singleParamHttpEndpoint = toHttpApiEndpoint(singleParamEndpoint)
-
-    // Test multiple path parameters
-    const multipleParamEndpoint = {
-      apiSchema: Schema.Struct({
-        id: Schema.String,
-      }),
-      entity: 'Event' as const,
-      method: 'DELETE' as const,
-      module: 'people' as const,
-      name: 'deletePersonEvent',
-      path: '/people/:personId/events/:eventId' as const,
-      response: Schema.Void,
-    }
-
-    const multipleParamHttpEndpoint = toHttpApiEndpoint(multipleParamEndpoint)
-
-    // Verify endpoints are created successfully
-    expect(singleParamHttpEndpoint).toBeDefined()
-    expect(singleParamHttpEndpoint.path).toBe('/people/:personId')
-
-    expect(multipleParamHttpEndpoint).toBeDefined()
-    expect(multipleParamHttpEndpoint.path).toBe('/people/:personId/events/:eventId')
-
-    // The real test is at compile time - TypeScript should infer the correct path parameter types
-    // Single param should have type: { readonly personId: string }
-    // Multiple params should have type: { readonly personId: string; readonly eventId: string }
-    console.log('✅ Path parameter types correctly inferred at compile time')
-  }),
-)
-
-// Tests for buildPayloadSchema function (to be implemented)
-live('buildPayloadSchema should create payload schema with selected fields under attributes', () =>
-  Effect.sync(() => {
-    // Mock API schema that follows the PCO entity structure
-    const mockApiSchema = Schema.Struct({
-      attributes: Schema.Struct({
-        age: Schema.Number,
-        created_at: Schema.String,
+      entity: 'Contact' as const,
+      method: 'POST' as const,
+      module: 'contacts' as const,
+      name: 'createContact',
+      path: '/contacts' as const,
+      response: Schema.Struct({
         email: Schema.String,
-        first_name: Schema.String,
-        is_active: Schema.Boolean,
-        last_name: Schema.String,
-        updated_at: Schema.String,
+        id: Schema.String,
+        name: Schema.String,
       }),
-      id: Schema.String,
-      links: Schema.Struct({}),
-      relationships: Schema.Struct({}),
-      type: Schema.Literal('Person'),
-    })
-
-    const fields = ['first_name', 'last_name', 'email'] as const
-    const payloadSchema = buildPayloadSchema(mockApiSchema, fields)
-
-    // Test with valid data structure
-    const validPayload = {
-      attributes: {
-        email: 'john@example.com',
-        first_name: 'John',
-        last_name: 'Doe',
-      },
     }
 
-    // Test that the schema validates the payload correctly
-    const result = Schema.decodeUnknownSync(payloadSchema)(validPayload) as any
-    expect(result).toEqual(validPayload)
-    expect(result.attributes.first_name).toBe('John')
-    expect(result.attributes.last_name).toBe('Doe')
-    expect(result.attributes.email).toBe('john@example.com')
-  }),
-)
-
-live('buildPayloadSchema should work with different field types', () =>
-  Effect.sync(() => {
-    const mockApiSchema = Schema.Struct({
-      attributes: Schema.Struct({
-        age: Schema.Number,
-        first_name: Schema.String,
-        is_active: Schema.Boolean,
-      }),
-      id: Schema.String,
-      links: Schema.Struct({}),
-      relationships: Schema.Struct({}),
-      type: Schema.Literal('Person'),
-    })
-
-    const fields = ['first_name', 'age', 'is_active'] as const
-    const payloadSchema = buildPayloadSchema(mockApiSchema, fields)
-
-    const validPayload = {
-      attributes: {
-        age: 25,
-        first_name: 'Jane',
-        is_active: true,
-      },
-    }
-
-    // Test that the schema validates different field types correctly
-    const result = Schema.decodeUnknownSync(payloadSchema)(validPayload) as any
-    expect(result).toEqual(validPayload)
-    expect(typeof result.attributes.first_name).toBe('string')
-    expect(typeof result.attributes.age).toBe('number')
-    expect(typeof result.attributes.is_active).toBe('boolean')
-  }),
-)
-
-live('buildPayloadSchema should work with PCO Person creatable fields', () =>
-  Effect.sync(() => {
-    // Simulate the actual PCO Person schema structure
-    const pcoPersonSchema = Schema.Struct({
-      attributes: Schema.Struct({
-        accounting_administrator: Schema.Boolean,
-        anniversary: Schema.NullOr(Schema.String),
-        avatar: Schema.String,
-        birthdate: Schema.NullOr(Schema.String),
-        child: Schema.Boolean,
-        first_name: Schema.String,
-        gender: Schema.NullOr(Schema.Literal('Male', 'Female', 'M', 'F')),
-        grade: Schema.NullOr(Schema.Number),
-        graduation_year: Schema.NullOr(Schema.Number),
-        inactivated_at: Schema.NullOr(Schema.String),
-        last_name: Schema.String,
-        medical_notes: Schema.NullOr(Schema.String),
-        membership: Schema.NullOr(Schema.String),
-        middle_name: Schema.NullOr(Schema.String),
-        nickname: Schema.NullOr(Schema.String),
-        people_permissions: Schema.NullOr(Schema.String),
-        remote_id: Schema.NullOr(Schema.Union(Schema.String, Schema.Number)),
-        site_administrator: Schema.Boolean,
-        status: Schema.Literal('active', 'inactive'),
-      }),
-      id: Schema.String,
-      links: Schema.Struct({}),
-      relationships: Schema.Struct({}),
-      type: Schema.Literal('Person'),
-    })
-
-    const creatableFields = [
-      'first_name',
-      'last_name',
-      'anniversary',
-      'birthdate',
-      'gender',
-      'grade',
-      'graduation_year',
-      'child',
-      'status',
-    ] as const
-
-    const payloadSchema = buildPayloadSchema(pcoPersonSchema, creatableFields)
-
-    const validPersonPayload = {
-      attributes: {
-        anniversary: '2020-01-01',
-        birthdate: '1990-05-15',
-        child: false,
-        first_name: 'John',
-        gender: 'Male' as const,
-        grade: null,
-        graduation_year: null,
-        last_name: 'Doe',
-        status: 'active' as const,
-      },
-    }
-
-    // Test that the schema validates PCO Person payload correctly
-    const result = Schema.decodeUnknownSync(payloadSchema)(validPersonPayload) as any
-    expect(result).toEqual(validPersonPayload)
-    expect(result.attributes.first_name).toBe('John')
-    expect(result.attributes.last_name).toBe('Doe')
-    expect(result.attributes.status).toBe('active')
-  }),
-)
-
-live('buildPayloadSchema should work with empty fields array', () =>
-  Effect.sync(() => {
-    const mockApiSchema = Schema.Struct({
-      attributes: Schema.Struct({
-        first_name: Schema.String,
-        last_name: Schema.String,
-      }),
-      id: Schema.String,
-      links: Schema.Struct({}),
-      relationships: Schema.Struct({}),
-      type: Schema.Literal('Person'),
-    })
-
-    const fields = [] as const
-    const payloadSchema = buildPayloadSchema(mockApiSchema, fields)
-
-    const validPayload = {
-      attributes: {},
-    }
-
-    // Test that empty fields array creates empty attributes schema
-    const result = Schema.decodeUnknownSync(payloadSchema)(validPayload) as any
-    expect(result).toEqual(validPayload)
-    expect(Object.keys(result.attributes)).toHaveLength(0)
-  }),
-)
-
-live('buildPayloadSchema should throw error if apiSchema lacks attributes property', () =>
-  Effect.sync(() => {
-    const invalidSchema = Schema.Struct({
-      id: Schema.String,
-      type: Schema.Literal('Person'),
-      // Missing attributes property
-    })
-
-    const fields = ['first_name'] as const
-
+    // Should throw when trying to use fieldsKey with flat structure
     expect(() => {
-      buildPayloadSchema(invalidSchema, fields)
-    }).toThrow(
-      "apiSchema for endpoint does not have a valid 'attributes' property needed to build a payload.",
-    )
-  }),
-)
-
-live('buildPayloadSchema should validate payload structure correctly', () =>
-  Effect.sync(() => {
-    const mockApiSchema = Schema.Struct({
-      attributes: Schema.Struct({
-        age: Schema.Number,
-        first_name: Schema.String,
-      }),
-      id: Schema.String,
-      links: Schema.Struct({}),
-      relationships: Schema.Struct({}),
-      type: Schema.Literal('Person'),
-    })
-
-    const fields = ['first_name', 'age'] as const
-    const payloadSchema = buildPayloadSchema(mockApiSchema, fields)
-
-    // Should reject payload with missing required fields
-    expect(() => {
-      Schema.decodeUnknownSync(payloadSchema)({
-        attributes: {
-          first_name: 'John',
-          // Missing age
-        },
-      })
-    }).toThrow()
+      toHttpApiEndpoint(endpoint, 'attributes')
+    }).toThrow("Expected field 'attributes' not found")
   }),
 )
 

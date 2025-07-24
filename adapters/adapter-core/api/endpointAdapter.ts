@@ -146,23 +146,23 @@ export function generatePathParamsSchema(
 
 /**
  * Builds the request body (payload) schema for a POST or PATCH endpoint
- * by picking the specified fields from the main API schema's attributes.
+ * by picking the specified fields from the attributes schema.
  */
-export function buildPayloadSchema<Api, Keys extends ReadonlyArray<string>>(
-  apiSchema: Schema.Schema<Api>,
+export function buildPayloadSchema<Keys extends ReadonlyArray<string>>(
+  attributesSchema: Schema.Struct<any>,
   keys: Keys,
+  wrapperKey?: string,
 ): Schema.Struct<any> {
-  // @ts-ignore - This relies on the convention that our API schemas have an 'attributes' struct.
-  const attributeSchema = apiSchema.fields?.attributes
-  if (!attributeSchema || !Schema.isSchema(attributeSchema)) {
-    throw new Error(
-      `apiSchema for endpoint does not have a valid 'attributes' property needed to build a payload.`,
-    )
+  const pickedSchema = attributesSchema.pick(...keys)
+
+  if (wrapperKey) {
+    // Wrap in the specified key (e.g., 'attributes' for PCO)
+    return Schema.Struct({
+      [wrapperKey]: pickedSchema,
+    })
   }
-  return Schema.Struct({
-    // The payload is expected to be nested under `attributes` as per many JSON:API-like standards.
-    attributes: (attributeSchema as Schema.Struct<any>).pick(...keys),
-  })
+  // Return flat structure (e.g., for CCB)
+  return pickedSchema
 }
 
 /**
@@ -212,6 +212,7 @@ export function toHttpApiEndpoint<
     never,
     Query
   >,
+  fieldsKey?: keyof Api,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
@@ -269,6 +270,7 @@ export function toHttpApiEndpoint<
     never,
     Query
   >,
+  fieldsKey?: keyof Api,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
@@ -317,6 +319,7 @@ export function toHttpApiEndpoint<
     UpdatableSpecial,
     Query
   >,
+  fieldsKey?: keyof Api,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
@@ -363,6 +366,7 @@ export function toHttpApiEndpoint<
     never,
     Query
   >,
+  fieldsKey?: keyof Api,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
@@ -376,8 +380,11 @@ export function toHttpApiEndpoint<
   never
 >
 
+// Catch-all overload for fieldsKey parameter
+export function toHttpApiEndpoint(definition: any, fieldsKey?: keyof any): any
+
 // Implementation
-export function toHttpApiEndpoint(definition: any) {
+export function toHttpApiEndpoint(definition: any, fieldsKey?: keyof any) {
   switch (definition.method) {
     case 'GET': {
       // Use the query property if present
@@ -386,9 +393,33 @@ export function toHttpApiEndpoint(definition: any) {
         .addSuccess(definition.response)
     }
     case 'POST': {
+      // Extract attributes schema based on fieldsKey parameter
+      let attributesSchema: Schema.Struct<any>
+
+      if (fieldsKey && definition.apiSchema.fields?.[fieldsKey]) {
+        // Use specified field key (e.g., 'attributes' for PCO)
+        attributesSchema = definition.apiSchema.fields[fieldsKey] as Schema.Struct<any>
+      } else if (
+        !fieldsKey &&
+        Schema.isSchema(definition.apiSchema) &&
+        'fields' in definition.apiSchema
+      ) {
+        // Use the schema directly (e.g., for CCB flat structure)
+        attributesSchema = definition.apiSchema as Schema.Struct<any>
+      } else {
+        throw new Error(
+          `apiSchema for endpoint does not have a valid schema structure needed to build a payload. ${
+            fieldsKey
+              ? `Expected field '${String(fieldsKey)}' not found.`
+              : 'Expected flat schema structure.'
+          }`,
+        )
+      }
+
       const payloadSchema = buildPayloadSchema(
-        definition.apiSchema,
+        attributesSchema,
         definition.creatableFields.fields,
+        fieldsKey ? String(fieldsKey) : undefined,
       )
       const pathParamsSchema = generatePathParamsSchema(definition.path)
 
@@ -398,9 +429,33 @@ export function toHttpApiEndpoint(definition: any) {
         .addSuccess(definition.response) as any
     }
     case 'PATCH': {
+      // Extract attributes schema based on fieldsKey parameter
+      let attributesSchema: Schema.Struct<any>
+
+      if (fieldsKey && definition.apiSchema.fields?.[fieldsKey]) {
+        // Use specified field key (e.g., 'attributes' for PCO)
+        attributesSchema = definition.apiSchema.fields[fieldsKey] as Schema.Struct<any>
+      } else if (
+        !fieldsKey &&
+        Schema.isSchema(definition.apiSchema) &&
+        'fields' in definition.apiSchema
+      ) {
+        // Use the schema directly (e.g., for CCB flat structure)
+        attributesSchema = definition.apiSchema as Schema.Struct<any>
+      } else {
+        throw new Error(
+          `apiSchema for endpoint does not have a valid schema structure needed to build a payload. ${
+            fieldsKey
+              ? `Expected field '${String(fieldsKey)}' not found.`
+              : 'Expected flat schema structure.'
+          }`,
+        )
+      }
+
       const payloadSchema = buildPayloadSchema(
-        definition.apiSchema,
+        attributesSchema,
         definition.updatableFields.fields,
+        fieldsKey ? String(fieldsKey) : undefined,
       )
       const pathParamsSchema = generatePathParamsSchema(definition.path)
 

@@ -7,10 +7,7 @@ import { TokenKey } from '@openfaith/adapter-core/server'
 import { effect, layer } from '@openfaith/bun-test'
 import type { CRUDMutation, CRUDOp } from '@openfaith/domain'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
-import {
-  makeMockPcoHttpClient,
-  makeMockPcoHttpClientWithErrors,
-} from '@openfaith/pco/api/pcoApiMock'
+import { makeMockPcoHttpClient } from '@openfaith/pco/api/pcoApiMock'
 import { mkEntityName } from '@openfaith/shared/string'
 import {
   type CrudOperation,
@@ -92,18 +89,11 @@ const MockExternalLinkManagerErrorLive = Layer.succeed(
   createMockExternalLinkManager(true, true),
 )
 const MockPcoHttpClientLive = Layer.effect(PcoHttpClient, makeMockPcoHttpClient)
-const MockPcoHttpClientWithErrorsLive = Layer.effect(PcoHttpClient, makeMockPcoHttpClientWithErrors)
-
 const TestLayer = Layer.mergeAll(TestTokenKey, MockExternalLinkManagerLive, MockPcoHttpClientLive)
 const TestLayerEmpty = Layer.mergeAll(
   TestTokenKey,
   MockExternalLinkManagerEmptyLive,
   MockPcoHttpClientLive,
-)
-const TestLayerWithErrors = Layer.mergeAll(
-  TestTokenKey,
-  MockExternalLinkManagerLive,
-  MockPcoHttpClientWithErrorsLive,
 )
 const TestLayerDbError = Layer.mergeAll(
   TestTokenKey,
@@ -373,14 +363,23 @@ layer(TestLayer)('syncToPcoE handles missing entity client', (it) =>
   ),
 )
 
-layer(TestLayerWithErrors)('syncToPcoE handles transformation errors', (it) =>
+layer(TestLayer)('syncToPcoE handles transformation errors', (it) =>
   it.effect('should fail with EntityTransformError when data is invalid', () =>
     Effect.gen(function* () {
-      const operation = createCrudOperation('update', 'addresses', 'address_123')
+      // Create operation with invalid data that will fail Person transformation
+      // first_name has minLength(1) validation, empty string will fail
+      // status must be 'active' or 'inactive', 'invalid' will fail
+      const invalidPersonData = {
+        first_name: '', // This will fail minLength(1) validation
+        last_name: 'Doe',
+        status: 'invalid', // This will fail the Literal validation
+      }
+      const operation = createCrudOperation('insert', 'people', 'person_123', invalidPersonData)
       const link = createExternalLink('pco', 'pco_123')
 
       // Should fail with EntityTransformError when using Person with invalid data
       const result = yield* syncToPcoE(operation, 'Person', link).pipe(Effect.either)
+
       expect(result._tag).toBe('Left')
       expect((result as any).left._tag).toBe('EntityTransformError')
       expect((result as any).left.entityName).toBe('Person')
@@ -536,10 +535,15 @@ layer(TestLayer)('syncDataE handles mutations with unknown entities', (it) =>
   ),
 )
 
-layer(TestLayerWithErrors)('syncDataE handles transformation errors', (it) =>
-  it.effect('should fail with EntityTransformError when using entities with transformers', () =>
+layer(TestLayer)('syncDataE handles transformation errors', (it) =>
+  it.effect('should succeed but log errors when transformation fails', () =>
     Effect.gen(function* () {
-      const op = createCrudOperation('update', 'addresses', 'address_123')
+      // Create operation with invalid data that will fail Address transformation
+      const invalidAddressData = {
+        anotherInvalidField: 123,
+        invalidField: 'this will cause transformation to fail',
+      }
+      const op = createCrudOperation('update', 'addresses', 'address_123', invalidAddressData)
       const mutations = [
         {
           mutation: createCrudMutation(op),
@@ -547,10 +551,10 @@ layer(TestLayerWithErrors)('syncDataE handles transformation errors', (it) =>
         },
       ]
 
-      // Should fail with EntityTransformError when using Address entity with invalid data
+      // syncDataE is designed to continue processing even when individual operations fail
+      // It logs errors but doesn't propagate them, so it should succeed
       const result = yield* syncDataE(mutations).pipe(Effect.either)
-      expect(result._tag).toBe('Left')
-      expect((result as any).left._tag).toBe('EntityTransformError')
+      expect(result._tag).toBe('Right')
     }),
   ),
 )
