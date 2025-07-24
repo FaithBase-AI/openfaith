@@ -99,7 +99,7 @@ infra/                   # Infrastructure services
 - Use `Effect.gen` for async operations instead of async/await
 - Prefer `pipe` for function composition over method chaining
 - Use Effect's service pattern for dependency injection
-- Define tagged errors using Effect's error handling system
+- Define tagged errors using `Schema.TaggedError` (not `Data.TaggedError`)
 - Use Effect Schema for all data validation and transformation
 - Leverage Effect's Layer system for service composition
 
@@ -131,9 +131,15 @@ Examples:
 - **No semicolons (`;`) at the end of lines**
 - **Trailing commas required**
 - **2-space indentation**
-- **Use direct module imports, not relative imports**
+- **Use absolute imports based on package tsconfig, not relative imports**
+  - Always use absolute imports that match the package structure
   - Prefer: `@openfaith/server/live/httpAuthMiddlewareLive`
   - Avoid: `../live/httpAuthMiddlewareLive`
+  - Prefer: `@openfaith/workers/helpers/ofLookup`
+  - Avoid: `./ofLookup`
+  - Use the package name prefix (e.g., `@openfaith/`) followed by the path from the package root
+  - Check the package's `tsconfig.json` and root `tsconfig.json` for path mappings
+  - This ensures imports work correctly with the monorepo tsconfig setup and IDE support
 - **Avoid destructuring in function parameters when it reduces readability**
   - Prefer: `Array.groupBy((item) => item.entityName)`
   - Avoid: `Array.groupBy(({ entityName }) => entityName)`
@@ -155,6 +161,35 @@ Examples:
   - Avoid: `items.filter((item) => item.active)`
   - Avoid: `Array.filter(items, (item) => item.active)`
 - Follow existing Effect-TS patterns
+
+### Error Handling Patterns
+
+**Tagged Errors:**
+
+- **Always use `Schema.TaggedError`** instead of `Data.TaggedError`
+- Use the correct syntax: `Schema.TaggedError<ErrorClass>()(tagName, fields)`
+- Define error fields using Schema types (e.g., `Schema.String`, `Schema.Unknown`)
+- Use `Schema.optional()` for optional fields
+
+**Example:**
+
+```typescript
+export class ValidationError extends Schema.TaggedError<ValidationError>()(
+  "ValidationError",
+  {
+    field: Schema.String,
+    message: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+  },
+) {}
+```
+
+**Import Pattern:**
+
+```typescript
+import { Schema } from "effect";
+// NOT: import { Data } from 'effect'
+```
 
 ## Key Components
 

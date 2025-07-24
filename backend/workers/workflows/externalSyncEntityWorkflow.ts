@@ -2,14 +2,25 @@ import { Activity, Workflow } from '@effect/workflow'
 import { TokenKey } from '@openfaith/adapter-core/server'
 import { ExternalLinkManagerLive } from '@openfaith/server/live/externalLinkManagerLive'
 import { PcoApiLayer } from '@openfaith/server/live/pcoApiLive'
-import { Effect, Schema } from 'effect'
-import { syncDataE } from '../helpers/syncDataE'
+import {
+  EntityClientNotFoundError,
+  EntityManifestNotFoundError,
+  EntityTransformError,
+  ExternalSyncError,
+  syncDataE,
+  UnsupportedAdapterError,
+  UnsupportedOperationError,
+} from '@openfaith/workers/helpers/syncDataE'
+import { Effect, Layer, Schema } from 'effect'
 
-// Define the external sync entity error
-class ExternalSyncEntityError extends Schema.TaggedError<ExternalSyncEntityError>(
-  'ExternalSyncEntityError',
-)('ExternalSyncEntityError', {
-  message: Schema.String,
+// Create a Schema version of ExternalLinkNotFoundError for workflow compatibility
+class ExternalLinkNotFoundErrorSchema extends Schema.TaggedError<ExternalLinkNotFoundErrorSchema>(
+  'ExternalLinkNotFound',
+)('ExternalLinkNotFound', {
+  cause: Schema.optional(Schema.Unknown),
+  entityId: Schema.String,
+  entityType: Schema.String,
+  message: Schema.optional(Schema.String),
 }) {}
 
 // Define the workflow payload schema
@@ -24,9 +35,17 @@ const ExternalSyncEntityPayload = Schema.Struct({
   tokenKey: Schema.String,
 })
 
-// Define the external sync entity workflow
+// Define the external sync entity workflow with union of specific error types
 export const ExternalSyncEntityWorkflow = Workflow.make({
-  error: ExternalSyncEntityError,
+  error: Schema.Union(
+    EntityTransformError,
+    EntityManifestNotFoundError,
+    UnsupportedOperationError,
+    EntityClientNotFoundError,
+    UnsupportedAdapterError,
+    ExternalSyncError,
+    ExternalLinkNotFoundErrorSchema,
+  ),
   idempotencyKey: ({ tokenKey, entityName }) =>
     `external-sync-entity-${tokenKey}-${entityName}-${new Date().toISOString()}`,
   name: 'ExternalSyncEntityWorkflow',
@@ -44,7 +63,15 @@ export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLaye
 
     // Create the external sync activity
     yield* Activity.make({
-      error: ExternalSyncEntityError,
+      error: Schema.Union(
+        EntityTransformError,
+        EntityManifestNotFoundError,
+        UnsupportedOperationError,
+        EntityClientNotFoundError,
+        UnsupportedAdapterError,
+        ExternalSyncError,
+        ExternalLinkNotFoundErrorSchema,
+      ),
       execute: Effect.gen(function* () {
         const attempt = yield* Activity.CurrentAttempt
 
@@ -59,19 +86,11 @@ export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLaye
           },
         )
 
-        // Process mutations using the helper
-        yield* syncDataE(mutations).pipe(
-          Effect.mapError(
-            (error: unknown) =>
-              new ExternalSyncEntityError({
-                message: error instanceof Error ? error.message : `${error}`,
-              }),
-          ),
-        )
+        // Process mutations using the helper - let specific errors flow through
+        yield* syncDataE(mutations)
       }).pipe(
         Effect.withSpan('external-sync-entity-activity'),
-        Effect.provide(ExternalLinkManagerLive),
-        Effect.provide(PcoApiLayer),
+        Effect.provide(Layer.mergeAll(ExternalLinkManagerLive, PcoApiLayer)),
         Effect.provideService(TokenKey, tokenKey),
       ),
       name: 'SyncExternalEntityData',

@@ -1,12 +1,12 @@
 import type { BucketDetails } from '@openfaith/adapter-core/layers/ratelimit/RateLimit'
 import { RateLimitStore } from '@openfaith/adapter-core/layers/ratelimit/RateLimit'
-import { Data, Effect, Layer, Option } from 'effect'
+import { Effect, Layer, Option, Schema } from 'effect'
 import { Redis, type RedisError } from 'effect-redis'
 
 // Custom error for better diagnostics
-class CorruptDataError extends Data.TaggedError('CorruptDataError')<{
-  readonly error: unknown
-}> {}
+class CorruptDataError extends Schema.TaggedError<CorruptDataError>()('CorruptDataError', {
+  error: Schema.Unknown,
+}) {}
 
 const bucketsKey = 'openfaith:ratelimit:buckets'
 const routesKey = 'openfaith:ratelimit:routes'

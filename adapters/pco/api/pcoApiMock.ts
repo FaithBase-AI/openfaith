@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/noUnusedFunctionParameters: it's a mock */
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import { Context, Effect, Layer } from 'effect'
 

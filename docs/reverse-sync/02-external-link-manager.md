@@ -14,23 +14,25 @@ The service interface defines the contract for managing external links with comp
 
 ```typescript
 import type { ExternalLink, NewExternalLink } from "@openfaith/db";
-import { Context, Data, type Effect } from "effect";
+import { Context, Schema, type Effect } from "effect";
 
 // Error types for ExternalLinkManager
-export class ExternalLinkNotFoundError extends Data.TaggedError(
+export class ExternalLinkNotFoundError extends Schema.TaggedError<ExternalLinkNotFoundError>()(
   "ExternalLinkNotFound",
-)<{
-  readonly entityId: string;
-  readonly entityType: string;
-}> {}
+  {
+    entityId: Schema.String,
+    entityType: Schema.String,
+  },
+) {}
 
-export class ExternalLinkConflictError extends Data.TaggedError(
+export class ExternalLinkConflictError extends Schema.TaggedError<ExternalLinkConflictError>()(
   "ExternalLinkConflict",
-)<{
-  readonly orgId: string;
-  readonly adapter: string;
-  readonly externalId: string;
-}> {}
+  {
+    orgId: Schema.String,
+    adapter: Schema.String,
+    externalId: Schema.String,
+  },
+) {}
 
 export class ExternalLinkManager extends Context.Tag(
   "@openfaith/adapter-core/layers/externalLinkManager/ExternalLinkManager",

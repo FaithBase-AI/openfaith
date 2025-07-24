@@ -2,8 +2,53 @@ import { ExternalLinkManager } from '@openfaith/adapter-core/layers/externalLink
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { singularize } from '@openfaith/shared/string'
+import { ofLookup } from '@openfaith/workers/helpers/ofLookup'
 import { Effect, pipe, Record, Schema } from 'effect'
-import { ofLookup } from './ofLookup'
+
+// Define tagged errors for external sync operations
+export class EntityTransformError extends Schema.TaggedError<EntityTransformError>(
+  'EntityTransformError',
+)('EntityTransformError', {
+  cause: Schema.Unknown,
+  entityName: Schema.String,
+}) {}
+
+export class EntityManifestNotFoundError extends Schema.TaggedError<EntityManifestNotFoundError>(
+  'EntityManifestNotFoundError',
+)('EntityManifestNotFoundError', {
+  entityName: Schema.String,
+  tableName: Schema.String,
+}) {}
+
+export class UnsupportedOperationError extends Schema.TaggedError<UnsupportedOperationError>(
+  'UnsupportedOperationError',
+)('UnsupportedOperationError', {
+  entityName: Schema.String,
+  operation: Schema.String,
+}) {}
+
+export class EntityClientNotFoundError extends Schema.TaggedError<EntityClientNotFoundError>(
+  'EntityClientNotFoundError',
+)('EntityClientNotFoundError', {
+  entityName: Schema.String,
+}) {}
+
+export class UnsupportedAdapterError extends Schema.TaggedError<UnsupportedAdapterError>(
+  'UnsupportedAdapterError',
+)('UnsupportedAdapterError', {
+  adapter: Schema.String,
+  entityName: Schema.String,
+}) {}
+
+export class ExternalSyncError extends Schema.TaggedError<ExternalSyncError>('ExternalSyncError')(
+  'ExternalSyncError',
+  {
+    cause: Schema.Unknown,
+    entityName: Schema.String,
+    externalId: Schema.String,
+    operation: Schema.String,
+  },
+) {}
 
 // Types for external sync operations
 export type CrudOperation = {
@@ -49,7 +94,9 @@ export const transformEntityDataE = Effect.fn('transformEntityDataE')(function* 
   const entityConfig = ofLookup[entityName as keyof typeof ofLookup]
 
   if (entityConfig?.transformer) {
-    return yield* Schema.encode(entityConfig.transformer as any)(data as any)
+    return yield* Schema.encode(entityConfig.transformer as any)(data as any).pipe(
+      Effect.mapError((cause) => new EntityTransformError({ cause, entityName })),
+    )
   }
 
   yield* Effect.logWarning('No transformer found for entity - using raw data', {
@@ -94,14 +141,24 @@ export const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
   switch (operation) {
     case 'insert':
       if (!entityClient.create) {
-        return yield* Effect.fail(new Error(`Create not supported for ${entityName}`))
+        yield* Effect.logWarning('Provider does not support create operation - skipping', {
+          entityName,
+          externalId,
+          operation: 'create',
+        })
+        return null
       }
       return yield* entityClient.create({ payload: encodedData })
 
     case 'update':
     case 'upsert':
       if (!entityClient.update) {
-        return yield* Effect.fail(new Error(`Update not supported for ${entityName}`))
+        yield* Effect.logWarning('Provider does not support update operation - skipping', {
+          entityName,
+          externalId,
+          operation: 'update',
+        })
+        return null
       }
       return yield* entityClient.update({
         payload: encodedData,
@@ -110,14 +167,19 @@ export const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
 
     case 'delete':
       if (!entityClient.delete) {
-        return yield* Effect.fail(new Error(`Delete not supported for ${entityName}`))
+        yield* Effect.logWarning('Provider does not support delete operation - skipping', {
+          entityName,
+          externalId,
+          operation: 'delete',
+        })
+        return null
       }
       return yield* entityClient.delete({
         urlParams: { id: externalId },
       })
 
     default:
-      return yield* Effect.fail(new Error(`Unknown operation: ${operation}`))
+      return yield* Effect.fail(new UnsupportedOperationError({ entityName, operation }))
   }
 })
 
@@ -145,9 +207,8 @@ export const syncToPcoE = Effect.fn('syncToPcoE')(function* (
   const entityClient = pcoClient[entityName as keyof typeof pcoClient] as EntityClient | undefined
 
   if (!entityClient) {
-    yield* Effect.logWarning('PCO client not found for entity', { entityName })
     yield* externalLinkManager.markSyncCompleted(link.adapter, link.externalId)
-    return
+    return yield* Effect.fail(new EntityClientNotFoundError({ entityName }))
   }
 
   // Transform data using existing bidirectional transformer
@@ -158,7 +219,7 @@ export const syncToPcoE = Effect.fn('syncToPcoE')(function* (
     hasTransformer: !!ofLookup[entityName as keyof typeof ofLookup]?.transformer,
   })
 
-  // Create and execute sync effect
+  // Create and execute sync effect with proper error handling
   yield* mkCrudEffectE(op.op, entityClient, entityName, encodedData, link.externalId).pipe(
     Effect.tap(() =>
       Effect.log('PCO sync completed successfully', {
@@ -167,21 +228,27 @@ export const syncToPcoE = Effect.fn('syncToPcoE')(function* (
         operation: op.op,
       }),
     ),
-    Effect.catchAll((error) =>
-      Effect.gen(function* () {
-        yield* externalLinkManager.markSyncCompleted(link.adapter, link.externalId)
-        yield* Effect.logError('PCO sync failed', {
-          entityName,
-          error: error instanceof Error ? error.message : `${error}`,
-          externalId: link.externalId,
-          operation: op.op,
-        })
+    Effect.tapError((error) =>
+      Effect.logError('PCO sync failed', {
+        entityName,
+        error: error instanceof Error ? error.message : `${error}`,
+        externalId: link.externalId,
+        operation: op.op,
       }),
     ),
+    Effect.mapError(
+      (cause) =>
+        new ExternalSyncError({
+          cause,
+          entityName,
+          externalId: link.externalId,
+          operation: op.op,
+        }),
+    ),
+    Effect.ensuring(
+      Effect.orDie(externalLinkManager.markSyncCompleted(link.adapter, link.externalId)),
+    ),
   )
-
-  // Mark sync completed on success
-  yield* externalLinkManager.markSyncCompleted(link.adapter, link.externalId)
 })
 
 /**
@@ -197,10 +264,9 @@ export const syncToExternalSystemsE = Effect.fn('syncToExternalSystemsE')(functi
       if (link.adapter === 'pco') {
         yield* syncToPcoE(op, entityName, link)
       } else {
-        yield* Effect.logWarning('Unsupported adapter for external sync', {
-          adapter: link.adapter,
-          entityName,
-        })
+        return yield* Effect.fail(
+          new UnsupportedAdapterError({ adapter: link.adapter, entityName }),
+        )
       }
     }),
   )
@@ -268,7 +334,7 @@ export const syncDataE = Effect.fn('syncDataE')(function* (
   // Process each mutation
   yield* Effect.forEach(mutations, ({ op }) =>
     processCrudOperationE(op as CrudOperation).pipe(
-      Effect.catchAll((error) =>
+      Effect.tapError((error) =>
         Effect.logError('Failed to process CRUD operation', {
           error: error instanceof Error ? error.message : `${error}`,
           operation: op,

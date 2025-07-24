@@ -1,11 +1,11 @@
 import { PgClient } from '@effect/sql-pg'
 import { PostgreSqlContainer } from '@testcontainers/postgresql'
-import { Data, Effect, Layer, Redacted, String } from 'effect'
+import { Effect, Layer, Redacted, Schema, String } from 'effect'
 import { Wait } from 'testcontainers'
 
-export class ContainerError extends Data.TaggedError('ContainerError')<{
-  cause: unknown
-}> {}
+export class ContainerError extends Schema.TaggedError<ContainerError>()('ContainerError', {
+  cause: Schema.Unknown,
+}) {}
 
 export class PgContainer extends Effect.Service<PgContainer>()('test/PgContainer', {
   scoped: Effect.acquireRelease(

@@ -13,7 +13,10 @@ import {
 import {
   type CrudOperation,
   type EntityClient,
+  EntityClientNotFoundError,
+  EntityTransformError,
   type ExternalLink,
+  ExternalSyncError,
   findEntityManifestE,
   getExternalLinksE,
   mkCrudEffectE,
@@ -23,6 +26,8 @@ import {
   syncToExternalSystemsE,
   syncToPcoE,
   transformEntityDataE,
+  UnsupportedAdapterError,
+  UnsupportedOperationError,
 } from '@openfaith/workers/helpers/syncDataE'
 import { Effect, Layer } from 'effect'
 
@@ -294,15 +299,36 @@ effect(
 )
 
 effect(
-  'mkCrudEffectE fails for unsupported operations',
+  'mkCrudEffectE succeeds with warning for unsupported operations',
   () =>
     Effect.gen(function* () {
       const entityClient = {} // Empty client with no methods
       const result = yield* mkCrudEffectE('insert', entityClient, 'Person', {}, 'pco_123').pipe(
         Effect.either,
       )
+      expect(result._tag).toBe('Right')
+      expect((result as any).right).toBe(null)
+    }),
+  { timeout: 10000 },
+)
+
+effect(
+  'mkCrudEffectE fails for unknown operation types',
+  () =>
+    Effect.gen(function* () {
+      const mockClient = yield* makeMockPcoHttpClient
+      const entityClient = mockClient.Person as EntityClient
+      const result = yield* mkCrudEffectE(
+        'unknown' as any,
+        entityClient,
+        'Person',
+        {},
+        'pco_123',
+      ).pipe(Effect.either)
       expect(result._tag).toBe('Left')
-      expect((result as any).left.message).toContain('Create not supported')
+      expect((result as any).left._tag).toBe('UnsupportedOperationError')
+      expect((result as any).left.operation).toBe('unknown')
+      expect((result as any).left.entityName).toBe('Person')
     }),
   { timeout: 10000 },
 )
@@ -310,37 +336,46 @@ effect(
 // ===== PCO SYNC TESTS =====
 
 layer(TestLayer)('syncToPcoE successfully syncs to PCO', (it) =>
-  it.effect('should sync successfully', () =>
+  it.effect('should sync successfully with entity that has no transformer', () =>
     Effect.gen(function* () {
       const operation = createCrudOperation('update', 'addresses', 'address_123')
       const link = createExternalLink('pco', 'pco_123')
 
-      // Should complete without errors
-      yield* syncToPcoE(operation, 'TestEntity', link)
+      // Should complete without errors - use "TestEntity" which has no transformer
+      // but will fail with EntityClientNotFoundError since it doesn't exist in mock
+      const result = yield* syncToPcoE(operation, 'TestEntity', link).pipe(Effect.either)
+      expect(result._tag).toBe('Left')
+      expect((result as any).left._tag).toBe('EntityClientNotFoundError')
     }),
   ),
 )
 
 layer(TestLayer)('syncToPcoE handles missing entity client', (it) =>
-  it.effect('should handle missing client gracefully', () =>
+  it.effect('should fail with EntityClientNotFoundError', () =>
     Effect.gen(function* () {
       const operation = createCrudOperation('update', 'test_entities', 'test_123')
       const link = createExternalLink('pco', 'pco_123')
 
-      // Should handle gracefully when entity client doesn't exist
-      yield* syncToPcoE(operation, 'UnknownEntity', link)
+      // Should fail with EntityClientNotFoundError when entity client doesn't exist
+      const result = yield* syncToPcoE(operation, 'UnknownEntity', link).pipe(Effect.either)
+      expect(result._tag).toBe('Left')
+      expect((result as any).left._tag).toBe('EntityClientNotFoundError')
+      expect((result as any).left.entityName).toBe('UnknownEntity')
     }),
   ),
 )
 
-layer(TestLayerWithErrors)('syncToPcoE handles API errors gracefully', (it) =>
-  it.effect('should handle API errors gracefully', () =>
+layer(TestLayerWithErrors)('syncToPcoE handles transformation errors', (it) =>
+  it.effect('should fail with EntityTransformError when data is invalid', () =>
     Effect.gen(function* () {
       const operation = createCrudOperation('update', 'addresses', 'address_123')
       const link = createExternalLink('pco', 'pco_123')
 
-      // Should handle API errors gracefully (no throw)
-      yield* syncToPcoE(operation, 'TestEntity', link)
+      // Should fail with EntityTransformError when using Person with invalid data
+      const result = yield* syncToPcoE(operation, 'Person', link).pipe(Effect.either)
+      expect(result._tag).toBe('Left')
+      expect((result as any).left._tag).toBe('EntityTransformError')
+      expect((result as any).left.entityName).toBe('Person')
     }),
   ),
 )
@@ -348,27 +383,35 @@ layer(TestLayerWithErrors)('syncToPcoE handles API errors gracefully', (it) =>
 // ===== EXTERNAL SYSTEMS SYNC TESTS =====
 
 layer(TestLayer)('syncToExternalSystemsE handles PCO adapter', (it) =>
-  it.effect('should handle PCO adapter', () =>
+  it.effect('should fail with EntityClientNotFoundError for unknown entity', () =>
     Effect.gen(function* () {
       const operation = createCrudOperation('update', 'addresses', 'address_123')
       const links = [createExternalLink('pco', 'pco_123')]
 
-      yield* syncToExternalSystemsE(operation, 'TestEntity', links)
+      // TestEntity doesn't exist in mock, so should fail with EntityClientNotFoundError
+      const result = yield* syncToExternalSystemsE(operation, 'TestEntity', links).pipe(
+        Effect.either,
+      )
+      expect(result._tag).toBe('Left')
+      expect((result as any).left._tag).toBe('EntityClientNotFoundError')
     }),
   ),
 )
 
 layer(TestLayer)('syncToExternalSystemsE handles unsupported adapters', (it) =>
-  it.effect('should handle unsupported adapters', () =>
+  it.effect('should fail with UnsupportedAdapterError', () =>
     Effect.gen(function* () {
       const operation = createCrudOperation('update', 'addresses', 'address_123')
-      const links = [
-        createExternalLink('pco', 'pco_123'),
-        createExternalLink('unsupported', 'other_123'),
-      ]
+      const links = [createExternalLink('unsupported', 'other_123')]
 
-      // Should handle both supported and unsupported adapters
-      yield* syncToExternalSystemsE(operation, 'TestEntity', links)
+      // Should fail with UnsupportedAdapterError when encountering unsupported adapter
+      const result = yield* syncToExternalSystemsE(operation, 'TestEntity', links).pipe(
+        Effect.either,
+      )
+      expect(result._tag).toBe('Left')
+      expect((result as any).left._tag).toBe('UnsupportedAdapterError')
+      expect((result as any).left.adapter).toBe('unsupported')
+      expect((result as any).left.entityName).toBe('TestEntity')
     }),
   ),
 )
@@ -425,7 +468,7 @@ layer(TestLayer)('syncDataE processes single mutation', (it) =>
 )
 
 layer(TestLayer)('syncDataE processes multiple mutations', (it) =>
-  it.effect('should process multiple mutations', () =>
+  it.effect('should fail with EntityTransformError when using entities with transformers', () =>
     Effect.gen(function* () {
       const mutations = [
         {
@@ -442,7 +485,10 @@ layer(TestLayer)('syncDataE processes multiple mutations', (it) =>
         },
       ]
 
-      yield* syncDataE(mutations)
+      // Should fail with EntityTransformError when processing addresses (which has a transformer)
+      const result = yield* syncDataE(mutations).pipe(Effect.either)
+      expect(result._tag).toBe('Left')
+      expect((result as any).left._tag).toBe('EntityTransformError')
     }),
   ),
 )
@@ -476,18 +522,20 @@ layer(TestLayer)('syncDataE handles mutations with unknown entities', (it) =>
   ),
 )
 
-layer(TestLayerWithErrors)('syncDataE handles API errors gracefully', (it) =>
-  it.effect('should handle API errors gracefully', () =>
+layer(TestLayerWithErrors)('syncDataE handles transformation errors', (it) =>
+  it.effect('should fail with EntityTransformError when using entities with transformers', () =>
     Effect.gen(function* () {
       const mutations = [
         {
           mutation: 'test_mutation_error',
-          op: createCrudOperation('update', 'test_entities', 'test_123'),
+          op: createCrudOperation('update', 'addresses', 'address_123'),
         },
       ]
 
-      // Should handle API errors gracefully and continue processing
-      yield* syncDataE(mutations)
+      // Should fail with EntityTransformError when using Address entity with invalid data
+      const result = yield* syncDataE(mutations).pipe(Effect.either)
+      expect(result._tag).toBe('Left')
+      expect((result as any).left._tag).toBe('EntityTransformError')
     }),
   ),
 )
@@ -545,5 +593,12 @@ effect('All types are properly exported', () =>
     expect(typeof syncToExternalSystemsE).toBe('function')
     expect(typeof processCrudOperationE).toBe('function')
     expect(typeof syncDataE).toBe('function')
+
+    // Verify error types are available (used in tests via _tag comparisons)
+    expect(EntityClientNotFoundError).toBeDefined()
+    expect(EntityTransformError).toBeDefined()
+    expect(ExternalSyncError).toBeDefined()
+    expect(UnsupportedAdapterError).toBeDefined()
+    expect(UnsupportedOperationError).toBeDefined()
   }),
 )

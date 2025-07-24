@@ -3,30 +3,36 @@
  */
 
 import type { ExternalLink, NewExternalLink } from '@openfaith/db'
-import { Context, Data, type Effect } from 'effect'
+import { Context, type Effect, Schema } from 'effect'
 
 /**
  * @since 1.0.0
  * @category errors
  */
-export class ExternalLinkNotFoundError extends Data.TaggedError('ExternalLinkNotFound')<{
-  readonly entityId: string
-  readonly entityType: string
-  readonly cause?: unknown
-  readonly message?: string
-}> {}
+export class ExternalLinkNotFoundError extends Schema.TaggedError<ExternalLinkNotFoundError>()(
+  'ExternalLinkNotFound',
+  {
+    cause: Schema.optional(Schema.Unknown),
+    entityId: Schema.String,
+    entityType: Schema.String,
+    message: Schema.optional(Schema.String),
+  },
+) {}
 
 /**
  * @since 1.0.0
  * @category errors
  */
-export class ExternalLinkConflictError extends Data.TaggedError('ExternalLinkConflict')<{
-  readonly orgId: string
-  readonly adapter: string
-  readonly externalId: string
-  readonly cause?: unknown
-  readonly message?: string
-}> {}
+export class ExternalLinkConflictError extends Schema.TaggedError<ExternalLinkConflictError>()(
+  'ExternalLinkConflict',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    externalId: Schema.String,
+    message: Schema.optional(Schema.String),
+    orgId: Schema.String,
+  },
+) {}
 
 /**
  * @since 1.0.0
