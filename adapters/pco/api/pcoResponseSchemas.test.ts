@@ -74,7 +74,7 @@ effect('mkPcoCollectionSchema: creates schema for collection without entity regi
       },
     }
 
-    const result = Schema.decodeSync(collectionSchema)(sampleCollection) as any
+    const result = Schema.decodeUnknownSync(collectionSchema)(sampleCollection)
     expect(result.data).toHaveLength(1)
     expect(result.data[0]).toEqual(samplePerson)
     expect(result.links.self).toBe('https://api.planningcenteronline.com/people/v2/people')
@@ -100,7 +100,7 @@ effect('mkPcoCollectionSchema: creates schema for collection with entity registr
       },
     }
 
-    const result = Schema.decodeSync(collectionSchema)(sampleCollectionWithIncludes) as any
+    const result = Schema.decodeUnknownSync(collectionSchema)(sampleCollectionWithIncludes)
     expect(result.data).toHaveLength(1)
     expect(result.data[0]).toEqual(samplePerson)
     expect(result.included).toHaveLength(1)
@@ -124,7 +124,7 @@ effect('mkPcoCollectionSchema: handles optional fields correctly', () =>
       },
     }
 
-    const result = Schema.decodeSync(collectionSchema)(minimalCollection) as any
+    const result = Schema.decodeUnknownSync(collectionSchema)(minimalCollection)
     expect(result.data).toHaveLength(1)
     expect(result.links.next).toBeUndefined()
     expect(result.meta.can_include).toBeUndefined()
@@ -147,7 +147,7 @@ effect('mkPcoCollectionSchema: validates required fields', () =>
       // Missing required meta field
     }
 
-    expect(() => Schema.decodeSync(collectionSchema)(invalidCollection)).toThrow()
+    expect(() => Schema.decodeUnknownSync(collectionSchema)(invalidCollection)).toThrow()
   }),
 )
 
@@ -160,7 +160,7 @@ effect('mkPcoSingleSchema: creates schema for single resource without entity reg
       data: samplePerson,
     }
 
-    const result = Schema.decodeSync(singleSchema)(sampleSingle) as any
+    const result = Schema.decodeUnknownSync(singleSchema)(sampleSingle)
     expect(result.data).toEqual(samplePerson)
     expect('included' in result).toBe(false)
   }),
@@ -176,7 +176,7 @@ effect('mkPcoSingleSchema: creates schema for single resource with entity regist
       included: [sampleAddress],
     }
 
-    const result = Schema.decodeSync(singleSchema)(sampleSingleWithIncludes) as any
+    const result = Schema.decodeUnknownSync(singleSchema)(sampleSingleWithIncludes)
     expect(result.data).toEqual(samplePerson)
     expect(result.included).toHaveLength(1)
     expect(result.included[0]).toEqual(sampleAddress)
@@ -193,7 +193,7 @@ effect('mkPcoSingleSchema: handles empty included array', () =>
       included: [],
     }
 
-    const result = Schema.decodeSync(singleSchema)(sampleSingleEmptyIncludes) as any
+    const result = Schema.decodeUnknownSync(singleSchema)(sampleSingleEmptyIncludes)
     expect(result.data).toEqual(samplePerson)
     expect(result.included).toHaveLength(0)
   }),
@@ -219,7 +219,7 @@ effect('mkPcoPayloadSchema: creates POST payload schema with required fields', (
       },
     }
 
-    const result = Schema.decodeSync(payloadSchema)(postPayload) as any
+    const result = Schema.decodeUnknownSync(payloadSchema)(postPayload)
     expect(result.data.type).toBe('Person')
     expect(result.data.attributes.first_name).toBe('Jane')
     expect(result.data.attributes.last_name).toBe('Smith')
@@ -247,7 +247,7 @@ effect('mkPcoPayloadSchema: creates PATCH payload schema with optional fields', 
       },
     }
 
-    const result = Schema.decodeSync(payloadSchema)(patchPayload) as any
+    const result = Schema.decodeUnknownSync(payloadSchema)(patchPayload)
     expect(result.data.type).toBe('Person')
     expect(result.data.id).toBe('123')
     expect(result.data.attributes.first_name).toBe('Jane')
@@ -275,7 +275,7 @@ effect('mkPcoPayloadSchema: validates entity type literal', () =>
       },
     }
 
-    expect(() => Schema.decodeSync(payloadSchema)(invalidPayload)).toThrow()
+    expect(() => Schema.decodeUnknownSync(payloadSchema)(invalidPayload)).toThrow()
   }),
 )
 
@@ -298,7 +298,7 @@ effect('mkPcoPayloadSchema: POST schema requires specified fields', () =>
       },
     }
 
-    expect(() => Schema.decodeSync(payloadSchema)(incompletePayload)).toThrow()
+    expect(() => Schema.decodeUnknownSync(payloadSchema)(incompletePayload)).toThrow()
   }),
 )
 
@@ -321,7 +321,7 @@ effect('mkPcoPayloadSchema: PATCH schema allows partial updates', () =>
       },
     }
 
-    const result = Schema.decodeSync(payloadSchema)(partialPayload) as any
+    const result = Schema.decodeUnknownSync(payloadSchema)(partialPayload)
     expect(result.data.attributes.email).toBe('newemail@example.com')
     expect('first_name' in result.data.attributes).toBe(false)
     expect('last_name' in result.data.attributes).toBe(false)
@@ -345,7 +345,7 @@ effect('mkPcoPayloadSchema: handles empty attributes for PATCH', () =>
       },
     }
 
-    const result = Schema.decodeSync(payloadSchema)(emptyAttributesPayload) as any
+    const result = Schema.decodeUnknownSync(payloadSchema)(emptyAttributesPayload)
     expect(result.data.type).toBe('Person')
     expect(result.data.id).toBe('123')
     expect(Object.keys(result.data.attributes)).toHaveLength(0)
@@ -370,7 +370,7 @@ effect('mkPcoPayloadSchema: validates data structure', () =>
       type: 'Person',
     }
 
-    expect(() => Schema.decodeSync(payloadSchema)(invalidStructure)).toThrow()
+    expect(() => Schema.decodeUnknownSync(payloadSchema)(invalidStructure)).toThrow()
   }),
 )
 
@@ -393,7 +393,7 @@ effect('mkPcoPayloadSchema: picks only specified fields', () =>
       },
     }
 
-    const result = Schema.decodeSync(payloadSchema)(payloadWithExtraFields) as any
+    const result = Schema.decodeUnknownSync(payloadSchema)(payloadWithExtraFields)
     expect(result.data.attributes.first_name).toBe('Jane')
     expect('last_name' in result.data.attributes).toBe(false) // Should be filtered out
   }),
@@ -427,7 +427,7 @@ effect('mkPcoPayloadSchema: handles real PCO person update scenario', () =>
       },
     }
 
-    const result = Schema.decodeSync(payloadSchema)(realUpdatePayload) as any
+    const result = Schema.decodeUnknownSync(payloadSchema)(realUpdatePayload)
     expect(result.data.type).toBe('Person')
     expect(result.data.id).toBe('105820014')
     expect(result.data.attributes.first_name).toBe('Updated Name')
@@ -469,7 +469,7 @@ effect('mkPcoPayloadSchema: handles complex nested attributes', () =>
       },
     }
 
-    const result = Schema.decodeSync(payloadSchema)(complexPayload) as any
+    const result = Schema.decodeUnknownSync(payloadSchema)(complexPayload)
     expect(result.data.attributes.name).toBe('Test Entity')
     expect(result.data.attributes.metadata?.source).toBe('api')
     expect(result.data.attributes.metadata?.priority).toBe(1)
@@ -489,7 +489,7 @@ effect('mkPcoCollectionSchema: fails with invalid data structure', () =>
       meta: { count: 1, total_count: 1 },
     }
 
-    expect(() => Schema.decodeSync(collectionSchema)(invalidData)).toThrow()
+    expect(() => Schema.decodeUnknownSync(collectionSchema)(invalidData)).toThrow()
   }),
 )
 
@@ -499,9 +499,9 @@ effect('mkPcoSingleSchema: fails with invalid data structure', () =>
 
     const invalidData = {
       data: ['should be object, not array'],
-    }
+    } as const
 
-    expect(() => Schema.decodeSync(singleSchema)(invalidData)).toThrow()
+    expect(() => Schema.decodeUnknownSync(singleSchema)(invalidData)).toThrow()
   }),
 )
 
@@ -522,7 +522,7 @@ effect('mkPcoPayloadSchema: fails with missing required data field', () =>
       type: 'Person',
     }
 
-    expect(() => Schema.decodeSync(payloadSchema)(invalidPayload)).toThrow()
+    expect(() => Schema.decodeUnknownSync(payloadSchema)(invalidPayload)).toThrow()
   }),
 )
 
@@ -555,8 +555,8 @@ effect('mkPcoPayloadSchema: POST and PATCH schemas work with same data structure
     }
 
     // Both schemas should accept the full payload
-    const postResult = Schema.decodeSync(postSchema)(fullPayload) as any
-    const patchResult = Schema.decodeSync(patchSchema)(fullPayload) as any
+    const postResult = Schema.decodeUnknownSync(postSchema)(fullPayload)
+    const patchResult = Schema.decodeUnknownSync(patchSchema)(fullPayload)
 
     expect(postResult.data.attributes.first_name).toBe('Jane')
     expect(postResult.data.attributes.last_name).toBe('Smith')
@@ -584,7 +584,7 @@ effect('mkPcoPayloadSchema: encodes back to original structure', () =>
       },
     }
 
-    const decoded = Schema.decodeSync(payloadSchema)(originalPayload)
+    const decoded = Schema.decodeUnknownSync(payloadSchema)(originalPayload)
     const encoded = Schema.encodeSync(payloadSchema)(decoded)
 
     expect(encoded).toEqual(originalPayload)

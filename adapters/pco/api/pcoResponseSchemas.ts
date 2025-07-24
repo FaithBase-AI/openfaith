@@ -91,20 +91,16 @@ export function mkPcoSingleSchema(
  */
 export function mkPcoPayloadSchema<Fields extends Record<string, any>>(
   attributesSchema: Schema.Struct<Fields>,
-  keys: ReadonlyArray<string>,
+  keys: ReadonlyArray<keyof Fields>,
   entityType: string,
   makeOptional?: boolean,
 ) {
-  let pickedSchema: any = attributesSchema.pick(...(keys as any))
-
-  // For PATCH operations, make all fields optional since we're doing partial updates
-  if (makeOptional) {
-    pickedSchema = Schema.partial(pickedSchema)
-  }
+  const pickedSchema = attributesSchema.pick(...keys)
+  const finalAttributesSchema = makeOptional ? Schema.partial(pickedSchema) : pickedSchema
 
   return Schema.Struct({
     data: Schema.Struct({
-      attributes: pickedSchema,
+      attributes: finalAttributesSchema,
       id: Schema.optional(Schema.String), // Optional for POST, required for PATCH
       type: Schema.Literal(entityType),
     }),
