@@ -3,10 +3,11 @@ import type { CRUDMutation, CRUDOp } from '@openfaith/domain'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import type { pcoPersonTransformer } from '@openfaith/pco/server'
+import { OfFieldName } from '@openfaith/schema'
 
 import { mkEntityName, mkEntityType, mkUrlParamName } from '@openfaith/shared/string'
 import { ofLookup } from '@openfaith/workers/helpers/ofLookup'
-import { Effect, pipe, Record, Schema } from 'effect'
+import { Array, Effect, Option, pipe, Record, Schema, SchemaAST } from 'effect'
 
 // Define tagged errors for external sync operations
 export class EntityTransformError extends Schema.TaggedError<EntityTransformError>()(
@@ -86,54 +87,55 @@ export const transformPartialEntityDataE = Effect.fn('transformPartialEntityData
     return partialData
   }
 
-  // For partial updates, we only transform the fields that are present
-  // We don't need a complete object, just the fields being updated
+  const originalTransformer = entityConfig.transformer as any
+  const sourceSchema = originalTransformer.from as Schema.Struct<any>
+
   const transformedFields: Record<string, unknown> = {}
 
-  // For now, we'll do a simple field mapping for common fields
-  // Note: We could use the transformer schema for more sophisticated field mapping
-  // const transformer = entityConfig.transformer as unknown as typeof pcoPersonTransformer;
-  // This handles the most common case where field names match or have simple mappings
-  for (const [key, value] of Object.entries(partialData)) {
-    switch (key) {
-      case 'firstName':
-        transformedFields.first_name = value
-        break
-      case 'lastName':
-        transformedFields.last_name = value
-        break
-      case 'middleName':
-        transformedFields.middle_name = value
-        break
-      case 'name':
-        transformedFields.name = value
-        break
-      case 'birthdate':
-        transformedFields.birthdate = value
-        break
-      case 'anniversary':
-        transformedFields.anniversary = value
-        break
-      case 'gender':
-        // Transform gender from OF format to PCO format
-        if (value === 'male') {
-          transformedFields.gender = 'Male'
-        } else if (value === 'female') {
-          transformedFields.gender = 'Female'
-        } else {
-          transformedFields.gender = value
-        }
-        break
-      case 'avatar':
-        transformedFields.avatar = value
-        break
-      case 'membership':
-        transformedFields.membership = value
-        break
-      default:
-        // For unknown fields, pass them through as-is
-        transformedFields[key] = value
-    }
+  // Process each field in the partial data
+  for (const [ofFieldName, value] of Object.entries(partialData)) {
+    // Find the corresponding PCO field name by looking through the source schema
+    const pcoFieldEntry = pipe(
+      sourceSchema.fields,
+      Record.toEntries,
+      Array.findFirst(([pcoKey, field]) => {
+        const fieldKeyOpt = SchemaAST.getAnnotation<string>(OfFieldName)(
+          field.ast as SchemaAST.Annotated,
+        )
+        return pipe(
+          fieldKeyOpt,
+          Option.match({
+            onNone: () => pcoKey === ofFieldName, // Direct match if no annotation
+            onSome: (annotatedFieldName) => annotatedFieldName === ofFieldName,
+          }),
+        )
+      }),
+    )
+
+    pipe(
+      pcoFieldEntry,
+      Option.match({
+        onNone: () => {
+          // No mapping found, pass through as-is
+          transformedFields[ofFieldName] = value
+        },
+        onSome: ([pcoKey, _field]) => {
+          // Apply any field-specific transformations
+          let transformedValue = value
+
+          // Handle special transformations (like gender)
+          if (ofFieldName === 'gender') {
+            if (value === 'male') {
+              transformedValue = 'Male'
+            } else if (value === 'female') {
+              transformedValue = 'Female'
+            }
+          }
+
+          transformedFields[pcoKey] = transformedValue
+        },
+      }),
+    )
   }
 
   yield* Effect.log('Transformed partial entity data', {

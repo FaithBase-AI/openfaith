@@ -23,6 +23,7 @@ import {
   syncToExternalSystemsE,
   syncToPcoE,
   transformEntityDataE,
+  transformPartialEntityDataE,
   UnsupportedAdapterError,
   UnsupportedOperationError,
 } from '@openfaith/workers/helpers/syncDataE'
@@ -605,6 +606,7 @@ effect('All types are properly exported', () =>
     expect(link.adapter).toBe('pco')
     expect(typeof mkEntityName).toBe('function')
     expect(typeof transformEntityDataE).toBe('function')
+    expect(typeof transformPartialEntityDataE).toBe('function')
     expect(typeof findEntityManifestE).toBe('function')
     expect(typeof getExternalLinksE).toBe('function')
     expect(typeof mkCrudEffectE).toBe('function')
@@ -620,3 +622,203 @@ effect('All types are properly exported', () =>
     expect(UnsupportedOperationError).toBeDefined()
   }),
 )
+
+// ===== PARTIAL TRANSFORMATION TESTS =====
+
+layer(Layer.empty)('transformPartialEntityDataE with Person entity', (it) => {
+  it.live('should transform Person fields using OfFieldName annotations', () =>
+    Effect.gen(function* () {
+      const partialPersonData = {
+        firstName: 'John',
+        lastName: 'Doe',
+        middleName: 'William',
+      }
+
+      const result = yield* transformPartialEntityDataE('Person', partialPersonData)
+
+      expect(result).toEqual({
+        first_name: 'John',
+        last_name: 'Doe',
+        middle_name: 'William',
+      })
+    }),
+  )
+
+  it.live('should handle gender transformation correctly', () =>
+    Effect.gen(function* () {
+      const maleData = { gender: 'male' }
+      const femaleData = { gender: 'female' }
+      const otherData = { gender: 'other' }
+
+      const maleResult = yield* transformPartialEntityDataE('Person', maleData)
+      const femaleResult = yield* transformPartialEntityDataE('Person', femaleData)
+      const otherResult = yield* transformPartialEntityDataE('Person', otherData)
+
+      expect(maleResult.gender).toBe('Male')
+      expect(femaleResult.gender).toBe('Female')
+      expect(otherResult.gender).toBe('other')
+    }),
+  )
+
+  it.live('should handle fields that map directly without annotations', () =>
+    Effect.gen(function* () {
+      const dataWithDirectFields = {
+        avatar: 'https://example.com/avatar.jpg',
+        name: 'John Doe',
+      }
+
+      const result = yield* transformPartialEntityDataE('Person', dataWithDirectFields)
+
+      expect(result.name).toBe('John Doe')
+      expect(result.avatar).toBe('https://example.com/avatar.jpg')
+    }),
+  )
+
+  it.live('should handle unknown fields by passing them through', () =>
+    Effect.gen(function* () {
+      const dataWithUnknownField = {
+        anotherUnknown: 123,
+        firstName: 'John',
+        unknownField: 'someValue',
+      }
+
+      const result = yield* transformPartialEntityDataE('Person', dataWithUnknownField)
+
+      expect(result.first_name).toBe('John')
+      expect(result.unknownField).toBe('someValue')
+      expect(result.anotherUnknown).toBe(123)
+    }),
+  )
+
+  it.live('should handle mixed known and unknown fields', () =>
+    Effect.gen(function* () {
+      const mixedData = {
+        birthdate: '1990-01-01',
+        customField: 'custom value',
+        firstName: 'Jane',
+        gender: 'female',
+      }
+
+      const result = yield* transformPartialEntityDataE('Person', mixedData)
+
+      expect(result.first_name).toBe('Jane')
+      expect(result.gender).toBe('Female')
+      expect(result.customField).toBe('custom value')
+      expect(result.birthdate).toBe('1990-01-01')
+    }),
+  )
+
+  it.live('should handle empty partial data', () =>
+    Effect.gen(function* () {
+      const emptyData = {}
+
+      const result = yield* transformPartialEntityDataE('Person', emptyData)
+
+      expect(result).toEqual({})
+    }),
+  )
+})
+
+layer(Layer.empty)('transformPartialEntityDataE with Address entity', (it) => {
+  it.live('should transform Address fields using OfFieldName annotations', () =>
+    Effect.gen(function* () {
+      const partialAddressData = {
+        city: 'New York',
+        state: 'NY',
+        street: '123 Main St',
+      }
+
+      const result = yield* transformPartialEntityDataE('Address', partialAddressData)
+
+      // Address fields should be transformed according to their OfFieldName annotations
+      expect(result.street).toBe('123 Main St')
+      expect(result.city).toBe('New York')
+      expect(result.state).toBe('NY')
+    }),
+  )
+})
+
+layer(Layer.empty)('transformPartialEntityDataE with unknown entity', (it) => {
+  it.live('should return raw data for entities without transformers', () =>
+    Effect.gen(function* () {
+      const unknownData = {
+        anotherField: 123,
+        nestedField: { nested: 'value' },
+        someField: 'someValue',
+      }
+
+      const result = yield* transformPartialEntityDataE('UnknownEntity', unknownData)
+
+      expect(result).toEqual(unknownData)
+    }),
+  )
+
+  it.live('should log warning for entities without transformers', () =>
+    Effect.gen(function* () {
+      const unknownData = { someField: 'someValue' }
+
+      // This should succeed but log a warning
+      const result = yield* transformPartialEntityDataE('NonExistentEntity', unknownData)
+
+      expect(result).toEqual(unknownData)
+    }),
+  )
+})
+
+layer(Layer.empty)('transformPartialEntityDataE edge cases', (it) => {
+  it.live('should handle null and undefined values', () =>
+    Effect.gen(function* () {
+      const dataWithNulls = {
+        firstName: 'John',
+        lastName: null,
+        middleName: undefined,
+      }
+
+      const result = yield* transformPartialEntityDataE('Person', dataWithNulls)
+
+      expect(result.first_name).toBe('John')
+      expect(result.last_name).toBe(null)
+      expect(result.middle_name).toBe(undefined)
+    }),
+  )
+
+  it.live('should handle complex data types', () =>
+    Effect.gen(function* () {
+      const complexData = {
+        firstName: 'John',
+        metadata: {
+          source: 'import',
+          tags: ['vip', 'member'],
+        },
+        scores: [95, 87, 92],
+      }
+
+      const result = yield* transformPartialEntityDataE('Person', complexData)
+
+      expect(result.first_name).toBe('John')
+      expect(result.metadata).toEqual({
+        source: 'import',
+        tags: ['vip', 'member'],
+      })
+      expect(result.scores).toEqual([95, 87, 92])
+    }),
+  )
+
+  it.live('should handle boolean and numeric values', () =>
+    Effect.gen(function* () {
+      const typedData = {
+        age: 30,
+        firstName: 'John',
+        isActive: true,
+        score: 95.5,
+      }
+
+      const result = yield* transformPartialEntityDataE('Person', typedData)
+
+      expect(result.first_name).toBe('John')
+      expect(result.isActive).toBe(true)
+      expect(result.age).toBe(30)
+      expect(result.score).toBe(95.5)
+    }),
+  )
+})
