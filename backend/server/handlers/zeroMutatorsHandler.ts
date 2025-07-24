@@ -1,9 +1,9 @@
 import { HttpApiBuilder } from '@effect/platform'
 import { TokenKey } from '@openfaith/adapter-core/server'
-
 import { MutatorError, SessionContext, ZeroMutatorsApi as ZeroApi } from '@openfaith/domain'
 import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
 import { AppZeroStore, ZeroLive } from '@openfaith/server/live/zeroLive'
+import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
 import { createMutators } from '@openfaith/zero'
 import type { ReadonlyJSONObject } from '@rocicorp/zero'
 import { Effect, Layer, Option, pipe } from 'effect'
@@ -41,19 +41,27 @@ export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) 
           ),
         )
 
-      // if (authData.activeOrganizationId) {
-      //   // 🔄 NEW: After local mutations succeed, sync to external systems
+      console.log(JSON.stringify(input.payload.mutations))
 
-      //   yield* externalSyncFunction(input.payload.mutations).pipe(
-      //     Effect.provideService(TokenKey, authData.activeOrganizationId),
-      //     Effect.catchAll((error) =>
-      //       Effect.logError('External sync failed', {
-      //         error: error instanceof Error ? error.message : String(error),
-      //         mutations: input.payload.mutations.length,
-      //       }),
-      //     ),
-      //   )
-      // }
+      if (authData.activeOrganizationId) {
+        const workflowClient = yield* WorkflowClient
+
+        yield* workflowClient.workflows
+          .ExternalSyncWorkflow({
+            payload: {
+              mutations: input.payload.mutations,
+              tokenKey: authData.activeOrganizationId,
+            },
+          })
+          .pipe(
+            Effect.mapError(
+              (error) =>
+                new MutatorError({
+                  message: `Error processing external sync workflow: ${error}`,
+                }),
+            ),
+          )
+      }
 
       return result
     }),

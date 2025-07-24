@@ -262,7 +262,7 @@ effect(
   () =>
     Effect.gen(function* () {
       const mockClient = yield* makeMockPcoHttpClient
-      const entityClient = mockClient.Person as EntityClient
+      const entityClient = mockClient.Person as unknown as EntityClient
       const result = yield* mkCrudEffectE(
         'insert',
         entityClient,
@@ -281,7 +281,7 @@ effect(
   () =>
     Effect.gen(function* () {
       const mockClient = yield* makeMockPcoHttpClient
-      const entityClient = mockClient.Person as EntityClient
+      const entityClient = mockClient.Person as unknown as EntityClient
       const result = yield* mkCrudEffectE(
         'update',
         entityClient,
@@ -300,7 +300,7 @@ effect(
   () =>
     Effect.gen(function* () {
       const mockClient = yield* makeMockPcoHttpClient
-      const entityClient = mockClient.Person as EntityClient
+      const entityClient = mockClient.Person as unknown as EntityClient
       const result = yield* mkCrudEffectE('delete', entityClient, 'Person', {}, 'pco_123')
       expect(result).toBeUndefined()
     }),
@@ -326,7 +326,7 @@ effect(
   () =>
     Effect.gen(function* () {
       const mockClient = yield* makeMockPcoHttpClient
-      const entityClient = mockClient.Person as EntityClient
+      const entityClient = mockClient.Person as unknown as EntityClient
       const result = yield* mkCrudEffectE(
         'unknown' as any,
         entityClient,

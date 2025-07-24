@@ -2,6 +2,8 @@ import { ExternalLinkManager } from '@openfaith/adapter-core/layers/externalLink
 import type { CRUDMutation, CRUDOp } from '@openfaith/domain'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
+import type { pcoPersonTransformer } from '@openfaith/pco/server'
+
 import { mkEntityName, mkEntityType } from '@openfaith/shared/string'
 import { ofLookup } from '@openfaith/workers/helpers/ofLookup'
 import { Effect, pipe, Record, Schema } from 'effect'
@@ -57,12 +59,14 @@ export type ExternalLink = {
 }
 
 export type EntityClient = {
-  readonly create?: (params: { payload: unknown }) => Effect.Effect<unknown, unknown, any>
+  readonly create?: (params: { payload: unknown }) => Effect.Effect<unknown, unknown, never>
   readonly update?: (params: {
     payload: unknown
     urlParams: { id: string }
-  }) => Effect.Effect<unknown, unknown, any>
-  readonly delete?: (params: { urlParams: { id: string } }) => Effect.Effect<unknown, unknown, any>
+  }) => Effect.Effect<unknown, unknown, never>
+  readonly delete?: (params: {
+    urlParams: { id: string }
+  }) => Effect.Effect<unknown, unknown, never>
 }
 
 /**
@@ -75,9 +79,9 @@ export const transformEntityDataE = Effect.fn('transformEntityDataE')(function* 
   const entityConfig = ofLookup[entityName as keyof typeof ofLookup]
 
   if (entityConfig?.transformer) {
-    return yield* Schema.encode(entityConfig.transformer as any)(data as any).pipe(
-      Effect.mapError((cause) => new EntityTransformError({ cause, entityName })),
-    )
+    return yield* Schema.encode(entityConfig.transformer as unknown as typeof pcoPersonTransformer)(
+      data as any,
+    ).pipe(Effect.mapError((cause) => new EntityTransformError({ cause, entityName })))
   }
 
   yield* Effect.logWarning('No transformer found for entity - using raw data', {
