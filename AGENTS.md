@@ -134,6 +134,26 @@ Examples:
 - **Use direct module imports, not relative imports**
   - Prefer: `@openfaith/server/live/httpAuthMiddlewareLive`
   - Avoid: `../live/httpAuthMiddlewareLive`
+- **Avoid destructuring in function parameters when it reduces readability**
+  - Prefer: `Array.groupBy((item) => item.entityName)`
+  - Avoid: `Array.groupBy(({ entityName }) => entityName)`
+  - Prefer: `Effect.forEach((entityWorkflow) => entityWorkflow.entityName)`
+  - Avoid: `Effect.forEach(({ entityName }) => entityName)`
+- **Use descriptive variable names, avoid abbreviations**
+  - Prefer: `(error) => error.message`
+  - Avoid: `(err) => err.message`
+- **Avoid direct array access, use Effect's safe array utilities**
+  - Prefer: `Array.head(mutation.args)` with `Option.match`
+  - Avoid: `mutation.args[0]`
+  - Prefer: `Array.get(items, index)` with `Option.match`
+  - Avoid: `items[index]`
+- **Use Effect's Array utilities instead of native array methods**
+  - Prefer: `pipe(items, Array.map((item) => item.name))`
+  - Avoid: `items.map((item) => item.name)`
+  - Avoid: `Array.map(items, (item) => item.name)`
+  - Prefer: `pipe(items, Array.filter((item) => item.active))`
+  - Avoid: `items.filter((item) => item.active)`
+  - Avoid: `Array.filter(items, (item) => item.active)`
 - Follow existing Effect-TS patterns
 
 ## Key Components

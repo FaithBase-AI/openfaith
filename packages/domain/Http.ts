@@ -3,45 +3,54 @@ import { SessionError, SessionHttpMiddleware } from '@openfaith/domain/contexts/
 import { Schema } from 'effect'
 
 // CRUD operation schemas
-const PrimaryKey = Schema.Record({ key: Schema.String, value: Schema.Unknown })
-const RowValue = Schema.Record({ key: Schema.String, value: Schema.Unknown })
+export const PrimaryKey = Schema.Record({ key: Schema.String, value: Schema.Unknown })
+export type PrimaryKey = typeof PrimaryKey.Type
 
-const InsertOp = Schema.Struct({
+export const RowValue = Schema.Record({ key: Schema.String, value: Schema.Unknown })
+export type RowValue = typeof RowValue.Type
+
+export const InsertOp = Schema.Struct({
   op: Schema.Literal('insert'),
   primaryKey: PrimaryKey,
   tableName: Schema.String,
   value: RowValue,
 })
+export type InsertOp = typeof InsertOp.Type
 
-const UpsertOp = Schema.Struct({
+export const UpsertOp = Schema.Struct({
   op: Schema.Literal('upsert'),
   primaryKey: PrimaryKey,
   tableName: Schema.String,
   value: RowValue,
 })
+export type UpsertOp = typeof UpsertOp.Type
 
-const UpdateOp = Schema.Struct({
+export const UpdateOp = Schema.Struct({
   op: Schema.Literal('update'),
   primaryKey: PrimaryKey,
   tableName: Schema.String,
   value: RowValue,
 })
+export type UpdateOp = typeof UpdateOp.Type
 
-const DeleteOp = Schema.Struct({
+export const DeleteOp = Schema.Struct({
   op: Schema.Literal('delete'),
   primaryKey: PrimaryKey,
   tableName: Schema.String,
   value: PrimaryKey, // For delete ops, value represents the primary key
 })
+export type DeleteOp = typeof DeleteOp.Type
 
-const CRUDOp = Schema.Union(InsertOp, UpsertOp, UpdateOp, DeleteOp)
+export const CRUDOp = Schema.Union(InsertOp, UpsertOp, UpdateOp, DeleteOp)
+export type CRUDOp = typeof CRUDOp.Type
 
-const CRUDMutationArg = Schema.Struct({
+export const CRUDMutationArg = Schema.Struct({
   ops: Schema.Array(CRUDOp),
 })
-
+export type CRUDMutationArg = typeof CRUDMutationArg.Type
 // Mutation schemas
-const CRUDMutation = Schema.Struct({
+
+export const CRUDMutation = Schema.Struct({
   args: Schema.Tuple(CRUDMutationArg),
   clientID: Schema.String,
   id: Schema.Number,
@@ -49,8 +58,9 @@ const CRUDMutation = Schema.Struct({
   timestamp: Schema.Number,
   type: Schema.Literal('crud'),
 })
+export type CRUDMutation = typeof CRUDMutation.Type
 
-const CustomMutation = Schema.Struct({
+export const CustomMutation = Schema.Struct({
   args: Schema.Array(Schema.Unknown),
   clientID: Schema.String,
   id: Schema.Number,
@@ -58,8 +68,10 @@ const CustomMutation = Schema.Struct({
   timestamp: Schema.Number, // JSON values
   type: Schema.Literal('custom'),
 })
+export type CustomMutation = typeof CustomMutation.Type
 
-const Mutation = Schema.Union(CRUDMutation, CustomMutation)
+export const Mutation = Schema.Union(CRUDMutation, CustomMutation)
+export type Mutation = typeof Mutation.Type
 
 export const PushRequest = Schema.Struct({
   clientGroupID: Schema.String,
@@ -70,7 +82,6 @@ export const PushRequest = Schema.Struct({
   timestamp: Schema.Number,
 })
 export type PushRequest = typeof PushRequest.Type
-
 export const PushUrlParams = Schema.Struct({
   appID: Schema.String,
   schema: Schema.String,
@@ -78,69 +89,83 @@ export const PushUrlParams = Schema.Struct({
 export type PushUrlParams = typeof PushUrlParams.Type
 
 // Mutation ID schema
-const MutationID = Schema.Struct({
+export const MutationID = Schema.Struct({
   clientID: Schema.String,
   id: Schema.Number,
 })
+export type MutationID = typeof MutationID.Type
 
 // Mutation result schemas
-const MutationOk = Schema.Struct({
+export const MutationOk = Schema.Struct({
   data: Schema.Unknown.pipe(Schema.optional),
 })
+export type MutationOk = typeof MutationOk.Type
 
-const AppError = Schema.Struct({
+export const AppError = Schema.Struct({
   details: Schema.Unknown.pipe(Schema.optional),
   error: Schema.Literal('app'),
 })
+export type AppError = typeof AppError.Type
 
-const ZeroError = Schema.Struct({
+export const ZeroError = Schema.Struct({
   details: Schema.Unknown.pipe(Schema.optional),
   error: Schema.Union(Schema.Literal('oooMutation'), Schema.Literal('alreadyProcessed')),
 })
+export type ZeroError = typeof ZeroError.Type
 
-const MutationError = Schema.Union(AppError, ZeroError)
-const MutationResult = Schema.Union(MutationOk, MutationError)
+export const MutationError = Schema.Union(AppError, ZeroError)
+export type MutationError = typeof MutationError.Type
 
-const MutationResponse = Schema.Struct({
+export const MutationResult = Schema.Union(MutationOk, MutationError)
+export type MutationResult = typeof MutationResult.Type
+
+export const MutationResponse = Schema.Struct({
   id: MutationID,
   result: MutationResult,
 })
+export type MutationResponse = typeof MutationResponse.Type
 
 // Push success response
-const PushOk = Schema.Struct({
+export const PushOk = Schema.Struct({
   mutations: Schema.Array(MutationResponse),
 })
+export type PushOk = typeof PushOk.Type
 
 // Push error responses
-const UnsupportedPushVersionError = Schema.Struct({
+export const UnsupportedPushVersionError = Schema.Struct({
   error: Schema.Literal('unsupportedPushVersion'),
   mutationIDs: Schema.Array(MutationID).pipe(Schema.optional),
 })
+export type UnsupportedPushVersionError = typeof UnsupportedPushVersionError.Type
 
-const UnsupportedSchemaVersionError = Schema.Struct({
+export const UnsupportedSchemaVersionError = Schema.Struct({
   error: Schema.Literal('unsupportedSchemaVersion'),
   mutationIDs: Schema.Array(MutationID).pipe(Schema.optional),
 })
+export type UnsupportedSchemaVersionError = typeof UnsupportedSchemaVersionError.Type
 
-const HttpError = Schema.Struct({
+export const HttpError = Schema.Struct({
   details: Schema.String,
   error: Schema.Literal('http'),
   mutationIDs: Schema.Array(MutationID).pipe(Schema.optional),
   status: Schema.Number,
 })
+export type HttpError = typeof HttpError.Type
 
-const ZeroPusherError = Schema.Struct({
+export const ZeroPusherError = Schema.Struct({
   details: Schema.String,
   error: Schema.Literal('zeroPusher'),
   mutationIDs: Schema.Array(MutationID).pipe(Schema.optional),
 })
+export type ZeroPusherError = typeof ZeroPusherError.Type
 
-const PushError = Schema.Union(
+export const PushError = Schema.Union(
   UnsupportedPushVersionError,
   UnsupportedSchemaVersionError,
   HttpError,
   ZeroPusherError,
 )
+export type PushError = typeof PushError.Type
 
 // Complete PushResponse schema (union of success and error cases)
 export const PushResponse = Schema.Union(PushOk, PushError)

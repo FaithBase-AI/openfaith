@@ -1,79 +1,97 @@
-import { Workflow } from '@effect/workflow'
-import { ExternalSyncEntityWorkflow } from '@openfaith/workers/workflows/externalSyncEntityWorkflow'
-import { Array, Effect, Schema } from 'effect'
+import { Workflow } from "@effect/workflow";
+import { type CRUDMutation, Mutation } from "@openfaith/domain";
+import { ExternalSyncEntityWorkflow } from "@openfaith/workers/workflows/externalSyncEntityWorkflow";
+import { Array, Effect, Option, pipe, Record, Schema } from "effect";
 
 // Define the external sync error
-class ExternalSyncError extends Schema.TaggedError<ExternalSyncError>('ExternalSyncError')(
-  'ExternalSyncError',
-  {
-    message: Schema.String,
-  },
-) {}
+class ExternalSyncError extends Schema.TaggedError<ExternalSyncError>(
+  "ExternalSyncError",
+)("ExternalSyncError", {
+  message: Schema.String,
+}) {}
 
 // Define the workflow payload schema
 const ExternalSyncPayload = Schema.Struct({
-  mutations: Schema.Array(Schema.Unknown),
+  mutations: Schema.Array(Mutation),
   tokenKey: Schema.String, // PushRequest['mutations'] but simplified for workflow
-})
+});
 
 // Define the external sync workflow
 export const ExternalSyncWorkflow = Workflow.make({
   error: ExternalSyncError,
-  idempotencyKey: ({ tokenKey }) => `external-sync-${tokenKey}-${new Date().toISOString()}`,
-  name: 'ExternalSyncWorkflow',
+  idempotencyKey: ({ tokenKey }) =>
+    `external-sync-${tokenKey}-${new Date().toISOString()}`,
+  name: "ExternalSyncWorkflow",
   payload: ExternalSyncPayload,
   success: Schema.Void,
-})
+});
 
 // Create the workflow implementation layer
 export const ExternalSyncWorkflowLayer = ExternalSyncWorkflow.toLayer(
   Effect.fn(function* (payload, executionId) {
-    yield* Effect.log(`🔄 Starting external sync workflow for token: ${payload.tokenKey}`)
-    yield* Effect.log(`🆔 Execution ID: ${executionId}`)
+    yield* Effect.log(
+      `🔄 Starting external sync workflow for token: ${payload.tokenKey}`,
+    );
+    yield* Effect.log(`🆔 Execution ID: ${executionId}`);
 
-    const { tokenKey, mutations } = payload
+    const { tokenKey, mutations } = payload;
 
-    yield* Effect.log('Processing mutations for external sync', {
+    yield* Effect.log("Processing mutations for external sync", {
       mutationCount: mutations.length,
       tokenKey,
-    })
+    });
 
     // Process each mutation individually - simpler approach
-    const crudMutations = Array.filter(mutations, (mutation: any) => mutation.type === 'crud')
+    const crudMutations = pipe(
+      mutations,
+      Array.filter(
+        (mutation): mutation is CRUDMutation => mutation.type === "crud",
+      ),
+    );
 
     // Group operations by entity name for efficient processing
-    const entityGroups: Record<string, Array<{ mutation: any; op: any }>> = {}
-
-    for (const mutation of crudMutations as Array<any>) {
-      const [crudArg] = mutation.args
-      for (const op of crudArg.ops) {
-        const entityName = op.tableName
-        if (!entityGroups[entityName]) {
-          entityGroups[entityName] = []
-        }
-        entityGroups[entityName].push({ mutation, op })
-      }
-    }
+    const entityWorkflows = pipe(
+      crudMutations,
+      Array.flatMap((mutation) =>
+        pipe(
+          Array.head(mutation.args),
+          Option.map((arg) => arg.ops),
+          Option.getOrElse(() => []),
+          Array.map((op) => ({
+            entityName: op.tableName,
+            mutation,
+            op,
+          })),
+        ),
+      ),
+      Array.groupBy((item) => item.entityName),
+      Record.collect((entityName, mutations) => ({
+        entityName,
+        mutations,
+      })),
+    );
 
     // Process each entity type with its mutations
     yield* Effect.forEach(
-      Object.entries(entityGroups),
-      ([entityName, entityMutations]) =>
+      entityWorkflows,
+      (entityWorkflow) =>
         ExternalSyncEntityWorkflow.execute({
-          entityName,
-          mutations: entityMutations,
+          entityName: entityWorkflow.entityName,
+          mutations: entityWorkflow.mutations,
           tokenKey,
         }).pipe(
           Effect.mapError(
-            (err) =>
+            (error) =>
               new ExternalSyncError({
-                message: err instanceof Error ? err.message : String(err),
+                message: error.message,
               }),
           ),
         ),
-      { concurrency: 'unbounded' },
-    )
+      { concurrency: "unbounded" },
+    );
 
-    yield* Effect.log(`✅ Completed external sync workflow for token: ${payload.tokenKey}`)
+    yield* Effect.log(
+      `✅ Completed external sync workflow for token: ${payload.tokenKey}`,
+    );
   }),
-)
+);
