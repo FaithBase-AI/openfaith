@@ -1,11 +1,131 @@
 import { expect } from 'bun:test'
 import { live } from '@openfaith/bun-test'
 import { Effect, Schema } from 'effect'
-import { toHttpApiEndpoint } from './endpointAdapter'
+import { extractPathParams, generatePathParamsSchema, toHttpApiEndpoint } from './endpointAdapter'
 
-// Import the internal functions for testing
-// Note: These are not exported, so we'll need to test them indirectly through toHttpApiEndpoint
-// or we can add them to the exports for testing purposes
+// Tests for extractPathParams function
+live('extractPathParams should extract single path parameter', () =>
+  Effect.sync(() => {
+    const result = extractPathParams('/people/:personId')
+    expect(result).toEqual(['personId'])
+  }),
+)
+
+live('extractPathParams should extract multiple path parameters', () =>
+  Effect.sync(() => {
+    const result = extractPathParams('/people/:personId/events/:eventId')
+    expect(result).toEqual(['personId', 'eventId'])
+  }),
+)
+
+live('extractPathParams should extract parameters with complex names', () =>
+  Effect.sync(() => {
+    const result = extractPathParams('/organizations/:orgId/people/:personId/events/:eventId')
+    expect(result).toEqual(['orgId', 'personId', 'eventId'])
+  }),
+)
+
+live('extractPathParams should return empty array for paths without parameters', () =>
+  Effect.sync(() => {
+    const result = extractPathParams('/people')
+    expect(result).toEqual([])
+  }),
+)
+
+live('extractPathParams should handle paths with mixed segments', () =>
+  Effect.sync(() => {
+    const result = extractPathParams('/api/v1/people/:personId/static/events/:eventId')
+    expect(result).toEqual(['personId', 'eventId'])
+  }),
+)
+
+live('extractPathParams should handle parameters at the end', () =>
+  Effect.sync(() => {
+    const result = extractPathParams('/people/:personId')
+    expect(result).toEqual(['personId'])
+  }),
+)
+
+live('extractPathParams should handle parameters at the beginning', () =>
+  Effect.sync(() => {
+    const result = extractPathParams('/:orgId/people')
+    expect(result).toEqual(['orgId'])
+  }),
+)
+
+// Tests for generatePathParamsSchema function
+live('generatePathParamsSchema should generate schema for single parameter', () =>
+  Effect.sync(() => {
+    const schema = generatePathParamsSchema('/people/:personId')
+    const result = Schema.decodeUnknownSync(schema)({ personId: 'test-id' })
+    expect(result).toEqual({ personId: 'test-id' })
+  }),
+)
+
+live('generatePathParamsSchema should generate schema for multiple parameters', () =>
+  Effect.sync(() => {
+    const schema = generatePathParamsSchema('/people/:personId/events/:eventId')
+    const result = Schema.decodeUnknownSync(schema)({
+      eventId: 'event-456',
+      personId: 'person-123',
+    })
+    expect(result).toEqual({ eventId: 'event-456', personId: 'person-123' })
+  }),
+)
+
+live('generatePathParamsSchema should generate empty schema for paths without parameters', () =>
+  Effect.sync(() => {
+    const schema = generatePathParamsSchema('/people')
+    const result = Schema.decodeUnknownSync(schema)({})
+    expect(result).toEqual({})
+  }),
+)
+
+live('generatePathParamsSchema should validate string types', () =>
+  Effect.sync(() => {
+    const schema = generatePathParamsSchema('/people/:personId')
+
+    // Should succeed with string
+    const validResult = Schema.decodeUnknownSync(schema)({
+      personId: 'valid-string',
+    })
+    expect(validResult).toEqual({ personId: 'valid-string' })
+
+    // Should fail with non-string (this will throw)
+    expect(() => {
+      Schema.decodeUnknownSync(schema)({ personId: 123 })
+    }).toThrow()
+  }),
+)
+
+live('generatePathParamsSchema should handle complex parameter names', () =>
+  Effect.sync(() => {
+    const schema = generatePathParamsSchema(
+      '/organizations/:orgId/people/:personId/events/:eventId',
+    )
+    const result = Schema.decodeUnknownSync(schema)({
+      eventId: 'event-3',
+      orgId: 'org-1',
+      personId: 'person-2',
+    })
+    expect(result).toEqual({
+      eventId: 'event-3',
+      orgId: 'org-1',
+      personId: 'person-2',
+    })
+  }),
+)
+
+live('generatePathParamsSchema should require all parameters', () =>
+  Effect.sync(() => {
+    const schema = generatePathParamsSchema('/people/:personId/events/:eventId')
+
+    // Should fail when missing required parameter
+    expect(() => {
+      Schema.decodeUnknownSync(schema)({ personId: 'person-123' }) // missing eventId
+    }).toThrow()
+  }),
+)
 
 live('should extract path parameters for PATCH endpoints', () =>
   Effect.sync(() => {

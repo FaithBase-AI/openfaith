@@ -1,5 +1,7 @@
+import type { HttpApiEndpoint } from '@effect/platform'
 import type {
   DefineEndpointInput,
+  DefineGetEndpointInput,
   DeleteEndpointDefinition,
   GetEndpointDefinition,
   PatchEndpointDefinition,
@@ -37,12 +39,28 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TModule extends string,
     TEntity extends string,
     TName extends string,
+    TPath extends HttpApiEndpoint.PathSegment,
     OrderableFields extends ReadonlyArray<Extract<keyof Api, string>>,
     QueryableFields extends ReadonlyArray<Extract<keyof Api, string>>,
     Includes extends ReadonlyArray<string>,
     OrderableSpecial extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
-    Query extends Schema.Schema<any>,
+    IsCollection extends true,
+    Query extends ReturnType<
+      typeof buildUrlParamsSchema<
+        Api,
+        Api,
+        TModule,
+        TEntity,
+        TName,
+        OrderableFields,
+        QueryableFields,
+        Includes,
+        OrderableSpecial,
+        QueryableSpecial,
+        IsCollection
+      >
+    >,
   >(
     params: Omit<
       DefineEndpointInput<
@@ -52,6 +70,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
         TModule,
         TEntity,
         TName,
+        TPath,
         OrderableFields,
         QueryableFields,
         Includes,
@@ -66,6 +85,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
       'includes' | 'queryableBy' | 'orderableBy'
     > & {
       isCollection: true
+      defaultQuery?: Schema.Schema.Type<Query>
       includes?: Includes
       queryableBy?:
         | {
@@ -87,6 +107,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TModule,
     TEntity,
     TName,
+    TPath,
     OrderableFields,
     QueryableFields,
     Includes,
@@ -102,12 +123,28 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TModule extends string,
     TEntity extends string,
     TName extends string,
+    TPath extends HttpApiEndpoint.PathSegment,
     OrderableFields extends ReadonlyArray<Extract<keyof Api, string>>,
     QueryableFields extends ReadonlyArray<Extract<keyof Api, string>>,
     Includes extends ReadonlyArray<string>,
     OrderableSpecial extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
-    Query extends Schema.Schema<any>,
+    IsCollection extends false,
+    Query extends ReturnType<
+      typeof buildUrlParamsSchema<
+        Api,
+        Api,
+        TModule,
+        TEntity,
+        TName,
+        OrderableFields,
+        QueryableFields,
+        Includes,
+        OrderableSpecial,
+        QueryableSpecial,
+        IsCollection
+      >
+    >,
   >(
     params: Omit<
       DefineEndpointInput<
@@ -117,6 +154,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
         TModule,
         TEntity,
         TName,
+        TPath,
         OrderableFields,
         QueryableFields,
         Includes,
@@ -131,6 +169,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
       'includes' | 'queryableBy' | 'orderableBy'
     > & {
       isCollection: false
+      defaultQuery?: Schema.Schema.Type<Query>
       includes?: Includes
       queryableBy?:
         | {
@@ -152,6 +191,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TModule,
     TEntity,
     TName,
+    TPath,
     OrderableFields,
     QueryableFields,
     Includes,
@@ -167,27 +207,39 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TModule extends string,
     TEntity extends string,
     TName extends string,
+    TPath extends HttpApiEndpoint.PathSegment,
     CreatableFields extends ReadonlyArray<Extract<keyof Api, string>>,
     CreatableSpecial extends ReadonlyArray<string>,
   >(
-    params: DefineEndpointInput<
-      'POST',
-      Api,
-      Api,
-      TModule,
-      TEntity,
-      TName,
-      never,
-      never,
-      never,
-      never,
-      never,
-      false,
-      CreatableFields,
-      CreatableSpecial,
-      never,
-      never
-    >,
+    params: Omit<
+      DefineEndpointInput<
+        'POST',
+        Api,
+        Api,
+        TModule,
+        TEntity,
+        TName,
+        TPath,
+        never,
+        never,
+        never,
+        never,
+        never,
+        false,
+        CreatableFields,
+        CreatableSpecial,
+        never,
+        never
+      >,
+      'creatableFields'
+    > & {
+      creatableFields?:
+        | {
+            fields?: CreatableFields
+            special?: CreatableSpecial
+          }
+        | CreatableFields
+    },
   ): PostEndpointDefinition<
     Api,
     ReturnType<typeof mkCcbSingleSchema<Api>>,
@@ -195,6 +247,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TModule,
     TEntity,
     TName,
+    TPath,
     CreatableFields,
     CreatableSpecial
   >
@@ -205,27 +258,39 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TModule extends string,
     TEntity extends string,
     TName extends string,
+    TPath extends HttpApiEndpoint.PathSegment,
     UpdatableFields extends ReadonlyArray<Extract<keyof Api, string>>,
     UpdatableSpecial extends ReadonlyArray<string>,
   >(
-    params: DefineEndpointInput<
-      'PATCH',
-      Api,
-      Api,
-      TModule,
-      TEntity,
-      TName,
-      never,
-      never,
-      never,
-      never,
-      never,
-      false,
-      never,
-      never,
-      UpdatableFields,
-      UpdatableSpecial
-    >,
+    params: Omit<
+      DefineEndpointInput<
+        'PATCH',
+        Api,
+        Api,
+        TModule,
+        TEntity,
+        TName,
+        TPath,
+        never,
+        never,
+        never,
+        never,
+        never,
+        false,
+        never,
+        never,
+        UpdatableFields,
+        UpdatableSpecial
+      >,
+      'updatableFields'
+    > & {
+      updatableFields?:
+        | {
+            fields?: UpdatableFields
+            special?: UpdatableSpecial
+          }
+        | UpdatableFields
+    },
   ): PatchEndpointDefinition<
     Api,
     ReturnType<typeof mkCcbSingleSchema<Api>>,
@@ -233,6 +298,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TModule,
     TEntity,
     TName,
+    TPath,
     UpdatableFields,
     UpdatableSpecial
   >
@@ -243,6 +309,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     TModule extends string,
     TEntity extends string,
     TName extends string,
+    TPath extends HttpApiEndpoint.PathSegment,
   >(
     params: DefineEndpointInput<
       'DELETE',
@@ -251,6 +318,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
       TModule,
       TEntity,
       TName,
+      TPath,
       never,
       never,
       never,
@@ -268,7 +336,8 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     Api,
     TModule,
     TEntity,
-    TName
+    TName,
+    TPath
   >
 
   // Implementation
@@ -276,6 +345,26 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
     const isGet = params.method === 'GET'
     const baseParams = {
       ...params,
+      creatableFields: pipe(
+        params.creatableFields,
+        Option.fromNullable,
+        Option.match({
+          onNone: () => ({
+            fields: [],
+            special: [],
+          }),
+          onSome: (creatableFields) =>
+            Array.isArray(creatableFields)
+              ? {
+                  fields: creatableFields,
+                  special: [],
+                }
+              : {
+                  fields: creatableFields.fields ?? [],
+                  special: creatableFields.special ?? [],
+                },
+        }),
+      ),
       includes: params.includes ?? [],
       orderableBy: pipe(
         params.orderableBy,
@@ -345,6 +434,11 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
         isGet && baseParams.isCollection
           ? mkCcbCollectionSchema(baseParams.apiSchema)
           : mkCcbSingleSchema(baseParams.apiSchema),
+      ...(params.method === 'GET'
+        ? {
+            query: buildUrlParamsSchema(baseParams),
+          }
+        : {}),
     }
   }
 
@@ -362,3 +456,148 @@ type CCBApiBase = {
  * CCB API adapter configured for resources with flat structure
  */
 export const ccbApiAdapter = createApiAdapter<CCBApiBase>()
+
+export function buildUrlParamsSchema<
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  OrderableSpecial extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends boolean,
+>(
+  definition: Omit<
+    DefineGetEndpointInput<
+      Api,
+      Fields,
+      TModule,
+      TEntity,
+      TName,
+      HttpApiEndpoint.PathSegment,
+      OrderableFields,
+      QueryableFields,
+      Includes,
+      OrderableSpecial,
+      QueryableSpecial,
+      IsCollection
+    >,
+    'includes'
+  > & { includes: Includes },
+): IsCollection extends true
+  ? ReturnType<
+      typeof buildCollectionUrlParamsSchema<
+        Api,
+        Fields,
+        TModule,
+        TEntity,
+        TName,
+        OrderableFields,
+        QueryableFields,
+        Includes,
+        OrderableSpecial,
+        QueryableSpecial,
+        IsCollection
+      >
+    >
+  : ReturnType<
+      typeof buildSingleUrlParamsSchema<
+        Api,
+        Fields,
+        TModule,
+        TEntity,
+        TName,
+        OrderableFields,
+        QueryableFields,
+        Includes,
+        OrderableSpecial,
+        QueryableSpecial,
+        false
+      >
+    > {
+  if (definition.isCollection) {
+    return buildCollectionUrlParamsSchema(definition as any) as any
+  }
+
+  return buildSingleUrlParamsSchema(definition as any) as any
+}
+
+export function buildSingleUrlParamsSchema<
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  OrderableSpecial extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends false,
+>(
+  _definition: Omit<
+    DefineGetEndpointInput<
+      Api,
+      Fields,
+      TModule,
+      TEntity,
+      TName,
+      HttpApiEndpoint.PathSegment,
+      OrderableFields,
+      QueryableFields,
+      Includes,
+      OrderableSpecial,
+      QueryableSpecial,
+      IsCollection
+    >,
+    'includes'
+  > & { includes: Includes },
+) {
+  return Schema.Struct({
+    offset: Schema.optional(Schema.NumberFromString),
+    per_page: Schema.optional(Schema.NumberFromString),
+  })
+}
+
+export function buildCollectionUrlParamsSchema<
+  Api,
+  Fields extends Record<string, any>,
+  TModule extends string,
+  TEntity extends string,
+  TName extends string,
+  OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
+  Includes extends ReadonlyArray<string>,
+  OrderableSpecial extends ReadonlyArray<string>,
+  QueryableSpecial extends ReadonlyArray<string>,
+  IsCollection extends true,
+>(
+  definition: Omit<
+    DefineGetEndpointInput<
+      Api,
+      Fields,
+      TModule,
+      TEntity,
+      TName,
+      HttpApiEndpoint.PathSegment,
+      OrderableFields,
+      QueryableFields,
+      Includes,
+      OrderableSpecial,
+      QueryableSpecial,
+      IsCollection
+    >,
+    'includes'
+  > & { includes: Includes },
+) {
+  return Schema.Struct({
+    offset: Schema.optional(Schema.NumberFromString),
+    order: Schema.optional(
+      Schema.Literal(...[...definition.orderableBy.fields, ...definition.orderableBy.special]),
+    ),
+    per_page: Schema.optional(Schema.NumberFromString),
+  })
+}

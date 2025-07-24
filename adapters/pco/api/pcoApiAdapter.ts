@@ -1,3 +1,4 @@
+import type { HttpApiEndpoint } from '@effect/platform'
 import type {
   BaseDeleteEndpointDefinition,
   BaseGetEndpointDefinition,
@@ -28,6 +29,7 @@ function createApiAdapter<
     TModule extends string,
     TEntity extends string,
     TName extends string,
+    TPath extends HttpApiEndpoint.PathSegment,
     OrderableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     Includes extends ReadonlyArray<string>,
@@ -58,6 +60,7 @@ function createApiAdapter<
         TModule,
         TEntity,
         TName,
+        TPath,
         OrderableFields,
         QueryableFields,
         Includes,
@@ -93,6 +96,7 @@ function createApiAdapter<
     TModule,
     TEntity,
     TName,
+    TPath,
     OrderableFields,
     QueryableFields,
     Includes,
@@ -108,6 +112,7 @@ function createApiAdapter<
     TModule extends string,
     TEntity extends string,
     TName extends string,
+    TPath extends HttpApiEndpoint.PathSegment,
     OrderableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     Includes extends ReadonlyArray<string>,
@@ -138,6 +143,7 @@ function createApiAdapter<
         TModule,
         TEntity,
         TName,
+        TPath,
         OrderableFields,
         QueryableFields,
         Includes,
@@ -173,6 +179,7 @@ function createApiAdapter<
     TModule,
     TEntity,
     TName,
+    TPath,
     OrderableFields,
     QueryableFields,
     Includes,
@@ -188,6 +195,7 @@ function createApiAdapter<
     TModule extends string,
     TEntity extends string,
     TName extends string,
+    TPath extends HttpApiEndpoint.PathSegment,
     CreatableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     CreatableSpecial extends ReadonlyArray<string>,
   >(
@@ -199,6 +207,7 @@ function createApiAdapter<
         TModule,
         TEntity,
         TName,
+        TPath,
         never,
         never,
         never,
@@ -225,6 +234,7 @@ function createApiAdapter<
     TModule,
     TEntity,
     TName,
+    TPath,
     CreatableFields,
     CreatableSpecial
   >
@@ -235,6 +245,7 @@ function createApiAdapter<
     TModule extends string,
     TEntity extends string,
     TName extends string,
+    TPath extends HttpApiEndpoint.PathSegment,
     UpdatableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
     UpdatableSpecial extends ReadonlyArray<string>,
   >(
@@ -246,6 +257,7 @@ function createApiAdapter<
         TModule,
         TEntity,
         TName,
+        TPath,
         never,
         never,
         never,
@@ -272,6 +284,7 @@ function createApiAdapter<
     TModule,
     TEntity,
     TName,
+    TPath,
     UpdatableFields,
     UpdatableSpecial
   >
@@ -282,6 +295,7 @@ function createApiAdapter<
     TModule extends string,
     TEntity extends string,
     TName extends string,
+    TPath extends HttpApiEndpoint.PathSegment,
   >(
     params: DefineEndpointInput<
       'DELETE',
@@ -290,6 +304,7 @@ function createApiAdapter<
       TModule,
       TEntity,
       TName,
+      TPath,
       never,
       never,
       never,
@@ -301,7 +316,7 @@ function createApiAdapter<
       never,
       never
     >,
-  ): BaseDeleteEndpointDefinition<Api, Api[TFieldsKey], TModule, TEntity, TName>
+  ): BaseDeleteEndpointDefinition<Api, Api[TFieldsKey], TModule, TEntity, TName, TPath>
 
   // Implementation
   function defineEndpoint(params: any) {
@@ -416,8 +431,8 @@ type PcoApiBase = {
 export const pcoApiAdapter = createApiAdapter<'attributes', PcoApiBase>()
 
 export function getQueryParamSchema(apiSchema: Schema.Struct<any>, field: string) {
-  // @ts-ignore - We assume the schema has `properties.attributes.properties`
-  const attributeType = apiSchema.properties?.attributes?.properties[field]?.ast._tag
+  // @ts-ignore - We assume the schema has `fields.attributes.fields`
+  const attributeType = apiSchema.fields?.attributes?.fields[field]?.ast._tag
 
   switch (attributeType) {
     case 'NumberKeyword':
@@ -449,6 +464,7 @@ export function buildUrlParamsSchema<
       TModule,
       TEntity,
       TName,
+      HttpApiEndpoint.PathSegment,
       OrderableFields,
       QueryableFields,
       Includes,
@@ -516,6 +532,7 @@ export function buildSingleUrlParamsSchema<
       TModule,
       TEntity,
       TName,
+      HttpApiEndpoint.PathSegment,
       OrderableFields,
       QueryableFields,
       Includes,
@@ -562,6 +579,7 @@ export function buildCollectionUrlParamsSchema<
       TModule,
       TEntity,
       TName,
+      HttpApiEndpoint.PathSegment,
       OrderableFields,
       QueryableFields,
       Includes,

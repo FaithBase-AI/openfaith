@@ -1,6 +1,7 @@
 /**
  * @since 1.0.0
  */
+import type { HttpApiEndpoint } from '@effect/platform'
 import type { Schema } from 'effect'
 
 /**
@@ -40,6 +41,7 @@ export type DefineGetEndpointInput<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TPath extends HttpApiEndpoint.PathSegment,
   OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   Includes extends ReadonlyArray<string>,
@@ -55,7 +57,7 @@ export type DefineGetEndpointInput<
       /** Available relationships that can be included */
       includes: Includes
       /** API endpoint path */
-      path: `/${string}`
+      path: TPath
       /** Order configuration */
       orderableBy: {
         /** Fields that can be ordered */
@@ -89,7 +91,7 @@ export type DefineGetEndpointInput<
       /** Available relationships that can be included */
       includes: Includes
       /** API endpoint path */
-      path: `/${string}`
+      path: TPath
       /** HTTP method for this endpoint */
       method: 'GET'
       /** API module name */
@@ -106,6 +108,7 @@ export type BaseGetEndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TPath extends HttpApiEndpoint.PathSegment,
   OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   Includes extends ReadonlyArray<string>,
@@ -119,6 +122,7 @@ export type BaseGetEndpointDefinition<
   TModule,
   TEntity,
   TName,
+  TPath,
   OrderableFields,
   QueryableFields,
   Includes,
@@ -134,6 +138,7 @@ export type GetEndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TPath extends HttpApiEndpoint.PathSegment,
   OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   Includes extends ReadonlyArray<string>,
@@ -147,6 +152,7 @@ export type GetEndpointDefinition<
   TModule,
   TEntity,
   TName,
+  TPath,
   OrderableFields,
   QueryableFields,
   Includes,
@@ -170,6 +176,7 @@ export type DefinePostEndpointInput<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  _TPath extends HttpApiEndpoint.PathSegment,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   CreatableSpecial extends ReadonlyArray<string>,
 > = {
@@ -198,9 +205,19 @@ export type BasePostEndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TPath extends HttpApiEndpoint.PathSegment,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   CreatableSpecial extends ReadonlyArray<string>,
-> = DefinePostEndpointInput<Api, Fields, TModule, TEntity, TName, CreatableFields, CreatableSpecial>
+> = DefinePostEndpointInput<
+  Api,
+  Fields,
+  TModule,
+  TEntity,
+  TName,
+  TPath,
+  CreatableFields,
+  CreatableSpecial
+>
 
 export type PostEndpointDefinition<
   Api,
@@ -209,6 +226,7 @@ export type PostEndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TPath extends HttpApiEndpoint.PathSegment,
   CreatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   CreatableSpecial extends ReadonlyArray<string>,
 > = BasePostEndpointDefinition<
@@ -217,6 +235,7 @@ export type PostEndpointDefinition<
   TModule,
   TEntity,
   TName,
+  TPath,
   CreatableFields,
   CreatableSpecial
 > & {
@@ -229,13 +248,14 @@ export type DefinePatchEndpointInput<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TPath extends HttpApiEndpoint.PathSegment,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   UpdatableSpecial extends ReadonlyArray<string>,
 > = {
   /** The Effect schema for the API resource */
   apiSchema: Schema.Schema<Api>
   /** The API endpoint path */
-  path: `/${string}`
+  path: TPath
   /** HTTP method - always 'PATCH' for this type */
   method: 'PATCH'
   /** The module this endpoint belongs to */
@@ -257,6 +277,7 @@ export type BasePatchEndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TPath extends HttpApiEndpoint.PathSegment,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   UpdatableSpecial extends ReadonlyArray<string>,
 > = DefinePatchEndpointInput<
@@ -265,6 +286,7 @@ export type BasePatchEndpointDefinition<
   TModule,
   TEntity,
   TName,
+  TPath,
   UpdatableFields,
   UpdatableSpecial
 >
@@ -276,6 +298,7 @@ export type PatchEndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TPath extends HttpApiEndpoint.PathSegment,
   UpdatableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   UpdatableSpecial extends ReadonlyArray<string>,
 > = BasePatchEndpointDefinition<
@@ -284,6 +307,7 @@ export type PatchEndpointDefinition<
   TModule,
   TEntity,
   TName,
+  TPath,
   UpdatableFields,
   UpdatableSpecial
 > & {
@@ -296,11 +320,12 @@ export type DefineDeleteEndpointInput<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TPath extends HttpApiEndpoint.PathSegment,
 > = {
   /** The Effect schema for the API resource */
   apiSchema: Schema.Schema<Api>
   /** The API endpoint path */
-  path: `/${string}`
+  path: TPath
   /** HTTP method - always 'DELETE' for this type */
   method: 'DELETE'
   /** The module this endpoint belongs to */
@@ -317,7 +342,8 @@ export type BaseDeleteEndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
-> = DefineDeleteEndpointInput<Api, Fields, TModule, TEntity, TName>
+  TPath extends HttpApiEndpoint.PathSegment,
+> = DefineDeleteEndpointInput<Api, Fields, TModule, TEntity, TName, TPath>
 
 export type DeleteEndpointDefinition<
   Api,
@@ -326,7 +352,8 @@ export type DeleteEndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
-> = BaseDeleteEndpointDefinition<Api, Fields, TModule, TEntity, TName> & {
+  TPath extends HttpApiEndpoint.PathSegment,
+> = BaseDeleteEndpointDefinition<Api, Fields, TModule, TEntity, TName, TPath> & {
   response: Response
 }
 
@@ -353,6 +380,7 @@ export type DefineEndpointInput<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TPath extends HttpApiEndpoint.PathSegment,
   OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   Includes extends ReadonlyArray<string>,
@@ -370,6 +398,7 @@ export type DefineEndpointInput<
       TModule,
       TEntity,
       TName,
+      TPath,
       OrderableFields,
       QueryableFields,
       Includes,
@@ -384,6 +413,7 @@ export type DefineEndpointInput<
         TModule,
         TEntity,
         TName,
+        TPath,
         CreatableFields,
         CreatableSpecial
       >
@@ -394,11 +424,12 @@ export type DefineEndpointInput<
           TModule,
           TEntity,
           TName,
+          TPath,
           UpdatableFields,
           UpdatableSpecial
         >
       : TMethod extends 'DELETE'
-        ? DefineDeleteEndpointInput<Api, Fields, TModule, TEntity, TName>
+        ? DefineDeleteEndpointInput<Api, Fields, TModule, TEntity, TName, TPath>
         : never
 
 export type BaseEndpointDefinition<
@@ -408,6 +439,7 @@ export type BaseEndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TPath extends HttpApiEndpoint.PathSegment,
   OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   Includes extends ReadonlyArray<string>,
@@ -426,6 +458,7 @@ export type BaseEndpointDefinition<
       TModule,
       TEntity,
       TName,
+      TPath,
       OrderableFields,
       QueryableFields,
       Includes,
@@ -441,6 +474,7 @@ export type BaseEndpointDefinition<
         TModule,
         TEntity,
         TName,
+        TPath,
         CreatableFields,
         CreatableSpecial
       >
@@ -451,11 +485,12 @@ export type BaseEndpointDefinition<
           TModule,
           TEntity,
           TName,
+          TPath,
           UpdatableFields,
           UpdatableSpecial
         >
       : TMethod extends 'DELETE'
-        ? BaseDeleteEndpointDefinition<Api, Fields, TModule, TEntity, TName>
+        ? BaseDeleteEndpointDefinition<Api, Fields, TModule, TEntity, TName, TPath>
         : never
 
 export type EndpointDefinition<
@@ -466,6 +501,7 @@ export type EndpointDefinition<
   TModule extends string,
   TEntity extends string,
   TName extends string,
+  TPath extends HttpApiEndpoint.PathSegment,
   OrderableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   QueryableFields extends ReadonlyArray<Extract<keyof Fields, string>>,
   Includes extends ReadonlyArray<string>,
@@ -485,6 +521,7 @@ export type EndpointDefinition<
       TModule,
       TEntity,
       TName,
+      TPath,
       OrderableFields,
       QueryableFields,
       Includes,
@@ -501,6 +538,7 @@ export type EndpointDefinition<
         TModule,
         TEntity,
         TName,
+        TPath,
         CreatableFields,
         CreatableSpecial
       >
@@ -512,19 +550,20 @@ export type EndpointDefinition<
           TModule,
           TEntity,
           TName,
+          TPath,
           UpdatableFields,
           UpdatableSpecial
         >
       : TMethod extends 'DELETE'
-        ? DeleteEndpointDefinition<Api, Response, Fields, TModule, TEntity, TName>
+        ? DeleteEndpointDefinition<Api, Response, Fields, TModule, TEntity, TName, TPath>
         : never
 
 export type EntityManifestShape = Record<
   string,
-  | GetEndpointDefinition<any, any, any, any, any, any, any, any, any, any, any, any, any>
-  | PostEndpointDefinition<any, any, any, any, any, any, any, any>
-  | PatchEndpointDefinition<any, any, any, any, any, any, any, any>
-  | DeleteEndpointDefinition<any, any, any, any, any, any>
+  | GetEndpointDefinition<any, any, any, any, any, any, any, any, any, any, any, any, any, any>
+  | PostEndpointDefinition<any, any, any, any, any, any, any, any, any>
+  | PatchEndpointDefinition<any, any, any, any, any, any, any, any, any>
+  | DeleteEndpointDefinition<any, any, any, any, any, any, any>
 >
 
 /**
@@ -534,6 +573,7 @@ export type EntityManifestShape = Record<
  */
 export type Any = EndpointDefinition<
   Method,
+  any,
   any,
   any,
   any,
@@ -560,6 +600,7 @@ export type Any = EndpointDefinition<
  */
 export type BaseAny = BaseEndpointDefinition<
   Method,
+  any,
   any,
   any,
   any,

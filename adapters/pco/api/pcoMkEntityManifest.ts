@@ -104,6 +104,7 @@ export type ConvertPcoEntityManifest<
             infer _Module,
             infer _Entity,
             infer _Name,
+            infer _TPath,
             infer _OrderableFields,
             infer _QueryableFields,
             infer Includes,
@@ -133,6 +134,7 @@ export type ConvertPcoEntityManifest<
                 infer _Module,
                 infer _Entity,
                 infer _Name,
+                infer _TPath,
                 infer _CreatableFields,
                 infer _CreatableSpecial
               >
@@ -150,6 +152,7 @@ export type ConvertPcoEntityManifest<
                   infer _Module,
                   infer _Entity,
                   infer _Name,
+                  infer _TPath,
                   infer _UpdatableFields,
                   infer _UpdatableSpecial
                 >
@@ -166,7 +169,8 @@ export type ConvertPcoEntityManifest<
                     infer _Fields,
                     infer _Module,
                     infer _Entity,
-                    infer _Name
+                    infer _Name,
+                    infer _TPath
                   >
                 ? E & {
                     response: typeof Schema.Void
@@ -197,6 +201,7 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
     infer _Module,
     infer _Entity,
     infer _Name,
+    infer _TPath,
     infer _OrderableFields,
     infer _QueryableFields,
     infer _Includes,
@@ -224,6 +229,7 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
           infer _Module,
           infer _Entity,
           infer _Name,
+          infer _TPath,
           infer _CreatableFields,
           infer _CreatableSpecial
         >
@@ -250,6 +256,7 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
             infer _Module,
             infer _Entity,
             infer _Name,
+            infer _TPath,
             infer _UpdatableFields,
             infer _UpdatableSpecial
           >
@@ -275,7 +282,8 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
               infer _Fields,
               infer _Module,
               infer _Entity,
-              infer _Name
+              infer _Name,
+              infer _TPath
             >
           ? HttpApiEndpoint.HttpApiEndpoint<
               _Name,

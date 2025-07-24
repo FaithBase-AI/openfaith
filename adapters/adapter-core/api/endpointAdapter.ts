@@ -3,23 +3,10 @@ import type { EndpointDefinition } from '@openfaith/adapter-core/api/endpointTyp
 import { Schema } from 'effect'
 
 /**
- * TypeScript utility to extract path parameter names from a path string.
- * Examples:
- * - "/people/:personId" -> { readonly personId: string }
- * - "/people/:personId/events/:eventId" -> { readonly personId: string; readonly eventId: string }
- * - "/people" -> {}
- */
-type ExtractPathParams<T extends string> = T extends `${infer _Start}:${infer Param}/${infer Rest}`
-  ? { readonly [K in Param]: string } & ExtractPathParams<`/${Rest}`>
-  : T extends `${infer _Start}:${infer Param}`
-    ? { readonly [K in Param]: string }
-    : {}
-
-/**
  * Extracts path parameter names from a URL path string.
  * For example: "/people/:personId/events/:eventId" -> ["personId", "eventId"]
  */
-function extractPathParams(path: string): Array<string> {
+export function extractPathParams(path: string): Array<string> {
   const paramRegex = /:([^/]+)/g
   const params: Array<string> = []
   let match
@@ -36,7 +23,7 @@ function extractPathParams(path: string): Array<string> {
  * Generates a Schema.Struct for path parameters based on the URL path.
  * All path parameters are treated as strings that can be converted from URL segments.
  */
-function generatePathParamsSchema(
+export function generatePathParamsSchema(
   path: string,
 ): Schema.Struct<Record<string, typeof Schema.String>> {
   const paramNames = extractPathParams(path)
@@ -200,6 +187,7 @@ export function toHttpApiEndpoint<
     TModule,
     TEntity,
     TName,
+    TPath,
     OrderableFields,
     QueryableFields,
     Includes,
@@ -211,11 +199,11 @@ export function toHttpApiEndpoint<
     never,
     never,
     Query
-  > & { path: TPath },
+  >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
-  ExtractPathParams<TPath>,
+  TPath,
   IsCollection extends true
     ? {
         readonly include?: Includes[number] | (Includes[number] & Includes) | undefined
@@ -256,6 +244,7 @@ export function toHttpApiEndpoint<
     TModule,
     TEntity,
     TName,
+    TPath,
     never,
     never,
     never,
@@ -267,12 +256,12 @@ export function toHttpApiEndpoint<
     never,
     never,
     Query
-  > & { path: TPath },
+  >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
+  TPath,
   never,
-  ExtractPathParams<TPath>,
   {
     readonly [x: string]: unknown
   },
@@ -305,6 +294,7 @@ export function toHttpApiEndpoint<
     TModule,
     TEntity,
     TName,
+    TPath,
     never,
     never,
     never,
@@ -316,12 +306,12 @@ export function toHttpApiEndpoint<
     UpdatableFields,
     UpdatableSpecial,
     Query
-  > & { path: TPath },
+  >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
   never,
-  ExtractPathParams<TPath>,
+  TPath,
   {
     readonly [x: string]: unknown
   },
@@ -352,6 +342,7 @@ export function toHttpApiEndpoint<
     TModule,
     TEntity,
     TName,
+    TPath,
     never,
     never,
     never,
@@ -363,12 +354,12 @@ export function toHttpApiEndpoint<
     never,
     never,
     Query
-  > & { path: TPath },
+  >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
+  TPath,
   never,
-  ExtractPathParams<TPath>,
   never,
   never,
   void,

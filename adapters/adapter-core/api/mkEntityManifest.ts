@@ -47,6 +47,7 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
     infer _Module,
     infer _Entity,
     infer _Name,
+    infer _Path,
     infer _OrderableFields,
     infer _QueryableFields,
     infer _Includes,
@@ -74,6 +75,7 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
           infer _Module,
           infer _Entity,
           infer _Name,
+          infer _Path,
           infer _CreatableFields,
           infer _CreatableSpecial
         >
@@ -100,6 +102,7 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
             infer _Module,
             infer _Entity,
             infer _Name,
+            infer _Path,
             infer _UpdatableFields,
             infer _UpdatableSpecial
           >
@@ -125,7 +128,8 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
               infer _Fields,
               infer _Module,
               infer _Entity,
-              infer _Name
+              infer _Name,
+              infer _Path
             >
           ? HttpApiEndpoint.HttpApiEndpoint<
               _Name,
