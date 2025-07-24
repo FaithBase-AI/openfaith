@@ -7,6 +7,8 @@ import { WorkflowProxyServer } from '@effect/workflow'
 import { DBLive } from '@openfaith/db'
 import { TokenManagerLive } from '@openfaith/server'
 import { HealthLive, WorkflowApi, workflows } from '@openfaith/workers/api/workflowApi'
+import { ExternalSyncEntityWorkflowLayer } from '@openfaith/workers/workflows/externalSyncEntityWorkflow'
+import { ExternalSyncWorkflowLayer } from '@openfaith/workers/workflows/externalSyncWorkflow'
 import { PcoSyncEntityWorkflowLayer } from '@openfaith/workers/workflows/pcoSyncEntityWorkflow'
 import { PcoSyncWorkflowLayer } from '@openfaith/workers/workflows/pcoSyncWorkflow'
 import { TestWorkflowLayer } from '@openfaith/workers/workflows/testWorkflow'
@@ -40,6 +42,8 @@ const port = 3020
 const EnvLayer = Layer.mergeAll(
   PcoSyncWorkflowLayer,
   PcoSyncEntityWorkflowLayer,
+  ExternalSyncWorkflowLayer,
+  ExternalSyncEntityWorkflowLayer,
   TestWorkflowLayer,
 ).pipe(
   Layer.provide(WorkflowEngineLayer),

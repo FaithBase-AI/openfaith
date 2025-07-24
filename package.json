@@ -3,6 +3,9 @@
     "@emnapi/core": "^1.4.3",
     "@emnapi/runtime": "^1.4.3",
     "@emnapi/wasi-threads": "^1.0.2",
+    "@opentelemetry/exporter-trace-otlp-http": "0.203.0",
+    "@opentelemetry/sdk-trace-base": "2.0.1",
+    "@opentelemetry/sdk-trace-web": "2.0.1",
     "@tybys/wasm-util": "^0.9.0",
     "tailwind-merge": "3.3.0"
   },

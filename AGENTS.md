@@ -50,7 +50,7 @@ This project is built around the Effect-TS ecosystem across the entire stack, pr
 - Effect-TS ecosystem with Effect HTTP and RPC
 - PostgreSQL with Drizzle ORM (Effect-integrated)
 - Better Auth for authentication
-- Temporal for durable workflows
+- @effect/cluster and @effect/workflow for durable workflows
 
 **Infrastructure:**
 
@@ -73,7 +73,7 @@ packages/                # Shared libraries
 └── shared/              # Common utilities
 backend/                 # Server-side services
 ├── server/              # Main API server
-├── workers/             # Temporal workflows
+├── workers/             # Effect workflows (@effect/cluster + @effect/workflow)
 └── email/               # Email service
 adapters/                # ChMS integration adapters
 ├── pco/                 # Planning Center Online
@@ -87,7 +87,7 @@ infra/                   # Infrastructure services
 - **Canonical Data Model (CDM)**: Core entities (Person, Group, Folder, Edge, ExternalLink)
 - **Effect Schema**: Type-safe data modeling with runtime validation
 - **Adapter Pattern**: ChMS integrations with Effect-based error handling
-- **Sync Engine**: Bi-directional data synchronization using Temporal workflows
+- **Sync Engine**: Bi-directional data synchronization using Effect workflows (@effect/cluster + @effect/workflow)
 - **Edge-based Relationships**: Flexible entity connections
 
 ## Development Patterns
@@ -239,9 +239,61 @@ import { Schema } from "effect";
 ### Sync Engine
 
 - Located in `backend/workers/`
-- Temporal workflows with Effect integration
+- Effect workflows using `@effect/cluster` and `@effect/workflow` packages
 - Bi-directional sync with conflict resolution
 - Effect's resource management for lifecycle
+- **NOT Temporal** - uses Effect's native workflow system
+
+#### Adding New Workflows
+
+When creating new Effect workflows (using `@effect/workflow`), they must be registered in two key locations:
+
+**1. Workflow API Registration (`backend/workers/api/workflowApi.ts`):**
+
+- Import the workflow definition
+- Add to the `workflows` array to expose via HTTP API
+
+**2. Workflow Runner Registration (`backend/workers/runner.ts`):**
+
+- Import the workflow layer
+- Add to the `EnvLayer.mergeAll()` call for execution
+
+**Example Pattern:**
+
+```typescript
+// In workflowApi.ts
+import { MyNewWorkflow } from "@openfaith/workers/workflows/myNewWorkflow";
+export const workflows = [
+  PcoSyncWorkflow,
+  PcoSyncEntityWorkflow,
+  ExternalSyncWorkflow,
+  ExternalSyncEntityWorkflow,
+  MyNewWorkflow, // Add here
+  TestWorkflow,
+] as const;
+
+// In runner.ts
+import { MyNewWorkflowLayer } from "@openfaith/workers/workflows/myNewWorkflow";
+const EnvLayer = Layer.mergeAll(
+  PcoSyncWorkflowLayer,
+  PcoSyncEntityWorkflowLayer,
+  ExternalSyncWorkflowLayer,
+  ExternalSyncEntityWorkflowLayer,
+  MyNewWorkflowLayer, // Add here
+  TestWorkflowLayer,
+);
+```
+
+**Workflow Structure Requirements:**
+
+- Export both the workflow definition and its layer
+- Use `Workflow.make()` from `@effect/workflow` to define workflows
+- Use Effect-TS patterns throughout (Effect.gen, pipe, etc.)
+- Define proper error schemas using `Schema.TaggedError`
+- Include proper logging and observability
+- Follow the naming convention: `MyWorkflow` and `MyWorkflowLayer`
+- Use `Activity.make()` for activities within workflows
+- Leverage `@effect/cluster` for distributed execution
 
 ### Client Sync
 

@@ -12,6 +12,7 @@
     "@openfaith/schema": "workspace:*",
     "@openfaith/server": "workspace:*",
     "@openfaith/shared": "workspace:*",
+    "@opentelemetry/exporter-trace-otlp-http": "0.203.0",
     "effect": "catalog:"
   },
   "devDependencies": {

@@ -66,7 +66,7 @@ This project is built around the Effect-TS ecosystem across the entire stack, wh
 - **Auth**: Better Auth for authentication
 - **Client Sync**: Rocicorp Zero for local-first data sync
 - **ChMS Integration**: Custom adapter pattern using Effect for external APIs
-- **Workflow Engine**: Temporal for durable workflows
+- **Workflow Engine**: @effect/cluster and @effect/workflow for durable workflows
 - **Monorepo**: Turborepo with Bun package manager
 
 ### Data Architecture
@@ -166,7 +166,7 @@ OpenFaith uses a **Canonical Data Model (CDM)** approach:
 ### Sync Engine & Effect Workflows
 
 - Located in `backend/workers/`
-- Uses Temporal for durable workflows with Effect integration
+- Uses @effect/cluster and @effect/workflow for durable workflows (NOT Temporal)
 - All workflow operations built using Effect patterns
 - Handles bi-directional sync between OpenFaith and external systems
 - Implements conflict resolution and state management using Effect's error handling

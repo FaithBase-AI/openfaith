@@ -95,7 +95,7 @@ function RouteComponent() {
 
   const z = useZero()
 
-  const [person] = useQuery(z.query.people.where('id', '105820014').one())
+  const [person] = useQuery(z.query.people.where('id', 'person_01k0y864sffzxa92xaqb5qhebg').one())
 
   return (
     <div className={'mx-auto flex max-w-3xl flex-col gap-4 p-4'}>
@@ -105,7 +105,7 @@ function RouteComponent() {
       <Button
         onClick={() =>
           z.mutate.people.update({
-            id: '105820014',
+            id: 'person_01k0y864sffzxa92xaqb5qhebg',
             name: `Yeeeeeet ${new Date().toISOString()}`,
           })
         }

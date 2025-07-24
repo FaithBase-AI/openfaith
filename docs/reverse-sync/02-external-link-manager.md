@@ -435,10 +435,10 @@ The service integrates with the `externalLinksTable` from `@openfaith/db` which 
 
 ## Usage Patterns
 
-### **In Temporal Workflows (Server-Side)**
+### **In Effect Workflows (Server-Side)**
 
 ```typescript
-// Used in Temporal workflows for durable sync operations
+// Used in Effect workflows (@effect/workflow) for durable sync operations
 export const syncEntityToExternalSystems = async (
   entityType: string,
   entityId: string,
@@ -583,7 +583,7 @@ The service implements comprehensive error handling:
 
 - **Entity not found**: Returns `null` for `findEntityByExternalId`, empty arrays for entity queries
 - **Duplicate external links**: Uses database constraints and tagged errors (`ExternalLinkConflictError`)
-- **Database connection issues**: Propagates as Effect errors for Temporal retry logic
+- **Database connection issues**: Propagates as Effect errors for Effect workflow retry logic
 - **Soft deletion**: All queries filter out deleted links using `isNull(deletedAt)`
 - **Concurrent sync protection**: Uses `syncing` flag to prevent race conditions
 
@@ -616,10 +616,11 @@ The service implements comprehensive error handling:
 - Implements Postgres layer in `@backend/server/live`
 - Supports dependency injection through Effect's Layer system
 
-### **Temporal Workflows**
-- Enables durable sync operations with state tracking
+### **Effect Workflows**
+- Enables durable sync operations with state tracking using @effect/workflow
 - Supports bulk operations for performance
 - Provides proper error handling for workflow retry logic
+- Uses @effect/cluster for distributed execution
 
 ## Status
 

@@ -1,4 +1,5 @@
 import { CoreRpc, TestFunctionError } from '@openfaith/domain'
+import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
 import { Effect } from 'effect'
 
 export const CoreHandlerLive = CoreRpc.toLayer(
@@ -9,7 +10,15 @@ export const CoreHandlerLive = CoreRpc.toLayer(
           console.log('🚀 Test function called')
 
           // Simulate some work
-          yield* Effect.sleep('100 millis')
+          const workflowClient = yield* WorkflowClient
+
+          const result = yield* workflowClient.workflows.PcoSyncWorkflow({
+            payload: {
+              tokenKey: 'org_01jww7zkeyfzvsxd20nfjzc21z',
+            },
+          })
+
+          console.log(result)
 
           console.log('✅ Test function completed')
 
