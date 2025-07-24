@@ -4,7 +4,7 @@ import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import type { pcoPersonTransformer } from '@openfaith/pco/server'
 
-import { mkEntityName, mkEntityType } from '@openfaith/shared/string'
+import { mkEntityName, mkEntityType, mkUrlParamName } from '@openfaith/shared/string'
 import { ofLookup } from '@openfaith/workers/helpers/ofLookup'
 import { Effect, pipe, Record, Schema } from 'effect'
 
@@ -190,39 +190,6 @@ export const getExternalLinksE = Effect.fn('getExternalLinksE')(function* (
 })
 
 /**
- * Gets the correct URL parameter name for a given entity
- */
-const getUrlParamName = (entityName: string): string => {
-  switch (entityName) {
-    case 'Person':
-      return 'personId'
-    case 'Household':
-      return 'householdId'
-    case 'Address':
-      return 'addressId'
-    case 'PhoneNumber':
-      return 'phoneNumberId'
-    case 'Email':
-      return 'emailId'
-    case 'Note':
-      return 'noteId'
-    case 'List':
-      return 'listId'
-    case 'Campus':
-      return 'campusId'
-    case 'Tab':
-      return 'tabId'
-    case 'FieldDefinition':
-      return 'fieldDefinitionId'
-    case 'FieldDatum':
-      return 'fieldDatumId'
-    default:
-      // Fallback to generic 'id' for unknown entities
-      return 'id'
-  }
-}
-
-/**
  * Creates appropriate API effect for CRUD operation
  */
 export const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
@@ -232,7 +199,7 @@ export const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
   encodedData: unknown,
   externalId: string,
 ) {
-  const urlParamName = getUrlParamName(entityName)
+  const urlParamName = mkUrlParamName(entityName)
 
   switch (operation) {
     case 'insert': {

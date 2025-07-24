@@ -4,6 +4,7 @@ import {
   mkEntityName,
   mkEntityType,
   mkTableName,
+  mkUrlParamName,
   pluralize,
   singularize,
 } from '@openfaith/shared/string'
@@ -422,5 +423,37 @@ effect('transformation utilities work together correctly', () =>
       expect(mkTableName(entity)).toBe(table)
       expect(mkEntityType(table)).toBe(type)
     }
+  }),
+)
+
+// Test mkUrlParamName function
+effect('mkUrlParamName converts entity names to URL parameter names correctly', () =>
+  Effect.gen(function* () {
+    // Basic entity names to URL parameter names
+    expect(mkUrlParamName('Person')).toBe('personId')
+    expect(mkUrlParamName('PhoneNumber')).toBe('phoneNumberId')
+    expect(mkUrlParamName('Address')).toBe('addressId')
+    expect(mkUrlParamName('Campus')).toBe('campusId')
+    expect(mkUrlParamName('Email')).toBe('emailId')
+    expect(mkUrlParamName('Note')).toBe('noteId')
+    expect(mkUrlParamName('List')).toBe('listId')
+    expect(mkUrlParamName('Tab')).toBe('tabId')
+    expect(mkUrlParamName('Household')).toBe('householdId')
+    expect(mkUrlParamName('FieldDefinition')).toBe('fieldDefinitionId')
+    expect(mkUrlParamName('FieldDatum')).toBe('fieldDatumId')
+
+    // Single character entity names
+    expect(mkUrlParamName('A')).toBe('aId')
+    expect(mkUrlParamName('B')).toBe('bId')
+
+    // Complex entity names
+    expect(mkUrlParamName('UserProfileSetting')).toBe('userProfileSettingId')
+    expect(mkUrlParamName('EmailAddress')).toBe('emailAddressId')
+    expect(mkUrlParamName('ContactPhoneNumber')).toBe('contactPhoneNumberId')
+
+    // Edge cases
+    expect(mkUrlParamName('ID')).toBe('iDId')
+    expect(mkUrlParamName('URL')).toBe('uRLId')
+    expect(mkUrlParamName('API')).toBe('aPIId')
   }),
 )

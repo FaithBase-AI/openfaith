@@ -142,3 +142,8 @@ export const mkTableName = flow(String.pascalToSnake, pluralize)
  * Converts table name to entity type for IDs (people -> person, phone_numbers -> phonenumber)
  */
 export const mkEntityType = flow(String.snakeToPascal, String.toLowerCase, singularize)
+
+/**
+ * Converts entity name to standardized URL parameter name (Person -> personId, PhoneNumber -> phoneNumberId)
+ */
+export const mkUrlParamName = flow(String.uncapitalize, String.concat('Id'))
