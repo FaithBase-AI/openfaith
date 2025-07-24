@@ -36,6 +36,8 @@ export function createMutators(
             )
           }
 
+          console.log(input)
+
           const validatedInput = yield* Schema.decodeUnknown(UpdatePersonInput)(input).pipe(
             Effect.mapError(
               (error) =>

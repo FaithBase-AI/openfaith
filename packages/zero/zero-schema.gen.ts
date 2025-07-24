@@ -1518,6 +1518,15 @@ export const schema = {
           optional: true,
           type: 'json',
         },
+        firstName: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'peopleTable',
+            'firstName'
+          >,
+          optional: true,
+          type: 'string',
+        },
         gender: {
           customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'peopleTable', 'gender'>,
           optional: true,

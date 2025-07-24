@@ -1,15 +1,13 @@
 import { Workflow } from '@effect/workflow'
-import { type CRUDMutation, Mutation } from '@openfaith/domain'
+import { type CRUDMutation, type CustomMutation, Mutation } from '@openfaith/domain'
+import { convertCustomMutations } from '@openfaith/workers/helpers/convertCustomMutation'
 import { ExternalSyncEntityWorkflow } from '@openfaith/workers/workflows/externalSyncEntityWorkflow'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
 
 // Define the external sync error
-class ExternalSyncError extends Schema.TaggedError<ExternalSyncError>('ExternalSyncError')(
-  'ExternalSyncError',
-  {
-    message: Schema.String,
-  },
-) {}
+class ExternalSyncError extends Schema.TaggedError<ExternalSyncError>()('ExternalSyncError', {
+  message: Schema.String,
+}) {}
 
 // Define the workflow payload schema
 const ExternalSyncPayload = Schema.Struct({
@@ -36,17 +34,24 @@ export const ExternalSyncWorkflowLayer = ExternalSyncWorkflow.toLayer(
 
     yield* Effect.log('Processing mutations for external sync', {
       mutationCount: mutations.length,
+      mutationNames: mutations.map((m) => m.name),
+      mutationTypes: mutations.map((m) => m.type),
       tokenKey,
     })
 
-    // Process each mutation individually - simpler approach
+    // Process both CRUD and custom mutations
     const crudMutations = pipe(
       mutations,
       Array.filter((mutation): mutation is CRUDMutation => mutation.type === 'crud'),
     )
 
-    // Group operations by entity name for efficient processing
-    const entityWorkflows = pipe(
+    const customMutations = pipe(
+      mutations,
+      Array.filter((mutation): mutation is CustomMutation => mutation.type === 'custom'),
+    )
+
+    // Convert CRUD mutations to entity workflows
+    const crudEntityWorkflows = pipe(
       crudMutations,
       Array.flatMap((mutation) =>
         pipe(
@@ -60,6 +65,26 @@ export const ExternalSyncWorkflowLayer = ExternalSyncWorkflow.toLayer(
           })),
         ),
       ),
+    )
+
+    // Convert custom mutations to entity workflows using the helper
+    yield* Effect.log('Processing custom mutations', {
+      customMutationCount: customMutations.length,
+      customMutationNames: customMutations.map((m) => m.name),
+    })
+
+    const customEntityWorkflows = yield* convertCustomMutations(customMutations)
+
+    yield* Effect.log('Converted custom mutations to entity workflows', {
+      customEntityWorkflowCount: customEntityWorkflows.length,
+    })
+
+    // Combine all entity workflows
+    const allEntityWorkflows = [...crudEntityWorkflows, ...customEntityWorkflows]
+
+    // Group operations by entity name for efficient processing
+    const entityWorkflows = pipe(
+      allEntityWorkflows,
       Array.groupBy((item) => item.entityName),
       Record.collect((entityName, mutations) => ({
         entityName,

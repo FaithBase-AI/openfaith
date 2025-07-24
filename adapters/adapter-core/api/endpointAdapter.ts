@@ -3,6 +3,57 @@ import type { EndpointDefinition } from '@openfaith/adapter-core/api/endpointTyp
 import { Schema } from 'effect'
 
 /**
+ * TypeScript utility to extract path parameter names from a path string.
+ * Examples:
+ * - "/people/:personId" -> { readonly personId: string }
+ * - "/people/:personId/events/:eventId" -> { readonly personId: string; readonly eventId: string }
+ * - "/people" -> {}
+ */
+type ExtractPathParams<T extends string> = T extends `${infer _Start}:${infer Param}/${infer Rest}`
+  ? { readonly [K in Param]: string } & ExtractPathParams<`/${Rest}`>
+  : T extends `${infer _Start}:${infer Param}`
+    ? { readonly [K in Param]: string }
+    : {}
+
+/**
+ * Extracts path parameter names from a URL path string.
+ * For example: "/people/:personId/events/:eventId" -> ["personId", "eventId"]
+ */
+function extractPathParams(path: string): Array<string> {
+  const paramRegex = /:([^/]+)/g
+  const params: Array<string> = []
+  let match
+
+  while ((match = paramRegex.exec(path)) !== null) {
+    if (match[1]) {
+      params.push(match[1])
+    }
+  }
+
+  return params
+}
+/**
+ * Generates a Schema.Struct for path parameters based on the URL path.
+ * All path parameters are treated as strings that can be converted from URL segments.
+ */
+function generatePathParamsSchema(
+  path: string,
+): Schema.Struct<Record<string, typeof Schema.String>> {
+  const paramNames = extractPathParams(path)
+
+  if (paramNames.length === 0) {
+    return Schema.Struct({})
+  }
+
+  const schemaFields: Record<string, typeof Schema.String> = {}
+  for (const paramName of paramNames) {
+    schemaFields[paramName] = Schema.String
+  }
+
+  return Schema.Struct(schemaFields)
+}
+
+/**
  * Builds the comprehensive URL parameter schema for a GET endpoint
  * from our high-level, declarative definition.
  */
@@ -126,6 +177,7 @@ import { Schema } from 'effect'
 // GET overload
 export function toHttpApiEndpoint<
   TMethod extends 'GET',
+  TPath extends `/${string}`,
   Api,
   Response extends Schema.Schema<any>,
   Fields extends Record<string, any>,
@@ -159,11 +211,11 @@ export function toHttpApiEndpoint<
     never,
     never,
     Query
-  >,
+  > & { path: TPath },
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
-  never,
+  ExtractPathParams<TPath>,
   IsCollection extends true
     ? {
         readonly include?: Includes[number] | (Includes[number] & Includes) | undefined
@@ -185,6 +237,7 @@ export function toHttpApiEndpoint<
 // POST overload
 export function toHttpApiEndpoint<
   TMethod extends 'POST',
+  TPath extends `/${string}`,
   Api,
   Response extends Schema.Schema<any>,
   Fields extends Record<string, any>,
@@ -214,12 +267,12 @@ export function toHttpApiEndpoint<
     never,
     never,
     Query
-  >,
+  > & { path: TPath },
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
   never,
-  never,
+  ExtractPathParams<TPath>,
   {
     readonly [x: string]: unknown
   },
@@ -233,6 +286,7 @@ export function toHttpApiEndpoint<
 // PATCH overload
 export function toHttpApiEndpoint<
   TMethod extends 'PATCH',
+  TPath extends `/${string}`,
   Api,
   Response extends Schema.Schema<any>,
   Fields extends Record<string, any>,
@@ -262,12 +316,12 @@ export function toHttpApiEndpoint<
     UpdatableFields,
     UpdatableSpecial,
     Query
-  >,
+  > & { path: TPath },
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
   never,
-  never,
+  ExtractPathParams<TPath>,
   {
     readonly [x: string]: unknown
   },
@@ -281,6 +335,7 @@ export function toHttpApiEndpoint<
 // DELETE overload
 export function toHttpApiEndpoint<
   TMethod extends 'DELETE',
+  TPath extends `/${string}`,
   Api,
   Response extends Schema.Schema<any>,
   Fields extends Record<string, any>,
@@ -308,12 +363,12 @@ export function toHttpApiEndpoint<
     never,
     never,
     Query
-  >,
+  > & { path: TPath },
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
   never,
-  never,
+  ExtractPathParams<TPath>,
   never,
   never,
   void,
@@ -333,26 +388,30 @@ export function toHttpApiEndpoint(definition: any) {
     }
     case 'POST': {
       // const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.creatableFields)
+      const pathParamsSchema = generatePathParamsSchema(definition.path)
 
-      return (
-        HttpApiEndpoint.post(definition.name, definition.path)
-          // .setPayload(payloadSchema)
-          .addSuccess(definition.response) as any
-      )
+      return HttpApiEndpoint.post(definition.name, definition.path)
+        .setUrlParams(pathParamsSchema)
+        .setPayload(Schema.Any)
+        .addSuccess(definition.response) as any
     }
     case 'PATCH': {
       // const payloadSchema = buildPayloadSchema(definition.apiSchema, definition.updatableFields)
+      const pathParamsSchema = generatePathParamsSchema(definition.path)
 
-      return (
-        HttpApiEndpoint.patch(definition.name, definition.path)
-          // .setPayload(payloadSchema)
-          .addSuccess(definition.response) as any
-      )
+      return HttpApiEndpoint.patch(definition.name, definition.path)
+        .setUrlParams(pathParamsSchema)
+        .setPayload(Schema.Any)
+        .addSuccess(definition.response) as any
     }
     case 'DELETE': {
-      return HttpApiEndpoint.del(definition.name, definition.path).addSuccess(Schema.Void, {
-        status: 204,
-      }) as any
+      const pathParamsSchema = generatePathParamsSchema(definition.path)
+
+      return HttpApiEndpoint.del(definition.name, definition.path)
+        .setUrlParams(pathParamsSchema)
+        .addSuccess(Schema.Void, {
+          status: 204,
+        }) as any
     }
   }
 }

@@ -62,12 +62,88 @@ export type EntityClient = {
   readonly create?: (params: { payload: unknown }) => Effect.Effect<unknown, unknown, never>
   readonly update?: (params: {
     payload: unknown
-    urlParams: { id: string }
+    path: Record<string, string>
   }) => Effect.Effect<unknown, unknown, never>
   readonly delete?: (params: {
-    urlParams: { id: string }
+    path: Record<string, string>
   }) => Effect.Effect<unknown, unknown, never>
 }
+
+/**
+ * Transforms partial entity data for update operations
+ * Only transforms the fields that are present in the partial data
+ */
+export const transformPartialEntityDataE = Effect.fn('transformPartialEntityDataE')(function* (
+  entityName: string,
+  partialData: Record<string, unknown>,
+) {
+  const entityConfig = ofLookup[entityName as keyof typeof ofLookup]
+
+  if (!entityConfig?.transformer) {
+    yield* Effect.logWarning('No transformer found for entity - using raw data', {
+      entityName,
+    })
+    return partialData
+  }
+
+  // For partial updates, we only transform the fields that are present
+  // We don't need a complete object, just the fields being updated
+  const transformedFields: Record<string, unknown> = {}
+
+  // For now, we'll do a simple field mapping for common fields
+  // Note: We could use the transformer schema for more sophisticated field mapping
+  // const transformer = entityConfig.transformer as unknown as typeof pcoPersonTransformer;
+  // This handles the most common case where field names match or have simple mappings
+  for (const [key, value] of Object.entries(partialData)) {
+    switch (key) {
+      case 'firstName':
+        transformedFields.first_name = value
+        break
+      case 'lastName':
+        transformedFields.last_name = value
+        break
+      case 'middleName':
+        transformedFields.middle_name = value
+        break
+      case 'name':
+        transformedFields.name = value
+        break
+      case 'birthdate':
+        transformedFields.birthdate = value
+        break
+      case 'anniversary':
+        transformedFields.anniversary = value
+        break
+      case 'gender':
+        // Transform gender from OF format to PCO format
+        if (value === 'male') {
+          transformedFields.gender = 'Male'
+        } else if (value === 'female') {
+          transformedFields.gender = 'Female'
+        } else {
+          transformedFields.gender = value
+        }
+        break
+      case 'avatar':
+        transformedFields.avatar = value
+        break
+      case 'membership':
+        transformedFields.membership = value
+        break
+      default:
+        // For unknown fields, pass them through as-is
+        transformedFields[key] = value
+    }
+  }
+
+  yield* Effect.log('Transformed partial entity data', {
+    entityName,
+    originalFields: Object.keys(partialData),
+    transformedFields: Object.keys(transformedFields),
+  })
+
+  return transformedFields
+})
 
 /**
  * Transforms entity data using appropriate transformer
@@ -114,6 +190,39 @@ export const getExternalLinksE = Effect.fn('getExternalLinksE')(function* (
 })
 
 /**
+ * Gets the correct URL parameter name for a given entity
+ */
+const getUrlParamName = (entityName: string): string => {
+  switch (entityName) {
+    case 'Person':
+      return 'personId'
+    case 'Household':
+      return 'householdId'
+    case 'Address':
+      return 'addressId'
+    case 'PhoneNumber':
+      return 'phoneNumberId'
+    case 'Email':
+      return 'emailId'
+    case 'Note':
+      return 'noteId'
+    case 'List':
+      return 'listId'
+    case 'Campus':
+      return 'campusId'
+    case 'Tab':
+      return 'tabId'
+    case 'FieldDefinition':
+      return 'fieldDefinitionId'
+    case 'FieldDatum':
+      return 'fieldDatumId'
+    default:
+      // Fallback to generic 'id' for unknown entities
+      return 'id'
+  }
+}
+
+/**
  * Creates appropriate API effect for CRUD operation
  */
 export const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
@@ -123,8 +232,10 @@ export const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
   encodedData: unknown,
   externalId: string,
 ) {
+  const urlParamName = getUrlParamName(entityName)
+
   switch (operation) {
-    case 'insert':
+    case 'insert': {
       if (!entityClient.create) {
         yield* Effect.logWarning('Provider does not support create operation - skipping', {
           entityName,
@@ -133,10 +244,20 @@ export const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
         })
         return null
       }
-      return yield* entityClient.create({ payload: encodedData })
+      // Wrap payload in JSON:API format that PCO expects
+      // Remove 'id' from attributes as it should not be in create requests
+      const { id: _id, ...attributesWithoutId } = encodedData as Record<string, unknown>
+      const createPayload = {
+        data: {
+          attributes: attributesWithoutId,
+          type: entityName,
+        },
+      }
+      return yield* entityClient.create({ payload: createPayload })
+    }
 
     case 'update':
-    case 'upsert':
+    case 'upsert': {
       if (!entityClient.update) {
         yield* Effect.logWarning('Provider does not support update operation - skipping', {
           entityName,
@@ -145,10 +266,31 @@ export const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
         })
         return null
       }
-      return yield* entityClient.update({
-        payload: encodedData,
-        urlParams: { id: externalId },
+      // Wrap payload in JSON:API format that PCO expects
+      // Remove 'id' from attributes as it should only be at the top level
+      const { id: _id, ...attributesWithoutId } = encodedData as Record<string, unknown>
+      const updatePayload = {
+        data: {
+          attributes: attributesWithoutId,
+          id: externalId,
+          type: entityName,
+        },
+      }
+
+      yield* Effect.log('Sending update request', {
+        data: updatePayload.data,
+        entityName,
+        externalId,
+        pathParams: { [urlParamName]: externalId },
+        payloadData: encodedData,
+        updatePayload,
+        urlParamName,
       })
+      return yield* entityClient.update({
+        path: { [urlParamName]: externalId },
+        payload: updatePayload,
+      })
+    }
 
     case 'delete':
       if (!entityClient.delete) {
@@ -160,7 +302,7 @@ export const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
         return null
       }
       return yield* entityClient.delete({
-        urlParams: { id: externalId },
+        path: { [urlParamName]: externalId },
       })
 
     default:
@@ -202,8 +344,11 @@ export const syncToPcoE = Effect.fn('syncToPcoE')(function* (
     return
   }
 
-  // Transform data using existing bidirectional transformer
-  const encodedData = yield* transformEntityDataE(entityName, op.value)
+  // Transform data - use partial transformation for updates, full transformation for inserts
+  const encodedData =
+    op.op === 'update'
+      ? yield* transformPartialEntityDataE(entityName, op.value as Record<string, unknown>)
+      : yield* transformEntityDataE(entityName, op.value)
 
   yield* Effect.log('Data transformed for PCO', {
     entityName,

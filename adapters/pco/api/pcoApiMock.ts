@@ -15,8 +15,11 @@ export const makeMockPcoHttpClient = Effect.gen(function* () {
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
-        Effect.succeed({ attributes: {}, id: urlParams.id }),
+      update: ({ payload, path }: { payload: unknown; path: Record<string, string> }) =>
+        Effect.succeed({
+          attributes: {},
+          id: Object.values(path)[0] || 'mock_id',
+        }),
     },
     Campus: {
       create: ({ payload }: { payload: unknown }) =>
@@ -24,8 +27,11 @@ export const makeMockPcoHttpClient = Effect.gen(function* () {
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
-        Effect.succeed({ attributes: {}, id: urlParams.id }),
+      update: ({ payload, path }: { payload: unknown; path: Record<string, string> }) =>
+        Effect.succeed({
+          attributes: {},
+          id: Object.values(path)[0] || 'mock_id',
+        }),
     },
     Person: {
       create: ({ payload }: { payload: unknown }) =>
@@ -33,8 +39,11 @@ export const makeMockPcoHttpClient = Effect.gen(function* () {
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
-        Effect.succeed({ attributes: {}, id: urlParams.id }),
+      update: ({ payload, path }: { payload: unknown; path: Record<string, string> }) =>
+        Effect.succeed({
+          attributes: {},
+          id: Object.values(path)[0] || 'mock_id',
+        }),
     },
     PhoneNumber: {
       create: ({ payload }: { payload: unknown }) =>
@@ -42,8 +51,11 @@ export const makeMockPcoHttpClient = Effect.gen(function* () {
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
-        Effect.succeed({ attributes: {}, id: urlParams.id }),
+      update: ({ payload, path }: { payload: unknown; path: Record<string, string> }) =>
+        Effect.succeed({
+          attributes: {},
+          id: Object.values(path)[0] || 'mock_id',
+        }),
     },
     token: 'test-token',
   } as unknown as PcoHttpClient
@@ -61,8 +73,11 @@ export const makeMockPcoHttpClientWithErrors = Effect.gen(function* () {
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
-        Effect.succeed({ attributes: {}, id: urlParams.id }),
+      update: ({ payload, path }: { payload: unknown; path: Record<string, string> }) =>
+        Effect.succeed({
+          attributes: {},
+          id: Object.values(path)[0] || 'mock_id',
+        }),
     },
     Campus: {
       create: ({ payload }: { payload: unknown }) =>
@@ -70,15 +85,18 @@ export const makeMockPcoHttpClientWithErrors = Effect.gen(function* () {
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
-        Effect.succeed({ attributes: {}, id: urlParams.id }),
+      update: ({ payload, path }: { payload: unknown; path: Record<string, string> }) =>
+        Effect.succeed({
+          attributes: {},
+          id: Object.values(path)[0] || 'mock_id',
+        }),
     },
     Person: {
       create: ({ payload }: { payload: unknown }) => Effect.fail(new Error('PCO API error')),
       delete: () => Effect.fail(new Error('PCO API error')),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
+      update: ({ payload, path }: { payload: unknown; path: Record<string, string> }) =>
         Effect.fail(new Error('PCO API error')),
     },
     PhoneNumber: {
@@ -87,8 +105,11 @@ export const makeMockPcoHttpClientWithErrors = Effect.gen(function* () {
       delete: () => Effect.succeed(undefined),
       get: () => Effect.succeed({ data: null, included: [] }),
       list: () => Effect.succeed({ data: [], included: [] }),
-      update: ({ payload, urlParams }: { payload: unknown; urlParams: { id: string } }) =>
-        Effect.succeed({ attributes: {}, id: urlParams.id }),
+      update: ({ payload, path }: { payload: unknown; path: Record<string, string> }) =>
+        Effect.succeed({
+          attributes: {},
+          id: Object.values(path)[0] || 'mock_id',
+        }),
     },
     token: 'test-token',
   } as unknown as PcoHttpClient
