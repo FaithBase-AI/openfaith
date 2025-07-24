@@ -1,4 +1,5 @@
 import { ExternalLinkManager } from '@openfaith/adapter-core/layers/externalLinkManager'
+import type { CRUDMutation, CRUDOp } from '@openfaith/domain'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { singularize } from '@openfaith/shared/string'
@@ -11,13 +12,6 @@ export class EntityTransformError extends Schema.TaggedError<EntityTransformErro
 )('EntityTransformError', {
   cause: Schema.Unknown,
   entityName: Schema.String,
-}) {}
-
-export class EntityManifestNotFoundError extends Schema.TaggedError<EntityManifestNotFoundError>(
-  'EntityManifestNotFoundError',
-)('EntityManifestNotFoundError', {
-  entityName: Schema.String,
-  tableName: Schema.String,
 }) {}
 
 export class UnsupportedOperationError extends Schema.TaggedError<UnsupportedOperationError>(
@@ -51,12 +45,7 @@ export class ExternalSyncError extends Schema.TaggedError<ExternalSyncError>('Ex
 ) {}
 
 // Types for external sync operations
-export type CrudOperation = {
-  op: 'insert' | 'update' | 'upsert' | 'delete'
-  tableName: string
-  primaryKey: { id: string }
-  value: unknown
-}
+export type CrudOperation = CRUDOp
 
 export type ExternalLink = {
   readonly adapter: string
@@ -132,7 +121,7 @@ export const getExternalLinksE = Effect.fn('getExternalLinksE')(function* (
  * Creates appropriate API effect for CRUD operation
  */
 export const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
-  operation: CrudOperation['op'],
+  operation: CRUDOp['op'],
   entityClient: EntityClient,
   entityName: string,
   encodedData: unknown,
@@ -208,7 +197,13 @@ export const syncToPcoE = Effect.fn('syncToPcoE')(function* (
 
   if (!entityClient) {
     yield* externalLinkManager.markSyncCompleted(link.adapter, link.externalId)
-    return yield* Effect.fail(new EntityClientNotFoundError({ entityName }))
+    yield* Effect.logWarning('Provider does not support this entity - skipping sync', {
+      adapter: link.adapter,
+      entityName,
+      externalId: link.externalId,
+      operation: op.op,
+    })
+    return
   }
 
   // Transform data using existing bidirectional transformer
@@ -279,7 +274,8 @@ export const processCrudOperationE = Effect.fn('processCrudOperationE')(function
   op: CrudOperation,
 ) {
   const entityName = mkEntityName(op.tableName)
-  const entityId = op.primaryKey.id as string
+  // Extract entity ID from primaryKey record
+  const entityId = Object.values(op.primaryKey)[0] as string
 
   yield* Effect.log('Processing CRUD operation', {
     entityId,
@@ -325,7 +321,7 @@ export const processCrudOperationE = Effect.fn('processCrudOperationE')(function
  * Processes multiple CRUD operations for external sync
  */
 export const syncDataE = Effect.fn('syncDataE')(function* (
-  mutations: ReadonlyArray<{ mutation: unknown; op: unknown }>,
+  mutations: ReadonlyArray<{ mutation: CRUDMutation; op: CRUDOp }>,
 ) {
   yield* Effect.log('Starting external sync for mutations', {
     mutationCount: mutations.length,
@@ -333,10 +329,10 @@ export const syncDataE = Effect.fn('syncDataE')(function* (
 
   // Process each mutation
   yield* Effect.forEach(mutations, ({ op }) =>
-    processCrudOperationE(op as CrudOperation).pipe(
+    processCrudOperationE(op).pipe(
       Effect.tapError((error) =>
         Effect.logError('Failed to process CRUD operation', {
-          error: error instanceof Error ? error.message : `${error}`,
+          error,
           operation: op,
         }),
       ),

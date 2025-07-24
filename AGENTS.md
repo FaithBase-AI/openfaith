@@ -171,6 +171,13 @@ Examples:
 - Define error fields using Schema types (e.g., `Schema.String`, `Schema.Unknown`)
 - Use `Schema.optional()` for optional fields
 
+**Error Logging:**
+
+- **NEVER use `instanceof Error` checks** when logging Effect errors
+- Effect errors are typed - log them directly without type checking
+- **Avoid**: `error instanceof Error ? error.message : \`${error}\``
+- **Prefer**: Just log the `error` directly - Effect's logging will handle serialization
+
 **Example:**
 
 ```typescript
@@ -182,6 +189,22 @@ export class ValidationError extends Schema.TaggedError<ValidationError>()(
     cause: Schema.optional(Schema.Unknown),
   },
 ) {}
+
+// Good error logging
+Effect.tapError((error) =>
+  Effect.logError("Operation failed", {
+    error, // Log the typed error directly
+    context: "additional context",
+  }),
+);
+
+// Bad error logging - DON'T DO THIS
+Effect.tapError((error) =>
+  Effect.logError("Operation failed", {
+    error: error instanceof Error ? error.message : `${error}`, // ❌ Wrong!
+    context: "additional context",
+  }),
+);
 ```
 
 **Import Pattern:**

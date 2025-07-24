@@ -352,7 +352,7 @@ export const SyncOrchestratorLive = Layer.effect(
                   externalSystem: link.externalSystem,
                   operation,
                   success: false,
-                  error: error instanceof Error ? error.message : String(error),
+                  error,
                   timestamp: new Date(),
                 } as SyncResult;
               }
@@ -364,7 +364,7 @@ export const SyncOrchestratorLive = Layer.effect(
                   externalSystem: link.externalSystem,
                   operation,
                   success: false,
-                  error: error instanceof Error ? error.message : String(error),
+                  error,
                   timestamp: new Date(),
                 } as SyncResult),
               ),

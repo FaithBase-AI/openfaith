@@ -1,10 +1,9 @@
 import { Activity, Workflow } from '@effect/workflow'
 import { TokenKey } from '@openfaith/adapter-core/server'
+import { CRUDMutation, CRUDOp } from '@openfaith/domain'
 import { ExternalLinkManagerLive } from '@openfaith/server/live/externalLinkManagerLive'
 import { PcoApiLayer } from '@openfaith/server/live/pcoApiLive'
 import {
-  EntityClientNotFoundError,
-  EntityManifestNotFoundError,
   EntityTransformError,
   ExternalSyncError,
   syncDataE,
@@ -28,8 +27,8 @@ const ExternalSyncEntityPayload = Schema.Struct({
   entityName: Schema.String,
   mutations: Schema.Array(
     Schema.Struct({
-      mutation: Schema.Unknown,
-      op: Schema.Unknown,
+      mutation: CRUDMutation,
+      op: CRUDOp,
     }),
   ),
   tokenKey: Schema.String,
@@ -39,9 +38,7 @@ const ExternalSyncEntityPayload = Schema.Struct({
 export const ExternalSyncEntityWorkflow = Workflow.make({
   error: Schema.Union(
     EntityTransformError,
-    EntityManifestNotFoundError,
     UnsupportedOperationError,
-    EntityClientNotFoundError,
     UnsupportedAdapterError,
     ExternalSyncError,
     ExternalLinkNotFoundErrorSchema,
@@ -65,9 +62,7 @@ export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLaye
     yield* Activity.make({
       error: Schema.Union(
         EntityTransformError,
-        EntityManifestNotFoundError,
         UnsupportedOperationError,
-        EntityClientNotFoundError,
         UnsupportedAdapterError,
         ExternalSyncError,
         ExternalLinkNotFoundErrorSchema,

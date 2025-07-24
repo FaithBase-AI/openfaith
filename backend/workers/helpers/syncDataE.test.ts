@@ -5,6 +5,7 @@ import {
 } from '@openfaith/adapter-core/layers/externalLinkManager'
 import { TokenKey } from '@openfaith/adapter-core/server'
 import { effect, layer } from '@openfaith/bun-test'
+import type { CRUDMutation, CRUDOp } from '@openfaith/domain'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import {
   makeMockPcoHttpClient,
@@ -13,7 +14,6 @@ import {
 import {
   type CrudOperation,
   type EntityClient,
-  EntityClientNotFoundError,
   EntityTransformError,
   type ExternalLink,
   ExternalSyncError,
@@ -133,6 +133,15 @@ const createCrudOperation = (
 const createExternalLink = (adapter = 'pco', externalId = 'pco_123'): ExternalLink => ({
   adapter,
   externalId,
+})
+
+const createCrudMutation = (op: CrudOperation): CRUDMutation => ({
+  args: [{ ops: [op] }],
+  clientID: 'test_client',
+  id: 1,
+  name: '_zero_crud',
+  timestamp: Date.now(),
+  type: 'crud',
 })
 
 // ===== UNIT TESTS =====
@@ -336,31 +345,30 @@ effect(
 // ===== PCO SYNC TESTS =====
 
 layer(TestLayer)('syncToPcoE successfully syncs to PCO', (it) =>
-  it.effect('should sync successfully with entity that has no transformer', () =>
+  it.effect('should succeed with warning when entity client not found', () =>
     Effect.gen(function* () {
       const operation = createCrudOperation('update', 'addresses', 'address_123')
       const link = createExternalLink('pco', 'pco_123')
 
-      // Should complete without errors - use "TestEntity" which has no transformer
-      // but will fail with EntityClientNotFoundError since it doesn't exist in mock
+      // Should complete without errors - use "TestEntity" which doesn't exist in mock
+      // but now succeeds with warning instead of failing
       const result = yield* syncToPcoE(operation, 'TestEntity', link).pipe(Effect.either)
-      expect(result._tag).toBe('Left')
-      expect((result as any).left._tag).toBe('EntityClientNotFoundError')
+      expect(result._tag).toBe('Right')
+      expect((result as any).right).toBeUndefined()
     }),
   ),
 )
 
 layer(TestLayer)('syncToPcoE handles missing entity client', (it) =>
-  it.effect('should fail with EntityClientNotFoundError', () =>
+  it.effect("should succeed with warning when entity client doesn't exist", () =>
     Effect.gen(function* () {
       const operation = createCrudOperation('update', 'test_entities', 'test_123')
       const link = createExternalLink('pco', 'pco_123')
 
-      // Should fail with EntityClientNotFoundError when entity client doesn't exist
+      // Should succeed with warning when entity client doesn't exist
       const result = yield* syncToPcoE(operation, 'UnknownEntity', link).pipe(Effect.either)
-      expect(result._tag).toBe('Left')
-      expect((result as any).left._tag).toBe('EntityClientNotFoundError')
-      expect((result as any).left.entityName).toBe('UnknownEntity')
+      expect(result._tag).toBe('Right')
+      expect((result as any).right).toBeUndefined()
     }),
   ),
 )
@@ -383,17 +391,17 @@ layer(TestLayerWithErrors)('syncToPcoE handles transformation errors', (it) =>
 // ===== EXTERNAL SYSTEMS SYNC TESTS =====
 
 layer(TestLayer)('syncToExternalSystemsE handles PCO adapter', (it) =>
-  it.effect('should fail with EntityClientNotFoundError for unknown entity', () =>
+  it.effect('should succeed with warning when entity client not found', () =>
     Effect.gen(function* () {
       const operation = createCrudOperation('update', 'addresses', 'address_123')
       const links = [createExternalLink('pco', 'pco_123')]
 
-      // TestEntity doesn't exist in mock, so should fail with EntityClientNotFoundError
+      // TestEntity doesn't exist in mock, so should succeed with warning
       const result = yield* syncToExternalSystemsE(operation, 'TestEntity', links).pipe(
         Effect.either,
       )
-      expect(result._tag).toBe('Left')
-      expect((result as any).left._tag).toBe('EntityClientNotFoundError')
+      expect(result._tag).toBe('Right')
+      expect((result as any).right).toBeUndefined()
     }),
   ),
 )
@@ -455,10 +463,11 @@ layer(TestLayerEmpty)('processCrudOperationE skips entities without external lin
 layer(TestLayer)('syncDataE processes single mutation', (it) =>
   it.effect('should process single mutation', () =>
     Effect.gen(function* () {
+      const op = createCrudOperation('update', 'test_entities', 'test_123')
       const mutations = [
         {
-          mutation: 'test_mutation_1',
-          op: createCrudOperation('update', 'test_entities', 'test_123'),
+          mutation: createCrudMutation(op),
+          op,
         },
       ]
 
@@ -470,18 +479,21 @@ layer(TestLayer)('syncDataE processes single mutation', (it) =>
 layer(TestLayer)('syncDataE processes multiple mutations', (it) =>
   it.effect('should fail with EntityTransformError when using entities with transformers', () =>
     Effect.gen(function* () {
+      const op1 = createCrudOperation('update', 'test_entities', 'test_123')
+      const op2 = createCrudOperation('insert', 'addresses', 'address_456')
+      const op3 = createCrudOperation('delete', 'phone_numbers', 'phone_789')
       const mutations = [
         {
-          mutation: 'test_mutation_1',
-          op: createCrudOperation('update', 'test_entities', 'test_123'),
+          mutation: createCrudMutation(op1),
+          op: op1,
         },
         {
-          mutation: 'test_mutation_2',
-          op: createCrudOperation('insert', 'addresses', 'address_456'),
+          mutation: createCrudMutation(op2),
+          op: op2,
         },
         {
-          mutation: 'test_mutation_3',
-          op: createCrudOperation('delete', 'phone_numbers', 'phone_789'),
+          mutation: createCrudMutation(op3),
+          op: op3,
         },
       ]
 
@@ -496,7 +508,7 @@ layer(TestLayer)('syncDataE processes multiple mutations', (it) =>
 layer(TestLayer)('syncDataE handles empty mutations array', (it) =>
   it.effect('should handle empty mutations', () =>
     Effect.gen(function* () {
-      const mutations: Array<{ mutation: unknown; op: unknown }> = []
+      const mutations: Array<{ mutation: CRUDMutation; op: CRUDOp }> = []
 
       yield* syncDataE(mutations)
     }),
@@ -506,14 +518,16 @@ layer(TestLayer)('syncDataE handles empty mutations array', (it) =>
 layer(TestLayer)('syncDataE handles mutations with unknown entities', (it) =>
   it.effect('should handle unknown entities', () =>
     Effect.gen(function* () {
+      const op1 = createCrudOperation('update', 'test_entities', 'test_123')
+      const op2 = createCrudOperation('update', 'unknown_entities', 'entity_789') // Should be skipped
       const mutations = [
         {
-          mutation: 'test_mutation_1',
-          op: createCrudOperation('update', 'test_entities', 'test_123'),
+          mutation: createCrudMutation(op1),
+          op: op1,
         },
         {
-          mutation: 'test_mutation_2',
-          op: createCrudOperation('update', 'unknown_entities', 'entity_789'), // Should be skipped
+          mutation: createCrudMutation(op2),
+          op: op2,
         },
       ]
 
@@ -525,10 +539,11 @@ layer(TestLayer)('syncDataE handles mutations with unknown entities', (it) =>
 layer(TestLayerWithErrors)('syncDataE handles transformation errors', (it) =>
   it.effect('should fail with EntityTransformError when using entities with transformers', () =>
     Effect.gen(function* () {
+      const op = createCrudOperation('update', 'addresses', 'address_123')
       const mutations = [
         {
-          mutation: 'test_mutation_error',
-          op: createCrudOperation('update', 'addresses', 'address_123'),
+          mutation: createCrudMutation(op),
+          op,
         },
       ]
 
@@ -595,7 +610,6 @@ effect('All types are properly exported', () =>
     expect(typeof syncDataE).toBe('function')
 
     // Verify error types are available (used in tests via _tag comparisons)
-    expect(EntityClientNotFoundError).toBeDefined()
     expect(EntityTransformError).toBeDefined()
     expect(ExternalSyncError).toBeDefined()
     expect(UnsupportedAdapterError).toBeDefined()
