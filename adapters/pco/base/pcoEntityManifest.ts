@@ -44,8 +44,8 @@ import {
   listPhoneNumbersDefinition,
   updatePhoneNumberDefinition,
 } from '@openfaith/pco/modules/people/pcoPhoneNumberEndpoints'
-import { pluralize } from '@openfaith/shared'
-import { Array, pipe, Record, Schema, String } from 'effect'
+import { mkTableName } from '@openfaith/shared/string'
+import { Array, pipe, Record, Schema } from 'effect'
 
 export const pcoEntityManifest = mkPcoEntityManifest({
   endpoints: [
@@ -96,7 +96,7 @@ export const pcoEntityManifest = mkPcoEntityManifest({
 export const PcoEntityRegistry: ConvertPcoEntityRegistry<typeof pcoEntityManifest> = pipe(
   pcoEntityManifest,
   Record.values,
-  Array.map((x) => [pipe(x.entity, String.pascalToSnake, pluralize), x.apiSchema] as const),
+  Array.map((x) => [mkTableName(x.entity), x.apiSchema] as const),
   Record.fromEntries,
 ) as any
 

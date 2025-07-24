@@ -1,6 +1,12 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
-import { pluralize, singularize } from '@openfaith/shared/string'
+import {
+  mkEntityName,
+  mkEntityType,
+  mkTableName,
+  pluralize,
+  singularize,
+} from '@openfaith/shared/string'
 import { Effect } from 'effect'
 
 // Test pluralize function with regular cases
@@ -305,5 +311,116 @@ effect('handles non-standard patterns gracefully', () =>
     // Test that the functions are deterministic
     expect(pluralize('test')).toBe(pluralize('test'))
     expect(singularize('tests')).toBe(singularize('tests'))
+  }),
+)
+
+// Test mkEntityName function
+effect('mkEntityName converts table names to entity names correctly', () =>
+  Effect.gen(function* () {
+    // Basic snake_case to PascalCase with singularization
+    expect(mkEntityName('people')).toBe('Person')
+    expect(mkEntityName('phone_numbers')).toBe('PhoneNumber')
+    expect(mkEntityName('addresses')).toBe('Address')
+    expect(mkEntityName('groups')).toBe('Group')
+    expect(mkEntityName('children')).toBe('Child')
+    expect(mkEntityName('campuses')).toBe('Campus')
+
+    // Single word tables
+    expect(mkEntityName('users')).toBe('User')
+    expect(mkEntityName('items')).toBe('Item')
+    expect(mkEntityName('files')).toBe('File')
+
+    // Complex snake_case patterns
+    expect(mkEntityName('user_profile_settings')).toBe('UserProfileSetting')
+    expect(mkEntityName('email_addresses')).toBe('EmailAddress')
+    expect(mkEntityName('contact_phone_numbers')).toBe('ContactPhoneNumber')
+  }),
+)
+
+// Test mkTableName function
+effect('mkTableName converts entity names to table names correctly', () =>
+  Effect.gen(function* () {
+    // Basic PascalCase to snake_case with pluralization
+    expect(mkTableName('Person')).toBe('people')
+    expect(mkTableName('PhoneNumber')).toBe('phone_numbers')
+    expect(mkTableName('Address')).toBe('addresses')
+    expect(mkTableName('Group')).toBe('groups')
+    expect(mkTableName('Child')).toBe('children')
+    expect(mkTableName('Campus')).toBe('campuses')
+
+    // Single word entities
+    expect(mkTableName('User')).toBe('users')
+    expect(mkTableName('Item')).toBe('items')
+    expect(mkTableName('File')).toBe('files')
+
+    // Complex PascalCase patterns
+    expect(mkTableName('UserProfileSetting')).toBe('user_profile_settings')
+    expect(mkTableName('EmailAddress')).toBe('email_addresses')
+    expect(mkTableName('ContactPhoneNumber')).toBe('contact_phone_numbers')
+  }),
+)
+
+// Test mkEntityType function
+effect('mkEntityType converts table names to entity types for IDs correctly', () =>
+  Effect.gen(function* () {
+    // Basic snake_case to lowercase singular
+    expect(mkEntityType('people')).toBe('person')
+    expect(mkEntityType('phone_numbers')).toBe('phonenumber')
+    expect(mkEntityType('addresses')).toBe('address')
+    expect(mkEntityType('groups')).toBe('group')
+    expect(mkEntityType('children')).toBe('child')
+    expect(mkEntityType('campuses')).toBe('campus')
+
+    // Single word tables
+    expect(mkEntityType('users')).toBe('user')
+    expect(mkEntityType('items')).toBe('item')
+    expect(mkEntityType('files')).toBe('file')
+
+    // Complex snake_case patterns (no underscores in result)
+    expect(mkEntityType('user_profile_settings')).toBe('userprofilesetting')
+    expect(mkEntityType('email_addresses')).toBe('emailaddress')
+    expect(mkEntityType('contact_phone_numbers')).toBe('contactphonenumber')
+  }),
+)
+
+// Test round-trip consistency between mkEntityName and mkTableName
+effect('mkEntityName and mkTableName maintain round-trip consistency', () =>
+  Effect.gen(function* () {
+    const testEntities = [
+      'Person',
+      'Group',
+      'Address',
+      'PhoneNumber',
+      'EmailAddress',
+      'User',
+      'Item',
+      'File',
+    ]
+
+    for (const entity of testEntities) {
+      const tableName = mkTableName(entity)
+      const backToEntity = mkEntityName(tableName)
+      expect(backToEntity).toBe(entity)
+    }
+  }),
+)
+
+// Test that all transformation utilities work together
+effect('transformation utilities work together correctly', () =>
+  Effect.gen(function* () {
+    const testCases = [
+      { entity: 'Person', table: 'people', type: 'person' },
+      { entity: 'PhoneNumber', table: 'phone_numbers', type: 'phonenumber' },
+      { entity: 'Address', table: 'addresses', type: 'address' },
+      { entity: 'UserGroup', table: 'user_groups', type: 'usergroup' },
+      { entity: 'Child', table: 'children', type: 'child' },
+      { entity: 'Campus', table: 'campuses', type: 'campus' },
+    ]
+
+    for (const { table, entity, type } of testCases) {
+      expect(mkEntityName(table)).toBe(entity)
+      expect(mkTableName(entity)).toBe(table)
+      expect(mkEntityType(table)).toBe(type)
+    }
   }),
 )

@@ -11,6 +11,7 @@ import {
   makeMockPcoHttpClient,
   makeMockPcoHttpClientWithErrors,
 } from '@openfaith/pco/api/pcoApiMock'
+import { mkEntityName } from '@openfaith/shared/string'
 import {
   type CrudOperation,
   type EntityClient,
@@ -20,7 +21,6 @@ import {
   findEntityManifestE,
   getExternalLinksE,
   mkCrudEffectE,
-  mkEntityName,
   processCrudOperationE,
   syncDataE,
   syncToExternalSystemsE,

@@ -1,4 +1,4 @@
-import { Array, pipe, Record } from 'effect'
+import { Array, flow, pipe, Record, String } from 'effect'
 
 const irregularPlurals: Record<string, string> = {
   address: 'addresses',
@@ -127,3 +127,18 @@ function preserveCase(original: string, transformed: string): string {
   // Otherwise, return lowercase
   return transformed.toLowerCase()
 }
+
+/**
+ * Converts table name to entity name (people -> Person, addresses -> Address)
+ */
+export const mkEntityName = flow(String.snakeToPascal, singularize)
+
+/**
+ * Converts entity name to table name (Person -> people, Address -> addresses)
+ */
+export const mkTableName = flow(String.pascalToSnake, pluralize)
+
+/**
+ * Converts table name to entity type for IDs (people -> person, phone_numbers -> phonenumber)
+ */
+export const mkEntityType = flow(String.snakeToPascal, String.toLowerCase, singularize)

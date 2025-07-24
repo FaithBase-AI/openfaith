@@ -1,6 +1,7 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
 import { getEntityId, getIdType } from '@openfaith/shared/getIds'
+import { mkEntityType } from '@openfaith/shared/string'
 import { Effect } from 'effect'
 
 // Test getIdType function
@@ -175,23 +176,9 @@ effect('getIdType should extract type from getEntityId result', () =>
       const extractedType = getIdType(generatedId)
 
       // The extracted type should match the expected singularized, transformed entity name
-      const expectedType = entity
-        .split('_')
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join('')
-        .toLowerCase()
+      const expectedType = mkEntityType(entity)
 
-      // Apply singularization logic for common cases
-      let singularizedType = expectedType
-      if (expectedType === 'people') singularizedType = 'person'
-      else if (expectedType === 'children') singularizedType = 'child'
-      else if (expectedType.endsWith('ies')) singularizedType = expectedType.slice(0, -3) + 'y'
-      else if (expectedType.endsWith('ves')) singularizedType = expectedType.slice(0, -3) + 'f'
-      else if (expectedType.endsWith('es')) singularizedType = expectedType.slice(0, -2)
-      else if (expectedType.endsWith('s') && !expectedType.endsWith('ss'))
-        singularizedType = expectedType.slice(0, -1)
-
-      expect(extractedType).toBe(singularizedType)
+      expect(extractedType).toBe(expectedType)
     }
   }),
 )

@@ -2,39 +2,43 @@ import { ExternalLinkManager } from '@openfaith/adapter-core/layers/externalLink
 import type { CRUDMutation, CRUDOp } from '@openfaith/domain'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
-import { singularize } from '@openfaith/shared/string'
+import { mkEntityName, mkEntityType } from '@openfaith/shared/string'
 import { ofLookup } from '@openfaith/workers/helpers/ofLookup'
 import { Effect, pipe, Record, Schema } from 'effect'
 
 // Define tagged errors for external sync operations
-export class EntityTransformError extends Schema.TaggedError<EntityTransformError>(
+export class EntityTransformError extends Schema.TaggedError<EntityTransformError>()(
   'EntityTransformError',
-)('EntityTransformError', {
-  cause: Schema.Unknown,
-  entityName: Schema.String,
-}) {}
+  {
+    cause: Schema.Unknown,
+    entityName: Schema.String,
+  },
+) {}
 
-export class UnsupportedOperationError extends Schema.TaggedError<UnsupportedOperationError>(
+export class UnsupportedOperationError extends Schema.TaggedError<UnsupportedOperationError>()(
   'UnsupportedOperationError',
-)('UnsupportedOperationError', {
-  entityName: Schema.String,
-  operation: Schema.String,
-}) {}
+  {
+    entityName: Schema.String,
+    operation: Schema.String,
+  },
+) {}
 
-export class EntityClientNotFoundError extends Schema.TaggedError<EntityClientNotFoundError>(
+export class EntityClientNotFoundError extends Schema.TaggedError<EntityClientNotFoundError>()(
   'EntityClientNotFoundError',
-)('EntityClientNotFoundError', {
-  entityName: Schema.String,
-}) {}
+  {
+    entityName: Schema.String,
+  },
+) {}
 
-export class UnsupportedAdapterError extends Schema.TaggedError<UnsupportedAdapterError>(
+export class UnsupportedAdapterError extends Schema.TaggedError<UnsupportedAdapterError>()(
   'UnsupportedAdapterError',
-)('UnsupportedAdapterError', {
-  adapter: Schema.String,
-  entityName: Schema.String,
-}) {}
+  {
+    adapter: Schema.String,
+    entityName: Schema.String,
+  },
+) {}
 
-export class ExternalSyncError extends Schema.TaggedError<ExternalSyncError>('ExternalSyncError')(
+export class ExternalSyncError extends Schema.TaggedError<ExternalSyncError>()(
   'ExternalSyncError',
   {
     cause: Schema.Unknown,
@@ -59,18 +63,6 @@ export type EntityClient = {
     urlParams: { id: string }
   }) => Effect.Effect<unknown, unknown, any>
   readonly delete?: (params: { urlParams: { id: string } }) => Effect.Effect<unknown, unknown, any>
-}
-
-/**
- * Converts table name to entity name (people -> Person, addresses -> Address)
- */
-export const mkEntityName = (tableName: string): string => {
-  // Convert snake_case to PascalCase, then singularize
-  const pascalName = tableName
-    .replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
-    .replace(/^[a-z]/, (letter) => letter.toUpperCase())
-
-  return singularize(pascalName)
 }
 
 /**
@@ -112,7 +104,7 @@ export const getExternalLinksE = Effect.fn('getExternalLinksE')(function* (
   entityId: string,
 ) {
   const externalLinkManager = yield* ExternalLinkManager
-  const entityType = tableName.slice(0, -1) // people -> person
+  const entityType = mkEntityType(tableName)
 
   return yield* externalLinkManager.getExternalLinksForEntity(entityType, entityId)
 })
@@ -226,7 +218,7 @@ export const syncToPcoE = Effect.fn('syncToPcoE')(function* (
     Effect.tapError((error) =>
       Effect.logError('PCO sync failed', {
         entityName,
-        error: error instanceof Error ? error.message : `${error}`,
+        error,
         externalId: link.externalId,
         operation: op.op,
       }),
@@ -301,7 +293,7 @@ export const processCrudOperationE = Effect.fn('processCrudOperationE')(function
   if (externalLinks.length === 0) {
     yield* Effect.log('No external links found for entity - skipping', {
       entityId,
-      entityType: op.tableName.slice(0, -1),
+      entityType: mkEntityType(op.tableName),
     })
     return
   }

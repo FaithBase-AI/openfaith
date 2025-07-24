@@ -2,9 +2,9 @@ import { type HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
 import { toHttpApiEndpoint } from '@openfaith/adapter-core/api/endpointAdapter'
 import type * as Endpoint from '@openfaith/adapter-core/api/endpointTypes'
 import { mkPcoCollectionSchema, mkPcoSingleSchema } from '@openfaith/pco/api/pcoResponseSchemas'
-import { pluralize, singularize } from '@openfaith/shared'
+import { mkEntityName, mkTableName } from '@openfaith/shared/string'
 import type { CaseTransform } from '@openfaith/shared/types'
-import { Array, Option, pipe, Record, Schema, String } from 'effect'
+import { Array, Option, pipe, Record, Schema } from 'effect'
 import type { NonEmptyReadonlyArray } from 'effect/Array'
 
 /**
@@ -357,7 +357,7 @@ export const mkPcoEntityManifest = <
 
       return [
         // @ts-expect-error - It doesn't know that it's {}
-        pipe(apiSchema.fields.type.ast.type.literal as string, String.pascalToSnake, pluralize),
+        mkTableName(apiSchema.fields.type.ast.type.literal as string),
         apiSchema,
       ] as const
     }),
@@ -389,7 +389,7 @@ export const mkPcoEntityManifest = <
                         Option.getOrElse(() =>
                           Schema.Struct({
                             attributes: Schema.Any,
-                            type: Schema.Literal(pipe(include, String.snakeToPascal, singularize)),
+                            type: Schema.Literal(mkEntityName(include)),
                           }),
                         ),
                       ),
