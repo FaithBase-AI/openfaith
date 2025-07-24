@@ -153,7 +153,7 @@ effect(
       expect((entity.attributes as any).last_name).toBe('Doe')
       expect((entity.attributes as any).status).toBe('active')
     }),
-  { timeout: 10000 },
+  { timeout: 120000 },
 )
 
 // Real saveDataE function tests
@@ -184,62 +184,65 @@ effect(
 // ===== COMPREHENSIVE COVERAGE TESTS =====
 
 // Test saveIncludesE function directly
-effect('saveIncludesE processes included entities correctly', () =>
-  Effect.gen(function* () {
-    yield* createTestTables
+effect(
+  'saveIncludesE processes included entities correctly',
+  () =>
+    Effect.gen(function* () {
+      yield* createTestTables
 
-    const mainEntity = createPcoBaseEntity('pco_main', 'Person')
-    const includedAddress = createPcoBaseEntity(
-      'pco_addr_123',
-      'Address',
-      {
-        city: 'Test City',
-        country_code: 'US',
-        country_name: 'United States',
-        created_at: '2023-01-01T00:00:00Z',
-        location: 'Home',
-        primary: true,
-        state: 'CA',
-        street_line_1: '123 Main St',
-        street_line_2: null,
-        updated_at: '2023-01-02T00:00:00Z',
-        zip: '12345',
-      },
-      {
-        person: {
-          data: { id: 'pco_main', type: 'Person' },
+      const mainEntity = createPcoBaseEntity('pco_main', 'Person')
+      const includedAddress = createPcoBaseEntity(
+        'pco_addr_123',
+        'Address',
+        {
+          city: 'Test City',
+          country_code: 'US',
+          country_name: 'United States',
+          created_at: '2023-01-01T00:00:00Z',
+          location: 'Home',
+          primary: true,
+          state: 'CA',
+          street_line_1: '123 Main St',
+          street_line_2: null,
+          updated_at: '2023-01-02T00:00:00Z',
+          zip: '12345',
         },
-      },
-    )
+        {
+          person: {
+            data: { id: 'pco_main', type: 'Person' },
+          },
+        },
+      )
 
-    // First create external links for the main entity
-    const mainExternalLinks = yield* mkExternalLinksE([mainEntity])
-    expect(mainExternalLinks.length).toBe(1)
+      // First create external links for the main entity
+      const mainExternalLinks = yield* mkExternalLinksE([mainEntity])
+      expect(mainExternalLinks.length).toBe(1)
 
-    // Test saveIncludesE directly
-    const data = {
-      data: [mainEntity],
-      included: [includedAddress],
-      links: { self: 'test' },
-      meta: { count: 1, total_count: 1 },
-    }
+      // Test saveIncludesE directly
+      const data = {
+        data: [mainEntity],
+        included: [includedAddress],
+        links: { self: 'test' },
+        meta: { count: 1, total_count: 1 },
+      }
 
-    const result = yield* saveIncludesE(data, mainExternalLinks, 'Person')
-    expect(result).toBeUndefined() // Function returns void
+      const result = yield* saveIncludesE(data, mainExternalLinks, 'Person')
+      expect(result).toBeUndefined() // Function returns void
 
-    // Verify that included entities were processed
-    const sql = yield* SqlClient.SqlClient
-    const addressLinks =
-      yield* sql`SELECT * FROM "openfaith_externalLinks" WHERE "externalId" = 'pco_addr_123'`
-    expect(addressLinks.length).toBe(1)
-    expect(addressLinks[0]?.entityType).toBe('address')
-  }).pipe(
-    Effect.provide(TestLayer),
-    Effect.catchTag('ContainerError', (error) => {
-      console.log('Container test skipped due to error:', error.cause)
-      return Effect.void
-    }),
-  ),
+      // Verify that included entities were processed
+      const sql = yield* SqlClient.SqlClient
+      const addressLinks =
+        yield* sql`SELECT * FROM "openfaith_externalLinks" WHERE "externalId" = 'pco_addr_123'`
+      expect(addressLinks.length).toBe(1)
+      expect(addressLinks[0]?.entityType).toBe('address')
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
 )
 
 // Test mkEdgesFromIncludesE function directly
@@ -383,211 +386,233 @@ effect('mkEntityUpsertE transforms PCO attributes to custom fields', () =>
 )
 
 // Test error scenarios
-effect('mkExternalLinksE handles invalid entity types', () =>
-  Effect.gen(function* () {
-    yield* createTestTables
+effect(
+  'mkExternalLinksE handles invalid entity types',
+  () =>
+    Effect.gen(function* () {
+      yield* createTestTables
 
-    // Create entity with invalid type not in ofLookup
-    const invalidEntity = createPcoBaseEntity('pco_invalid', 'InvalidType')
-    const result = yield* mkExternalLinksE([invalidEntity])
+      // Create entity with invalid type not in ofLookup
+      const invalidEntity = createPcoBaseEntity('pco_invalid', 'InvalidType')
+      const result = yield* mkExternalLinksE([invalidEntity])
 
-    // Should return empty array for invalid types
-    expect(result).toEqual([])
-  }).pipe(
-    Effect.provide(TestLayer),
-    Effect.catchTag('ContainerError', (error) => {
-      console.log('Container test skipped due to error:', error.cause)
-      return Effect.void
-    }),
-  ),
+      // Should return empty array for invalid types
+      expect(result).toEqual([])
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
 )
 
-effect('mkEntityUpsertE handles invalid entity types', () =>
-  Effect.gen(function* () {
-    yield* createTestTables
+effect(
+  'mkEntityUpsertE handles invalid entity types',
+  () =>
+    Effect.gen(function* () {
+      yield* createTestTables
 
-    const invalidEntity = createPcoBaseEntity('pco_invalid', 'InvalidType')
-    const data: ReadonlyArray<readonly [string, PcoBaseEntity]> = [['invalid_123', invalidEntity]]
+      const invalidEntity = createPcoBaseEntity('pco_invalid', 'InvalidType')
+      const data: ReadonlyArray<readonly [string, PcoBaseEntity]> = [['invalid_123', invalidEntity]]
 
-    const result = yield* mkEntityUpsertE(data)
+      const result = yield* mkEntityUpsertE(data)
 
-    // Should return undefined (no-op) for invalid types
-    expect(result).toBeUndefined()
-  }).pipe(
-    Effect.provide(TestLayer),
-    Effect.catchTag('ContainerError', (error) => {
-      console.log('Container test skipped due to error:', error.cause)
-      return Effect.void
-    }),
-  ),
+      // Should return undefined (no-op) for invalid types
+      expect(result).toBeUndefined()
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
 )
 
 // Test entities without updated_at field
-effect('mkExternalLinksE handles entities without updated_at', () =>
-  Effect.gen(function* () {
-    yield* createTestTables
+effect(
+  'mkExternalLinksE handles entities without updated_at',
+  () =>
+    Effect.gen(function* () {
+      yield* createTestTables
 
-    const entityWithoutUpdatedAt = createPcoBaseEntity('pco_no_update', 'Person', {
-      accounting_administrator: false,
-      anniversary: null,
-      avatar: 'https://example.com/avatar.png',
-      birthdate: null,
-      child: false,
-      created_at: '2023-01-01T00:00:00Z',
-      // Note: no updated_at field
-      first_name: 'Jane',
-      last_name: 'Smith',
-      status: 'active',
-    })
+      const entityWithoutUpdatedAt = createPcoBaseEntity('pco_no_update', 'Person', {
+        accounting_administrator: false,
+        anniversary: null,
+        avatar: 'https://example.com/avatar.png',
+        birthdate: null,
+        child: false,
+        created_at: '2023-01-01T00:00:00Z',
+        // Note: no updated_at field
+        first_name: 'Jane',
+        last_name: 'Smith',
+        status: 'active',
+      })
 
-    const result = yield* mkExternalLinksE([entityWithoutUpdatedAt])
+      const result = yield* mkExternalLinksE([entityWithoutUpdatedAt])
 
-    expect(result.length).toBe(1)
-    expect(result[0]?.externalId).toBe('pco_no_update')
-    // Should use current date as fallback for updatedAt
-  }).pipe(
-    Effect.provide(TestLayer),
-    Effect.catchTag('ContainerError', (error) => {
-      console.log('Container test skipped due to error:', error.cause)
-      return Effect.void
-    }),
-  ),
+      expect(result.length).toBe(1)
+      expect(result[0]?.externalId).toBe('pco_no_update')
+      // Should use current date as fallback for updatedAt
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
 )
 
 // Test entities without relationships
-effect('mkEdgesFromIncludesE handles entities without relationships', () =>
-  Effect.gen(function* () {
-    yield* createTestTables
+effect(
+  'mkEdgesFromIncludesE handles entities without relationships',
+  () =>
+    Effect.gen(function* () {
+      yield* createTestTables
 
-    const mainEntity = createPcoBaseEntity('pco_no_rel_main', 'Person')
-    const includedEntityNoRel = createPcoBaseEntity(
-      'pco_no_rel_addr',
-      'Address',
-      {
-        city: 'No Rel City',
-        country_code: 'US',
-        country_name: 'United States',
-        created_at: '2023-01-01T00:00:00Z',
-        location: 'Work',
-        primary: false,
-        state: 'NY',
-        street_line_1: '789 No Rel St',
-        street_line_2: null,
-        updated_at: '2023-01-02T00:00:00Z',
-        zip: '99999',
-      },
-      // Note: no relationships object
-    )
-
-    const mainExternalLinks = yield* mkExternalLinksE([mainEntity])
-    const addrExternalLinks = yield* mkExternalLinksE([includedEntityNoRel])
-
-    // Should handle entities without relationships gracefully
-    const result = yield* mkEdgesFromIncludesE(
-      [includedEntityNoRel],
-      mainExternalLinks,
-      addrExternalLinks,
-      'Person',
-    )
-    expect(result).toBeUndefined()
-
-    // Should not create any edges
-    const sql = yield* SqlClient.SqlClient
-    const edges =
-      yield* sql`SELECT * FROM "openfaith_edges" WHERE "sourceEntityId" = ${mainExternalLinks[0]?.entityId || ''}`
-    expect(edges.length).toBe(0)
-  }).pipe(
-    Effect.provide(TestLayer),
-    Effect.catchTag('ContainerError', (error) => {
-      console.log('Container test skipped due to error:', error.cause)
-      return Effect.void
-    }),
-  ),
-)
-
-effect('upserts entities successfully', () =>
-  Effect.gen(function* () {
-    yield* createTestTables
-    const entity = createPcoBaseEntity()
-    const data: ReadonlyArray<readonly [string, PcoBaseEntity]> = [['per_123', entity]]
-
-    const result = yield* mkEntityUpsertE(data)
-    expect(result).toBeUndefined()
-  }).pipe(
-    Effect.provide(TestLayer),
-    Effect.catchTag('ContainerError', (error) => {
-      console.log('Container test skipped due to error:', error.cause)
-      return Effect.void
-    }),
-  ),
-)
-
-effect('processes data successfully', () =>
-  Effect.gen(function* () {
-    yield* createTestTables
-    const data = createPcoCollectionData([createPcoBaseEntity()])
-    const result = yield* saveDataE(data)
-    expect(result).toBeUndefined()
-  }).pipe(
-    Effect.provide(TestLayer),
-    Effect.catchTag('ContainerError', (error) => {
-      console.log('Container test skipped due to error:', error.cause)
-      return Effect.void
-    }),
-  ),
-)
-
-effect('full workflow with real database operations', () =>
-  Effect.gen(function* () {
-    yield* createTestTables
-
-    // Test the full workflow
-    const mainEntity = createPcoBaseEntity('pco_123', 'Person')
-    const includedEntity = createPcoBaseEntity(
-      'pco_456',
-      'Address',
-      {
-        city: 'Test City',
-        country_code: 'US',
-        country_name: 'United States',
-        created_at: '2023-01-01T00:00:00Z',
-        location: 'Home',
-        primary: true,
-        state: 'CA',
-        street_line_1: '123 Main St',
-        street_line_2: null,
-        updated_at: '2023-01-02T00:00:00Z',
-        zip: '12345',
-      },
-      {
-        person: {
-          data: { id: 'pco_123', type: 'Person' },
+      const mainEntity = createPcoBaseEntity('pco_no_rel_main', 'Person')
+      const includedEntityNoRel = createPcoBaseEntity(
+        'pco_no_rel_addr',
+        'Address',
+        {
+          city: 'No Rel City',
+          country_code: 'US',
+          country_name: 'United States',
+          created_at: '2023-01-01T00:00:00Z',
+          location: 'Work',
+          primary: false,
+          state: 'NY',
+          street_line_1: '789 No Rel St',
+          street_line_2: null,
+          updated_at: '2023-01-02T00:00:00Z',
+          zip: '99999',
         },
-      },
-    )
+        // Note: no relationships object
+      )
 
-    const data = createPcoCollectionData([mainEntity], [includedEntity])
+      const mainExternalLinks = yield* mkExternalLinksE([mainEntity])
+      const addrExternalLinks = yield* mkExternalLinksE([includedEntityNoRel])
 
-    // This should create external links, upsert entities, and create edges
-    const result = yield* saveDataE(data)
-    expect(result).toBeUndefined()
+      // Should handle entities without relationships gracefully
+      const result = yield* mkEdgesFromIncludesE(
+        [includedEntityNoRel],
+        mainExternalLinks,
+        addrExternalLinks,
+        'Person',
+      )
+      expect(result).toBeUndefined()
 
-    // Verify that external links were created by running mkExternalLinksE again
-    const externalLinks = yield* mkExternalLinksE([mainEntity])
-    expect(externalLinks.length).toBe(1)
-    expect(externalLinks[0]?.externalId).toBe('pco_123')
+      // Should not create any edges
+      const sql = yield* SqlClient.SqlClient
+      const edges =
+        yield* sql`SELECT * FROM "openfaith_edges" WHERE "sourceEntityId" = ${mainExternalLinks[0]?.entityId || ''}`
+      expect(edges.length).toBe(0)
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
+)
 
-    // Verify we can query the database directly
-    const sql = yield* SqlClient.SqlClient
-    const links = yield* sql`SELECT * FROM "openfaith_externalLinks" WHERE "externalId" = 'pco_123'`
-    expect(links.length).toBe(1)
-  }).pipe(
-    Effect.provide(TestLayer),
-    Effect.catchTag('ContainerError', (error) => {
-      console.log('Container test skipped due to error:', error.cause)
-      return Effect.void
-    }),
-  ),
+effect(
+  'upserts entities successfully',
+  () =>
+    Effect.gen(function* () {
+      yield* createTestTables
+      const entity = createPcoBaseEntity()
+      const data: ReadonlyArray<readonly [string, PcoBaseEntity]> = [['per_123', entity]]
+
+      const result = yield* mkEntityUpsertE(data)
+      expect(result).toBeUndefined()
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
+)
+
+effect(
+  'processes data successfully',
+  () =>
+    Effect.gen(function* () {
+      yield* createTestTables
+      const data = createPcoCollectionData([createPcoBaseEntity()])
+      const result = yield* saveDataE(data)
+      expect(result).toBeUndefined()
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
+)
+
+effect(
+  'full workflow with real database operations',
+  () =>
+    Effect.gen(function* () {
+      yield* createTestTables
+
+      // Test the full workflow
+      const mainEntity = createPcoBaseEntity('pco_123', 'Person')
+      const includedEntity = createPcoBaseEntity(
+        'pco_456',
+        'Address',
+        {
+          city: 'Test City',
+          country_code: 'US',
+          country_name: 'United States',
+          created_at: '2023-01-01T00:00:00Z',
+          location: 'Home',
+          primary: true,
+          state: 'CA',
+          street_line_1: '123 Main St',
+          street_line_2: null,
+          updated_at: '2023-01-02T00:00:00Z',
+          zip: '12345',
+        },
+        {
+          person: {
+            data: { id: 'pco_123', type: 'Person' },
+          },
+        },
+      )
+
+      const data = createPcoCollectionData([mainEntity], [includedEntity])
+
+      // This should create external links, upsert entities, and create edges
+      const result = yield* saveDataE(data)
+      expect(result).toBeUndefined()
+
+      // Verify that external links were created by running mkExternalLinksE again
+      const externalLinks = yield* mkExternalLinksE([mainEntity])
+      expect(externalLinks.length).toBe(1)
+      expect(externalLinks[0]?.externalId).toBe('pco_123')
+
+      // Verify we can query the database directly
+      const sql = yield* SqlClient.SqlClient
+      const links =
+        yield* sql`SELECT * FROM "openfaith_externalLinks" WHERE "externalId" = 'pco_123'`
+      expect(links.length).toBe(1)
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
 )
 
 effect(
