@@ -23,12 +23,16 @@ const createMockAdapterOperations = (tag: string) =>
     getEntityManifest: () => ({
       person: {
         endpoint: '/api/person',
+        endpoints: { list: {} },
         entity: 'person',
+        skipSync: false,
         transformer: undefined,
       },
     }),
 
     listEntityData: (entityName) => Stream.make({ id: '1', name: `mock-${entityName}` }),
+
+    processEntityData: () => Effect.void,
 
     syncEntityData: (entityName, operations) =>
       Effect.succeed(

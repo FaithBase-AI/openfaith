@@ -20,7 +20,12 @@ export const AdapterEntityManifest = Schema.Record({
   key: Schema.String,
   value: Schema.Struct({
     endpoint: Schema.String,
+    endpoints: Schema.Record({
+      key: Schema.String,
+      value: Schema.Unknown,
+    }),
     entity: Schema.String,
+    skipSync: Schema.Boolean,
     transformer: Schema.optional(Schema.Unknown),
   }),
 })
@@ -57,6 +62,11 @@ export class AdapterOperations extends Context.Tag('@openfaith/adapter-core/Adap
       entityName: string,
       params?: Record<string, unknown>,
     ) => Stream.Stream<unknown, AdapterSyncError | AdapterConnectionError>
+
+    readonly processEntityData: <R, E>(
+      entityName: string,
+      processor: (data: unknown) => Effect.Effect<void, E, R>,
+    ) => Effect.Effect<void, AdapterSyncError | AdapterConnectionError | E, R>
 
     readonly getEntityManifest: () => AdapterEntityManifest
 

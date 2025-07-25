@@ -1,11 +1,9 @@
 import { Activity, Workflow } from '@effect/workflow'
-import { createPaginatedStream, TokenKey } from '@openfaith/adapter-core/server'
-import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
-import { PcoHttpClient } from '@openfaith/pco/server'
-import { OfSkipEntity } from '@openfaith/schema'
-import { PcoApiLayer } from '@openfaith/server'
+import { AdapterOperations } from '@openfaith/adapter-core/layers/adapterOperations'
+import { TokenKey } from '@openfaith/adapter-core/server'
+import { PcoAdapterOperationsLayer } from '@openfaith/pco/pcoAdapterLayer'
 import { saveDataE } from '@openfaith/workers/helpers/saveDataE'
-import { Array, Effect, Option, pipe, Record, Schema, SchemaAST, Stream } from 'effect'
+import { Effect, Schema } from 'effect'
 
 // Define the PCO sync error
 class PcoSyncEntityError extends Schema.TaggedError<PcoSyncEntityError>('PcoSyncEntityError')(
@@ -17,13 +15,7 @@ class PcoSyncEntityError extends Schema.TaggedError<PcoSyncEntityError>('PcoSync
 
 // Define the workflow payload schema
 const PcoSyncEntityPayload = Schema.Struct({
-  entity: Schema.Literal(
-    ...pipe(
-      pcoEntityManifest,
-      Record.values,
-      Array.map((x) => x.entity),
-    ),
-  ),
+  entity: Schema.String,
   tokenKey: Schema.String,
 })
 
@@ -56,64 +48,30 @@ export const PcoSyncEntityWorkflowLayer = PcoSyncEntityWorkflow.toLayer(
           tokenKey: payload.tokenKey,
         })
 
-        // Core PCO sync logic - stream through all people with addresses
-        const pcoClient = yield* PcoHttpClient
+        // Core PCO sync logic - process all entity data using processEntityData with saveDataE
+        const adapterOps = yield* AdapterOperations.pipe(
+          Effect.provide(PcoAdapterOperationsLayer),
+          Effect.provideService(TokenKey, payload.tokenKey),
+        )
 
-        const entityHttp = pcoClient[payload.entity]
-
-        if ('list' in entityHttp) {
-          const entityOpt = pipe(
-            pcoEntityManifest,
-            Record.findFirst((x) => x.entity === payload.entity),
-            Option.filter(([, x]) => {
-              return !SchemaAST.getAnnotation<boolean>(OfSkipEntity)(x.apiSchema.ast).pipe(
-                Option.getOrElse(() => false),
-              )
-            }),
+        yield* adapterOps
+          .processEntityData(payload.entity, (data) =>
+            saveDataE(data as any).pipe(
+              Effect.mapError((error) => {
+                console.log(error)
+                return new PcoSyncEntityError({ message: String(error) })
+              }),
+            ),
           )
-
-          if (entityOpt._tag === 'None') {
-            yield* Effect.annotateLogs(
-              Effect.log(`🔄 Skipping PCO sync for entity: ${payload.entity}`),
-              {
-                attempt,
-                executionId,
-                tokenKey: payload.tokenKey,
-              },
-            )
-            return
-          }
-
-          const urlParams = pipe(
-            entityOpt,
-            Option.flatMapNullable(([, x]) => x.endpoints.list.defaultQuery),
-            Option.getOrElse(() => ({})),
-          )
-
-          yield* Stream.runForEach(
-            createPaginatedStream(entityHttp.list, {
-              // We have to cast here because the type is too complex for the compiler to infer.
-              urlParams: urlParams as any,
-            } as const),
-            (data) =>
-              saveDataE(data).pipe(
-                Effect.mapError((error) => {
-                  console.log(error)
-
-                  return new PcoSyncEntityError({ message: error.message })
-                }),
-              ),
-          ).pipe(
+          .pipe(
             Effect.mapError((error) => {
               console.log(error)
-
-              return new PcoSyncEntityError({ message: error.message })
+              return new PcoSyncEntityError({ message: String(error) })
             }),
           )
-        }
       }).pipe(
         Effect.withSpan('pco-sync-activity'),
-        Effect.provide(PcoApiLayer),
+        Effect.provide(PcoAdapterOperationsLayer),
         Effect.provideService(TokenKey, payload.tokenKey),
       ),
       name: 'SyncPcoData',
