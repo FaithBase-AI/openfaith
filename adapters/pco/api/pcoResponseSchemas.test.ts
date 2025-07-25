@@ -914,3 +914,245 @@ effect('PcoBuildPayloadSchemaType: works with real PCO workflow scenario', () =>
     expect(patchPayload.data.id).toBe('456')
   }),
 )
+
+// mkPcoPayloadSchema tests with special parameter
+effect('mkPcoPayloadSchema: handles special fields for POST payload', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: false,
+      special: ['custom_field', 'external_id'],
+    })
+
+    const payloadWithSpecial = {
+      data: {
+        attributes: {
+          custom_field: 'special value',
+          external_id: 'ext_123',
+          first_name: 'John',
+          last_name: 'Doe',
+        },
+        id: '123',
+        type: 'Person',
+      },
+    }
+
+    const result = Schema.decodeUnknownSync(payloadSchema)(payloadWithSpecial)
+    expect(result.data.attributes.first_name).toBe('John')
+    expect(result.data.attributes.last_name).toBe('Doe')
+    expect(result.data.attributes.custom_field).toBe('special value')
+    expect(result.data.attributes.external_id).toBe('ext_123')
+  }),
+)
+
+effect('mkPcoPayloadSchema: handles special fields for PATCH payload', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name', 'email'],
+      makeOptional: true,
+      special: ['custom_field'],
+    })
+
+    const patchPayload = {
+      data: {
+        attributes: {
+          custom_field: 'updated value',
+          first_name: 'Jane',
+        },
+        id: '456',
+        type: 'Person',
+      },
+    }
+
+    const result = Schema.decodeUnknownSync(payloadSchema)(patchPayload)
+    expect(result.data.attributes.first_name).toBe('Jane')
+    expect(result.data.attributes.custom_field).toBe('updated value')
+    expect('last_name' in result.data.attributes).toBe(false)
+    expect('email' in result.data.attributes).toBe(false)
+  }),
+)
+
+effect('mkPcoPayloadSchema: special fields are optional when not provided', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: false,
+      special: ['custom_field', 'external_id'],
+    })
+
+    const payloadWithoutSpecial = {
+      data: {
+        attributes: {
+          first_name: 'John',
+          last_name: 'Doe',
+        },
+        id: '123',
+        type: 'Person',
+      },
+    }
+
+    const result = Schema.decodeUnknownSync(payloadSchema)(payloadWithoutSpecial)
+    expect(result.data.attributes.first_name).toBe('John')
+    expect(result.data.attributes.last_name).toBe('Doe')
+    expect('custom_field' in result.data.attributes).toBe(false)
+    expect('external_id' in result.data.attributes).toBe(false)
+  }),
+)
+
+effect('mkPcoPayloadSchema: special fields work with empty regular fields', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: [],
+      makeOptional: true,
+      special: ['custom_field'],
+    })
+
+    const specialOnlyPayload = {
+      data: {
+        attributes: {
+          custom_field: 'only special field',
+        },
+        id: '789',
+        type: 'Person',
+      },
+    }
+
+    const result = Schema.decodeUnknownSync(payloadSchema)(specialOnlyPayload)
+    expect(result.data.attributes.custom_field).toBe('only special field')
+    expect(Object.keys(result.data.attributes)).toEqual(['custom_field'])
+  }),
+)
+
+effect('mkPcoPayloadSchema: validates special fields are strings', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name'],
+      makeOptional: false,
+      special: ['custom_field'],
+    })
+
+    const invalidSpecialPayload = {
+      data: {
+        attributes: {
+          custom_field: 123,
+          first_name: 'John',
+        },
+        id: '123',
+        type: 'Person',
+      },
+    }
+
+    expect(() => Schema.decodeUnknownSync(payloadSchema)(invalidSpecialPayload)).toThrow()
+  }),
+)
+
+effect('mkPcoPayloadSchema: special fields work with complex nested attributes', () =>
+  Effect.gen(function* () {
+    const ComplexSchema = Schema.Struct({
+      metadata: Schema.Struct({
+        priority: Schema.Number,
+        source: Schema.String,
+      }),
+      name: Schema.String,
+    })
+
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: ComplexSchema,
+      entityType: 'ComplexEntity',
+      fields: ['name', 'metadata'],
+      makeOptional: false,
+      special: ['external_ref', 'sync_token'],
+    })
+
+    const complexPayload = {
+      data: {
+        attributes: {
+          external_ref: 'ref_456',
+          metadata: {
+            priority: 1,
+            source: 'api',
+          },
+          name: 'Test Entity',
+          sync_token: 'token_789',
+        },
+        id: '999',
+        type: 'ComplexEntity',
+      },
+    }
+
+    const result = Schema.decodeUnknownSync(payloadSchema)(complexPayload)
+    expect(result.data.attributes.name).toBe('Test Entity')
+    expect((result.data.attributes.metadata as any).priority).toBe(1)
+    expect((result.data.attributes.metadata as any).source).toBe('api')
+    expect(result.data.attributes.external_ref).toBe('ref_456')
+    expect(result.data.attributes.sync_token).toBe('token_789')
+  }),
+)
+
+effect('mkPcoPayloadSchema: special fields work with makeOptional=true', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name', 'email'],
+      makeOptional: true,
+      special: ['custom_field', 'external_id'],
+    })
+
+    const minimalPayload = {
+      data: {
+        attributes: {
+          external_id: 'ext_999',
+        },
+        id: '123',
+        type: 'Person',
+      },
+    }
+
+    const result = Schema.decodeUnknownSync(payloadSchema)(minimalPayload)
+    expect(result.data.attributes.external_id).toBe('ext_999')
+    expect('first_name' in result.data.attributes).toBe(false)
+    expect('last_name' in result.data.attributes).toBe(false)
+    expect('email' in result.data.attributes).toBe(false)
+    expect('custom_field' in result.data.attributes).toBe(false)
+  }),
+)
+
+effect('mkPcoPayloadSchema: encodes back to original structure with special fields', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: false,
+      special: ['custom_field'],
+    })
+
+    const originalPayload = {
+      data: {
+        attributes: {
+          custom_field: 'special value',
+          first_name: 'Jane',
+          last_name: 'Smith',
+        },
+        id: '123',
+        type: 'Person',
+      },
+    } as const
+
+    const decoded = Schema.decodeUnknownSync(payloadSchema)(originalPayload)
+    const encoded = Schema.encodeSync(payloadSchema)(decoded)
+
+    expect(encoded).toEqual(originalPayload)
+  }),
+)
