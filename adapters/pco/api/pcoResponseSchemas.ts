@@ -82,6 +82,21 @@ export function mkPcoSingleSchema(
   }) as any
 }
 
+type AttributesStruct<Fields extends Record<string, any>> = Schema.Struct<{
+  [K in keyof Pick<Fields, keyof Fields>]: Pick<Fields, keyof Fields>[K]
+}>
+
+type AttributesWithSpecialStruct<
+  Fields extends Record<string, any>,
+  Special extends ReadonlyArray<string>,
+> = Schema.Struct<
+  {
+    [K in keyof Pick<Fields, keyof Fields>]: Pick<Fields, keyof Fields>[K]
+  } & {
+    [key in Special[0]]: typeof Schema.String
+  }
+>
+
 /**
  * Creates a PCO payload schema for POST/PATCH requests.
  *
@@ -93,35 +108,9 @@ export function mkPcoSingleSchema(
 // Overload 1: No special fields - returns clean, well-typed schema
 export function mkPcoPayloadSchema<
   Fields extends Record<string, any>,
-  Special extends ReadonlyArray<string>,
+  Special extends [],
   EntityType extends string,
-  MarkOptional extends boolean,
->(
-  attributesSchema: Schema.Struct<Fields>,
-  fields: ReadonlyArray<keyof Fields>,
-  special: Special,
-  entityType: EntityType,
-  makeOptional?: MarkOptional,
-): Schema.Struct<{
-  data: Schema.Struct<{
-    attributes: MarkOptional extends true
-      ? Schema.SchemaClass<{
-          [K in keyof Pick<Fields, keyof Fields>]?: Pick<Fields, keyof Fields>[K] | undefined
-        }>
-      : Schema.Struct<{
-          [K in keyof Pick<Fields, keyof Fields>]: Pick<Fields, keyof Fields>[K]
-        }>
-    id: Schema.optional<typeof Schema.String>
-    type: Schema.Literal<[EntityType]>
-  }>
-}>
-
-// Overload 2: With special fields - returns schema with special fields as optional strings
-export function mkPcoPayloadSchema<
-  Fields extends Record<string, any>,
-  Special extends ReadonlyArray<string>,
-  EntityType extends string,
-  MarkOptional extends boolean,
+  MarkOptional extends boolean = false,
 >(
   attributesSchema: Schema.Struct<Fields>,
   fields: ReadonlyArray<keyof Fields>,
@@ -132,18 +121,38 @@ export function mkPcoPayloadSchema<
   data: Schema.Struct<{
     attributes: MarkOptional extends true
       ? Schema.SchemaClass<
-          {
-            [K in keyof Pick<Fields, keyof Fields>]?: Pick<Fields, keyof Fields>[K] | undefined
-          } & {
-            [key in Special[0]]?: Schema.optional<typeof Schema.String> | undefined
-          }
+          Schema.Schema.Type<AttributesStruct<Fields>>,
+          Schema.Schema.Encoded<AttributesStruct<Fields>>,
+          Schema.Schema.Context<AttributesStruct<Fields>>
         >
-      : Schema.Struct<
-          { [K in keyof Pick<Fields, keyof Fields>]: Pick<Fields, keyof Fields>[K] } & {
-            [key in Special[0]]: Schema.optional<typeof Schema.String>
-          }
+      : AttributesStruct<Fields>
+    id: typeof Schema.String
+    type: Schema.Literal<[EntityType]>
+  }>
+}>
+
+// Overload 2: With special fields - returns schema with special fields as optional strings
+export function mkPcoPayloadSchema<
+  Fields extends Record<string, any>,
+  Special extends ReadonlyArray<string>,
+  EntityType extends string,
+  MarkOptional extends boolean = false,
+>(
+  attributesSchema: Schema.Struct<Fields>,
+  fields: ReadonlyArray<keyof Fields>,
+  special: Special,
+  entityType: EntityType,
+  makeOptional?: MarkOptional,
+): Schema.Struct<{
+  data: Schema.Struct<{
+    attributes: MarkOptional extends true
+      ? Schema.SchemaClass<
+          Schema.Schema.Type<AttributesWithSpecialStruct<Fields, Special>>,
+          Schema.Schema.Encoded<AttributesWithSpecialStruct<Fields, Special>>,
+          Schema.Schema.Context<AttributesWithSpecialStruct<Fields, Special>>
         >
-    id: Schema.optional<typeof Schema.String>
+      : AttributesWithSpecialStruct<Fields, Special>
+    id: typeof Schema.String
     type: Schema.Literal<[EntityType]>
   }>
 }>
@@ -153,7 +162,7 @@ export function mkPcoPayloadSchema<
   Fields extends Record<string, any>,
   Special extends ReadonlyArray<string>,
   EntityType extends string,
-  MarkOptional extends boolean,
+  MarkOptional extends boolean = false,
 >(
   attributesSchema: Schema.Struct<Fields>,
   fields: ReadonlyArray<keyof Fields>,
@@ -169,7 +178,7 @@ export function mkPcoPayloadSchema<
     return Schema.Struct({
       data: Schema.Struct({
         attributes: finalAttributesSchema,
-        id: Schema.optional(Schema.String), // Optional for POST, required for PATCH
+        id: Schema.String,
         type: Schema.Literal(entityType),
       }),
     })
@@ -198,7 +207,7 @@ export function mkPcoPayloadSchema<
   return Schema.Struct({
     data: Schema.Struct({
       attributes: finalAttributesSchema,
-      id: Schema.optional(Schema.String), // Optional for POST, required for PATCH
+      id: Schema.String,
       type: Schema.Literal(entityType),
     }),
   })
