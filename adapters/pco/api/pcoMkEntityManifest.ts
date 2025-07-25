@@ -159,7 +159,8 @@ export type ConvertPcoEntityManifest<
                     _CreatableFields,
                     _CreatableSpecial,
                     _Entity,
-                    false
+                    false,
+                    'POST'
                   >
                 >
               }
@@ -186,7 +187,8 @@ export type ConvertPcoEntityManifest<
                       _UpdatableFields,
                       _UpdatableSpecial,
                       _Entity,
-                      true
+                      true,
+                      'PATCH'
                     >
                   >
                 }
@@ -264,7 +266,14 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
           'POST',
           ExtractPathParams<_TPath>,
           never,
-          PcoBuildPayloadSchemaType<_Fields, _CreatableFields, _CreatableSpecial, _Entity, false>,
+          PcoBuildPayloadSchemaType<
+            _Fields,
+            _CreatableFields,
+            _CreatableSpecial,
+            _Entity,
+            false,
+            'POST'
+          >,
           never,
           _Response['Type'],
           never,
@@ -287,7 +296,14 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
             'PATCH',
             never,
             ExtractPathParams<_TPath>,
-            PcoBuildPayloadSchemaType<_Fields, _UpdatableFields, _UpdatableSpecial, _Entity, true>,
+            PcoBuildPayloadSchemaType<
+              _Fields,
+              _UpdatableFields,
+              _UpdatableSpecial,
+              _Entity,
+              true,
+              'PATCH'
+            >,
             never,
             _Response['Type'],
             never,
@@ -481,6 +497,7 @@ export const mkPcoEntityManifest = <
                         .literal as string,
                       fields,
                       makeOptional: isOptional,
+                      method: endpoint.method,
                       special,
                     }),
                     response: mkPcoSingleSchema(endpoint.apiSchema),

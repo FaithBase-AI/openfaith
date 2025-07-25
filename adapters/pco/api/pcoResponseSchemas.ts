@@ -109,24 +109,27 @@ type AttributesWithSpecialStruct<
 export function mkPcoPayloadSchema<
   Fields extends Record<string, any>,
   EntityType extends string,
+  Method extends 'POST' | 'PATCH' = 'PATCH',
   MarkOptional extends boolean = false,
 >(params: {
   attributesSchema: Schema.Struct<Fields>
   fields: ReadonlyArray<keyof Fields>
   entityType: EntityType
+  method?: Method
   makeOptional?: MarkOptional
 }): Schema.Struct<{
-  data: Schema.Struct<{
-    attributes: MarkOptional extends true
-      ? Schema.SchemaClass<
-          Schema.Schema.Type<AttributesStruct<Fields>>,
-          Schema.Schema.Encoded<AttributesStruct<Fields>>,
-          Schema.Schema.Context<AttributesStruct<Fields>>
-        >
-      : AttributesStruct<Fields>
-    id: typeof Schema.String
-    type: Schema.Literal<[EntityType]>
-  }>
+  data: Schema.Struct<
+    {
+      attributes: MarkOptional extends true
+        ? Schema.SchemaClass<
+            Schema.Schema.Type<AttributesStruct<Fields>>,
+            Schema.Schema.Encoded<AttributesStruct<Fields>>,
+            Schema.Schema.Context<AttributesStruct<Fields>>
+          >
+        : AttributesStruct<Fields>
+      type: Schema.Literal<[EntityType]>
+    } & (Method extends 'POST' ? {} : { id: typeof Schema.String })
+  >
 }>
 
 // Overload 2: With special fields - returns schema with special fields as optional strings
@@ -134,25 +137,28 @@ export function mkPcoPayloadSchema<
   Fields extends Record<string, any>,
   Special extends ReadonlyArray<string>,
   EntityType extends string,
+  Method extends 'POST' | 'PATCH' = 'PATCH',
   MarkOptional extends boolean = false,
 >(params: {
   attributesSchema: Schema.Struct<Fields>
   fields: ReadonlyArray<keyof Fields>
   entityType: EntityType
   special: Special
+  method?: Method
   makeOptional?: MarkOptional
 }): Schema.Struct<{
-  data: Schema.Struct<{
-    attributes: MarkOptional extends true
-      ? Schema.SchemaClass<
-          Schema.Schema.Type<AttributesWithSpecialStruct<Fields, Special>>,
-          Schema.Schema.Encoded<AttributesWithSpecialStruct<Fields, Special>>,
-          Schema.Schema.Context<AttributesWithSpecialStruct<Fields, Special>>
-        >
-      : AttributesWithSpecialStruct<Fields, Special>
-    id: typeof Schema.String
-    type: Schema.Literal<[EntityType]>
-  }>
+  data: Schema.Struct<
+    {
+      attributes: MarkOptional extends true
+        ? Schema.SchemaClass<
+            Schema.Schema.Type<AttributesWithSpecialStruct<Fields, Special>>,
+            Schema.Schema.Encoded<AttributesWithSpecialStruct<Fields, Special>>,
+            Schema.Schema.Context<AttributesWithSpecialStruct<Fields, Special>>
+          >
+        : AttributesWithSpecialStruct<Fields, Special>
+      type: Schema.Literal<[EntityType]>
+    } & (Method extends 'POST' ? {} : { id: typeof Schema.String })
+  >
 }>
 
 // Implementation function
@@ -160,27 +166,42 @@ export function mkPcoPayloadSchema<
   Fields extends Record<string, any>,
   Special extends ReadonlyArray<string>,
   EntityType extends string,
+  Method extends 'POST' | 'PATCH' = 'PATCH',
   MarkOptional extends boolean = false,
 >(params: {
   attributesSchema: Schema.Struct<Fields>
   fields: ReadonlyArray<keyof Fields>
   entityType: EntityType
   special?: Special
+  method?: Method
   makeOptional?: MarkOptional
 }): any {
-  const { attributesSchema, fields, entityType, special = [], makeOptional } = params
+  const {
+    attributesSchema,
+    fields,
+    entityType,
+    special = [],
+    method = 'PATCH' as Method,
+    makeOptional,
+  } = params
 
   // If no special fields, use the original approach for better type compatibility
   if (special.length === 0) {
     const pickedSchema = attributesSchema.pick(...fields)
     const finalAttributesSchema = makeOptional ? Schema.partial(pickedSchema) : pickedSchema
 
+    const dataFields: any = {
+      attributes: finalAttributesSchema,
+      type: Schema.Literal(entityType),
+    }
+
+    // Only include id field for PATCH requests
+    if (method !== 'POST') {
+      dataFields.id = Schema.String
+    }
+
     return Schema.Struct({
-      data: Schema.Struct({
-        attributes: finalAttributesSchema,
-        id: Schema.String,
-        type: Schema.Literal(entityType),
-      }),
+      data: Schema.Struct(dataFields),
     })
   }
 
@@ -204,12 +225,18 @@ export function mkPcoPayloadSchema<
   const combinedSchema = Schema.Struct(combinedFields)
   const finalAttributesSchema = makeOptional ? Schema.partial(combinedSchema) : combinedSchema
 
+  const dataFields: any = {
+    attributes: finalAttributesSchema,
+    type: Schema.Literal(entityType),
+  }
+
+  // Only include id field for PATCH requests
+  if (method !== 'POST') {
+    dataFields.id = Schema.String
+  }
+
   return Schema.Struct({
-    data: Schema.Struct({
-      attributes: finalAttributesSchema,
-      id: Schema.String,
-      type: Schema.Literal(entityType),
-    }),
+    data: Schema.Struct(dataFields),
   })
 }
 /**
@@ -226,6 +253,7 @@ export type PcoBuildPayloadSchemaType<
   Special extends ReadonlyArray<string> = [],
   EntityType extends string = string,
   MarkOptional extends boolean = false,
+  Method extends 'POST' | 'PATCH' = 'PATCH',
 > = {
   data: {
     attributes: MarkOptional extends true
@@ -237,9 +265,8 @@ export type PcoBuildPayloadSchemaType<
       : Pick<Fields, Keys[number] & keyof Fields> & {
           [K in Special[number]]?: string
         }
-    id: string
     type: EntityType
-  }
+  } & (Method extends 'POST' ? {} : { id: string })
 }
 
 export type PcoBaseEntity = {

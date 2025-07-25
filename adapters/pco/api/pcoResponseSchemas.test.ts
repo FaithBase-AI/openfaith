@@ -201,13 +201,14 @@ effect('mkPcoSingleSchema: handles empty included array', () =>
 )
 
 // mkPcoPayloadSchema tests
-effect('mkPcoPayloadSchema: creates POST payload schema with required fields', () =>
+effect('mkPcoPayloadSchema: creates POST payload schema without id field', () =>
   Effect.gen(function* () {
     const payloadSchema = mkPcoPayloadSchema({
       attributesSchema: PersonAttributesSchema,
       entityType: 'Person',
       fields: ['first_name', 'last_name'],
-      makeOptional: false, // Required fields for POST
+      makeOptional: false,
+      method: 'POST', // Required fields for POST
     })
 
     const postPayload = {
@@ -216,26 +217,55 @@ effect('mkPcoPayloadSchema: creates POST payload schema with required fields', (
           first_name: 'Jane',
           last_name: 'Smith',
         },
-        id: '123',
         type: 'Person',
       },
     }
 
-    const result = Schema.decodeUnknownSync(payloadSchema)(postPayload) as any
+    const result = Schema.decodeUnknownSync(payloadSchema)(postPayload)
     expect(result.data.type).toBe('Person')
     expect(result.data.attributes.first_name).toBe('Jane')
     expect(result.data.attributes.last_name).toBe('Smith')
-    expect(result.data.id).toBe('123')
+    expect('id' in result.data).toBe(false) // POST should not have id
   }),
 )
 
-effect('mkPcoPayloadSchema: creates PATCH payload schema with optional fields', () =>
+effect('mkPcoPayloadSchema: POST schema filters out id field when present', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: false,
+      method: 'POST',
+    })
+
+    const postPayloadWithId = {
+      data: {
+        attributes: {
+          first_name: 'Jane',
+          last_name: 'Smith',
+        },
+        id: '123', // This should be filtered out, not cause an error
+        type: 'Person',
+      },
+    }
+
+    const result = Schema.decodeUnknownSync(payloadSchema)(postPayloadWithId)
+    expect(result.data.type).toBe('Person')
+    expect(result.data.attributes.first_name).toBe('Jane')
+    expect(result.data.attributes.last_name).toBe('Smith')
+    expect('id' in result.data).toBe(false) // id should be filtered out
+  }),
+)
+
+effect('mkPcoPayloadSchema: creates PATCH payload schema with id field', () =>
   Effect.gen(function* () {
     const payloadSchema = mkPcoPayloadSchema({
       attributesSchema: PersonAttributesSchema,
       entityType: 'Person',
       fields: ['first_name', 'last_name', 'email'],
-      makeOptional: true, // Optional fields for PATCH
+      makeOptional: true,
+      method: 'PATCH', // Optional fields for PATCH
     })
 
     // PATCH payload with only some fields
@@ -251,10 +281,34 @@ effect('mkPcoPayloadSchema: creates PATCH payload schema with optional fields', 
 
     const result = Schema.decodeUnknownSync(payloadSchema)(patchPayload)
     expect(result.data.type).toBe('Person')
-    expect(result.data.id).toBe('123')
+    expect(result.data.id).toBe('123') // PATCH should have id
     expect(result.data.attributes.first_name).toBe('Jane')
     expect('last_name' in result.data.attributes).toBe(false)
     expect('email' in result.data.attributes).toBe(false)
+  }),
+)
+
+effect('mkPcoPayloadSchema: PATCH schema requires id field', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: true,
+      method: 'PATCH',
+    })
+
+    const patchPayloadWithoutId = {
+      data: {
+        attributes: {
+          first_name: 'Jane',
+        },
+        type: 'Person',
+        // Missing required id field
+      },
+    }
+
+    expect(() => Schema.decodeUnknownSync(payloadSchema)(patchPayloadWithoutId)).toThrow()
   }),
 )
 
@@ -597,7 +651,7 @@ effect('mkPcoPayloadSchema: encodes back to original structure', () =>
 )
 
 // PcoBuildPayloadSchemaType tests
-effect('PcoBuildPayloadSchemaType: creates correct type for POST payload', () =>
+effect('PcoBuildPayloadSchemaType: creates correct type for POST payload without id', () =>
   Effect.gen(function* () {
     type PersonFields = {
       first_name: string
@@ -611,7 +665,8 @@ effect('PcoBuildPayloadSchemaType: creates correct type for POST payload', () =>
       ['first_name', 'last_name'],
       [],
       'Person',
-      false
+      false,
+      'POST'
     >
 
     const postPayload: PostPayloadType = {
@@ -620,51 +675,51 @@ effect('PcoBuildPayloadSchemaType: creates correct type for POST payload', () =>
           first_name: 'John',
           last_name: 'Doe',
         },
-        id: '123',
         type: 'Person',
+        // No id field for POST
       },
     }
 
     expect(postPayload.data.type).toBe('Person')
     expect(postPayload.data.attributes.first_name).toBe('John')
     expect(postPayload.data.attributes.last_name).toBe('Doe')
-    expect(postPayload.data.id).toBe('123')
+    // POST payload should not have id field
+    expect('id' in postPayload.data).toBe(false)
   }),
 )
 
-effect(
-  'PcoBuildPayloadSchemaType: creates correct type for PATCH payload with optional fields',
-  () =>
-    Effect.gen(function* () {
-      type PersonFields = {
-        first_name: string
-        last_name: string
-        email?: string
-        status: 'active' | 'inactive'
-      }
+effect('PcoBuildPayloadSchemaType: creates correct type for PATCH payload with id field', () =>
+  Effect.gen(function* () {
+    type PersonFields = {
+      first_name: string
+      last_name: string
+      email?: string
+      status: 'active' | 'inactive'
+    }
 
-      type PatchPayloadType = PcoBuildPayloadSchemaType<
-        PersonFields,
-        ['first_name', 'last_name', 'email'],
-        [],
-        'Person',
-        true
-      >
+    type PatchPayloadType = PcoBuildPayloadSchemaType<
+      PersonFields,
+      ['first_name', 'last_name', 'email'],
+      [],
+      'Person',
+      true,
+      'PATCH'
+    >
 
-      const patchPayload: PatchPayloadType = {
-        data: {
-          attributes: {
-            first_name: 'Jane',
-          },
-          id: '456',
-          type: 'Person',
+    const patchPayload: PatchPayloadType = {
+      data: {
+        attributes: {
+          first_name: 'Jane',
         },
-      }
+        id: '456',
+        type: 'Person',
+      },
+    }
 
-      expect(patchPayload.data.type).toBe('Person')
-      expect(patchPayload.data.attributes.first_name).toBe('Jane')
-      expect(patchPayload.data.id).toBe('456')
-    }),
+    expect(patchPayload.data.type).toBe('Person')
+    expect(patchPayload.data.attributes.first_name).toBe('Jane')
+    expect(patchPayload.data.id).toBe('456')
+  }),
 )
 
 effect('PcoBuildPayloadSchemaType: handles special fields correctly', () =>
@@ -1154,5 +1209,305 @@ effect('mkPcoPayloadSchema: encodes back to original structure with special fiel
     const encoded = Schema.encodeSync(payloadSchema)(decoded)
 
     expect(encoded).toEqual(originalPayload)
+  }),
+)
+
+// Method parameter tests
+effect('mkPcoPayloadSchema: POST method excludes id field by default', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: false,
+      method: 'POST',
+    })
+
+    const postPayload = {
+      data: {
+        attributes: {
+          first_name: 'John',
+          last_name: 'Doe',
+        },
+        type: 'Person',
+      },
+    }
+
+    const result = Schema.decodeUnknownSync(payloadSchema)(postPayload)
+    expect(result.data.type).toBe('Person')
+    expect(result.data.attributes.first_name).toBe('John')
+    expect('id' in result.data).toBe(false)
+  }),
+)
+
+effect('mkPcoPayloadSchema: PATCH method includes id field by default', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: true,
+      method: 'PATCH',
+    })
+
+    const patchPayload = {
+      data: {
+        attributes: {
+          first_name: 'Jane',
+        },
+        id: '123',
+        type: 'Person',
+      },
+    }
+
+    const result = Schema.decodeUnknownSync(payloadSchema)(patchPayload)
+    expect(result.data.type).toBe('Person')
+    expect(result.data.id).toBe('123')
+    expect(result.data.attributes.first_name).toBe('Jane')
+  }),
+)
+
+effect('mkPcoPayloadSchema: defaults to PATCH behavior when method not specified', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: true,
+      // method not specified, should default to PATCH
+    })
+
+    const patchPayload = {
+      data: {
+        attributes: {
+          first_name: 'Jane',
+        },
+        id: '123',
+        type: 'Person',
+      },
+    }
+
+    const result = Schema.decodeUnknownSync(payloadSchema)(patchPayload)
+    expect(result.data.id).toBe('123') // Should have id like PATCH
+  }),
+)
+
+effect('mkPcoPayloadSchema: POST with special fields excludes id', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: false,
+      method: 'POST',
+      special: ['custom_field'],
+    })
+
+    const postPayload = {
+      data: {
+        attributes: {
+          custom_field: 'special',
+          first_name: 'John',
+          last_name: 'Doe',
+        },
+        type: 'Person',
+      },
+    }
+
+    const result = Schema.decodeUnknownSync(payloadSchema)(postPayload)
+    expect(result.data.type).toBe('Person')
+    expect(result.data.attributes.custom_field).toBe('special')
+    expect('id' in result.data).toBe(false)
+  }),
+)
+
+effect('mkPcoPayloadSchema: PATCH with special fields includes id', () =>
+  Effect.gen(function* () {
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: true,
+      method: 'PATCH',
+      special: ['custom_field'],
+    })
+
+    const patchPayload = {
+      data: {
+        attributes: {
+          custom_field: 'updated',
+          first_name: 'Jane',
+        },
+        id: '456',
+        type: 'Person',
+      },
+    }
+
+    const result = Schema.decodeUnknownSync(payloadSchema)(patchPayload)
+    expect(result.data.type).toBe('Person')
+    expect(result.data.id).toBe('456')
+    expect(result.data.attributes.custom_field).toBe('updated')
+  }),
+)
+
+// PcoBuildPayloadSchemaType method parameter tests
+effect('PcoBuildPayloadSchemaType: POST method excludes id field in type', () =>
+  Effect.gen(function* () {
+    type PersonFields = {
+      first_name: string
+      last_name: string
+    }
+
+    type PostPayloadType = PcoBuildPayloadSchemaType<
+      PersonFields,
+      ['first_name', 'last_name'],
+      [],
+      'Person',
+      false,
+      'POST'
+    >
+
+    const postPayload: PostPayloadType = {
+      data: {
+        attributes: {
+          first_name: 'John',
+          last_name: 'Doe',
+        },
+        type: 'Person',
+        // id field should not be available for POST
+      },
+    }
+
+    expect(postPayload.data.type).toBe('Person')
+    expect('id' in postPayload.data).toBe(false)
+  }),
+)
+
+effect('PcoBuildPayloadSchemaType: PATCH method includes id field in type', () =>
+  Effect.gen(function* () {
+    type PersonFields = {
+      first_name: string
+      last_name: string
+    }
+
+    type PatchPayloadType = PcoBuildPayloadSchemaType<
+      PersonFields,
+      ['first_name', 'last_name'],
+      [],
+      'Person',
+      true,
+      'PATCH'
+    >
+
+    const patchPayload: PatchPayloadType = {
+      data: {
+        attributes: {
+          first_name: 'Jane',
+        },
+        id: '123', // id field should be available for PATCH
+        type: 'Person',
+      },
+    }
+
+    expect(patchPayload.data.type).toBe('Person')
+    expect(patchPayload.data.id).toBe('123')
+  }),
+)
+
+effect('PcoBuildPayloadSchemaType: defaults to PATCH when method not specified', () =>
+  Effect.gen(function* () {
+    type PersonFields = {
+      first_name: string
+      last_name: string
+    }
+
+    type DefaultPayloadType = PcoBuildPayloadSchemaType<
+      PersonFields,
+      ['first_name', 'last_name'],
+      [],
+      'Person',
+      false
+      // method not specified, should default to PATCH
+    >
+
+    const defaultPayload: DefaultPayloadType = {
+      data: {
+        attributes: {
+          first_name: 'John',
+          last_name: 'Doe',
+        },
+        id: '123', // Should have id field like PATCH
+        type: 'Person',
+      },
+    }
+
+    expect(defaultPayload.data.id).toBe('123')
+  }),
+)
+
+effect('PcoBuildPayloadSchemaType: POST with special fields excludes id', () =>
+  Effect.gen(function* () {
+    type PersonFields = {
+      first_name: string
+      last_name: string
+    }
+
+    type PostWithSpecialType = PcoBuildPayloadSchemaType<
+      PersonFields,
+      ['first_name', 'last_name'],
+      ['custom_field'],
+      'Person',
+      false,
+      'POST'
+    >
+
+    const postPayload: PostWithSpecialType = {
+      data: {
+        attributes: {
+          custom_field: 'special',
+          first_name: 'John',
+          last_name: 'Doe',
+        },
+        type: 'Person',
+        // No id field for POST
+      },
+    }
+
+    expect(postPayload.data.type).toBe('Person')
+    expect(postPayload.data.attributes.custom_field).toBe('special')
+    expect('id' in postPayload.data).toBe(false)
+  }),
+)
+
+effect('PcoBuildPayloadSchemaType: PATCH with special fields includes id', () =>
+  Effect.gen(function* () {
+    type PersonFields = {
+      first_name: string
+      last_name: string
+    }
+
+    type PatchWithSpecialType = PcoBuildPayloadSchemaType<
+      PersonFields,
+      ['first_name', 'last_name'],
+      ['custom_field'],
+      'Person',
+      true,
+      'PATCH'
+    >
+
+    const patchPayload: PatchWithSpecialType = {
+      data: {
+        attributes: {
+          custom_field: 'updated',
+          first_name: 'Jane',
+        },
+        id: '456', // id field should be available for PATCH
+        type: 'Person',
+      },
+    }
+
+    expect(patchPayload.data.type).toBe('Person')
+    expect(patchPayload.data.id).toBe('456')
+    expect(patchPayload.data.attributes.custom_field).toBe('updated')
   }),
 )
