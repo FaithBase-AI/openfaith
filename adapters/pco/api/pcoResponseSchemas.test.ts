@@ -1,11 +1,11 @@
-import { expect } from 'bun:test'
-import { effect } from '@openfaith/bun-test'
+import { expect } from "bun:test";
+import { effect } from "@openfaith/bun-test";
 import {
   mkPcoCollectionSchema,
   mkPcoPayloadSchema,
   mkPcoSingleSchema,
-} from '@openfaith/pco/api/pcoResponseSchemas'
-import { Effect, Schema } from 'effect'
+} from "@openfaith/pco/api/pcoResponseSchemas";
+import { Effect, Schema } from "effect";
 
 // Test schemas for our tests
 const PersonSchema = Schema.Struct({
@@ -15,8 +15,8 @@ const PersonSchema = Schema.Struct({
     last_name: Schema.String,
   }),
   id: Schema.String,
-  type: Schema.Literal('Person'),
-})
+  type: Schema.Literal("Person"),
+});
 
 const AddressSchema = Schema.Struct({
   attributes: Schema.Struct({
@@ -24,418 +24,465 @@ const AddressSchema = Schema.Struct({
     street: Schema.String,
   }),
   id: Schema.String,
-  type: Schema.Literal('Address'),
-})
+  type: Schema.Literal("Address"),
+});
 
 const PersonAttributesSchema = Schema.Struct({
   email: Schema.optional(Schema.String),
   first_name: Schema.String,
   last_name: Schema.String,
-})
+});
 
 // Test data
 const samplePerson = {
   attributes: {
-    email: 'john@example.com',
-    first_name: 'John',
-    last_name: 'Doe',
+    email: "john@example.com",
+    first_name: "John",
+    last_name: "Doe",
   },
-  id: '123',
-  type: 'Person' as const,
-}
+  id: "123",
+  type: "Person" as const,
+};
 
 const sampleAddress = {
   attributes: {
-    city: 'Anytown',
-    street: '123 Main St',
+    city: "Anytown",
+    street: "123 Main St",
   },
-  id: '456',
-  type: 'Address' as const,
-}
+  id: "456",
+  type: "Address" as const,
+};
 
 // mkPcoCollectionSchema tests
-effect('mkPcoCollectionSchema: creates schema for collection without entity registry', () =>
+effect(
+  "mkPcoCollectionSchema: creates schema for collection without entity registry",
+  () =>
+    Effect.gen(function* () {
+      const collectionSchema = mkPcoCollectionSchema(PersonSchema);
+
+      const sampleCollection = {
+        data: [samplePerson],
+        included: [],
+        links: {
+          next: "https://api.planningcenteronline.com/people/v2/people?offset=25",
+          self: "https://api.planningcenteronline.com/people/v2/people",
+        },
+        meta: {
+          can_include: ["addresses"],
+          can_order_by: ["first_name", "last_name"],
+          can_query_by: ["first_name", "last_name"],
+          count: 1,
+          total_count: 100,
+        },
+      };
+
+      const result =
+        Schema.decodeUnknownSync(collectionSchema)(sampleCollection);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]).toEqual(samplePerson);
+      expect(result.links.self).toBe(
+        "https://api.planningcenteronline.com/people/v2/people",
+      );
+      expect(result.meta.count).toBe(1);
+      expect(result.meta.total_count).toBe(100);
+    }),
+);
+
+effect(
+  "mkPcoCollectionSchema: creates schema for collection with entity registry",
+  () =>
+    Effect.gen(function* () {
+      const entityRegistry = Schema.Union(PersonSchema, AddressSchema);
+      const collectionSchema = mkPcoCollectionSchema(
+        PersonSchema,
+        entityRegistry,
+      );
+
+      const sampleCollectionWithIncludes = {
+        data: [samplePerson],
+        included: [sampleAddress],
+        links: {
+          self: "https://api.planningcenteronline.com/people/v2/people",
+        },
+        meta: {
+          count: 1,
+          total_count: 1,
+        },
+      };
+
+      const result = Schema.decodeUnknownSync(collectionSchema)(
+        sampleCollectionWithIncludes,
+      );
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]).toEqual(samplePerson);
+      expect(result.included).toHaveLength(1);
+      expect(result.included[0]).toEqual(sampleAddress);
+    }),
+);
+
+effect("mkPcoCollectionSchema: handles optional fields correctly", () =>
   Effect.gen(function* () {
-    const collectionSchema = mkPcoCollectionSchema(PersonSchema)
-
-    const sampleCollection = {
-      data: [samplePerson],
-      included: [],
-      links: {
-        next: 'https://api.planningcenteronline.com/people/v2/people?offset=25',
-        self: 'https://api.planningcenteronline.com/people/v2/people',
-      },
-      meta: {
-        can_include: ['addresses'],
-        can_order_by: ['first_name', 'last_name'],
-        can_query_by: ['first_name', 'last_name'],
-        count: 1,
-        total_count: 100,
-      },
-    }
-
-    const result = Schema.decodeUnknownSync(collectionSchema)(sampleCollection)
-    expect(result.data).toHaveLength(1)
-    expect(result.data[0]).toEqual(samplePerson)
-    expect(result.links.self).toBe('https://api.planningcenteronline.com/people/v2/people')
-    expect(result.meta.count).toBe(1)
-    expect(result.meta.total_count).toBe(100)
-  }),
-)
-
-effect('mkPcoCollectionSchema: creates schema for collection with entity registry', () =>
-  Effect.gen(function* () {
-    const entityRegistry = Schema.Union(PersonSchema, AddressSchema)
-    const collectionSchema = mkPcoCollectionSchema(PersonSchema, entityRegistry)
-
-    const sampleCollectionWithIncludes = {
-      data: [samplePerson],
-      included: [sampleAddress],
-      links: {
-        self: 'https://api.planningcenteronline.com/people/v2/people',
-      },
-      meta: {
-        count: 1,
-        total_count: 1,
-      },
-    }
-
-    const result = Schema.decodeUnknownSync(collectionSchema)(sampleCollectionWithIncludes)
-    expect(result.data).toHaveLength(1)
-    expect(result.data[0]).toEqual(samplePerson)
-    expect(result.included).toHaveLength(1)
-    expect(result.included[0]).toEqual(sampleAddress)
-  }),
-)
-
-effect('mkPcoCollectionSchema: handles optional fields correctly', () =>
-  Effect.gen(function* () {
-    const collectionSchema = mkPcoCollectionSchema(PersonSchema)
+    const collectionSchema = mkPcoCollectionSchema(PersonSchema);
 
     const minimalCollection = {
       data: [samplePerson],
       included: [],
       links: {
-        self: 'https://api.planningcenteronline.com/people/v2/people',
+        self: "https://api.planningcenteronline.com/people/v2/people",
       },
       meta: {
         count: 1,
         total_count: 1,
       },
-    }
+    };
 
-    const result = Schema.decodeUnknownSync(collectionSchema)(minimalCollection)
-    expect(result.data).toHaveLength(1)
-    expect(result.links.next).toBeUndefined()
-    expect(result.meta.can_include).toBeUndefined()
-    expect(result.meta.next).toBeUndefined()
-    expect(result.meta.prev).toBeUndefined()
-    expect(result.meta.parent).toBeUndefined()
+    const result =
+      Schema.decodeUnknownSync(collectionSchema)(minimalCollection);
+    expect(result.data).toHaveLength(1);
+    expect(result.links.next).toBeUndefined();
+    expect(result.meta.can_include).toBeUndefined();
+    expect(result.meta.next).toBeUndefined();
+    expect(result.meta.prev).toBeUndefined();
+    expect(result.meta.parent).toBeUndefined();
   }),
-)
+);
 
-effect('mkPcoCollectionSchema: validates required fields', () =>
+effect("mkPcoCollectionSchema: validates required fields", () =>
   Effect.gen(function* () {
-    const collectionSchema = mkPcoCollectionSchema(PersonSchema)
+    const collectionSchema = mkPcoCollectionSchema(PersonSchema);
 
     const invalidCollection = {
       data: [samplePerson],
       included: [],
       links: {
-        self: 'https://api.planningcenteronline.com/people/v2/people',
+        self: "https://api.planningcenteronline.com/people/v2/people",
       },
       // Missing required meta field
-    }
+    };
 
-    expect(() => Schema.decodeUnknownSync(collectionSchema)(invalidCollection)).toThrow()
+    expect(() =>
+      Schema.decodeUnknownSync(collectionSchema)(invalidCollection),
+    ).toThrow();
   }),
-)
+);
 
 // mkPcoSingleSchema tests
-effect('mkPcoSingleSchema: creates schema for single resource without entity registry', () =>
+effect(
+  "mkPcoSingleSchema: creates schema for single resource without entity registry",
+  () =>
+    Effect.gen(function* () {
+      const singleSchema = mkPcoSingleSchema(PersonSchema);
+
+      const sampleSingle = {
+        data: samplePerson,
+      };
+
+      const result = Schema.decodeUnknownSync(singleSchema)(sampleSingle);
+      expect(result.data).toEqual(samplePerson);
+      expect("included" in result).toBe(false);
+    }),
+);
+
+effect(
+  "mkPcoSingleSchema: creates schema for single resource with entity registry",
+  () =>
+    Effect.gen(function* () {
+      const entityRegistry = Schema.Union(PersonSchema, AddressSchema);
+      const singleSchema = mkPcoSingleSchema(PersonSchema, entityRegistry);
+
+      const sampleSingleWithIncludes = {
+        data: samplePerson,
+        included: [sampleAddress],
+      };
+
+      const result = Schema.decodeUnknownSync(singleSchema)(
+        sampleSingleWithIncludes,
+      );
+      expect(result.data).toEqual(samplePerson);
+      expect(result.included).toHaveLength(1);
+      expect(result.included[0]).toEqual(sampleAddress);
+    }),
+);
+
+effect("mkPcoSingleSchema: handles empty included array", () =>
   Effect.gen(function* () {
-    const singleSchema = mkPcoSingleSchema(PersonSchema)
-
-    const sampleSingle = {
-      data: samplePerson,
-    }
-
-    const result = Schema.decodeUnknownSync(singleSchema)(sampleSingle)
-    expect(result.data).toEqual(samplePerson)
-    expect('included' in result).toBe(false)
-  }),
-)
-
-effect('mkPcoSingleSchema: creates schema for single resource with entity registry', () =>
-  Effect.gen(function* () {
-    const entityRegistry = Schema.Union(PersonSchema, AddressSchema)
-    const singleSchema = mkPcoSingleSchema(PersonSchema, entityRegistry)
-
-    const sampleSingleWithIncludes = {
-      data: samplePerson,
-      included: [sampleAddress],
-    }
-
-    const result = Schema.decodeUnknownSync(singleSchema)(sampleSingleWithIncludes)
-    expect(result.data).toEqual(samplePerson)
-    expect(result.included).toHaveLength(1)
-    expect(result.included[0]).toEqual(sampleAddress)
-  }),
-)
-
-effect('mkPcoSingleSchema: handles empty included array', () =>
-  Effect.gen(function* () {
-    const entityRegistry = Schema.Union(PersonSchema, AddressSchema)
-    const singleSchema = mkPcoSingleSchema(PersonSchema, entityRegistry)
+    const entityRegistry = Schema.Union(PersonSchema, AddressSchema);
+    const singleSchema = mkPcoSingleSchema(PersonSchema, entityRegistry);
 
     const sampleSingleEmptyIncludes = {
       data: samplePerson,
       included: [],
-    }
+    };
 
-    const result = Schema.decodeUnknownSync(singleSchema)(sampleSingleEmptyIncludes)
-    expect(result.data).toEqual(samplePerson)
-    expect(result.included).toHaveLength(0)
+    const result = Schema.decodeUnknownSync(singleSchema)(
+      sampleSingleEmptyIncludes,
+    );
+    expect(result.data).toEqual(samplePerson);
+    expect(result.included).toHaveLength(0);
   }),
-)
+);
 
 // mkPcoPayloadSchema tests
-effect('mkPcoPayloadSchema: creates POST payload schema with required fields', () =>
-  Effect.gen(function* () {
-    const payloadSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      'Person',
-      false, // Required fields for POST
-    )
+effect(
+  "mkPcoPayloadSchema: creates POST payload schema with required fields",
+  () =>
+    Effect.gen(function* () {
+      const payloadSchema = mkPcoPayloadSchema(
+        PersonAttributesSchema,
+        ["first_name", "last_name"],
+        [],
+        "Person",
+        false, // Required fields for POST
+      );
 
-    const postPayload = {
-      data: {
-        attributes: {
-          first_name: 'Jane',
-          last_name: 'Smith',
+      const postPayload = {
+        data: {
+          attributes: {
+            first_name: "Jane",
+            last_name: "Smith",
+          },
+          type: "Person",
         },
-        type: 'Person',
-      },
-    }
+      };
 
-    const result = Schema.decodeUnknownSync(payloadSchema)(postPayload)
-    expect(result.data.type).toBe('Person')
-    expect(result.data.attributes.first_name).toBe('Jane')
-    expect(result.data.attributes.last_name).toBe('Smith')
-    expect(result.data.id).toBeUndefined()
-  }),
-)
+      const result = Schema.decodeUnknownSync(payloadSchema)(
+        postPayload,
+      ) as any;
+      expect(result.data.type).toBe("Person");
+      expect(result.data.attributes.first_name).toBe("Jane");
+      expect(result.data.attributes.last_name).toBe("Smith");
+      expect(result.data.id).toBeUndefined();
+    }),
+);
 
-effect('mkPcoPayloadSchema: creates PATCH payload schema with optional fields', () =>
-  Effect.gen(function* () {
-    const payloadSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name', 'email'],
-      'Person',
-      true, // Optional fields for PATCH
-    )
+effect(
+  "mkPcoPayloadSchema: creates PATCH payload schema with optional fields",
+  () =>
+    Effect.gen(function* () {
+      const payloadSchema = mkPcoPayloadSchema(
+        PersonAttributesSchema,
+        ["first_name", "last_name", "email"],
+        [],
+        "Person",
+        true, // Optional fields for PATCH
+      );
 
-    // PATCH payload with only some fields
-    const patchPayload = {
-      data: {
-        attributes: {
-          first_name: 'Jane', // Only updating first name
+      // PATCH payload with only some fields
+      const patchPayload = {
+        data: {
+          attributes: {
+            first_name: "Jane", // Only updating first name
+          },
+          id: "123",
+          type: "Person",
         },
-        id: '123',
-        type: 'Person',
-      },
-    }
+      };
 
-    const result = Schema.decodeUnknownSync(payloadSchema)(patchPayload)
-    expect(result.data.type).toBe('Person')
-    expect(result.data.id).toBe('123')
-    expect(result.data.attributes.first_name).toBe('Jane')
-    expect('last_name' in result.data.attributes).toBe(false)
-    expect('email' in result.data.attributes).toBe(false)
-  }),
-)
+      const result = Schema.decodeUnknownSync(payloadSchema)(patchPayload);
+      expect(result.data.type).toBe("Person");
+      expect(result.data.id).toBe("123");
+      expect(result.data.attributes.first_name).toBe("Jane");
+      expect("last_name" in result.data.attributes).toBe(false);
+      expect("email" in result.data.attributes).toBe(false);
+    }),
+);
 
-effect('mkPcoPayloadSchema: validates entity type literal', () =>
+effect("mkPcoPayloadSchema: validates entity type literal", () =>
   Effect.gen(function* () {
     const payloadSchema = mkPcoPayloadSchema(
       PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      'Person',
+      ["first_name", "last_name"],
+      [],
+      "Person",
       false,
-    )
+    );
 
     const invalidPayload = {
       data: {
         attributes: {
-          first_name: 'Jane',
-          last_name: 'Smith',
+          first_name: "Jane",
+          last_name: "Smith",
         }, // Wrong type
-        type: 'Address',
+        type: "Address",
       },
-    }
+    };
 
-    expect(() => Schema.decodeUnknownSync(payloadSchema)(invalidPayload)).toThrow()
+    expect(() =>
+      Schema.decodeUnknownSync(payloadSchema)(invalidPayload),
+    ).toThrow();
   }),
-)
+);
 
-effect('mkPcoPayloadSchema: POST schema requires specified fields', () =>
+effect("mkPcoPayloadSchema: POST schema requires specified fields", () =>
   Effect.gen(function* () {
     const payloadSchema = mkPcoPayloadSchema(
       PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      'Person',
+      ["first_name", "last_name"],
+      [],
+      "Person",
       false, // Required fields
-    )
+    );
 
     const incompletePayload = {
       data: {
         attributes: {
-          first_name: 'Jane',
+          first_name: "Jane",
           // Missing required last_name
         },
-        type: 'Person',
+        type: "Person",
       },
-    }
+    };
 
-    expect(() => Schema.decodeUnknownSync(payloadSchema)(incompletePayload)).toThrow()
+    expect(() =>
+      Schema.decodeUnknownSync(payloadSchema)(incompletePayload),
+    ).toThrow();
   }),
-)
+);
 
-effect('mkPcoPayloadSchema: PATCH schema allows partial updates', () =>
+effect("mkPcoPayloadSchema: PATCH schema allows partial updates", () =>
   Effect.gen(function* () {
     const payloadSchema = mkPcoPayloadSchema(
       PersonAttributesSchema,
-      ['first_name', 'last_name', 'email'],
-      'Person',
+      ["first_name", "last_name", "email"],
+      [],
+      "Person",
       true, // Optional fields
-    )
+    );
 
     const partialPayload = {
       data: {
         attributes: {
-          email: 'newemail@example.com', // Only updating email
+          email: "newemail@example.com", // Only updating email
         },
-        id: '123',
-        type: 'Person',
+        id: "123",
+        type: "Person",
       },
-    }
+    };
 
-    const result = Schema.decodeUnknownSync(payloadSchema)(partialPayload)
-    expect(result.data.attributes.email).toBe('newemail@example.com')
-    expect('first_name' in result.data.attributes).toBe(false)
-    expect('last_name' in result.data.attributes).toBe(false)
+    const result = Schema.decodeUnknownSync(payloadSchema)(partialPayload);
+    expect(result.data.attributes.email).toBe("newemail@example.com");
+    expect("first_name" in result.data.attributes).toBe(false);
+    expect("last_name" in result.data.attributes).toBe(false);
   }),
-)
+);
 
-effect('mkPcoPayloadSchema: handles empty attributes for PATCH', () =>
+effect("mkPcoPayloadSchema: handles empty attributes for PATCH", () =>
   Effect.gen(function* () {
     const payloadSchema = mkPcoPayloadSchema(
       PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      'Person',
+      ["first_name", "last_name"],
+      [],
+      "Person",
       true, // Optional fields
-    )
+    );
 
     const emptyAttributesPayload = {
       data: {
         attributes: {},
-        id: '123',
-        type: 'Person', // No attributes to update
+        id: "123",
+        type: "Person", // No attributes to update
       },
-    }
+    };
 
-    const result = Schema.decodeUnknownSync(payloadSchema)(emptyAttributesPayload)
-    expect(result.data.type).toBe('Person')
-    expect(result.data.id).toBe('123')
-    expect(Object.keys(result.data.attributes)).toHaveLength(0)
+    const result = Schema.decodeUnknownSync(payloadSchema)(
+      emptyAttributesPayload,
+    );
+    expect(result.data.type).toBe("Person");
+    expect(result.data.id).toBe("123");
+    expect(Object.keys(result.data.attributes)).toHaveLength(0);
   }),
-)
+);
 
-effect('mkPcoPayloadSchema: validates data structure', () =>
+effect("mkPcoPayloadSchema: validates data structure", () =>
   Effect.gen(function* () {
     const payloadSchema = mkPcoPayloadSchema(
       PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      'Person',
+      ["first_name", "last_name"],
+      [],
+      "Person",
       false,
-    )
+    );
 
     const invalidStructure = {
       attributes: {
-        first_name: 'Jane',
-        last_name: 'Smith',
+        first_name: "Jane",
+        last_name: "Smith",
       },
       // Missing data wrapper
-      type: 'Person',
-    }
+      type: "Person",
+    };
 
-    expect(() => Schema.decodeUnknownSync(payloadSchema)(invalidStructure)).toThrow()
+    expect(() =>
+      Schema.decodeUnknownSync(payloadSchema)(invalidStructure),
+    ).toThrow();
   }),
-)
+);
 
-effect('mkPcoPayloadSchema: picks only specified fields', () =>
+effect("mkPcoPayloadSchema: picks only specified fields", () =>
   Effect.gen(function* () {
     const payloadSchema = mkPcoPayloadSchema(
       PersonAttributesSchema,
-      ['first_name'], // Only pick first_name
-      'Person',
+      ["first_name"], // Only pick first_name
+      "Person",
       false,
-    )
+    );
 
     const payloadWithExtraFields = {
       data: {
         attributes: {
-          first_name: 'Jane',
-          last_name: 'Smith', // This should be ignored, not rejected
+          first_name: "Jane",
+          last_name: "Smith", // This should be ignored, not rejected
         },
-        type: 'Person',
+        type: "Person",
       },
-    }
+    };
 
-    const result = Schema.decodeUnknownSync(payloadSchema)(payloadWithExtraFields)
-    expect(result.data.attributes.first_name).toBe('Jane')
-    expect('last_name' in result.data.attributes).toBe(false) // Should be filtered out
+    const result = Schema.decodeUnknownSync(payloadSchema)(
+      payloadWithExtraFields,
+    );
+    expect(result.data.attributes.first_name).toBe("Jane");
+    expect("last_name" in result.data.attributes).toBe(false); // Should be filtered out
   }),
-)
+);
 
 // Integration tests with real-world scenarios
-effect('mkPcoPayloadSchema: handles real PCO person update scenario', () =>
+effect("mkPcoPayloadSchema: handles real PCO person update scenario", () =>
   Effect.gen(function* () {
     const PersonUpdateSchema = Schema.Struct({
       email: Schema.optional(Schema.String),
       first_name: Schema.String.pipe(Schema.minLength(1)),
       last_name: Schema.String.pipe(Schema.minLength(1)),
-      status: Schema.optional(Schema.Literal('active', 'inactive')),
-    })
+      status: Schema.optional(Schema.Literal("active", "inactive")),
+    });
 
     const payloadSchema = mkPcoPayloadSchema(
       PersonUpdateSchema,
-      ['first_name', 'last_name', 'email', 'status'],
-      'Person',
+      ["first_name", "last_name", "email", "status"],
+      [],
+      "Person",
       true, // PATCH - optional fields
-    )
+    );
 
     const realUpdatePayload = {
       data: {
         attributes: {
-          first_name: 'Updated Name',
+          first_name: "Updated Name",
           // Only updating first_name, other fields remain unchanged
         },
-        id: '105820014',
-        type: 'Person',
+        id: "105820014",
+        type: "Person",
       },
-    }
+    };
 
-    const result = Schema.decodeUnknownSync(payloadSchema)(realUpdatePayload)
-    expect(result.data.type).toBe('Person')
-    expect(result.data.id).toBe('105820014')
-    expect(result.data.attributes.first_name).toBe('Updated Name')
-    expect('last_name' in result.data.attributes).toBe(false)
+    const result = Schema.decodeUnknownSync(payloadSchema)(realUpdatePayload);
+    expect(result.data.type).toBe("Person");
+    expect(result.data.id).toBe("105820014");
+    expect(result.data.attributes.first_name).toBe("Updated Name");
+    expect("last_name" in result.data.attributes).toBe(false);
   }),
-)
+);
 
-effect('mkPcoPayloadSchema: handles complex nested attributes', () =>
+effect("mkPcoPayloadSchema: handles complex nested attributes", () =>
   Effect.gen(function* () {
     const ComplexAttributesSchema = Schema.Struct({
       metadata: Schema.optional(
@@ -446,147 +493,158 @@ effect('mkPcoPayloadSchema: handles complex nested attributes', () =>
       ),
       name: Schema.String,
       tags: Schema.optional(Schema.Array(Schema.String)),
-    })
+    });
 
     const payloadSchema = mkPcoPayloadSchema(
       ComplexAttributesSchema,
-      ['name', 'metadata', 'tags'],
-      'ComplexEntity',
+      ["name", "metadata", "tags"],
+      [],
+      "ComplexEntity",
       false,
-    )
+    );
 
     const complexPayload = {
       data: {
         attributes: {
           metadata: {
             priority: 1,
-            source: 'api',
+            source: "api",
           },
-          name: 'Test Entity',
-          tags: ['important', 'test'],
+          name: "Test Entity",
+          tags: ["important", "test"],
         },
-        type: 'ComplexEntity',
+        type: "ComplexEntity",
       },
-    }
+    };
 
-    const result = Schema.decodeUnknownSync(payloadSchema)(complexPayload)
-    expect(result.data.attributes.name).toBe('Test Entity')
-    expect(result.data.attributes.metadata?.source).toBe('api')
-    expect(result.data.attributes.metadata?.priority).toBe(1)
-    expect(result.data.attributes.tags).toEqual(['important', 'test'])
+    const result = Schema.decodeUnknownSync(payloadSchema)(complexPayload);
+    expect(result.data.attributes.name).toBe("Test Entity");
+    expect(result.data.attributes.metadata?.source).toBe("api");
+    expect(result.data.attributes.metadata?.priority).toBe(1);
+    expect(result.data.attributes.tags).toEqual(["important", "test"]);
   }),
-)
+);
 
 // Error handling tests
-effect('mkPcoCollectionSchema: fails with invalid data structure', () =>
+effect("mkPcoCollectionSchema: fails with invalid data structure", () =>
   Effect.gen(function* () {
-    const collectionSchema = mkPcoCollectionSchema(PersonSchema)
+    const collectionSchema = mkPcoCollectionSchema(PersonSchema);
 
     const invalidData = {
-      data: 'not an array',
+      data: "not an array",
       included: [],
-      links: { self: 'test' },
+      links: { self: "test" },
       meta: { count: 1, total_count: 1 },
-    }
+    };
 
-    expect(() => Schema.decodeUnknownSync(collectionSchema)(invalidData)).toThrow()
+    expect(() =>
+      Schema.decodeUnknownSync(collectionSchema)(invalidData),
+    ).toThrow();
   }),
-)
+);
 
-effect('mkPcoSingleSchema: fails with invalid data structure', () =>
+effect("mkPcoSingleSchema: fails with invalid data structure", () =>
   Effect.gen(function* () {
-    const singleSchema = mkPcoSingleSchema(PersonSchema)
+    const singleSchema = mkPcoSingleSchema(PersonSchema);
 
     const invalidData = {
-      data: ['should be object, not array'],
-    } as const
+      data: ["should be object, not array"],
+    } as const;
 
-    expect(() => Schema.decodeUnknownSync(singleSchema)(invalidData)).toThrow()
+    expect(() => Schema.decodeUnknownSync(singleSchema)(invalidData)).toThrow();
   }),
-)
+);
 
-effect('mkPcoPayloadSchema: fails with missing required data field', () =>
+effect("mkPcoPayloadSchema: fails with missing required data field", () =>
   Effect.gen(function* () {
     const payloadSchema = mkPcoPayloadSchema(
       PersonAttributesSchema,
-      ['first_name'],
-      'Person',
+      ["first_name"],
+      [],
+      "Person",
       false,
-    )
+    );
 
     const invalidPayload = {
       attributes: {
-        first_name: 'Jane',
+        first_name: "Jane",
       },
       // Missing data field
-      type: 'Person',
-    }
+      type: "Person",
+    };
 
-    expect(() => Schema.decodeUnknownSync(payloadSchema)(invalidPayload)).toThrow()
+    expect(() =>
+      Schema.decodeUnknownSync(payloadSchema)(invalidPayload),
+    ).toThrow();
   }),
-)
+);
 
 // Roundtrip tests
-effect('mkPcoPayloadSchema: POST and PATCH schemas work with same data structure', () =>
-  Effect.gen(function* () {
-    const postSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      'Person',
-      false, // Required fields
-    )
+effect(
+  "mkPcoPayloadSchema: POST and PATCH schemas work with same data structure",
+  () =>
+    Effect.gen(function* () {
+      const postSchema = mkPcoPayloadSchema(
+        PersonAttributesSchema,
+        ["first_name", "last_name"],
+        [],
+        "Person",
+        false, // Required fields
+      );
 
-    const patchSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      'Person',
-      true, // Optional fields
-    )
+      const patchSchema = mkPcoPayloadSchema(
+        PersonAttributesSchema,
+        ["first_name", "last_name"],
+        [],
+        "Person",
+        true, // Optional fields
+      );
 
-    const fullPayload = {
-      data: {
-        attributes: {
-          first_name: 'Jane',
-          last_name: 'Smith',
+      const fullPayload = {
+        data: {
+          attributes: {
+            first_name: "Jane",
+            last_name: "Smith",
+          },
+          id: "123",
+          type: "Person",
         },
-        id: '123',
-        type: 'Person',
-      },
-    }
+      };
 
-    // Both schemas should accept the full payload
-    const postResult = Schema.decodeUnknownSync(postSchema)(fullPayload)
-    const patchResult = Schema.decodeUnknownSync(patchSchema)(fullPayload)
+      // Both schemas should accept the full payload
+      const postResult = Schema.decodeUnknownSync(postSchema)(fullPayload);
+      const patchResult = Schema.decodeUnknownSync(patchSchema)(fullPayload);
 
-    expect(postResult.data.attributes.first_name).toBe('Jane')
-    expect(postResult.data.attributes.last_name).toBe('Smith')
-    expect(patchResult.data.attributes.first_name).toBe('Jane')
-    expect(patchResult.data.attributes.last_name).toBe('Smith')
-  }),
-)
+      expect(postResult.data.attributes.first_name).toBe("Jane");
+      expect(postResult.data.attributes.last_name).toBe("Smith");
+      expect(patchResult.data.attributes.first_name).toBe("Jane");
+      expect(patchResult.data.attributes.last_name).toBe("Smith");
+    }),
+);
 
-effect('mkPcoPayloadSchema: encodes back to original structure', () =>
+effect("mkPcoPayloadSchema: encodes back to original structure", () =>
   Effect.gen(function* () {
     const payloadSchema = mkPcoPayloadSchema(
       PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      'Person',
+      ["first_name", "last_name"],
+      [],
+      "Person",
       false,
-    )
+    );
 
     const originalPayload = {
       data: {
         attributes: {
-          first_name: 'Jane',
-          last_name: 'Smith',
+          first_name: "Jane",
+          last_name: "Smith",
         },
-        type: 'Person',
+        type: "Person",
       },
-    }
+    };
 
-    const decoded = Schema.decodeUnknownSync(payloadSchema)(originalPayload)
-    const encoded = Schema.encodeSync(payloadSchema)(decoded)
+    const decoded = Schema.decodeUnknownSync(payloadSchema)(originalPayload);
+    const encoded = Schema.encodeSync(payloadSchema)(decoded);
 
-    expect(encoded).toEqual(originalPayload)
+    expect(encoded).toEqual(originalPayload);
   }),
-)
+);

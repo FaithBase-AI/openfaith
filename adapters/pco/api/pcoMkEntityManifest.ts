@@ -5,7 +5,11 @@ import {
   toHttpApiEndpoint,
 } from '@openfaith/adapter-core/api/endpointAdapter'
 import type * as Endpoint from '@openfaith/adapter-core/api/endpointTypes'
-import { mkPcoCollectionSchema, mkPcoSingleSchema } from '@openfaith/pco/api/pcoResponseSchemas'
+import {
+  mkPcoCollectionSchema,
+  mkPcoPayloadSchema,
+  mkPcoSingleSchema,
+} from '@openfaith/pco/api/pcoResponseSchemas'
 import { mkEntityName, mkTableName } from '@openfaith/shared/string'
 import type { CaseTransform } from '@openfaith/shared/types'
 import { Array, Option, pipe, Record, Schema } from 'effect'
@@ -412,6 +416,60 @@ export const mkPcoEntityManifest = <
                 ] as const
               }
 
+              // Handle POST and PATCH endpoints with proper payload schema
+              if (endpoint.method === 'POST' || endpoint.method === 'PATCH') {
+                const isOptional = endpoint.method === 'PATCH'
+
+                type FieldsStructure = {
+                  fields: Array<string>
+                  special: Array<string>
+                }
+
+                const fields = pipe(
+                  endpoint as {
+                    creatableFields?: FieldsStructure
+                    updatableFields?: FieldsStructure
+                  },
+                  (ep) => {
+                    if (endpoint.method === 'POST') {
+                      return ep.creatableFields?.fields
+                    }
+                    return ep.updatableFields?.fields
+                  },
+                  Option.fromNullable,
+                  Option.getOrElse(() => []),
+                )
+                const special = pipe(
+                  endpoint as {
+                    creatableFields?: FieldsStructure
+                    updatableFields?: FieldsStructure
+                  },
+                  (ep) => {
+                    if (endpoint.method === 'POST') {
+                      return ep.creatableFields?.special
+                    }
+                    return ep.updatableFields?.special
+                  },
+                  Option.fromNullable,
+                  Option.getOrElse(() => []),
+                )
+                return [
+                  endpoint.name,
+                  {
+                    ...endpoint,
+                    payload: mkPcoPayloadSchema(
+                      (endpoint.apiSchema as any).fields.attributes,
+                      fields,
+                      special,
+                      (endpoint.apiSchema as any).fields.type.ast.type.literal as string,
+                      isOptional,
+                    ),
+                    response: mkPcoSingleSchema(endpoint.apiSchema),
+                  },
+                ] as const
+              }
+
+              // Handle DELETE and other methods
               return [
                 endpoint.name,
                 {

@@ -1,4 +1,4 @@
-import { Option, pipe, Schema } from 'effect'
+import { Array, Option, pipe, Schema } from 'effect'
 
 /**
  * Creates a PCO collection response schema.
@@ -89,14 +89,111 @@ export function mkPcoSingleSchema(
  * - POST: { data: { type: "EntityName", attributes: {...} } }
  * - PATCH: { data: { type: "EntityName", id: "123", attributes: {...} } }
  */
-export function mkPcoPayloadSchema<Fields extends Record<string, any>>(
+
+// Overload 1: No special fields - returns clean, well-typed schema
+export function mkPcoPayloadSchema<
+  Fields extends Record<string, any>,
+  Special extends ReadonlyArray<string>,
+  EntityType extends string,
+  MarkOptional extends boolean,
+>(
   attributesSchema: Schema.Struct<Fields>,
-  keys: ReadonlyArray<keyof Fields>,
-  entityType: string,
-  makeOptional?: boolean,
-) {
-  const pickedSchema = attributesSchema.pick(...keys)
-  const finalAttributesSchema = makeOptional ? Schema.partial(pickedSchema) : pickedSchema
+  fields: ReadonlyArray<keyof Fields>,
+  special: Special,
+  entityType: EntityType,
+  makeOptional?: MarkOptional,
+): Schema.Struct<{
+  data: Schema.Struct<{
+    attributes: MarkOptional extends true
+      ? Schema.SchemaClass<{
+          [K in keyof Pick<Fields, keyof Fields>]?: Pick<Fields, keyof Fields>[K] | undefined
+        }>
+      : Schema.Struct<{
+          [K in keyof Pick<Fields, keyof Fields>]: Pick<Fields, keyof Fields>[K]
+        }>
+    id: Schema.optional<typeof Schema.String>
+    type: Schema.Literal<[EntityType]>
+  }>
+}>
+
+// Overload 2: With special fields - returns schema with special fields as optional strings
+export function mkPcoPayloadSchema<
+  Fields extends Record<string, any>,
+  Special extends ReadonlyArray<string>,
+  EntityType extends string,
+  MarkOptional extends boolean,
+>(
+  attributesSchema: Schema.Struct<Fields>,
+  fields: ReadonlyArray<keyof Fields>,
+  special: Special,
+  entityType: EntityType,
+  makeOptional?: MarkOptional,
+): Schema.Struct<{
+  data: Schema.Struct<{
+    attributes: MarkOptional extends true
+      ? Schema.SchemaClass<
+          {
+            [K in keyof Pick<Fields, keyof Fields>]?: Pick<Fields, keyof Fields>[K] | undefined
+          } & {
+            [key in Special[0]]?: Schema.optional<typeof Schema.String> | undefined
+          }
+        >
+      : Schema.Struct<
+          { [K in keyof Pick<Fields, keyof Fields>]: Pick<Fields, keyof Fields>[K] } & {
+            [key in Special[0]]: Schema.optional<typeof Schema.String>
+          }
+        >
+    id: Schema.optional<typeof Schema.String>
+    type: Schema.Literal<[EntityType]>
+  }>
+}>
+
+// Implementation function
+export function mkPcoPayloadSchema<
+  Fields extends Record<string, any>,
+  Special extends ReadonlyArray<string>,
+  EntityType extends string,
+  MarkOptional extends boolean,
+>(
+  attributesSchema: Schema.Struct<Fields>,
+  fields: ReadonlyArray<keyof Fields>,
+  special: Special,
+  entityType: EntityType,
+  makeOptional?: MarkOptional,
+): any {
+  // If no special fields, use the original approach for better type compatibility
+  if (special.length === 0) {
+    const pickedSchema = attributesSchema.pick(...fields)
+    const finalAttributesSchema = makeOptional ? Schema.partial(pickedSchema) : pickedSchema
+
+    return Schema.Struct({
+      data: Schema.Struct({
+        attributes: finalAttributesSchema,
+        id: Schema.optional(Schema.String), // Optional for POST, required for PATCH
+        type: Schema.Literal(entityType),
+      }),
+    })
+  }
+
+  // When we have special fields, create the combined schema
+  const pickedSchema = attributesSchema.pick(...fields)
+  const pickedFields = pickedSchema.fields
+  const specialFields = pipe(
+    special,
+    Array.reduce(
+      {} as { [key in Special[0]]: Schema.optional<typeof Schema.String> },
+      (acc, fieldName) => {
+        return {
+          ...acc,
+          [fieldName]: Schema.optional(Schema.String),
+        }
+      },
+    ),
+  )
+
+  const combinedFields = { ...pickedFields, ...specialFields }
+  const combinedSchema = Schema.Struct(combinedFields)
+  const finalAttributesSchema = makeOptional ? Schema.partial(combinedSchema) : combinedSchema
 
   return Schema.Struct({
     data: Schema.Struct({
@@ -106,7 +203,6 @@ export function mkPcoPayloadSchema<Fields extends Record<string, any>>(
     }),
   })
 }
-
 export type PcoBaseEntity = {
   id: string
   type: string
