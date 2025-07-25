@@ -34,15 +34,6 @@ type ExtractEntityType<ApiSchema> = ApiSchema extends Schema.Schema<{
   : never
 
 /**
- * Filters fields to only include the specified keys
- * Used to create payload schemas with only creatable/updatable fields
- */
-type FilterFields<
-  Fields extends Record<string, any>,
-  AllowedKeys extends ReadonlyArray<string>,
-> = Pick<Fields, AllowedKeys[number] & keyof Fields>
-
-/**
  * Creates a type-level registry mapping entity type names to their API schemas
  * Equivalent to the runtime PcoEntityRegistry creation
  */
@@ -162,9 +153,10 @@ export type ConvertPcoEntityManifest<
                     Schema.Schema.Type<PcoEntitySchemaFromIncludes<Endpoints, readonly []>>
                   >
                 >
-                payload: ReturnType<
-                  typeof mkPcoPayloadSchema<
-                    FilterFields<_Fields, _CreatableFields>,
+                payload: Schema.Schema<
+                  PcoBuildPayloadSchemaType<
+                    _Fields,
+                    _CreatableFields,
                     _CreatableSpecial,
                     _Entity,
                     false
@@ -188,9 +180,10 @@ export type ConvertPcoEntityManifest<
                       Schema.Schema.Type<PcoEntitySchemaFromIncludes<Endpoints, readonly []>>
                     >
                   >
-                  payload: ReturnType<
-                    typeof mkPcoPayloadSchema<
-                      FilterFields<_Fields, _UpdatableFields>,
+                  payload: Schema.Schema<
+                    PcoBuildPayloadSchemaType<
+                      _Fields,
+                      _UpdatableFields,
                       _UpdatableSpecial,
                       _Entity,
                       true
