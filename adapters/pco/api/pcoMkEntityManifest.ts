@@ -1,6 +1,5 @@
 import { type HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
 import {
-  type BuildPayloadSchemaType,
   type ExtractPathParams,
   toHttpApiEndpoint,
 } from '@openfaith/adapter-core/api/endpointAdapter'
@@ -9,6 +8,7 @@ import {
   mkPcoCollectionSchema,
   mkPcoPayloadSchema,
   mkPcoSingleSchema,
+  type PcoBuildPayloadSchemaType,
 } from '@openfaith/pco/api/pcoResponseSchemas'
 import { mkEntityName, mkTableName } from '@openfaith/shared/string'
 import type { CaseTransform } from '@openfaith/shared/types'
@@ -246,7 +246,13 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
           'POST',
           ExtractPathParams<_TPath>,
           never,
-          BuildPayloadSchemaType<_Fields, [..._CreatableFields, ..._CreatableSpecial]>,
+          PcoBuildPayloadSchemaType<
+            _Fields,
+            _CreatableFields,
+            _CreatableSpecial,
+            ExtractEntityType<_Api>,
+            false
+          >,
           never,
           _Response['Type'],
           never,
@@ -269,7 +275,13 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
             'PATCH',
             never,
             ExtractPathParams<_TPath>,
-            BuildPayloadSchemaType<_Fields, [..._UpdatableFields, ..._UpdatableSpecial]>,
+            PcoBuildPayloadSchemaType<
+              _Fields,
+              _UpdatableFields,
+              _UpdatableSpecial,
+              ExtractEntityType<_Api>,
+              true
+            >,
             never,
             _Response['Type'],
             never,

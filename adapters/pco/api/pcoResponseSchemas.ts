@@ -212,6 +212,36 @@ export function mkPcoPayloadSchema<
     }),
   })
 }
+/**
+ * PCO-specific type helper that mirrors mkPcoPayloadSchema function.
+ * Takes the Fields type (which represents the attributes structure) and picks specified fields,
+ * then wraps them in PCO's JSON:API payload structure with data.attributes.
+ *
+ * This is similar to BuildPayloadSchemaType from adapter-core but specifically for PCO's
+ * JSON:API format with the data wrapper and type/id fields.
+ */
+export type PcoBuildPayloadSchemaType<
+  Fields extends Record<string, any>,
+  Keys extends ReadonlyArray<string>,
+  Special extends ReadonlyArray<string> = [],
+  EntityType extends string = string,
+  MarkOptional extends boolean = false,
+> = {
+  data: {
+    attributes: MarkOptional extends true
+      ? Partial<
+          Pick<Fields, Keys[number] & keyof Fields> & {
+            [K in Special[number]]: string
+          }
+        >
+      : Pick<Fields, Keys[number] & keyof Fields> & {
+          [K in Special[number]]?: string
+        }
+    id: string
+    type: EntityType
+  }
+}
+
 export type PcoBaseEntity = {
   id: string
   type: string

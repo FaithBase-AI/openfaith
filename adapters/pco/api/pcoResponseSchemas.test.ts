@@ -4,6 +4,7 @@ import {
   mkPcoCollectionSchema,
   mkPcoPayloadSchema,
   mkPcoSingleSchema,
+  type PcoBuildPayloadSchemaType,
 } from '@openfaith/pco/api/pcoResponseSchemas'
 import { Effect, Schema } from 'effect'
 
@@ -606,5 +607,257 @@ effect('mkPcoPayloadSchema: encodes back to original structure', () =>
     const encoded = Schema.encodeSync(payloadSchema)(decoded)
 
     expect(encoded).toEqual(originalPayload)
+  }),
+)
+
+// PcoBuildPayloadSchemaType tests
+effect('PcoBuildPayloadSchemaType: creates correct type for POST payload', () =>
+  Effect.gen(function* () {
+    type PersonFields = {
+      first_name: string
+      last_name: string
+      email?: string
+      status: 'active' | 'inactive'
+    }
+
+    type PostPayloadType = PcoBuildPayloadSchemaType<
+      PersonFields,
+      ['first_name', 'last_name'],
+      [],
+      'Person',
+      false
+    >
+
+    const postPayload: PostPayloadType = {
+      data: {
+        attributes: {
+          first_name: 'John',
+          last_name: 'Doe',
+        },
+        id: '123',
+        type: 'Person',
+      },
+    }
+
+    expect(postPayload.data.type).toBe('Person')
+    expect(postPayload.data.attributes.first_name).toBe('John')
+    expect(postPayload.data.attributes.last_name).toBe('Doe')
+    expect(postPayload.data.id).toBe('123')
+  }),
+)
+
+effect(
+  'PcoBuildPayloadSchemaType: creates correct type for PATCH payload with optional fields',
+  () =>
+    Effect.gen(function* () {
+      type PersonFields = {
+        first_name: string
+        last_name: string
+        email?: string
+        status: 'active' | 'inactive'
+      }
+
+      type PatchPayloadType = PcoBuildPayloadSchemaType<
+        PersonFields,
+        ['first_name', 'last_name', 'email'],
+        [],
+        'Person',
+        true
+      >
+
+      const patchPayload: PatchPayloadType = {
+        data: {
+          attributes: {
+            first_name: 'Jane',
+          },
+          id: '456',
+          type: 'Person',
+        },
+      }
+
+      expect(patchPayload.data.type).toBe('Person')
+      expect(patchPayload.data.attributes.first_name).toBe('Jane')
+      expect(patchPayload.data.id).toBe('456')
+    }),
+)
+
+effect('PcoBuildPayloadSchemaType: handles special fields correctly', () =>
+  Effect.gen(function* () {
+    type PersonFields = {
+      first_name: string
+      last_name: string
+      email?: string
+    }
+
+    type PayloadWithSpecialType = PcoBuildPayloadSchemaType<
+      PersonFields,
+      ['first_name', 'last_name'],
+      ['custom_field'],
+      'Person',
+      false
+    >
+
+    const payloadWithSpecial: PayloadWithSpecialType = {
+      data: {
+        attributes: {
+          custom_field: 'special value',
+          first_name: 'John',
+          last_name: 'Doe',
+        },
+        id: '789',
+        type: 'Person',
+      },
+    }
+
+    expect(payloadWithSpecial.data.attributes.first_name).toBe('John')
+    expect(payloadWithSpecial.data.attributes.last_name).toBe('Doe')
+    expect(payloadWithSpecial.data.attributes.custom_field).toBe('special value')
+  }),
+)
+
+effect('PcoBuildPayloadSchemaType: enforces entity type literal', () =>
+  Effect.gen(function* () {
+    type PersonFields = {
+      name: string
+    }
+
+    type PersonPayloadType = PcoBuildPayloadSchemaType<PersonFields, ['name'], [], 'Person', false>
+
+    const personPayload: PersonPayloadType = {
+      data: {
+        attributes: {
+          name: 'John',
+        },
+        id: '123',
+        type: 'Person',
+      },
+    }
+
+    expect(personPayload.data.type).toBe('Person')
+  }),
+)
+
+effect('PcoBuildPayloadSchemaType: works with complex nested attributes', () =>
+  Effect.gen(function* () {
+    type ComplexFields = {
+      name: string
+      metadata: {
+        priority: number
+        source: string
+      }
+      tags: Array<string>
+    }
+
+    type ComplexPayloadType = PcoBuildPayloadSchemaType<
+      ComplexFields,
+      ['name', 'metadata'],
+      ['custom_tag'],
+      'ComplexEntity',
+      false
+    >
+
+    const complexPayload: ComplexPayloadType = {
+      data: {
+        attributes: {
+          custom_tag: 'important',
+          metadata: {
+            priority: 1,
+            source: 'api',
+          },
+          name: 'Test Entity',
+        },
+        id: '999',
+        type: 'ComplexEntity',
+      },
+    }
+
+    expect(complexPayload.data.attributes.name).toBe('Test Entity')
+    expect(complexPayload.data.attributes.metadata.priority).toBe(1)
+    expect(complexPayload.data.attributes.metadata.source).toBe('api')
+    expect(complexPayload.data.attributes.custom_tag).toBe('important')
+  }),
+)
+
+effect('PcoBuildPayloadSchemaType: optional fields work correctly with PATCH', () =>
+  Effect.gen(function* () {
+    type PersonFields = {
+      first_name: string
+      last_name: string
+      email?: string
+      phone?: string
+    }
+
+    type PatchPayloadType = PcoBuildPayloadSchemaType<
+      PersonFields,
+      ['first_name', 'last_name', 'email', 'phone'],
+      [],
+      'Person',
+      true
+    >
+
+    const minimalPatch: PatchPayloadType = {
+      data: {
+        attributes: {},
+        id: '123',
+        type: 'Person',
+      },
+    }
+
+    const partialPatch: PatchPayloadType = {
+      data: {
+        attributes: {
+          email: 'new@example.com',
+        },
+        id: '123',
+        type: 'Person',
+      },
+    }
+
+    expect(minimalPatch.data.type).toBe('Person')
+    expect(Object.keys(minimalPatch.data.attributes)).toHaveLength(0)
+    expect(partialPatch.data.attributes.email).toBe('new@example.com')
+  }),
+)
+
+effect('PcoBuildPayloadSchemaType: matches mkPcoPayloadSchema runtime behavior', () =>
+  Effect.gen(function* () {
+    type PersonFields = {
+      first_name: string
+      last_name: string
+      email?: string
+    }
+
+    type TypedPayload = PcoBuildPayloadSchemaType<
+      PersonFields,
+      ['first_name', 'last_name'],
+      [],
+      'Person',
+      false
+    >
+
+    const runtimeSchema = mkPcoPayloadSchema(
+      PersonAttributesSchema,
+      ['first_name', 'last_name'],
+      [],
+      'Person',
+      false,
+    )
+
+    const testPayload: TypedPayload = {
+      data: {
+        attributes: {
+          first_name: 'John',
+          last_name: 'Doe',
+        },
+        id: '123',
+        type: 'Person',
+      },
+    }
+
+    const runtimeResult = Schema.decodeUnknownSync(runtimeSchema)(testPayload)
+    expect(runtimeResult.data.type).toBe('Person')
+    expect(runtimeResult.data.attributes.first_name).toBe('John')
+    expect(runtimeResult.data.attributes.last_name).toBe('Doe')
+    expect(runtimeResult.data.id).toBe('123')
   }),
 )
