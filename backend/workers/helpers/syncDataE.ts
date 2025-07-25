@@ -289,7 +289,7 @@ export const syncToPcoE = Effect.fn('syncToPcoE')(function* (
   const externalLinkManager = yield* ExternalLinkManager
   const pcoClient = yield* PcoHttpClient
 
-  yield* Effect.log('Starting PCO sync', {
+  yield* Effect.log('Starting Entity sync', {
     entityName,
     externalId: link.externalId,
     operation: op.op,

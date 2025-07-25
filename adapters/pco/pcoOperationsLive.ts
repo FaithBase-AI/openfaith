@@ -21,24 +21,12 @@ import {
 } from '@openfaith/workers/helpers/syncDataE'
 import { Chunk, Effect, Layer, Option, pipe, Record, SchemaAST, Stream } from 'effect'
 
-type EntityClient = {
-  readonly create?: (params: { payload: unknown }) => Effect.Effect<unknown, unknown, never>
-  readonly update?: (params: {
-    payload: unknown
-    path: Record<string, string>
-  }) => Effect.Effect<unknown, unknown, never>
-  readonly delete?: (params: {
-    path: Record<string, string>
-  }) => Effect.Effect<unknown, unknown, never>
-  readonly list?: (params?: Record<string, unknown>) => Effect.Effect<unknown, unknown, never>
-}
-
 const createPcoEntityPaginatedStream = (
   entityName: string,
-  client: EntityClient,
+  client: any,
   params?: Record<string, unknown>,
 ): Stream.Stream<unknown, AdapterSyncError | AdapterConnectionError> => {
-  if (!client.list) {
+  if (!client || !client.list) {
     return Stream.fail(
       new AdapterSyncError({
         adapter: 'pco',
@@ -50,8 +38,10 @@ const createPcoEntityPaginatedStream = (
   }
 
   // PCO-specific pagination using offset-based pagination
-  return Stream.paginateChunkEffect(0, (currentOffset) =>
-    client.list!({ ...params, offset: currentOffset }).pipe(
+  return Stream.paginateChunkEffect(0, (currentOffset) => {
+    const finalParams = params ? { ...params, offset: currentOffset } : { offset: currentOffset }
+
+    return client.list!({ urlParams: finalParams }).pipe(
       Effect.map((response: any) => {
         const nextOffset = response.meta?.next?.offset
         return [
@@ -67,13 +57,13 @@ const createPcoEntityPaginatedStream = (
             message: `Failed to list ${entityName}`,
           }),
       ),
-    ),
-  )
+    )
+  })
 }
 
 const mkCrudEffect = (
   operation: CRUDOp['op'],
-  entityClient: EntityClient,
+  entityClient: any,
   entityName: string,
   encodedData: unknown,
   externalId: string,
@@ -204,9 +194,24 @@ export const PcoOperationsLive = Layer.effect(
       },
 
       listEntityData: (entityName: string, params?: Record<string, unknown>) => {
-        const entityClient = pcoClient[entityName as keyof typeof pcoClient] as
-          | EntityClient
-          | undefined
+        // PCO client uses entity names directly (Campus, not campuses)
+        // Type-safe access to entity client
+        const entityClient = pcoClient[entityName as keyof typeof pcoClient]
+
+        // Type guard to ensure we have a valid entity client
+        if (!entityClient || typeof entityClient !== 'object' || !('list' in entityClient)) {
+          return Stream.fail(
+            new AdapterSyncError({
+              adapter: 'pco',
+              entityName,
+              message: `Entity ${entityName} not found in PCO client or missing list method`,
+              operation: 'list',
+            }),
+          )
+        }
+
+        // Use the entity client directly - TypeScript will infer the correct types
+        const typedEntityClient = entityClient
 
         if (!entityClient) {
           return Stream.fail(
@@ -219,7 +224,7 @@ export const PcoOperationsLive = Layer.effect(
           )
         }
 
-        return createPcoEntityPaginatedStream(entityName, entityClient, params)
+        return createPcoEntityPaginatedStream(entityName, typedEntityClient, params)
       },
 
       processEntityData: <R, E>(
@@ -243,20 +248,24 @@ export const PcoOperationsLive = Layer.effect(
             return
           }
 
-          const entityClient = pcoClient[entityName as keyof typeof pcoClient] as
-            | EntityClient
-            | undefined
+          // PCO client uses entity names directly (Campus, not campuses)
+          // Type-safe access to entity client
+          const entityClient = pcoClient[entityName as keyof typeof pcoClient]
 
-          if (!entityClient || !entityClient.list) {
+          // Type guard to ensure we have a valid entity client
+          if (!entityClient || typeof entityClient !== 'object' || !('list' in entityClient)) {
             return yield* Effect.fail(
               new AdapterSyncError({
                 adapter: 'pco',
                 entityName,
-                message: `Entity ${entityName} does not support list operation`,
+                message: `Entity ${entityName} not found in PCO client or missing list method`,
                 operation: 'list',
               }),
             )
           }
+
+          // Now we know entityClient has the correct structure
+          const typedEntityClient = entityClient
 
           // Get URL params from entity manifest
           const urlParams = pipe(
@@ -267,7 +276,7 @@ export const PcoOperationsLive = Layer.effect(
 
           // Process all data using PCO-specific pagination
           yield* Stream.runForEach(
-            createPcoEntityPaginatedStream(entityName, entityClient, urlParams as any),
+            createPcoEntityPaginatedStream(entityName, typedEntityClient, urlParams),
             processor,
           )
         }).pipe(
@@ -285,13 +294,17 @@ export const PcoOperationsLive = Layer.effect(
 
       syncEntityData: (entityName: string, operations: ReadonlyArray<CRUDOp>) =>
         Effect.gen(function* () {
-          const entityClient = pcoClient[entityName as keyof typeof pcoClient] as
-            | EntityClient
-            | undefined
+          // PCO client uses entity names directly (Campus, not campuses)
+          // Type-safe access to entity client
+          const entityClient = pcoClient[entityName as keyof typeof pcoClient]
 
-          if (!entityClient) {
+          // Type guard to ensure we have a valid entity client
+          if (!entityClient || typeof entityClient !== 'object') {
             return []
           }
+
+          // Now we know entityClient has the correct structure
+          const typedEntityClient = entityClient
 
           const results: Array<SyncResult> = []
 
@@ -308,7 +321,7 @@ export const PcoOperationsLive = Layer.effect(
                       )
                     : yield* transformEntityDataE(entityName, op.value)
 
-                yield* mkCrudEffect(op.op, entityClient, entityName, encodedData, externalId)
+                yield* mkCrudEffect(op.op, typedEntityClient, entityName, encodedData, externalId)
 
                 return {
                   entityName,
