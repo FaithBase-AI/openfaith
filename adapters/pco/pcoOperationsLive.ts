@@ -24,6 +24,8 @@ import { Chunk, Effect, Layer, Option, pipe, Record, SchemaAST, Stream } from 'e
 // Get the actual type from the service
 type PcoClientType = Effect.Effect.Success<typeof PcoHttpClient>
 
+type PcoEntityClientKeys = Exclude<keyof PcoClientType, '_tag' | 'token'>
+
 type EntityClient = PcoClientType[Exclude<keyof PcoClientType, '_tag' | 'token'>]
 
 // Type guard to ensure we have a valid entity client with required methods
@@ -82,10 +84,48 @@ const createPcoEntityPaginatedStream = <Client extends EntityClient>(
   })
 }
 
-const mkCrudEffect = <Client extends EntityClient>(
+const mkInsertEffect = <
+  ClientKey extends PcoEntityClientKeys,
+  // Method extends EntityClient['create'],
+  // Data extends Parameters<Method>[0]['payload']['data']['attributes'],
+  // EntityName extends Parameters<Method>[0]['payload']['data']['type'],
+>(
+  method: PcoClientType[ClientKey]['create'],
+  entityName: Parameters<PcoClientType[ClientKey]['create']>[0]['payload']['data']['type'],
+  encodedData: Parameters<
+    PcoClientType[ClientKey]['create']
+  >[0]['payload']['data']['attributes'] & { id: string },
+) => {
+  const { id: _id, ...attributesWithoutId } = encodedData
+  const createPayload = {
+    data: {
+      attributes: attributesWithoutId,
+      type: entityName,
+    },
+  }
+
+  return (method as PcoClientType['Person']['create'])({
+    payload: createPayload as unknown as Parameters<
+      PcoClientType['Person']['create']
+    >[0]['payload'],
+  }).pipe(
+    Effect.mapError(
+      (error) =>
+        new AdapterSyncError({
+          adapter: 'pco',
+          cause: error,
+          entityName,
+          message: `Failed to create ${entityName}`,
+          operation: 'create',
+        }),
+    ),
+  )
+}
+
+const mkCrudEffect = <Client extends EntityClient, EntityName extends PcoEntityClientKeys>(
   operation: CRUDOp['op'],
   entityClient: Client,
-  entityName: string,
+  entityName: EntityName,
   encodedData: unknown,
   externalId: string,
 ): Effect.Effect<unknown, AdapterSyncError, any> => {
@@ -96,25 +136,7 @@ const mkCrudEffect = <Client extends EntityClient>(
       if (!entityClient.create) {
         return Effect.succeed(null)
       }
-      const { id: _id, ...attributesWithoutId } = encodedData as Record<string, unknown>
-      const createPayload = {
-        data: {
-          attributes: attributesWithoutId,
-          type: entityName as string,
-        },
-      }
-      return entityClient.create({ payload: createPayload }).pipe(
-        Effect.mapError(
-          (error) =>
-            new AdapterSyncError({
-              adapter: 'pco',
-              cause: error,
-              entityName,
-              message: `Failed to create ${entityName}`,
-              operation: 'create',
-            }),
-        ),
-      )
+      return mkInsertEffect(entityClient.create, entityName, encodedData)
     }
 
     case 'update':
