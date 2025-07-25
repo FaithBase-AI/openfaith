@@ -38,8 +38,6 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
     )
     const entityManifest = adapterOps.getEntityManifest()
 
-    console.log(entityManifest, tokenKey)
-
     const syncEntities = pipe(
       entityManifest,
       Record.values,
