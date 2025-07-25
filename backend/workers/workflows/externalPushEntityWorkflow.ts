@@ -5,7 +5,7 @@ import { ExternalLinkManagerLive } from '@openfaith/server/live/externalLinkMana
 import { PcoApiLayer } from '@openfaith/server/live/pcoApiLive'
 import {
   EntityTransformError,
-  ExternalSyncError,
+  ExternalPushError,
   syncDataE,
   UnsupportedAdapterError,
   UnsupportedOperationError,
@@ -23,7 +23,7 @@ class ExternalLinkNotFoundErrorSchema extends Schema.TaggedError<ExternalLinkNot
 }) {}
 
 // Define the workflow payload schema
-const ExternalSyncEntityPayload = Schema.Struct({
+const ExternalPushEntityPayload = Schema.Struct({
   entityName: Schema.String,
   mutations: Schema.Array(
     Schema.Struct({
@@ -35,23 +35,23 @@ const ExternalSyncEntityPayload = Schema.Struct({
 })
 
 // Define the external sync entity workflow with union of specific error types
-export const ExternalSyncEntityWorkflow = Workflow.make({
+export const ExternalPushEntityWorkflow = Workflow.make({
   error: Schema.Union(
     EntityTransformError,
     UnsupportedOperationError,
     UnsupportedAdapterError,
-    ExternalSyncError,
+    ExternalPushError,
     ExternalLinkNotFoundErrorSchema,
   ),
   idempotencyKey: ({ tokenKey, entityName }) =>
     `external-sync-entity-${tokenKey}-${entityName}-${new Date().toISOString()}`,
-  name: 'ExternalSyncEntityWorkflow',
-  payload: ExternalSyncEntityPayload,
+  name: 'ExternalPushEntityWorkflow',
+  payload: ExternalPushEntityPayload,
   success: Schema.Void,
 })
 
 // Create the workflow implementation layer
-export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLayer(
+export const ExternalPushEntityWorkflowLayer = ExternalPushEntityWorkflow.toLayer(
   Effect.fn(function* (payload, executionId) {
     yield* Effect.log(`🔄 Starting external sync entity workflow for: ${payload.entityName}`)
     yield* Effect.log(`🆔 Execution ID: ${executionId}`)
@@ -64,7 +64,7 @@ export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLaye
         EntityTransformError,
         UnsupportedOperationError,
         UnsupportedAdapterError,
-        ExternalSyncError,
+        ExternalPushError,
         ExternalLinkNotFoundErrorSchema,
       ),
       execute: Effect.gen(function* () {
@@ -91,7 +91,7 @@ export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLaye
       name: 'SyncExternalEntityData',
     }).pipe(
       Activity.retry({ times: 3 }),
-      ExternalSyncEntityWorkflow.withCompensation(
+      ExternalPushEntityWorkflow.withCompensation(
         Effect.fn(function* (_value, cause) {
           yield* Effect.log(`🔄 Compensating external sync entity activity for: ${entityName}`)
           yield* Effect.log(`📋 Cause: ${cause}`)

@@ -47,7 +47,7 @@ export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) 
         const workflowClient = yield* WorkflowClient
 
         yield* workflowClient.workflows
-          .ExternalSyncWorkflow({
+          .ExternalPushWorkflow({
             payload: {
               mutations: input.payload.mutations,
               tokenKey: authData.activeOrganizationId,

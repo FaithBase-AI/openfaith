@@ -41,8 +41,8 @@ export class UnsupportedAdapterError extends Schema.TaggedError<UnsupportedAdapt
   },
 ) {}
 
-export class ExternalSyncError extends Schema.TaggedError<ExternalSyncError>()(
-  'ExternalSyncError',
+export class ExternalPushError extends Schema.TaggedError<ExternalPushError>()(
+  'ExternalPushError',
   {
     cause: Schema.Unknown,
     entityName: Schema.String,
@@ -342,7 +342,7 @@ export const syncToPcoE = Effect.fn('syncToPcoE')(function* (
     ),
     Effect.mapError(
       (cause) =>
-        new ExternalSyncError({
+        new ExternalPushError({
           cause,
           entityName,
           externalId: link.externalId,

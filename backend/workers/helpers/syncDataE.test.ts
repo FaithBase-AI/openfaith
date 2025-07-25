@@ -14,7 +14,7 @@ import {
   type EntityClient,
   EntityTransformError,
   type ExternalLink,
-  ExternalSyncError,
+  ExternalPushError,
   findEntityManifestE,
   getExternalLinksE,
   mkCrudEffectE,
@@ -617,7 +617,7 @@ effect('All types are properly exported', () =>
 
     // Verify error types are available (used in tests via _tag comparisons)
     expect(EntityTransformError).toBeDefined()
-    expect(ExternalSyncError).toBeDefined()
+    expect(ExternalPushError).toBeDefined()
     expect(UnsupportedAdapterError).toBeDefined()
     expect(UnsupportedOperationError).toBeDefined()
   }),

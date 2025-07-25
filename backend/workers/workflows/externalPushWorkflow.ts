@@ -1,31 +1,31 @@
 import { Workflow } from '@effect/workflow'
 import { type CRUDMutation, type CustomMutation, Mutation } from '@openfaith/domain'
 import { convertCustomMutations } from '@openfaith/workers/helpers/convertCustomMutation'
-import { ExternalSyncEntityWorkflow } from '@openfaith/workers/workflows/externalSyncEntityWorkflow'
+import { ExternalPushEntityWorkflow } from '@openfaith/workers/workflows/externalPushEntityWorkflow'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
 
 // Define the external sync error
-class ExternalSyncError extends Schema.TaggedError<ExternalSyncError>()('ExternalSyncError', {
+class ExternalPushError extends Schema.TaggedError<ExternalPushError>()('ExternalPushError', {
   message: Schema.String,
 }) {}
 
 // Define the workflow payload schema
-const ExternalSyncPayload = Schema.Struct({
+const ExternalPushPayload = Schema.Struct({
   mutations: Schema.Array(Mutation),
   tokenKey: Schema.String, // PushRequest['mutations'] but simplified for workflow
 })
 
 // Define the external sync workflow
-export const ExternalSyncWorkflow = Workflow.make({
-  error: ExternalSyncError,
+export const ExternalPushWorkflow = Workflow.make({
+  error: ExternalPushError,
   idempotencyKey: ({ tokenKey }) => `external-sync-${tokenKey}-${new Date().toISOString()}`,
-  name: 'ExternalSyncWorkflow',
-  payload: ExternalSyncPayload,
+  name: 'ExternalPushWorkflow',
+  payload: ExternalPushPayload,
   success: Schema.Void,
 })
 
 // Create the workflow implementation layer
-export const ExternalSyncWorkflowLayer = ExternalSyncWorkflow.toLayer(
+export const ExternalPushWorkflowLayer = ExternalPushWorkflow.toLayer(
   Effect.fn(function* (payload, executionId) {
     yield* Effect.log(`🔄 Starting external sync workflow for token: ${payload.tokenKey}`)
     yield* Effect.log(`🆔 Execution ID: ${executionId}`)
@@ -96,14 +96,14 @@ export const ExternalSyncWorkflowLayer = ExternalSyncWorkflow.toLayer(
     yield* Effect.forEach(
       entityWorkflows,
       (entityWorkflow) =>
-        ExternalSyncEntityWorkflow.execute({
+        ExternalPushEntityWorkflow.execute({
           entityName: entityWorkflow.entityName,
           mutations: entityWorkflow.mutations,
           tokenKey,
         }).pipe(
           Effect.mapError(
             (error) =>
-              new ExternalSyncError({
+              new ExternalPushError({
                 message: error.message,
               }),
           ),
