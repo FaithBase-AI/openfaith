@@ -21,14 +21,10 @@ import {
 } from '@openfaith/workers/helpers/syncDataE'
 import { Chunk, Effect, Layer, Option, pipe, Record, SchemaAST, Stream } from 'effect'
 
-// Type-safe entity client utilities
-// Define the expected structure of an entity client
-interface EntityClient {
-  list?: (request: { urlParams?: Record<string, unknown> }) => Effect.Effect<any, any, any>
-  create?: (request: { payload: any }) => Effect.Effect<any, any, any>
-  update?: (request: { path: Record<string, string>; payload: any }) => Effect.Effect<any, any, any>
-  delete?: (request: { path: Record<string, string> }) => Effect.Effect<any, any, any>
-}
+// Get the actual type from the service
+type PcoClientType = Effect.Effect.Success<typeof PcoHttpClient>
+
+type EntityClient = PcoClientType[Exclude<keyof PcoClientType, '_tag' | 'token'>]
 
 // Type guard to ensure we have a valid entity client with required methods
 const isValidEntityClient = (client: unknown): client is EntityClient => {
@@ -46,12 +42,12 @@ const getEntityClient = (pcoClient: any, entityName: string): EntityClient | nul
   return isValidEntityClient(client) ? client : null
 }
 
-const createPcoEntityPaginatedStream = (
+const createPcoEntityPaginatedStream = <Client extends EntityClient>(
   entityName: string,
-  client: EntityClient,
+  client: Client,
   params?: Record<string, unknown>,
 ): Stream.Stream<unknown, AdapterSyncError | AdapterConnectionError, any> => {
-  if (!client || !client.list) {
+  if (!client && !('list' in client)) {
     return Stream.fail(
       new AdapterSyncError({
         adapter: 'pco',
@@ -86,9 +82,9 @@ const createPcoEntityPaginatedStream = (
   })
 }
 
-const mkCrudEffect = (
+const mkCrudEffect = <Client extends EntityClient>(
   operation: CRUDOp['op'],
-  entityClient: EntityClient,
+  entityClient: Client,
   entityName: string,
   encodedData: unknown,
   externalId: string,
