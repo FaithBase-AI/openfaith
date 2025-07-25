@@ -41,7 +41,7 @@ export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLaye
       execute: Effect.gen(function* () {
         const attempt = yield* Activity.CurrentAttempt
 
-        yield* Effect.annotateLogs(Effect.log(`📊 Syncing PCO data`), {
+        yield* Effect.annotateLogs(Effect.log(`📊 Syncing External data`), {
           attempt,
           executionId,
           tokenKey: payload.tokenKey,
