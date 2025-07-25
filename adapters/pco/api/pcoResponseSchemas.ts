@@ -108,16 +108,14 @@ type AttributesWithSpecialStruct<
 // Overload 1: No special fields - returns clean, well-typed schema
 export function mkPcoPayloadSchema<
   Fields extends Record<string, any>,
-  Special extends [],
   EntityType extends string,
   MarkOptional extends boolean = false,
->(
-  attributesSchema: Schema.Struct<Fields>,
-  fields: ReadonlyArray<keyof Fields>,
-  special: Special,
-  entityType: EntityType,
-  makeOptional?: MarkOptional,
-): Schema.Struct<{
+>(params: {
+  attributesSchema: Schema.Struct<Fields>
+  fields: ReadonlyArray<keyof Fields>
+  entityType: EntityType
+  makeOptional?: MarkOptional
+}): Schema.Struct<{
   data: Schema.Struct<{
     attributes: MarkOptional extends true
       ? Schema.SchemaClass<
@@ -137,13 +135,13 @@ export function mkPcoPayloadSchema<
   Special extends ReadonlyArray<string>,
   EntityType extends string,
   MarkOptional extends boolean = false,
->(
-  attributesSchema: Schema.Struct<Fields>,
-  fields: ReadonlyArray<keyof Fields>,
-  special: Special,
-  entityType: EntityType,
-  makeOptional?: MarkOptional,
-): Schema.Struct<{
+>(params: {
+  attributesSchema: Schema.Struct<Fields>
+  fields: ReadonlyArray<keyof Fields>
+  entityType: EntityType
+  special: Special
+  makeOptional?: MarkOptional
+}): Schema.Struct<{
   data: Schema.Struct<{
     attributes: MarkOptional extends true
       ? Schema.SchemaClass<
@@ -163,13 +161,15 @@ export function mkPcoPayloadSchema<
   Special extends ReadonlyArray<string>,
   EntityType extends string,
   MarkOptional extends boolean = false,
->(
-  attributesSchema: Schema.Struct<Fields>,
-  fields: ReadonlyArray<keyof Fields>,
-  special: Special,
-  entityType: EntityType,
-  makeOptional?: MarkOptional,
-): any {
+>(params: {
+  attributesSchema: Schema.Struct<Fields>
+  fields: ReadonlyArray<keyof Fields>
+  entityType: EntityType
+  special?: Special
+  makeOptional?: MarkOptional
+}): any {
+  const { attributesSchema, fields, entityType, special = [], makeOptional } = params
+
   // If no special fields, use the original approach for better type compatibility
   if (special.length === 0) {
     const pickedSchema = attributesSchema.pick(...fields)
@@ -188,7 +188,7 @@ export function mkPcoPayloadSchema<
   const pickedSchema = attributesSchema.pick(...fields)
   const pickedFields = pickedSchema.fields
   const specialFields = pipe(
-    special,
+    special as ReadonlyArray<string>,
     Array.reduce(
       {} as { [key in Special[0]]: Schema.optional<typeof Schema.String> },
       (acc, fieldName) => {

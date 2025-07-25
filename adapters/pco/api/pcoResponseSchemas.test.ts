@@ -203,13 +203,12 @@ effect('mkPcoSingleSchema: handles empty included array', () =>
 // mkPcoPayloadSchema tests
 effect('mkPcoPayloadSchema: creates POST payload schema with required fields', () =>
   Effect.gen(function* () {
-    const payloadSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      [],
-      'Person',
-      false, // Required fields for POST
-    )
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: false, // Required fields for POST
+    })
 
     const postPayload = {
       data: {
@@ -232,13 +231,12 @@ effect('mkPcoPayloadSchema: creates POST payload schema with required fields', (
 
 effect('mkPcoPayloadSchema: creates PATCH payload schema with optional fields', () =>
   Effect.gen(function* () {
-    const payloadSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name', 'email'],
-      [],
-      'Person',
-      true, // Optional fields for PATCH
-    )
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name', 'email'],
+      makeOptional: true, // Optional fields for PATCH
+    })
 
     // PATCH payload with only some fields
     const patchPayload = {
@@ -262,13 +260,12 @@ effect('mkPcoPayloadSchema: creates PATCH payload schema with optional fields', 
 
 effect('mkPcoPayloadSchema: validates entity type literal', () =>
   Effect.gen(function* () {
-    const payloadSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      [],
-      'Person',
-      false,
-    )
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: false,
+    })
 
     const invalidPayload = {
       data: {
@@ -286,13 +283,12 @@ effect('mkPcoPayloadSchema: validates entity type literal', () =>
 
 effect('mkPcoPayloadSchema: POST schema requires specified fields', () =>
   Effect.gen(function* () {
-    const payloadSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      [],
-      'Person',
-      false, // Required fields
-    )
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: false, // Required fields
+    })
 
     const incompletePayload = {
       data: {
@@ -310,13 +306,12 @@ effect('mkPcoPayloadSchema: POST schema requires specified fields', () =>
 
 effect('mkPcoPayloadSchema: PATCH schema allows partial updates', () =>
   Effect.gen(function* () {
-    const payloadSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name', 'email'],
-      [],
-      'Person',
-      true, // Optional fields
-    )
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name', 'email'],
+      makeOptional: true, // Optional fields
+    })
 
     const partialPayload = {
       data: {
@@ -337,13 +332,12 @@ effect('mkPcoPayloadSchema: PATCH schema allows partial updates', () =>
 
 effect('mkPcoPayloadSchema: handles empty attributes for PATCH', () =>
   Effect.gen(function* () {
-    const payloadSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      [],
-      'Person',
-      true, // Optional fields
-    )
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: true, // Optional fields
+    })
 
     const emptyAttributesPayload = {
       data: {
@@ -362,13 +356,12 @@ effect('mkPcoPayloadSchema: handles empty attributes for PATCH', () =>
 
 effect('mkPcoPayloadSchema: validates data structure', () =>
   Effect.gen(function* () {
-    const payloadSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      [],
-      'Person',
-      false,
-    )
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: false,
+    })
 
     const invalidStructure = {
       attributes: {
@@ -385,13 +378,12 @@ effect('mkPcoPayloadSchema: validates data structure', () =>
 
 effect('mkPcoPayloadSchema: picks only specified fields', () =>
   Effect.gen(function* () {
-    const payloadSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name'], // Only pick first_name
-      [],
-      'Person',
-      false,
-    )
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person', // Only pick first_name
+      fields: ['first_name'],
+      makeOptional: false,
+    })
 
     const payloadWithExtraFields = {
       data: {
@@ -420,13 +412,12 @@ effect('mkPcoPayloadSchema: handles real PCO person update scenario', () =>
       status: Schema.optional(Schema.Literal('active', 'inactive')),
     })
 
-    const payloadSchema = mkPcoPayloadSchema(
-      PersonUpdateSchema,
-      ['first_name', 'last_name', 'email', 'status'],
-      [],
-      'Person',
-      true, // PATCH - optional fields
-    )
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonUpdateSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name', 'email', 'status'],
+      makeOptional: true, // PATCH - optional fields
+    })
 
     const realUpdatePayload = {
       data: {
@@ -460,13 +451,12 @@ effect('mkPcoPayloadSchema: handles complex nested attributes', () =>
       tags: Schema.optional(Schema.Array(Schema.String)),
     })
 
-    const payloadSchema = mkPcoPayloadSchema(
-      ComplexAttributesSchema,
-      ['name', 'metadata', 'tags'],
-      [],
-      'ComplexEntity',
-      false,
-    )
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: ComplexAttributesSchema,
+      entityType: 'ComplexEntity',
+      fields: ['name', 'metadata', 'tags'],
+      makeOptional: false,
+    })
 
     const complexPayload = {
       data: {
@@ -521,13 +511,12 @@ effect('mkPcoSingleSchema: fails with invalid data structure', () =>
 
 effect('mkPcoPayloadSchema: fails with missing required data field', () =>
   Effect.gen(function* () {
-    const payloadSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name'],
-      [],
-      'Person',
-      false,
-    )
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name'],
+      makeOptional: false,
+    })
 
     const invalidPayload = {
       attributes: {
@@ -544,21 +533,19 @@ effect('mkPcoPayloadSchema: fails with missing required data field', () =>
 // Roundtrip tests
 effect('mkPcoPayloadSchema: POST and PATCH schemas work with same data structure', () =>
   Effect.gen(function* () {
-    const postSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      [],
-      'Person',
-      false, // Required fields
-    )
+    const postSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: false, // Required fields
+    })
 
-    const patchSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      [],
-      'Person',
-      true, // Optional fields
-    )
+    const patchSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: true, // Optional fields
+    })
 
     const fullPayload = {
       data: {
@@ -584,13 +571,12 @@ effect('mkPcoPayloadSchema: POST and PATCH schemas work with same data structure
 
 effect('mkPcoPayloadSchema: encodes back to original structure', () =>
   Effect.gen(function* () {
-    const payloadSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      [],
-      'Person',
-      false,
-    )
+    const payloadSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: false,
+    })
 
     const originalPayload = {
       data: {
@@ -835,13 +821,12 @@ effect('PcoBuildPayloadSchemaType: matches mkPcoPayloadSchema runtime behavior',
       false
     >
 
-    const runtimeSchema = mkPcoPayloadSchema(
-      PersonAttributesSchema,
-      ['first_name', 'last_name'],
-      [],
-      'Person',
-      false,
-    )
+    const runtimeSchema = mkPcoPayloadSchema({
+      attributesSchema: PersonAttributesSchema,
+      entityType: 'Person',
+      fields: ['first_name', 'last_name'],
+      makeOptional: false,
+    })
 
     const testPayload: TypedPayload = {
       data: {

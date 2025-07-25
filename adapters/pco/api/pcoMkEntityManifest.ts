@@ -153,6 +153,9 @@ export type ConvertPcoEntityManifest<
                     Schema.Schema.Type<PcoEntitySchemaFromIncludes<Endpoints, readonly []>>
                   >
                 >
+                payload: ReturnType<
+                  typeof mkPcoPayloadSchema<_Fields, _CreatableSpecial, _Entity, false>
+                >
               }
             : E extends Endpoint.BasePatchEndpointDefinition<
                   infer Api,
@@ -170,6 +173,9 @@ export type ConvertPcoEntityManifest<
                       Api,
                       Schema.Schema.Type<PcoEntitySchemaFromIncludes<Endpoints, readonly []>>
                     >
+                  >
+                  payload: ReturnType<
+                    typeof mkPcoPayloadSchema<_Fields, _UpdatableSpecial, _Entity, true>
                   >
                 }
               : E extends Endpoint.BaseDeleteEndpointDefinition<
@@ -457,13 +463,14 @@ export const mkPcoEntityManifest = <
                   endpoint.name,
                   {
                     ...endpoint,
-                    payload: mkPcoPayloadSchema(
-                      (endpoint.apiSchema as any).fields.attributes,
+                    payload: mkPcoPayloadSchema({
+                      attributesSchema: (endpoint.apiSchema as any).fields.attributes,
+                      entityType: (endpoint.apiSchema as any).fields.type.ast.type
+                        .literal as string,
                       fields,
+                      makeOptional: isOptional,
                       special,
-                      (endpoint.apiSchema as any).fields.type.ast.type.literal as string,
-                      isOptional,
-                    ),
+                    }),
                     response: mkPcoSingleSchema(endpoint.apiSchema),
                   },
                 ] as const

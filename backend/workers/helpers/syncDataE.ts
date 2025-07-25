@@ -247,14 +247,13 @@ export const mkCrudEffectE = Effect.fn('mkCrudEffectE')(function* (
       }
 
       yield* Effect.log('Sending update request', {
-        data: updatePayload.data,
         entityName,
         externalId,
-        pathParams: { [urlParamName]: externalId },
-        payloadData: encodedData,
-        updatePayload,
-        urlParamName,
+        path: { [urlParamName]: externalId },
+        payload: updatePayload,
+        payloadJson: JSON.stringify(updatePayload),
       })
+
       return yield* entityClient.update({
         path: { [urlParamName]: externalId },
         payload: updatePayload,
