@@ -18,7 +18,7 @@ Before implementing, review these files to understand the existing patterns:
 ### **Discovery Patterns**
 
 - `backend/workers/workflows/pcoSyncWorkflow.ts` - How to discover entities from manifests
-- `backend/workers/workflows/pcoSyncEntityWorkflow.ts` - Entity-level processing patterns
+- `backend/workers/workflows/externalSyncEntityWorkflow.ts` - Entity-level processing patterns
 
 ### **Dependencies**
 
@@ -53,7 +53,7 @@ export interface SyncOptions {
 
 // Error types
 export class SyncValidationError extends Schema.TaggedError<SyncValidationError>(
-  "SyncValidationError",
+  "SyncValidationError"
 )("SyncValidationError", {
   message: Schema.String,
   entityType: Schema.String,
@@ -61,7 +61,7 @@ export class SyncValidationError extends Schema.TaggedError<SyncValidationError>
 }) {}
 
 export class SyncTransformationError extends Schema.TaggedError<SyncTransformationError>(
-  "SyncTransformationError",
+  "SyncTransformationError"
 )("SyncTransformationError", {
   message: Schema.String,
   entityType: Schema.String,
@@ -70,7 +70,7 @@ export class SyncTransformationError extends Schema.TaggedError<SyncTransformati
 }) {}
 
 export class SyncExecutionError extends Schema.TaggedError<SyncExecutionError>(
-  "SyncExecutionError",
+  "SyncExecutionError"
 )("SyncExecutionError", {
   message: Schema.String,
   entityType: Schema.String,
@@ -85,7 +85,7 @@ export type SyncError =
   | SyncExecutionError;
 
 export class SyncOrchestrator extends Context.Tag(
-  "@openfaith/adapter-core/layers/syncOrchestrator/SyncOrchestrator",
+  "@openfaith/adapter-core/layers/syncOrchestrator/SyncOrchestrator"
 )<
   SyncOrchestrator,
   {
@@ -94,7 +94,7 @@ export class SyncOrchestrator extends Context.Tag(
       entityType: string,
       entityData: unknown,
       operation: CRUDOperation,
-      options?: SyncOptions,
+      options?: SyncOptions
     ) => Effect.Effect<SyncResult[], SyncError>;
 
     // Individual system sync
@@ -102,7 +102,7 @@ export class SyncOrchestrator extends Context.Tag(
       entityType: string,
       entityData: unknown,
       targetSystem: string,
-      operation: CRUDOperation,
+      operation: CRUDOperation
     ) => Effect.Effect<SyncResult, SyncError>;
 
     // Bulk operations
@@ -112,7 +112,7 @@ export class SyncOrchestrator extends Context.Tag(
         entityData: unknown;
         operation: CRUDOperation;
       }>,
-      options?: SyncOptions,
+      options?: SyncOptions
     ) => Effect.Effect<SyncResult[], SyncError>;
 
     // Discovery and introspection
@@ -194,10 +194,10 @@ export const SyncOrchestratorLive = Layer.effect(
 
         for (const [adapterName, adapterInfo] of Object.entries(adapters)) {
           for (const [entityKey, entityDef] of Object.entries(
-            adapterInfo.manifest,
+            adapterInfo.manifest
           )) {
             const ofEntityOpt = SchemaAST.getAnnotation<string>(OfEntity)(
-              entityDef.apiSchema.ast,
+              entityDef.apiSchema.ast
             );
 
             if (ofEntityOpt._tag === "Some") {
@@ -225,7 +225,7 @@ export const SyncOrchestratorLive = Layer.effect(
         entityType,
         entityData,
         operation,
-        options = {},
+        options = {}
       ) =>
         Effect.gen(function* () {
           // 1. Validate input data
@@ -239,7 +239,7 @@ export const SyncOrchestratorLive = Layer.effect(
                 message: "Entity data must be an object with an id field",
                 entityType,
                 entityId: "unknown",
-              }),
+              })
             );
           }
 
@@ -249,13 +249,13 @@ export const SyncOrchestratorLive = Layer.effect(
           const externalLinks =
             yield* externalLinkManager.getExternalLinksForEntity(
               entityType,
-              entityId,
+              entityId
             );
 
           // 3. Filter by target systems if specified
           const filteredLinks = options.targetSystems
             ? externalLinks.filter((link) =>
-                options.targetSystems!.includes(link.externalSystem),
+                options.targetSystems!.includes(link.externalSystem)
               )
             : externalLinks;
 
@@ -276,7 +276,7 @@ export const SyncOrchestratorLive = Layer.effect(
                 message: `No adapter mappings found for entity type: ${entityType}`,
                 entityType,
                 entityId,
-              }),
+              })
             );
           }
 
@@ -284,7 +284,7 @@ export const SyncOrchestratorLive = Layer.effect(
           const results = yield* Effect.forEach(filteredLinks, (link) =>
             Effect.gen(function* () {
               const mapping = mappings.find(
-                (m) => m.adapter === link.externalSystem,
+                (m) => m.adapter === link.externalSystem
               );
 
               if (!mapping) {
@@ -315,7 +315,7 @@ export const SyncOrchestratorLive = Layer.effect(
               try {
                 // 7. Transform CDM data to adapter format
                 const adapterData = yield* Schema.encode(mapping.transformer)(
-                  entityData,
+                  entityData
                 );
 
                 // 8. Get API client and execute operation
@@ -366,9 +366,9 @@ export const SyncOrchestratorLive = Layer.effect(
                   success: false,
                   error,
                   timestamp: new Date(),
-                } as SyncResult),
-              ),
-            ),
+                } as SyncResult)
+              )
+            )
           );
 
           return results;
@@ -380,7 +380,7 @@ export const SyncOrchestratorLive = Layer.effect(
             entityType,
             entityData,
             operation,
-            { targetSystems: [targetSystem] },
+            { targetSystems: [targetSystem] }
           );
 
           const result = pipe(results, Array.head);
@@ -393,7 +393,7 @@ export const SyncOrchestratorLive = Layer.effect(
                 entityId: (entityData as any).id || "unknown",
                 externalSystem: targetSystem,
                 operation,
-              }),
+              })
             );
           }
 
@@ -412,9 +412,9 @@ export const SyncOrchestratorLive = Layer.effect(
                 entity.entityType,
                 entity.entityData,
                 entity.operation,
-                options,
-              ),
-            ),
+                options
+              )
+            )
           );
 
           return pipe(allResults, Array.flatten);
@@ -450,22 +450,22 @@ export const SyncOrchestratorLive = Layer.effect(
               (acc, entityType) => {
                 const mappings = entityMappings.get(entityType) || [];
                 const adapterMapping = mappings.find(
-                  (m) => m.adapter === adapterName,
+                  (m) => m.adapter === adapterName
                 );
 
                 if (adapterMapping) {
                   const operations = Object.keys(
-                    adapterMapping.endpoints,
+                    adapterMapping.endpoints
                   ).filter((op) =>
-                    ["create", "update", "delete"].includes(op),
+                    ["create", "update", "delete"].includes(op)
                   ) as CRUDOperation[];
 
                   acc[entityType] = operations;
                 }
 
                 return acc;
-              },
-            ),
+              }
+            )
           );
 
           return {
@@ -474,7 +474,7 @@ export const SyncOrchestratorLive = Layer.effect(
           };
         }),
     });
-  }),
+  })
 );
 ```
 
@@ -496,7 +496,7 @@ export const SyncOrchestratorZero = (tx: EffectTransaction<ZSchema>) =>
       const baseSyncOrchestrator = yield* SyncOrchestrator;
 
       return baseSyncOrchestrator;
-    }),
+    })
   ).pipe(Layer.provide(ExternalLinkManagerZero(tx)));
 ```
 
@@ -522,7 +522,7 @@ const syncResults =
 ```typescript
 // In auto-generated mutators
 const mutators = createMutators(authData).pipe(
-  Effect.provide(SyncOrchestratorZero(tx)),
+  Effect.provide(SyncOrchestratorZero(tx))
 );
 ```
 

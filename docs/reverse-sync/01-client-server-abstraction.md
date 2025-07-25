@@ -15,7 +15,7 @@ This document outlines how OpenFaith's reverse sync uses Effect dependency injec
 ### **Existing Infrastructure (Proven Import Patterns)**
 
 - `backend/workers/workflows/pcoSyncWorkflow.ts` - Main PCO sync workflow ✅ **Pattern to mirror**
-- `backend/workers/workflows/pcoSyncEntityWorkflow.ts` - Entity-specific sync workflow ✅ **Pattern to mirror**
+- `backend/workers/workflows/externalSyncEntityWorkflow.ts` - Entity-specific sync workflow ✅ **Pattern to mirror**
 - `adapters/pco/base/pcoEntityManifest.ts` - Entity manifest for dynamic routing ✅ **Ready to use**
 - `adapters/pco/api/pcoApi.ts` - HTTP clients for external sync ✅ **Ready to use**
 - `adapters/pco/modules/people/pcoPersonSchema.ts` - Bidirectional transformers ✅ **Ready to use**
@@ -76,7 +76,7 @@ export const UpdatePersonInput = Schema.Struct({
 });
 
 export function createMutators(
-  authData: Pick<AuthData, "sub" | "activeOrganizationId"> | undefined,
+  authData: Pick<AuthData, "sub" | "activeOrganizationId"> | undefined
 ) {
   return {
     people: {
@@ -88,19 +88,19 @@ export function createMutators(
             return yield* Effect.fail(
               new ZeroMutatorAuthError({
                 message: "Not authenticated",
-              }),
+              })
             );
           }
 
           const validatedInput = yield* Schema.decodeUnknown(UpdatePersonInput)(
-            input,
+            input
           ).pipe(
             Effect.mapError(
               (error) =>
                 new ZeroMutatorValidationError({
                   message: `Invalid input: ${String(error)}`,
-                }),
-            ),
+                })
+            )
           );
 
           // ✅ Local update only - no external sync concerns
@@ -142,7 +142,7 @@ import { Effect, Option, pipe, Record, String } from "effect";
 
 /**
  * Creates external sync functions using the SAME manifest-driven approach
- * as our proven import workflows (pcoSyncWorkflow.ts → pcoSyncEntityWorkflow.ts)
+ * as our proven import workflows (pcoSyncWorkflow.ts → externalSyncEntityWorkflow.ts)
  */
 export function createExternalSyncFunctions() {
   return (mutations: PushRequest["mutations"]) =>
@@ -160,19 +160,17 @@ export function createExternalSyncFunctions() {
             yield* Effect.forEach(crudArg.ops, (op) =>
               Effect.gen(function* () {
                 // Convert table name to entity name (people -> Person)
-                // Same pattern as pcoSyncEntityWorkflow.ts
+                // Same pattern as externalSyncEntityWorkflow.ts
                 const entityName = pipe(
                   op.tableName,
                   String.snakeToPascal,
-                  (name) => (name.endsWith("s") ? name.slice(0, -1) : name),
+                  (name) => (name.endsWith("s") ? name.slice(0, -1) : name)
                 );
 
                 // Find entity in PCO manifest (SAME as import workflows)
                 const entityManifestOpt = pipe(
                   pcoEntityManifest,
-                  Record.findFirst(
-                    (manifest) => manifest.entity === entityName,
-                  ),
+                  Record.findFirst((manifest) => manifest.entity === entityName)
                 );
 
                 if (entityManifestOpt._tag === "None") {
@@ -190,7 +188,7 @@ export function createExternalSyncFunctions() {
                 const externalLinks =
                   yield* externalLinkManager.getExternalLinksForEntity(
                     op.tableName.slice(0, -1), // people -> person
-                    entityId,
+                    entityId
                   );
 
                 // Sync to each external system
@@ -200,7 +198,7 @@ export function createExternalSyncFunctions() {
                       // Mark sync in progress
                       yield* externalLinkManager.markSyncInProgress(
                         link.adapter,
-                        link.externalId,
+                        link.externalId
                       );
 
                       // Get PCO client method dynamically (SAME as import)
@@ -218,7 +216,7 @@ export function createExternalSyncFunctions() {
                         switch (entityName) {
                           case "Person":
                             return Schema.encode(pcoPersonTransformer)(
-                              op.value,
+                              op.value
                             );
                           // Add other transformers as needed
                           default:
@@ -236,8 +234,8 @@ export function createExternalSyncFunctions() {
                               ? entityClient.create({ body: encodedData })
                               : Effect.fail(
                                   new Error(
-                                    `Create not supported for ${entityName}`,
-                                  ),
+                                    `Create not supported for ${entityName}`
+                                  )
                                 );
 
                           case "update":
@@ -249,8 +247,8 @@ export function createExternalSyncFunctions() {
                                 })
                               : Effect.fail(
                                   new Error(
-                                    `Update not supported for ${entityName}`,
-                                  ),
+                                    `Update not supported for ${entityName}`
+                                  )
                                 );
 
                           case "delete":
@@ -260,13 +258,13 @@ export function createExternalSyncFunctions() {
                                 })
                               : Effect.fail(
                                   new Error(
-                                    `Delete not supported for ${entityName}`,
-                                  ),
+                                    `Delete not supported for ${entityName}`
+                                  )
                                 );
 
                           default:
                             return Effect.fail(
-                              new Error(`Unknown operation: ${op.op}`),
+                              new Error(`Unknown operation: ${op.op}`)
                             );
                         }
                       })();
@@ -277,7 +275,7 @@ export function createExternalSyncFunctions() {
                           Effect.gen(function* () {
                             yield* externalLinkManager.markSyncCompleted(
                               link.adapter,
-                              link.externalId,
+                              link.externalId
                             );
                             yield* Effect.logError("External sync failed", {
                               error,
@@ -285,22 +283,22 @@ export function createExternalSyncFunctions() {
                               op: op.op,
                             });
                             // Don't fail the entire operation - log and continue
-                          }),
-                        ),
+                          })
+                        )
                       );
 
                       // Mark sync completed on success
                       yield* externalLinkManager.markSyncCompleted(
                         link.adapter,
-                        link.externalId,
+                        link.externalId
                       );
                     }
-                  }),
+                  })
                 );
-              }),
+              })
             );
           }
-        }),
+        })
       );
     });
 }
@@ -309,7 +307,7 @@ export function createExternalSyncFunctions() {
 **Key Points:**
 
 - ✅ **Uses SAME manifest** as import workflows (`pcoEntityManifest`)
-- ✅ **Uses SAME entity discovery** pattern as `pcoSyncEntityWorkflow.ts`
+- ✅ **Uses SAME entity discovery** pattern as `externalSyncEntityWorkflow.ts`
 - ✅ **Uses EXISTING transformers** (`pcoPersonTransformer`)
 - ✅ **Uses EXISTING HTTP clients** (`PcoHttpClient`)
 - ✅ **Mirrors import architecture** but in reverse direction
@@ -347,7 +345,7 @@ export const ZeroHandlerLive = HttpApiBuilder.group(
         // Log the incoming push request with user context
         yield* Effect.log(
           "Processing Zero push request",
-          input.payload.mutations,
+          input.payload.mutations
         );
 
         const result = yield* appZeroStore
@@ -355,12 +353,12 @@ export const ZeroHandlerLive = HttpApiBuilder.group(
             createMutators({
               activeOrganizationId: pipe(
                 session.activeOrganizationIdOpt,
-                Option.getOrNull,
+                Option.getOrNull
               ),
               sub: session.userId,
             }),
             input.urlParams,
-            input.payload as unknown as ReadonlyJSONObject,
+            input.payload as unknown as ReadonlyJSONObject
           )
           .pipe(
             Effect.provideService(TokenKey, "server-token-key"),
@@ -368,13 +366,13 @@ export const ZeroHandlerLive = HttpApiBuilder.group(
               (error) =>
                 new MutatorError({
                   message: `Error processing push request: ${error}`,
-                }),
-            ),
+                })
+            )
           );
 
         return result;
-      }),
-    ),
+      })
+    )
 ).pipe(Layer.provide(SessionHttpMiddlewareLayer), Layer.provide(ZeroLive));
 ```
 
@@ -408,13 +406,13 @@ export const ZeroHandlerLive = HttpApiBuilder.group(
 
         yield* Effect.log(
           "Processing Zero push request",
-          input.payload.mutations,
+          input.payload.mutations
         );
 
         const authData = {
           activeOrganizationId: pipe(
             session.activeOrganizationIdOpt,
-            Option.getOrNull,
+            Option.getOrNull
           ),
           sub: session.userId,
         };
@@ -424,7 +422,7 @@ export const ZeroHandlerLive = HttpApiBuilder.group(
           .processMutations(
             createMutators(authData), // Clean mutators - local only
             input.urlParams,
-            input.payload as unknown as ReadonlyJSONObject,
+            input.payload as unknown as ReadonlyJSONObject
           )
           .pipe(
             Effect.provideService(TokenKey, "server-token-key"),
@@ -432,8 +430,8 @@ export const ZeroHandlerLive = HttpApiBuilder.group(
               (error) =>
                 new MutatorError({
                   message: `Error processing push request: ${error}`,
-                }),
-            ),
+                })
+            )
           );
 
         // 🔄 NEW: After local mutations succeed, sync to external systems
@@ -444,19 +442,19 @@ export const ZeroHandlerLive = HttpApiBuilder.group(
           Effect.provide(BasePcoApiLayer),
           Effect.provideService(
             TokenKey,
-            authData.activeOrganizationId || "default",
+            authData.activeOrganizationId || "default"
           ),
           Effect.catchAll((error) =>
             Effect.logError("External sync failed", {
               error: error.message,
               mutations: input.payload.mutations.length,
-            }),
-          ),
+            })
+          )
         );
 
         return result;
-      }),
-    ),
+      })
+    )
 ).pipe(Layer.provide(SessionHttpMiddlewareLayer), Layer.provide(ZeroLive));
 ```
 
@@ -470,7 +468,7 @@ export const ZeroHandlerLive = HttpApiBuilder.group(
 
 ## Key Benefits
 
-1. **✅ Proven Architecture** - Uses SAME patterns as working import workflows (`pcoSyncWorkflow.ts` → `pcoSyncEntityWorkflow.ts`)
+1. **✅ Proven Architecture** - Uses SAME patterns as working import workflows (`pcoSyncWorkflow.ts` → `externalSyncEntityWorkflow.ts`)
 2. **✅ Manifest-Driven** - Uses SAME `pcoEntityManifest` as import workflows for consistency
 3. **✅ Dynamic Entity Resolution** - Automatically handles any entity defined in the manifest
 4. **✅ Existing Infrastructure** - Uses EXISTING transformers, HTTP clients, and error handling
@@ -505,7 +503,7 @@ export const PcoPersonAttributes = Schema.Struct({
 export const pcoPersonTransformer = pcoToOf(
   PcoPersonAttributes,
   BasePerson,
-  "person",
+  "person"
 );
 
 export const PcoPerson = mkPcoEntity({
@@ -553,7 +551,7 @@ export class PcoHttpClient extends Effect.Service<PcoHttpClient>()(
       // ✅ EXISTING client with auth, rate limiting, error handling
       const client = (yield* HttpClient.HttpClient).pipe(
         HttpClient.mapRequestEffect(/* auth logic */),
-        HttpClient.transformResponse(/* retry logic */),
+        HttpClient.transformResponse(/* retry logic */)
       );
 
       return yield* HttpApiClient.makeWith(PcoApi, {
@@ -561,7 +559,7 @@ export class PcoHttpClient extends Effect.Service<PcoHttpClient>()(
         httpClient: client,
       });
     }),
-  },
+  }
 ) {}
 
 // ✅ EXISTING API structure - ready for reverse sync
@@ -622,7 +620,7 @@ export const PushRequest = Schema.Struct({
 
 ### **Table Name to Entity Name Mapping** ✅ Using Existing Patterns
 
-**Pattern from**: `backend/workers/workflows/pcoSyncEntityWorkflow.ts`
+**Pattern from**: `backend/workers/workflows/externalSyncEntityWorkflow.ts`
 
 ```typescript
 // ✅ EXISTING pattern for entity discovery in import workflows
@@ -634,26 +632,26 @@ const syncEntities = pipe(
       return Option.some(entity.entity); // ← "Person", "Address", "Campus"
     }
     return Option.none();
-  }),
+  })
 );
 
 // ✅ SAME pattern for reverse sync - table name to entity name
 const entityName = pipe(
   op.tableName, // "people"
   String.snakeToPascal, // "People"
-  (name) => (name.endsWith("s") ? name.slice(0, -1) : name), // "Person"
+  (name) => (name.endsWith("s") ? name.slice(0, -1) : name) // "Person"
 );
 
 // ✅ Find entity in manifest (SAME as import)
 const entityManifestOpt = pipe(
   pcoEntityManifest,
-  Record.findFirst((manifest) => manifest.entity === entityName),
+  Record.findFirst((manifest) => manifest.entity === entityName)
 );
 ```
 
 ### **Dynamic HTTP Client Method Resolution** ✅ Using Existing Patterns
 
-**Pattern from**: `backend/workers/workflows/pcoSyncEntityWorkflow.ts`
+**Pattern from**: `backend/workers/workflows/externalSyncEntityWorkflow.ts`
 
 ```typescript
 // ✅ EXISTING pattern for dynamic client method resolution

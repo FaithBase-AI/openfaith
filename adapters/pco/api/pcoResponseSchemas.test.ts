@@ -905,7 +905,7 @@ effect('PcoBuildPayloadSchemaType: matches mkPcoPayloadSchema runtime behavior',
 // Test entity type extraction with real PCO workflow scenario
 effect('PcoBuildPayloadSchemaType: works with real PCO workflow scenario', () =>
   Effect.gen(function* () {
-    // Simulate the real scenario from pcoSyncEntityWorkflow.ts
+    // Simulate the real scenario from externalSyncEntityWorkflow.ts
     type PersonAttributes = {
       first_name: string
       last_name: string

@@ -61,20 +61,20 @@ const PcoResponseSchema = Schema.Struct({
       attributes: Schema.optional(
         Schema.Struct({
           updated_at: Schema.optional(Schema.String),
-        }),
+        })
       ),
-    }),
+    })
   ),
 });
 
 export const extractPcoUpdatedAt = (
-  response: unknown,
+  response: unknown
 ): Option.Option<string> => {
   return pipe(
     Schema.decodeUnknownOption(PcoResponseSchema)(response),
     Option.flatMap((parsed) =>
-      Option.fromNullable(parsed.data?.attributes?.updated_at),
-    ),
+      Option.fromNullable(parsed.data?.attributes?.updated_at)
+    )
   );
 };
 ```
@@ -124,10 +124,10 @@ syncEntityData: (entityName: string, operations: ReadonlyArray<CRUDOp>) =>
           entityClient,
           entityName,
           encodedData,
-          externalId,
+          externalId
         );
         // Handle success/error results
-      }),
+      })
     );
 
     return results;
@@ -142,7 +142,7 @@ syncEntityData: (entityName: string, operations: ReadonlyArray<CRUDOp>) =>
 
 **Objective**: Migrate PCO workflows to use abstract operations
 
-**Status**: **COMPLETED** - `backend/workers/workflows/pcoSyncEntityWorkflow.ts` has been refactored
+**Status**: **COMPLETED** - `backend/workers/workflows/externalSyncEntityWorkflow.ts` has been refactored
 
 **Implementation Summary**:
 
@@ -171,7 +171,7 @@ const entityConfig = entityManifest[payload.entity];
 
 yield *
   Stream.runForEach(adapterOps.listEntityData(payload.entity), (data) =>
-    saveDataE(data as any),
+    saveDataE(data as any)
   );
 ```
 
@@ -204,7 +204,7 @@ const syncEntities = pipe(
       return Option.some(entity.entity);
     }
     return Option.none();
-  }),
+  })
 );
 ```
 
@@ -224,7 +224,7 @@ const syncEntities = pipe(
       return Option.some(entity.entity);
     }
     return Option.none();
-  }),
+  })
 );
 ```
 
@@ -253,12 +253,12 @@ import { Layer } from "effect";
 
 export const PcoAdapterLayer = Layer.mergeAll(
   BasePcoApiLayer,
-  PcoOperationsLive,
+  PcoOperationsLive
 ).pipe(Layer.provide(BasePcoApiLayer));
 
 export const PcoAdapterOperationsLayer = Layer.provide(
   PcoOperationsLive,
-  PcoApiLayer,
+  PcoApiLayer
 );
 ```
 

@@ -2,10 +2,10 @@ import { Workflow } from '@effect/workflow'
 import { TokenKey } from '@openfaith/adapter-core'
 import { AdapterOperations } from '@openfaith/adapter-core/layers/adapterOperations'
 import { PcoAdapterOperationsLayer } from '@openfaith/pco/pcoAdapterLayer'
-import { PcoSyncEntityWorkflow } from '@openfaith/workers/workflows/pcoSyncEntityWorkflow'
+import { ExternalSyncEntityWorkflow } from '@openfaith/workers/workflows/extenralSyncEntityWorkflow'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
 
-// Define the PCO sync error
+// Define the external sync error
 class PcoSyncError extends Schema.TaggedError<PcoSyncError>('PcoSyncError')('PcoSyncError', {
   message: Schema.String,
 }) {}
@@ -15,10 +15,10 @@ const PcoSyncPayload = Schema.Struct({
   tokenKey: Schema.String,
 })
 
-// Define the PCO sync workflow
+// Define the external sync workflow
 export const PcoSyncWorkflow = Workflow.make({
   error: PcoSyncError,
-  idempotencyKey: ({ tokenKey }) => `pco-sync-${tokenKey}-${new Date().toISOString()}`,
+  idempotencyKey: ({ tokenKey }) => `external-sync-${tokenKey}-${new Date().toISOString()}`,
   name: 'PcoSyncWorkflow',
   payload: PcoSyncPayload,
   success: Schema.Void,
@@ -27,7 +27,7 @@ export const PcoSyncWorkflow = Workflow.make({
 // Create the workflow implementation layer
 export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
   Effect.fn(function* (payload, executionId) {
-    yield* Effect.log(`🔄 Starting PCO sync workflow for token: ${payload.tokenKey}`)
+    yield* Effect.log(`🔄 Starting external sync workflow for token: ${payload.tokenKey}`)
     yield* Effect.log(`🆔 Execution ID: ${executionId}`)
 
     const { tokenKey } = payload
@@ -50,11 +50,11 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
     )
 
     yield* Effect.forEach(syncEntities, (entity) =>
-      PcoSyncEntityWorkflow.execute({ entity, tokenKey }).pipe(
+      ExternalSyncEntityWorkflow.execute({ entity, tokenKey }).pipe(
         Effect.mapError((err) => new PcoSyncError({ message: err.message })),
       ),
     )
 
-    yield* Effect.log(`✅ Completed PCO sync workflow for token: ${payload.tokenKey}`)
+    yield* Effect.log(`✅ Completed external sync workflow for token: ${payload.tokenKey}`)
   }),
 )

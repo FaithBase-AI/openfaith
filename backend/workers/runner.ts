@@ -7,10 +7,10 @@ import { WorkflowProxyServer } from '@effect/workflow'
 import { DBLive } from '@openfaith/db'
 import { TokenManagerLive } from '@openfaith/server'
 import { HealthLive, WorkflowApi, workflows } from '@openfaith/workers/api/workflowApi'
+import { ExternalSyncEntityWorkflowLayer } from '@openfaith/workers/workflows/extenralSyncEntityWorkflow'
 import { ExternalPushEntityWorkflowLayer } from '@openfaith/workers/workflows/externalPushEntityWorkflow'
 import { ExternalPushWorkflowLayer } from '@openfaith/workers/workflows/externalPushWorkflow'
-import { PcoSyncEntityWorkflowLayer } from '@openfaith/workers/workflows/pcoSyncEntityWorkflow'
-import { PcoSyncWorkflowLayer } from '@openfaith/workers/workflows/pcoSyncWorkflow'
+import { PcoSyncWorkflowLayer } from '@openfaith/workers/workflows/externalSyncWorkflow'
 import { TestWorkflowLayer } from '@openfaith/workers/workflows/testWorkflow'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
@@ -41,7 +41,7 @@ const port = 3020
 
 const EnvLayer = Layer.mergeAll(
   PcoSyncWorkflowLayer,
-  PcoSyncEntityWorkflowLayer,
+  ExternalSyncEntityWorkflowLayer,
   ExternalPushWorkflowLayer,
   ExternalPushEntityWorkflowLayer,
   TestWorkflowLayer,

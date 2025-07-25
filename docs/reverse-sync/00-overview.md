@@ -128,6 +128,6 @@ Key files to understand before implementation:
 ### **Workflow Patterns**
 
 - `backend/workers/workflows/pcoSyncWorkflow.ts` - Workflow orchestration pattern
-- `backend/workers/workflows/pcoSyncEntityWorkflow.ts` - Entity-level sync pattern
+- `backend/workers/workflows/externalSyncEntityWorkflow.ts` - Entity-level sync pattern
 
 This implementation will mirror the proven patterns from inbound sync while leveraging all existing infrastructure for maximum efficiency and reliability.

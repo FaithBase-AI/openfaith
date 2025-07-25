@@ -124,7 +124,7 @@ This specification outlines the refactoring of OpenFaith's adapter system to sup
 
 1. **Update PcoSyncEntityWorkflow**
 
-   - Files to modify: `backend/workers/workflows/pcoSyncEntityWorkflow.ts`
+   - Files to modify: `backend/workers/workflows/externalSyncEntityWorkflow.ts`
    - Replace direct `PcoHttpClient` usage with `AdapterOperations`
    - Maintain existing functionality
    - Effect docs context: Search "service dependencies" and "Effect.provide"
