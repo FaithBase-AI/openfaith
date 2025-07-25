@@ -216,6 +216,7 @@ effect('mkPcoPayloadSchema: creates POST payload schema with required fields', (
           first_name: 'Jane',
           last_name: 'Smith',
         },
+        id: '123',
         type: 'Person',
       },
     }
@@ -224,7 +225,7 @@ effect('mkPcoPayloadSchema: creates POST payload schema with required fields', (
     expect(result.data.type).toBe('Person')
     expect(result.data.attributes.first_name).toBe('Jane')
     expect(result.data.attributes.last_name).toBe('Smith')
-    expect(result.data.id).toBeUndefined()
+    expect(result.data.id).toBe('123')
   }),
 )
 
@@ -397,6 +398,7 @@ effect('mkPcoPayloadSchema: picks only specified fields', () =>
           first_name: 'Jane',
           last_name: 'Smith', // This should be ignored, not rejected
         },
+        id: '456',
         type: 'Person',
       },
     }
@@ -475,6 +477,7 @@ effect('mkPcoPayloadSchema: handles complex nested attributes', () =>
           name: 'Test Entity',
           tags: ['important', 'test'],
         },
+        id: '789',
         type: 'ComplexEntity',
       },
     }
