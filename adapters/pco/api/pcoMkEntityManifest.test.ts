@@ -652,9 +652,7 @@ effect('mkPcoEntityManifest: handles special fields in payload schemas', () =>
     }
 
     // Should not throw
-    const decoded = Schema.decodeUnknownSync(createEndpoint.payload as Schema.Schema.Any)(
-      payloadWithSpecial,
-    )
+    const decoded = Effect.runSync(Schema.decodeUnknown(createEndpoint.payload)(payloadWithSpecial))
     expect(decoded.data.attributes.first_name).toBe('John')
     expect(decoded.data.attributes.last_name).toBe('Doe')
     expect(decoded.data.attributes.custom_field).toBe('special value')
