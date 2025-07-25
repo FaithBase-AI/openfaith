@@ -155,27 +155,6 @@ export type ExtractPathParams<TPath extends string> =
 // }
 
 /**
- * Builds the request body (payload) schema for a POST or PATCH endpoint
- * by picking the specified fields from the attributes schema.
- */
-export function buildPayloadSchema<Keys extends ReadonlyArray<string>>(
-  attributesSchema: Schema.Struct<any>,
-  keys: Keys,
-  wrapperKey?: string,
-): Schema.Struct<any> {
-  const pickedSchema = attributesSchema.pick(...keys)
-
-  if (wrapperKey) {
-    // Wrap in the specified key (e.g., 'attributes' for PCO)
-    return Schema.Struct({
-      [wrapperKey]: pickedSchema,
-    })
-  }
-  // Return flat structure (e.g., for CCB)
-  return pickedSchema
-}
-
-/**
  * Transforms our custom, high-level EndpointDefinition into an official
  * HttpApiEndpoint object from @effect/platform.
  *
@@ -222,7 +201,6 @@ export function toHttpApiEndpoint<
     never,
     Query
   >,
-  fieldsKey?: keyof Api,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
@@ -241,16 +219,17 @@ export function toHttpApiEndpoint<
   never,
   Schema.Schema.Type<Response>,
   never,
-  Schema.Schema.Context<Response>,
+  never,
   never
 >
 
-// POST overload
+// POST overload with payload
 export function toHttpApiEndpoint<
   TMethod extends 'POST',
   TPath extends `/${string}`,
   Api,
   Response extends Schema.Schema<any>,
+  Payload extends Schema.Schema<any>,
   Fields extends Record<string, any>,
   TModule extends string,
   TEntity extends string,
@@ -279,27 +258,27 @@ export function toHttpApiEndpoint<
     never,
     never,
     Query
-  >,
-  fieldsKey?: keyof Api,
+  > & { payload: Payload },
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
   ExtractPathParams<TPath>,
   never,
-  BuildPayloadSchemaType<Fields, CreatableFields>,
+  Schema.Schema.Type<Payload>,
   never,
   Schema.Schema.Type<Response>,
   never,
-  unknown,
+  never,
   never
 >
 
-// PATCH overload
+// PATCH overload with payload
 export function toHttpApiEndpoint<
   TMethod extends 'PATCH',
   TPath extends `/${string}`,
   Api,
   Response extends Schema.Schema<any>,
+  Payload extends Schema.Schema<any>,
   Fields extends Record<string, any>,
   TModule extends string,
   TEntity extends string,
@@ -328,18 +307,17 @@ export function toHttpApiEndpoint<
     UpdatableFields,
     UpdatableSpecial,
     Query
-  >,
-  fieldsKey?: keyof Api,
+  > & { payload: Payload },
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
   ExtractPathParams<TPath>,
   never,
-  BuildPayloadSchemaType<Fields, UpdatableFields>,
+  Schema.Schema.Type<Payload>,
   never,
   Schema.Schema.Type<Response>,
   never,
-  unknown,
+  never,
   never
 >
 
@@ -376,7 +354,6 @@ export function toHttpApiEndpoint<
     never,
     Query
   >,
-  fieldsKey?: keyof Api,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
@@ -390,11 +367,8 @@ export function toHttpApiEndpoint<
   never
 >
 
-// Catch-all overload for fieldsKey parameter
-export function toHttpApiEndpoint(definition: any, fieldsKey?: keyof any): any
-
 // Implementation
-export function toHttpApiEndpoint(definition: any, fieldsKey?: keyof any) {
+export function toHttpApiEndpoint(definition: any) {
   switch (definition.method) {
     case 'GET': {
       const pathParamsSchema = generatePathParamsSchema(definition.path)
@@ -405,75 +379,31 @@ export function toHttpApiEndpoint(definition: any, fieldsKey?: keyof any) {
         .addSuccess(definition.response)
     }
     case 'POST': {
-      // Extract attributes schema based on fieldsKey parameter
-      let attributesSchema: Schema.Struct<any>
+      const pathParamsSchema = generatePathParamsSchema(definition.path)
 
-      if (fieldsKey && definition.apiSchema.fields?.[fieldsKey]) {
-        // Use specified field key (e.g., 'attributes' for PCO)
-        attributesSchema = definition.apiSchema.fields[fieldsKey] as Schema.Struct<any>
-      } else if (
-        !fieldsKey &&
-        Schema.isSchema(definition.apiSchema) &&
-        'fields' in definition.apiSchema
-      ) {
-        // Use the schema directly (e.g., for CCB flat structure)
-        attributesSchema = definition.apiSchema as Schema.Struct<any>
-      } else {
+      if (!definition.payload) {
         throw new Error(
-          `apiSchema for endpoint does not have a valid schema structure needed to build a payload. ${
-            fieldsKey
-              ? `Expected field '${String(fieldsKey)}' not found.`
-              : 'Expected flat schema structure.'
-          }`,
+          `POST endpoint '${definition.name}' must have a payload schema. Please ensure the endpoint definition includes a 'payload' property.`,
         )
       }
-
-      const payloadSchema = buildPayloadSchema(
-        attributesSchema,
-        definition.creatableFields.fields,
-        fieldsKey ? String(fieldsKey) : undefined,
-      )
-      const pathParamsSchema = generatePathParamsSchema(definition.path)
 
       return HttpApiEndpoint.post(definition.name, definition.path)
         .setPath(pathParamsSchema)
-        .setPayload(payloadSchema)
+        .setPayload(definition.payload)
         .addSuccess(definition.response) as any
     }
     case 'PATCH': {
-      // Extract attributes schema based on fieldsKey parameter
-      let attributesSchema: Schema.Struct<any>
+      const pathParamsSchema = generatePathParamsSchema(definition.path)
 
-      if (fieldsKey && definition.apiSchema.fields?.[fieldsKey]) {
-        // Use specified field key (e.g., 'attributes' for PCO)
-        attributesSchema = definition.apiSchema.fields[fieldsKey] as Schema.Struct<any>
-      } else if (
-        !fieldsKey &&
-        Schema.isSchema(definition.apiSchema) &&
-        'fields' in definition.apiSchema
-      ) {
-        // Use the schema directly (e.g., for CCB flat structure)
-        attributesSchema = definition.apiSchema as Schema.Struct<any>
-      } else {
+      if (!definition.payload) {
         throw new Error(
-          `apiSchema for endpoint does not have a valid schema structure needed to build a payload. ${
-            fieldsKey
-              ? `Expected field '${String(fieldsKey)}' not found.`
-              : 'Expected flat schema structure.'
-          }`,
+          `PATCH endpoint '${definition.name}' must have a payload schema. Please ensure the endpoint definition includes a 'payload' property.`,
         )
       }
 
-      const payloadSchema = buildPayloadSchema(
-        attributesSchema,
-        definition.updatableFields.fields,
-        fieldsKey ? String(fieldsKey) : undefined,
-      )
-      const pathParamsSchema = generatePathParamsSchema(definition.path)
-
       return HttpApiEndpoint.patch(definition.name, definition.path)
         .setPath(pathParamsSchema)
-        .setPayload(payloadSchema)
+        .setPayload(definition.payload)
         .addSuccess(definition.response) as any
     }
     case 'DELETE': {

@@ -549,7 +549,7 @@ export const toPcoHttpApiGroup = <
 
   const endpoints = Object.values(entityManifest.endpoints)
   for (const endpoint of endpoints) {
-    group = group.add(toHttpApiEndpoint(endpoint as any, 'attributes')) as any
+    group = group.add(toHttpApiEndpoint(endpoint as any)) as any
   }
 
   // Apply error configuration - errors are now always present
