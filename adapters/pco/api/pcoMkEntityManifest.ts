@@ -246,13 +246,7 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
           'POST',
           ExtractPathParams<_TPath>,
           never,
-          PcoBuildPayloadSchemaType<
-            _Fields,
-            _CreatableFields,
-            _CreatableSpecial,
-            ExtractEntityType<_Api>,
-            false
-          >,
+          PcoBuildPayloadSchemaType<_Fields, _CreatableFields, _CreatableSpecial, _Entity, false>,
           never,
           _Response['Type'],
           never,
@@ -275,13 +269,7 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
             'PATCH',
             never,
             ExtractPathParams<_TPath>,
-            PcoBuildPayloadSchemaType<
-              _Fields,
-              _UpdatableFields,
-              _UpdatableSpecial,
-              ExtractEntityType<_Api>,
-              true
-            >,
+            PcoBuildPayloadSchemaType<_Fields, _UpdatableFields, _UpdatableSpecial, _Entity, true>,
             never,
             _Response['Type'],
             never,

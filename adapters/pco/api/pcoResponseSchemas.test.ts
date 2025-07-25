@@ -861,3 +861,71 @@ effect('PcoBuildPayloadSchemaType: matches mkPcoPayloadSchema runtime behavior',
     expect(runtimeResult.data.id).toBe('123')
   }),
 )
+
+// Test entity type extraction with real PCO workflow scenario
+effect('PcoBuildPayloadSchemaType: works with real PCO workflow scenario', () =>
+  Effect.gen(function* () {
+    // Simulate the real scenario from pcoSyncEntityWorkflow.ts
+    type PersonAttributes = {
+      first_name: string
+      last_name: string
+      avatar: string
+      accounting_administrator: boolean
+      anniversary: string | null
+      birthdate: string | null
+      child: boolean
+      gender: 'Male' | 'Female' | 'M' | 'F' | null
+      grade: number | null
+      graduation_year: number | null
+      status: 'active' | 'inactive'
+    }
+
+    // Test POST payload type (like what would be used in create operations)
+    type PostPayloadType = PcoBuildPayloadSchemaType<
+      PersonAttributes,
+      ['first_name', 'last_name', 'status'],
+      [],
+      'Person',
+      false
+    >
+
+    // Test PATCH payload type (like what would be used in update operations)
+    type PatchPayloadType = PcoBuildPayloadSchemaType<
+      PersonAttributes,
+      ['first_name', 'last_name', 'avatar', 'status'],
+      [],
+      'Person',
+      true
+    >
+
+    const postPayload: PostPayloadType = {
+      data: {
+        attributes: {
+          first_name: 'John',
+          last_name: 'Doe',
+          status: 'active',
+        },
+        id: '123',
+        type: 'Person',
+      },
+    }
+
+    const patchPayload: PatchPayloadType = {
+      data: {
+        attributes: {
+          first_name: 'Jane',
+        },
+        id: '456',
+        type: 'Person',
+      },
+    }
+
+    expect(postPayload.data.type).toBe('Person')
+    expect(postPayload.data.attributes.first_name).toBe('John')
+    expect(postPayload.data.attributes.status).toBe('active')
+
+    expect(patchPayload.data.type).toBe('Person')
+    expect(patchPayload.data.attributes.first_name).toBe('Jane')
+    expect(patchPayload.data.id).toBe('456')
+  }),
+)
