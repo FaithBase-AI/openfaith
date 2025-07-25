@@ -129,7 +129,7 @@ This specification outlines the refactoring of OpenFaith's adapter system to sup
    - Maintain existing functionality
    - Effect docs context: Search "service dependencies" and "Effect.provide"
 
-2. **Update PcoSyncWorkflow**
+2. **Update ExternalSyncWorkflow**
    - Files to modify: `backend/workers/workflows/pcoSyncWorkflow.ts`
    - Use abstract operations for entity manifest access
    - Remove direct PCO manifest dependencies

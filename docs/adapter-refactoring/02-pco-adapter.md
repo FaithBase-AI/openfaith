@@ -183,7 +183,7 @@ yield *
 - Provides `PcoAdapterOperationsLayer` instead of `PcoApiLayer`
 - Maintains existing error handling and logging patterns
 
-### Task 2.2.2: Update PcoSyncWorkflow ✅
+### Task 2.2.2: Update ExternalSyncWorkflow ✅
 
 **Objective**: Use abstract operations for entity manifest access
 
@@ -295,7 +295,7 @@ export const PcoAdapterOperationsLayer = Layer.provide(
 2. **Updated PCO Workflows** ✅:
 
    - ✅ `PcoSyncEntityWorkflow` uses `AdapterOperations.listEntityData()` instead of direct PCO client
-   - ✅ `PcoSyncWorkflow` uses `AdapterOperations.getEntityManifest()` instead of direct manifest import
+   - ✅ `ExternalSyncWorkflow` uses `AdapterOperations.getEntityManifest()` instead of direct manifest import
    - ✅ Maintained existing functionality and error handling patterns
    - ✅ Removed all direct PCO dependencies (`PcoHttpClient`, `pcoEntityManifest`)
    - ✅ Uses `PcoAdapterOperationsLayer` for dependency injection

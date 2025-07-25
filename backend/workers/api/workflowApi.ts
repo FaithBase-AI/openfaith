@@ -3,13 +3,13 @@ import { WorkflowProxy } from '@effect/workflow'
 import { ExternalSyncEntityWorkflow } from '@openfaith/workers/workflows/extenralSyncEntityWorkflow'
 import { ExternalPushEntityWorkflow } from '@openfaith/workers/workflows/externalPushEntityWorkflow'
 import { ExternalPushWorkflow } from '@openfaith/workers/workflows/externalPushWorkflow'
-import { PcoSyncWorkflow } from '@openfaith/workers/workflows/externalSyncWorkflow'
+import { ExternalSyncWorkflow } from '@openfaith/workers/workflows/externalSyncWorkflow'
 import { TestWorkflow } from '@openfaith/workers/workflows/testWorkflow'
 import { Effect, Schema } from 'effect'
 
 // Define the workflows to expose
 export const workflows = [
-  PcoSyncWorkflow,
+  ExternalSyncWorkflow,
   ExternalSyncEntityWorkflow,
   ExternalPushWorkflow,
   ExternalPushEntityWorkflow,

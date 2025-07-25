@@ -59,7 +59,7 @@ Workflows can be triggered directly via HTTP API calls:
 
 ```bash
 # Trigger PCO sync workflow
-curl -X POST http://localhost:3001/workflows/PcoSyncWorkflow \
+curl -X POST http://localhost:3001/workflows/ExternalSyncWorkflow \
   -H "Content-Type: application/json" \
   -d '{"payload": {"tokenKey": "your-token-key"}}'
 ```
@@ -74,7 +74,7 @@ const program = Effect.gen(function* () {
   const workflowClient = yield* WorkflowClient;
 
   // Trigger PCO sync workflow
-  const result = yield* workflowClient.workflows.PcoSyncWorkflow({
+  const result = yield* workflowClient.workflows.ExternalSyncWorkflow({
     payload: { tokenKey: "your-token-key" },
   });
 
@@ -87,12 +87,12 @@ const program = Effect.gen(function* () {
 
 ## Available Workflows
 
-### PcoSyncWorkflow
+### ExternalSyncWorkflow
 
 - **Purpose**: Synchronizes data from Planning Center Online
 - **Payload**: `{ tokenKey: string }`
-- **HTTP Endpoint**: `POST /workflows/PcoSyncWorkflow`
-- **Client Method**: `workflowClient.workflows.PcoSyncWorkflow({ payload: { tokenKey } })`
+- **HTTP Endpoint**: `POST /workflows/ExternalSyncWorkflow`
+- **Client Method**: `workflowClient.workflows.ExternalSyncWorkflow({ payload: { tokenKey } })`
 
 ## API Integration
 
@@ -103,7 +103,7 @@ The main API triggers workflows using the `WorkflowClient` service:
 const program = Effect.gen(function* () {
   const workflowClient = yield* WorkflowClient;
 
-  const result = yield* workflowClient.workflows.PcoSyncWorkflow({
+  const result = yield* workflowClient.workflows.ExternalSyncWorkflow({
     payload: { tokenKey: "your-token-key" },
   });
 

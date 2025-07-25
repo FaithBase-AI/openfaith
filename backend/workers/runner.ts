@@ -10,7 +10,7 @@ import { HealthLive, WorkflowApi, workflows } from '@openfaith/workers/api/workf
 import { ExternalSyncEntityWorkflowLayer } from '@openfaith/workers/workflows/extenralSyncEntityWorkflow'
 import { ExternalPushEntityWorkflowLayer } from '@openfaith/workers/workflows/externalPushEntityWorkflow'
 import { ExternalPushWorkflowLayer } from '@openfaith/workers/workflows/externalPushWorkflow'
-import { PcoSyncWorkflowLayer } from '@openfaith/workers/workflows/externalSyncWorkflow'
+import { ExternalSyncWorkflowLayer } from '@openfaith/workers/workflows/externalSyncWorkflow'
 import { TestWorkflowLayer } from '@openfaith/workers/workflows/testWorkflow'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
@@ -40,7 +40,7 @@ const WorkflowApiLive = HttpApiBuilder.api(WorkflowApi).pipe(
 const port = 3020
 
 const EnvLayer = Layer.mergeAll(
-  PcoSyncWorkflowLayer,
+  ExternalSyncWorkflowLayer,
   ExternalSyncEntityWorkflowLayer,
   ExternalPushWorkflowLayer,
   ExternalPushEntityWorkflowLayer,

@@ -6,26 +6,29 @@ import { ExternalSyncEntityWorkflow } from '@openfaith/workers/workflows/extenra
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
 
 // Define the external sync error
-class PcoSyncError extends Schema.TaggedError<PcoSyncError>('PcoSyncError')('PcoSyncError', {
-  message: Schema.String,
-}) {}
+class ExternalSyncError extends Schema.TaggedError<ExternalSyncError>('ExternalSyncError')(
+  'ExternalSyncError',
+  {
+    message: Schema.String,
+  },
+) {}
 
 // Define the workflow payload schema
-const PcoSyncPayload = Schema.Struct({
+const ExternalSyncPayload = Schema.Struct({
   tokenKey: Schema.String,
 })
 
 // Define the external sync workflow
-export const PcoSyncWorkflow = Workflow.make({
-  error: PcoSyncError,
+export const ExternalSyncWorkflow = Workflow.make({
+  error: ExternalSyncError,
   idempotencyKey: ({ tokenKey }) => `external-sync-${tokenKey}-${new Date().toISOString()}`,
-  name: 'PcoSyncWorkflow',
-  payload: PcoSyncPayload,
+  name: 'ExternalSyncWorkflow',
+  payload: ExternalSyncPayload,
   success: Schema.Void,
 })
 
 // Create the workflow implementation layer
-export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
+export const ExternalSyncWorkflowLayer = ExternalSyncWorkflow.toLayer(
   Effect.fn(function* (payload, executionId) {
     yield* Effect.log(`🔄 Starting external sync workflow for token: ${payload.tokenKey}`)
     yield* Effect.log(`🆔 Execution ID: ${executionId}`)
@@ -51,7 +54,7 @@ export const PcoSyncWorkflowLayer = PcoSyncWorkflow.toLayer(
 
     yield* Effect.forEach(syncEntities, (entity) =>
       ExternalSyncEntityWorkflow.execute({ entity, tokenKey }).pipe(
-        Effect.mapError((err) => new PcoSyncError({ message: err.message })),
+        Effect.mapError((err) => new ExternalSyncError({ message: err.message })),
       ),
     )
 

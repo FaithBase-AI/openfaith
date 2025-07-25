@@ -187,7 +187,7 @@ export class ValidationError extends Schema.TaggedError<ValidationError>()(
     field: Schema.String,
     message: Schema.String,
     cause: Schema.optional(Schema.Unknown),
-  },
+  }
 ) {}
 
 // Good error logging
@@ -195,7 +195,7 @@ Effect.tapError((error) =>
   Effect.logError("Operation failed", {
     error, // Log the typed error directly
     context: "additional context",
-  }),
+  })
 );
 
 // Bad error logging - DON'T DO THIS
@@ -203,7 +203,7 @@ Effect.tapError((error) =>
   Effect.logError("Operation failed", {
     error: error instanceof Error ? error.message : `${error}`, // ❌ Wrong!
     context: "additional context",
-  }),
+  })
 );
 ```
 
@@ -264,7 +264,7 @@ When creating new Effect workflows (using `@effect/workflow`), they must be regi
 // In workflowApi.ts
 import { MyNewWorkflow } from "@openfaith/workers/workflows/myNewWorkflow";
 export const workflows = [
-  PcoSyncWorkflow,
+  ExternalSyncWorkflow,
   PcoSyncEntityWorkflow,
   ExternalSyncWorkflow,
   ExternalSyncEntityWorkflow,
@@ -275,12 +275,12 @@ export const workflows = [
 // In runner.ts
 import { MyNewWorkflowLayer } from "@openfaith/workers/workflows/myNewWorkflow";
 const EnvLayer = Layer.mergeAll(
-  PcoSyncWorkflowLayer,
+  ExternalSyncWorkflowLayer,
   PcoSyncEntityWorkflowLayer,
   ExternalSyncWorkflowLayer,
   ExternalSyncEntityWorkflowLayer,
   MyNewWorkflowLayer, // Add here
-  TestWorkflowLayer,
+  TestWorkflowLayer
 );
 ```
 

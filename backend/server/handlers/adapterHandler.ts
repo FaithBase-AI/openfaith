@@ -123,7 +123,7 @@ export const AdapterHandlerLive = AdapterRpc.toLayer(
             console.log('🚀 Starting PCO sync workflow for org:', orgId)
 
             const result = yield* workflowClient.workflows
-              .PcoSyncWorkflow({
+              .ExternalSyncWorkflow({
                 payload: {
                   tokenKey: orgId,
                 },
