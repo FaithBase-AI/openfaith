@@ -1,0 +1,21 @@
+{
+  "dependencies": {
+    "@openfaith/adapter-core": "workspace:*",
+    "@openfaith/shared": "workspace:*",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  },
+  "license": "MIT",
+  "name": "@openfaith/every-adapter",
+  "private": true,
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "format": "biome check",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "type": "module",
+  "version": "0.1.0"
+}

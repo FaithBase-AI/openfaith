@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@openfaith/every-adapter/*": ["./*"]
+    }
+  },
+  "extends": "@openfaith/tsconfig/base.json",
+  "include": ["."]
+}
