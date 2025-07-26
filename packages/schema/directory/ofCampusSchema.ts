@@ -1,3 +1,5 @@
+import { campusesTable } from '@openfaith/db'
+import { OfTable } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -64,6 +66,8 @@ export const BaseCampus = Schema.Struct({
   zip: Schema.String.annotations({
     description: 'Zip code',
   }).pipe(Schema.NullOr),
+}).annotations({
+  [OfTable]: campusesTable,
 })
 export type BaseCampus = typeof BaseCampus.Type
 

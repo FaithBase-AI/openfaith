@@ -6,7 +6,7 @@ import type { pcoPersonTransformer } from '@openfaith/pco/server'
 import { OfFieldName } from '@openfaith/schema'
 
 import { mkEntityName, mkEntityType, mkUrlParamName } from '@openfaith/shared/string'
-import { ofLookup } from '@openfaith/workers/helpers/ofLookup'
+import { getPcoEntityMetadata } from '@openfaith/workers/helpers/schemaRegistry'
 import { Array, Effect, Option, pipe, Record, Schema, SchemaAST } from 'effect'
 
 // Define tagged errors for external sync operations
@@ -78,16 +78,26 @@ export const transformPartialEntityDataE = Effect.fn('transformPartialEntityData
   entityName: string,
   partialData: Record<string, unknown>,
 ) {
-  const entityConfig = ofLookup[entityName as keyof typeof ofLookup]
+  // Get entity metadata from schema registry
+  const entityMetadataOpt = getPcoEntityMetadata(entityName)
 
-  if (!entityConfig?.transformer) {
+  if (Option.isNone(entityMetadataOpt)) {
+    yield* Effect.logWarning('No entity config found - using raw data', {
+      entityName,
+    })
+    return partialData
+  }
+
+  const entityMetadata = entityMetadataOpt.value
+
+  if (Option.isNone(entityMetadata.transformer)) {
     yield* Effect.logWarning('No transformer found for entity - using raw data', {
       entityName,
     })
     return partialData
   }
 
-  const originalTransformer = entityConfig.transformer as any
+  const originalTransformer = entityMetadata.transformer.value as any
   const sourceSchema = originalTransformer.from as Schema.Struct<any>
 
   const transformedFields: Record<string, unknown> = {}
@@ -154,12 +164,22 @@ export const transformEntityDataE = Effect.fn('transformEntityDataE')(function* 
   entityName: string,
   data: unknown,
 ) {
-  const entityConfig = ofLookup[entityName as keyof typeof ofLookup]
+  // Get entity metadata from schema registry
+  const entityMetadataOpt = getPcoEntityMetadata(entityName)
 
-  if (entityConfig?.transformer) {
-    return yield* Schema.encode(entityConfig.transformer as unknown as typeof pcoPersonTransformer)(
-      data as any,
-    ).pipe(Effect.mapError((cause) => new EntityTransformError({ cause, entityName })))
+  if (Option.isNone(entityMetadataOpt)) {
+    yield* Effect.logWarning('No entity config found - using raw data', {
+      entityName,
+    })
+    return data
+  }
+
+  const entityMetadata = entityMetadataOpt.value
+
+  if (Option.isSome(entityMetadata.transformer)) {
+    return yield* Schema.encode(
+      entityMetadata.transformer.value as unknown as typeof pcoPersonTransformer,
+    )(data as any).pipe(Effect.mapError((cause) => new EntityTransformError({ cause, entityName })))
   }
 
   yield* Effect.logWarning('No transformer found for entity - using raw data', {
@@ -318,9 +338,14 @@ export const syncToPcoE = Effect.fn('syncToPcoE')(function* (
       ? yield* transformPartialEntityDataE(entityName, op.value as Record<string, unknown>)
       : yield* transformEntityDataE(entityName, op.value)
 
+  // Get entity metadata from schema registry for logging
+  const entityMetadataOpt = getPcoEntityMetadata(entityName)
+  const hasTransformer =
+    Option.isSome(entityMetadataOpt) && Option.isSome(entityMetadataOpt.value.transformer)
+
   yield* Effect.log('Data transformed for PCO', {
     entityName,
-    hasTransformer: !!ofLookup[entityName as keyof typeof ofLookup]?.transformer,
+    hasTransformer,
   })
 
   // Create and execute sync effect with proper error handling

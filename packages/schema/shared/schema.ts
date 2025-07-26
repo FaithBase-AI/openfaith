@@ -10,6 +10,7 @@ export const OfSkipEntity = Symbol.for('@openfaith/schema/skipEntity')
 export const OfTransformer = Symbol.for('@openfaith/schema/transformer')
 export const OfFolderType = Symbol.for('@openfaith/schema/folderType')
 export const OfIdentifier = Symbol.for('@openfaith/schema/identifier')
+export const OfTable = Symbol.for('@openfaith/schema/table')
 
 export type OfEdgeAnnotation = {
   relationshipType: string
@@ -33,6 +34,7 @@ declare module 'effect/Schema' {
       [OfTransformer]?: unknown
       [OfFolderType]?: string
       [OfIdentifier]?: string
+      [OfTable]?: unknown
     }
   }
 }

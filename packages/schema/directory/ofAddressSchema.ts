@@ -1,3 +1,5 @@
+import { addressesTable } from '@openfaith/db'
+import { OfTable } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -34,6 +36,8 @@ export const BaseAddress = Schema.TaggedStruct('address', {
   zip: Schema.String.annotations({
     description: 'The postal or ZIP code of the address',
   }).pipe(Schema.NullOr),
+}).annotations({
+  [OfTable]: addressesTable,
 })
 export type BaseAddress = typeof BaseAddress.Type
 

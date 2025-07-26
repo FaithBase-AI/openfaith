@@ -1,3 +1,5 @@
+import { phoneNumbersTable } from '@openfaith/db'
+import { OfTable } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -19,6 +21,8 @@ export const BasePhoneNumber = Schema.TaggedStruct('phoneNumber', {
     description: 'Whether this is the primary phone number',
   }),
   type: Schema.Literal('default'),
+}).annotations({
+  [OfTable]: phoneNumbersTable,
 })
 export type BasePhoneNumber = typeof BasePhoneNumber.Type
 

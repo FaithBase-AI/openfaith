@@ -1,3 +1,5 @@
+import { peopleTable } from '@openfaith/db'
+import { OfTable } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -37,6 +39,8 @@ export const BasePerson = Schema.Struct({
     description: 'The full name of the person',
   }).pipe(Schema.NullOr),
   type: Schema.Literal('default'),
+}).annotations({
+  [OfTable]: peopleTable,
 })
 export type BasePerson = typeof BasePerson.Type
 

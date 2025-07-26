@@ -4,7 +4,7 @@ import { edgesTable, externalLinksTable } from '@openfaith/db'
 import type { mkPcoCollectionSchema, PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import type { pcoPersonTransformer } from '@openfaith/pco/server'
 import { EdgeDirectionSchema, getEntityId } from '@openfaith/shared'
-import { ofLookup } from '@openfaith/workers/helpers/ofLookup'
+import { getPcoEntityMetadata } from '@openfaith/workers/helpers/schemaRegistry'
 import { getTableColumns, getTableName, sql } from 'drizzle-orm'
 import { Array, Effect, Option, pipe, Record, Schema, String } from 'effect'
 
@@ -29,8 +29,10 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
     return []
   }
 
-  // For some reason, it's a super pain in the butt to get this type to narrow.
-  if (!(entityTypeOpt.value in ofLookup)) {
+  // Get entity metadata from schema registry
+  const entityMetadataOpt = getPcoEntityMetadata(entityTypeOpt.value)
+
+  if (Option.isNone(entityMetadataOpt)) {
     yield* Effect.annotateLogs(Effect.log('No data to process, skipping mkExternalLinksE'), {
       dataCount: data.length,
       orgId,
@@ -38,8 +40,10 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
     return []
   }
 
-  // Have to cast here even though we have narrowed the type above.
-  const { ofEntity } = ofLookup[entityTypeOpt.value as keyof typeof ofLookup]
+  const entityMetadata = entityMetadataOpt.value
+  const ofEntity = Option.isSome(entityMetadata.ofEntity)
+    ? entityMetadata.ofEntity.value
+    : entityTypeOpt.value.toLowerCase()
 
   yield* Effect.annotateLogs(Effect.log('Inserting external links'), {
     count: data.length,
@@ -126,8 +130,10 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
     return
   }
 
-  // For some reason, it's a super pain in the butt to get this type to narrow.
-  if (!(entityTypeOpt.value in ofLookup)) {
+  // Get entity metadata from schema registry
+  const entityMetadataOpt = getPcoEntityMetadata(entityTypeOpt.value)
+
+  if (Option.isNone(entityMetadataOpt)) {
     yield* Effect.annotateLogs(Effect.log('No data to process, skipping mkEntityUpsertE'), {
       dataCount: data.length,
       orgId,
@@ -135,8 +141,29 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
     return
   }
 
-  // Have to cast here even though we have narrowed the type above.
-  const { table, transformer, ofEntity } = ofLookup[entityTypeOpt.value as keyof typeof ofLookup]
+  const entityMetadata = entityMetadataOpt.value
+  const ofEntity = Option.isSome(entityMetadata.ofEntity)
+    ? entityMetadata.ofEntity.value
+    : entityTypeOpt.value.toLowerCase()
+
+  if (Option.isNone(entityMetadata.transformer)) {
+    yield* Effect.annotateLogs(Effect.log('No transformer found for entity'), {
+      entityType: ofEntity,
+      orgId,
+    })
+    return
+  }
+
+  if (Option.isNone(entityMetadata.table)) {
+    yield* Effect.annotateLogs(Effect.log('No table found for entity'), {
+      entityType: ofEntity,
+      orgId,
+    })
+    return
+  }
+
+  const transformer = entityMetadata.transformer.value
+  const table = entityMetadata.table.value
 
   const entityValues = yield* Effect.all(
     pipe(
