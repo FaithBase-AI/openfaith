@@ -380,7 +380,7 @@ export const PcoOperationsLive = Layer.effect(
                   entityClient,
                   // We know this is a PcoEntityClientKeys because of the check !entityClient above
                   entityName as PcoEntityClientKeys,
-                  encodedData,
+                  encodedData as Record<string, unknown>,
                   externalId,
                 )
 

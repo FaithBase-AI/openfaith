@@ -826,13 +826,29 @@ live('PATCH endpoint should have correct payload type from BuildPayloadSchemaTyp
 live('toHttpApiEndpoint should work with GET endpoint', () =>
   Effect.sync(() => {
     const getEndpoint = {
-      method: 'GET',
+      apiSchema: Schema.Struct({
+        id: Schema.String,
+        type: Schema.String,
+      }),
+      entity: 'Person' as const,
+      includes: [] as const,
+      isCollection: true as const,
+      method: 'GET' as const,
+      module: 'people' as const,
       name: 'listPeople',
-      path: '/people',
+      orderableFields: {
+        fields: [] as const,
+        special: [] as const,
+      },
+      path: '/people' as const,
       query: Schema.Struct({
         include: Schema.optional(Schema.Array(Schema.String)),
         per_page: Schema.optional(Schema.Number),
       }),
+      queryableFields: {
+        fields: [] as const,
+        special: [] as const,
+      },
       response: Schema.Struct({
         data: Schema.Array(
           Schema.Struct({
@@ -843,7 +859,7 @@ live('toHttpApiEndpoint should work with GET endpoint', () =>
       }),
     }
 
-    const httpEndpoint = toHttpApiEndpoint(getEndpoint)
+    const httpEndpoint = toHttpApiEndpoint(getEndpoint as any)
 
     expect(httpEndpoint.name).toBe('listPeople')
     expect(httpEndpoint.method).toBe('GET')
@@ -854,12 +870,28 @@ live('toHttpApiEndpoint should work with GET endpoint', () =>
 live('toHttpApiEndpoint should work with GET endpoint with path parameters', () =>
   Effect.sync(() => {
     const getEndpoint = {
-      method: 'GET',
+      apiSchema: Schema.Struct({
+        id: Schema.String,
+        type: Schema.String,
+      }),
+      entity: 'Person' as const,
+      includes: [] as const,
+      isCollection: false as const,
+      method: 'GET' as const,
+      module: 'people' as const,
       name: 'getPerson',
-      path: '/people/:personId',
+      orderableFields: {
+        fields: [] as const,
+        special: [] as const,
+      },
+      path: '/people/:personId' as const,
       query: Schema.Struct({
         include: Schema.optional(Schema.Array(Schema.String)),
       }),
+      queryableFields: {
+        fields: [] as const,
+        special: [] as const,
+      },
       response: Schema.Struct({
         data: Schema.Struct({
           id: Schema.String,
@@ -868,8 +900,7 @@ live('toHttpApiEndpoint should work with GET endpoint with path parameters', () 
       }),
     }
 
-    const httpEndpoint = toHttpApiEndpoint(getEndpoint)
-
+    const httpEndpoint = toHttpApiEndpoint(getEndpoint as any)
     expect(httpEndpoint.name).toBe('getPerson')
     expect(httpEndpoint.method).toBe('GET')
     expect(httpEndpoint.path).toBe('/people/:personId')
@@ -879,9 +910,15 @@ live('toHttpApiEndpoint should work with GET endpoint with path parameters', () 
 live('toHttpApiEndpoint should work with DELETE endpoint', () =>
   Effect.sync(() => {
     const deleteEndpoint = {
-      method: 'DELETE',
+      apiSchema: Schema.Struct({
+        id: Schema.String,
+        type: Schema.String,
+      }),
+      entity: 'Person' as const,
+      method: 'DELETE' as const,
+      module: 'people' as const,
       name: 'deletePerson',
-      path: '/people/:personId',
+      path: '/people/:personId' as const,
       response: Schema.Void,
     }
 
@@ -896,9 +933,15 @@ live('toHttpApiEndpoint should work with DELETE endpoint', () =>
 live('toHttpApiEndpoint should work with DELETE endpoint without path parameters', () =>
   Effect.sync(() => {
     const deleteEndpoint = {
-      method: 'DELETE',
+      apiSchema: Schema.Struct({
+        id: Schema.String,
+        type: Schema.String,
+      }),
+      entity: 'Person' as const,
+      method: 'DELETE' as const,
+      module: 'people' as const,
       name: 'deleteAll',
-      path: '/people',
+      path: '/people' as const,
       response: Schema.Void,
     }
 
@@ -914,9 +957,19 @@ live('toHttpApiEndpoint should work with DELETE endpoint without path parameters
 live('toHttpApiEndpoint should throw error for POST endpoint without payload', () =>
   Effect.sync(() => {
     const postEndpointWithoutPayload = {
-      method: 'POST',
+      apiSchema: Schema.Struct({
+        id: Schema.String,
+        type: Schema.String,
+      }),
+      creatableFields: {
+        fields: [] as const,
+        special: [] as const,
+      },
+      entity: 'Person' as const,
+      method: 'POST' as const,
+      module: 'people' as const,
       name: 'createPerson',
-      path: '/people',
+      path: '/people' as const,
       response: Schema.Struct({
         data: Schema.Struct({
           id: Schema.String,
@@ -924,7 +977,7 @@ live('toHttpApiEndpoint should throw error for POST endpoint without payload', (
         }),
       }),
       // Missing payload property
-    }
+    } as any
 
     expect(() => toHttpApiEndpoint(postEndpointWithoutPayload)).toThrow(
       "POST endpoint 'createPerson' must have a payload schema. Please ensure the endpoint definition includes a 'payload' property.",
@@ -935,17 +988,27 @@ live('toHttpApiEndpoint should throw error for POST endpoint without payload', (
 live('toHttpApiEndpoint should throw error for PATCH endpoint without payload', () =>
   Effect.sync(() => {
     const patchEndpointWithoutPayload = {
-      method: 'PATCH',
+      apiSchema: Schema.Struct({
+        id: Schema.String,
+        type: Schema.String,
+      }),
+      entity: 'Person' as const,
+      method: 'PATCH' as const,
+      module: 'people' as const,
       name: 'updatePerson',
-      path: '/people/:personId',
+      path: '/people/:personId' as const,
       response: Schema.Struct({
         data: Schema.Struct({
           id: Schema.String,
           type: Schema.String,
         }),
       }),
+      updatableFields: {
+        fields: [] as const,
+        special: [] as const,
+      },
       // Missing payload property
-    }
+    } as any
 
     expect(() => toHttpApiEndpoint(patchEndpointWithoutPayload)).toThrow(
       "PATCH endpoint 'updatePerson' must have a payload schema. Please ensure the endpoint definition includes a 'payload' property.",
