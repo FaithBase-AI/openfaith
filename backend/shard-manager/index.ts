@@ -1,5 +1,5 @@
 import { NodeClusterShardManagerSocket, NodeRuntime } from '@effect/platform-node'
-import { PgLive } from '@openfaith/server'
+import { PgLive } from '@openfaith/server/live/dbLive'
 import { Layer, Logger } from 'effect'
 
 NodeClusterShardManagerSocket.layer({
