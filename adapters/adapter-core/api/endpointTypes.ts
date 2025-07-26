@@ -222,6 +222,7 @@ export type BasePostEndpointDefinition<
 export type PostEndpointDefinition<
   Api,
   Response extends Schema.Schema<any>,
+  Payload extends Schema.Schema<any>,
   Fields extends Record<string, any>,
   TModule extends string,
   TEntity extends string,
@@ -240,6 +241,7 @@ export type PostEndpointDefinition<
   CreatableSpecial
 > & {
   response: Response
+  payload: Payload
 }
 
 export type DefinePatchEndpointInput<
@@ -294,6 +296,7 @@ export type BasePatchEndpointDefinition<
 export type PatchEndpointDefinition<
   Api,
   Response extends Schema.Schema<any>,
+  Payload extends Schema.Schema<any>,
   Fields extends Record<string, any>,
   TModule extends string,
   TEntity extends string,
@@ -312,6 +315,7 @@ export type PatchEndpointDefinition<
   UpdatableSpecial
 > & {
   response: Response
+  payload: Payload
 }
 
 export type DefineDeleteEndpointInput<
@@ -497,6 +501,7 @@ export type EndpointDefinition<
   TMethod extends Method,
   Api,
   Response extends Schema.Schema<any>,
+  Payload extends Schema.Schema<any>,
   Fields extends Record<string, any>,
   TModule extends string,
   TEntity extends string,
@@ -534,6 +539,7 @@ export type EndpointDefinition<
     ? PostEndpointDefinition<
         Api,
         Response,
+        Payload,
         Fields,
         TModule,
         TEntity,
@@ -546,6 +552,7 @@ export type EndpointDefinition<
       ? PatchEndpointDefinition<
           Api,
           Response,
+          Payload,
           Fields,
           TModule,
           TEntity,
@@ -561,8 +568,8 @@ export type EndpointDefinition<
 export type EntityManifestShape = Record<
   string,
   | GetEndpointDefinition<any, any, any, any, any, any, any, any, any, any, any, any, any, any>
-  | PostEndpointDefinition<any, any, any, any, any, any, any, any, any>
-  | PatchEndpointDefinition<any, any, any, any, any, any, any, any, any>
+  | PostEndpointDefinition<any, any, any, any, any, any, any, any, any, any>
+  | PatchEndpointDefinition<any, any, any, any, any, any, any, any, any, any>
   | DeleteEndpointDefinition<any, any, any, any, any, any, any>
 >
 
@@ -573,6 +580,7 @@ export type EntityManifestShape = Record<
  */
 export type Any = EndpointDefinition<
   Method,
+  any,
   any,
   any,
   any,

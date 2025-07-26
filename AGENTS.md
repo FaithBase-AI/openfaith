@@ -187,7 +187,7 @@ export class ValidationError extends Schema.TaggedError<ValidationError>()(
     field: Schema.String,
     message: Schema.String,
     cause: Schema.optional(Schema.Unknown),
-  }
+  },
 ) {}
 
 // Good error logging
@@ -195,7 +195,7 @@ Effect.tapError((error) =>
   Effect.logError("Operation failed", {
     error, // Log the typed error directly
     context: "additional context",
-  })
+  }),
 );
 
 // Bad error logging - DON'T DO THIS
@@ -203,7 +203,7 @@ Effect.tapError((error) =>
   Effect.logError("Operation failed", {
     error: error instanceof Error ? error.message : `${error}`, // ❌ Wrong!
     context: "additional context",
-  })
+  }),
 );
 ```
 
@@ -280,7 +280,7 @@ const EnvLayer = Layer.mergeAll(
   ExternalSyncWorkflowLayer,
   ExternalSyncEntityWorkflowLayer,
   MyNewWorkflowLayer, // Add here
-  TestWorkflowLayer
+  TestWorkflowLayer,
 );
 ```
 
@@ -311,11 +311,123 @@ const EnvLayer = Layer.mergeAll(
 
 ## Testing
 
-- Co-locate test files with source code
-- Use Effect's testing utilities
-- Test services with Effect's test runtime
-- Use Effect's mock layer system
-- Follow existing test patterns
+### Testing Philosophy
+
+Write comprehensive tests that validate both **type-level correctness** and **runtime behavior**. This dual approach catches issues at compile time and ensures proper functionality.
+
+### Core Testing Principles
+
+- **Co-locate test files with source code**
+- **Use Effect's testing utilities**
+- **Test services with Effect's test runtime**
+- **Use Effect's mock layer system**
+- **Follow existing test patterns**
+
+### Type-Level Testing
+
+When working with complex type transformations (especially in adapters and API layers), include tests that validate the generated types work correctly:
+
+**Type Structure Validation:**
+
+- Test that generated types have the expected parameter structure
+- Verify path parameters are in the correct positions for HTTP endpoints
+- Ensure payload schemas match expected shapes
+- Validate that type constraints are properly enforced
+
+**Mock Integration Testing:**
+
+- Create mock implementations that use the generated types
+- Test that mock clients can be called with expected parameters
+- Verify type safety prevents incorrect usage at compile time
+
+**Example Pattern:**
+
+```typescript
+// Test that PATCH endpoints have correct type structure
+effect(
+  "Type validation: PATCH endpoints have path and payload parameters",
+  () =>
+    Effect.gen(function* () {
+      // Mock function that expects PATCH structure
+      const mockPatchCall = (params: {
+        path: { personId: string }; // Path params should be available
+        payload: {
+          data: {
+            type: string;
+            attributes: Record<string, unknown>;
+          };
+        };
+      }) => params;
+
+      // This should compile correctly - validates type structure
+      const result = mockPatchCall({
+        path: { personId: "456" },
+        payload: {
+          data: {
+            type: "Person",
+            attributes: { first_name: "Jane" },
+          },
+        },
+      });
+
+      expect(result.path.personId).toBe("456");
+    }),
+);
+```
+
+### Runtime Testing
+
+**Functional Testing:**
+
+- Test actual business logic and data transformations
+- Verify Effect workflows execute correctly
+- Test error handling and recovery scenarios
+- Validate schema parsing and validation
+
+**Integration Testing:**
+
+- Test adapter integrations with mock external services
+- Verify database operations work correctly
+- Test API endpoints with real request/response cycles
+
+### When to Use Each Approach
+
+**Type-Level Tests:** Essential for
+
+- Complex type transformations (like `ConvertPcoHttpApi`)
+- Generic utilities that generate types
+- API client generation
+- Schema transformations
+- Any code where type correctness is critical for runtime behavior
+
+**Runtime Tests:** Essential for
+
+- Business logic validation
+- Data processing and transformations
+- Error handling scenarios
+- Integration points
+- User-facing functionality
+
+### Test Organization
+
+```typescript
+// Type-level tests - focus on compile-time correctness
+effect("Type validation: endpoint parameter structure", () => {
+  /* ... */
+});
+
+// Runtime tests - focus on behavior
+effect("Business logic: data transformation works correctly", () => {
+  /* ... */
+});
+
+// Integration tests - focus on system interactions
+effect("Integration: adapter syncs data correctly", () => {
+  /* ... */
+});
+```
+
+This comprehensive testing approach ensures both type safety and functional correctness, catching issues early and providing confidence in complex type-driven architectures.
 
 ## Important Notes
 

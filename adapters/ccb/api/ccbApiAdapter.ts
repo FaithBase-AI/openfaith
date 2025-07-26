@@ -243,6 +243,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
   ): PostEndpointDefinition<
     Api,
     ReturnType<typeof mkCcbSingleSchema<Api>>,
+    never, // TODO: Add payload schema
     Api,
     TModule,
     TEntity,
@@ -294,6 +295,7 @@ function createApiAdapter<TApiBase extends Record<string, any>>() {
   ): PatchEndpointDefinition<
     Api,
     ReturnType<typeof mkCcbSingleSchema<Api>>,
+    never, // TODO: Add payload schema
     Api,
     TModule,
     TEntity,

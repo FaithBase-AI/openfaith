@@ -84,12 +84,7 @@ const createPcoEntityPaginatedStream = <Client extends EntityClient>(
   })
 }
 
-const mkInsertEffect = <
-  ClientKey extends PcoEntityClientKeys,
-  // Method extends EntityClient['create'],
-  // Data extends Parameters<Method>[0]['payload']['data']['attributes'],
-  // EntityName extends Parameters<Method>[0]['payload']['data']['type'],
->(
+const mkInsertEffect = <ClientKey extends PcoEntityClientKeys>(
   method: PcoClientType[ClientKey]['create'],
   entityName: Parameters<PcoClientType[ClientKey]['create']>[0]['payload']['data']['type'],
   encodedData: Parameters<
@@ -122,6 +117,69 @@ const mkInsertEffect = <
   )
 }
 
+const mkUpdateEffect = <ClientKey extends PcoEntityClientKeys>(
+  method: PcoClientType[ClientKey]['update'],
+  entityName: Parameters<PcoClientType[ClientKey]['update']>[0]['payload']['data']['type'],
+  encodedData: Parameters<
+    PcoClientType[ClientKey]['update']
+  >[0]['payload']['data']['attributes'] & { id: string },
+) => {
+  const urlParamName = mkUrlParamName(entityName)
+  const { id, ...attributesWithoutId } = encodedData
+  const updatePayload = {
+    data: {
+      attributes: attributesWithoutId,
+      id: id,
+      type: entityName,
+    },
+  }
+
+  return (method as PcoClientType['Person']['update'])({
+    path: { [urlParamName]: id } as unknown as Parameters<
+      PcoClientType['Person']['update']
+    >[0]['path'],
+    payload: updatePayload as unknown as Parameters<
+      PcoClientType['Person']['update']
+    >[0]['payload'],
+  }).pipe(
+    Effect.mapError(
+      (error) =>
+        new AdapterSyncError({
+          adapter: 'pco',
+          cause: error,
+          entityName,
+          message: `Failed to update ${entityName}`,
+          operation: 'update',
+        }),
+    ),
+  )
+}
+
+const mkDeleteEffect = <ClientKey extends PcoEntityClientKeys>(
+  method: PcoClientType[ClientKey]['delete'],
+  entityName: string,
+  externalId: string,
+) => {
+  const urlParamName = mkUrlParamName(entityName)
+
+  return (method as PcoClientType['Person']['delete'])({
+    path: { [urlParamName]: externalId } as unknown as Parameters<
+      PcoClientType['Person']['delete']
+    >[0]['path'],
+  }).pipe(
+    Effect.mapError(
+      (error) =>
+        new AdapterSyncError({
+          adapter: 'pco',
+          cause: error,
+          entityName,
+          message: `Failed to delete ${entityName}`,
+          operation: 'delete',
+        }),
+    ),
+  )
+}
+
 const mkCrudEffect = <Client extends EntityClient, EntityName extends PcoEntityClientKeys>(
   operation: CRUDOp['op'],
   entityClient: Client,
@@ -129,8 +187,6 @@ const mkCrudEffect = <Client extends EntityClient, EntityName extends PcoEntityC
   encodedData: unknown,
   externalId: string,
 ): Effect.Effect<unknown, AdapterSyncError, any> => {
-  const urlParamName = mkUrlParamName(entityName)
-
   switch (operation) {
     case 'insert': {
       if (!entityClient.create) {
@@ -144,54 +200,14 @@ const mkCrudEffect = <Client extends EntityClient, EntityName extends PcoEntityC
       if (!entityClient.update) {
         return Effect.succeed(null)
       }
-      const { id: _id, ...attributesWithoutId } = encodedData as Record<string, unknown>
-      const updatePayload = {
-        data: {
-          attributes: attributesWithoutId,
-          id: externalId,
-          type: entityName,
-        },
-      }
-
-      return entityClient
-        .update({
-          path: { [urlParamName]: externalId },
-          payload: updatePayload,
-        })
-        .pipe(
-          Effect.mapError(
-            (error) =>
-              new AdapterSyncError({
-                adapter: 'pco',
-                cause: error,
-                entityName,
-                message: `Failed to update ${entityName}`,
-                operation: 'update',
-              }),
-          ),
-        )
+      return mkUpdateEffect(entityClient.update, entityName, encodedData)
     }
 
     case 'delete':
       if (!entityClient.delete) {
         return Effect.succeed(null)
       }
-      return entityClient
-        .delete({
-          path: { [urlParamName]: externalId },
-        })
-        .pipe(
-          Effect.mapError(
-            (error) =>
-              new AdapterSyncError({
-                adapter: 'pco',
-                cause: error,
-                entityName,
-                message: `Failed to delete ${entityName}`,
-                operation: 'delete',
-              }),
-          ),
-        )
+      return mkDeleteEffect(entityClient.delete, entityName, externalId)
 
     default:
       return Effect.fail(

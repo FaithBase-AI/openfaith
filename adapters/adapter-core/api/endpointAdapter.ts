@@ -168,6 +168,7 @@ export function toHttpApiEndpoint<
   TPath extends `/${string}`,
   Api,
   Response extends Schema.Schema<any>,
+  Payload extends Schema.Schema<any>,
   Fields extends Record<string, any>,
   TModule extends string,
   TEntity extends string,
@@ -184,6 +185,7 @@ export function toHttpApiEndpoint<
     TMethod,
     Api,
     Response,
+    Payload,
     Fields,
     TModule,
     TEntity,
@@ -242,6 +244,7 @@ export function toHttpApiEndpoint<
     TMethod,
     Api,
     Response,
+    Payload,
     Fields,
     TModule,
     TEntity,
@@ -258,7 +261,7 @@ export function toHttpApiEndpoint<
     never,
     never,
     Query
-  > & { payload: Payload },
+  >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
@@ -291,6 +294,7 @@ export function toHttpApiEndpoint<
     TMethod,
     Api,
     Response,
+    Payload,
     Fields,
     TModule,
     TEntity,
@@ -307,7 +311,7 @@ export function toHttpApiEndpoint<
     UpdatableFields,
     UpdatableSpecial,
     Query
-  > & { payload: Payload },
+  >,
 ): HttpApiEndpoint.HttpApiEndpoint<
   TName,
   TMethod,
@@ -337,6 +341,7 @@ export function toHttpApiEndpoint<
     TMethod,
     Api,
     Response,
+    never,
     Fields,
     TModule,
     TEntity,

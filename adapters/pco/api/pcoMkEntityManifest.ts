@@ -247,12 +247,13 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
         never,
         _Response['Type'],
         never,
-        _Response['Context'],
+        never,
         never
       >
     : Endpoints extends Endpoint.PostEndpointDefinition<
           infer _Api,
           infer _Response,
+          infer _Payload,
           infer _Fields,
           infer _Module,
           infer _Entity,
@@ -266,23 +267,17 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
           'POST',
           ExtractPathParams<_TPath>,
           never,
-          PcoBuildPayloadSchemaType<
-            _Fields,
-            _CreatableFields,
-            _CreatableSpecial,
-            _Entity,
-            false,
-            'POST'
-          >,
+          _Payload['Type'],
           never,
           _Response['Type'],
           never,
-          _Response['Context'],
+          never,
           never
         >
       : Endpoints extends Endpoint.PatchEndpointDefinition<
             infer _Api,
             infer _Response,
+            infer _Payload,
             infer _Fields,
             infer _Module,
             infer _Entity,
@@ -296,18 +291,11 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
             'PATCH',
             ExtractPathParams<_TPath>,
             never,
-            PcoBuildPayloadSchemaType<
-              _Fields,
-              _UpdatableFields,
-              _UpdatableSpecial,
-              _Entity,
-              true,
-              'PATCH'
-            >,
+            _Payload['Type'],
             never,
             _Response['Type'],
             never,
-            _Response['Context'],
+            never,
             never
           >
         : Endpoints extends Endpoint.DeleteEndpointDefinition<

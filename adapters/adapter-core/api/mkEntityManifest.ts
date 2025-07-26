@@ -68,12 +68,13 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
         never,
         _Response['Type'],
         never,
-        _Response['Context'],
+        never,
         never
       >
     : Endpoints extends Endpoint.PostEndpointDefinition<
           infer _Api,
           infer _Response,
+          infer _Payload,
           infer _Fields,
           infer _Module,
           infer _Entity,
@@ -95,12 +96,13 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
           never,
           _Response['Type'],
           never,
-          _Response['Context'],
+          never,
           never
         >
       : Endpoints extends Endpoint.PatchEndpointDefinition<
             infer _Api,
             infer _Response,
+            infer _Payload,
             infer _Fields,
             infer _Module,
             infer _Entity,
@@ -122,7 +124,7 @@ export type ConvertHttpApi<Endpoints extends Endpoint.Any> =
             never,
             _Response['Type'],
             never,
-            _Response['Context'],
+            never,
             never
           >
         : Endpoints extends Endpoint.DeleteEndpointDefinition<
