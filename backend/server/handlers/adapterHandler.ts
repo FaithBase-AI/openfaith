@@ -125,6 +125,7 @@ export const AdapterHandlerLive = AdapterRpc.toLayer(
             const result = yield* workflowClient.workflows
               .ExternalSyncWorkflow({
                 payload: {
+                  adapter: adapterImpl._tag,
                   tokenKey: orgId,
                 },
               })

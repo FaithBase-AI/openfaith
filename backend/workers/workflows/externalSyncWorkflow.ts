@@ -15,6 +15,7 @@ class ExternalSyncError extends Schema.TaggedError<ExternalSyncError>('ExternalS
 
 // Define the workflow payload schema
 const ExternalSyncPayload = Schema.Struct({
+  adapter: Schema.String,
   tokenKey: Schema.String,
 })
 
@@ -33,7 +34,9 @@ export const ExternalSyncWorkflowLayer = ExternalSyncWorkflow.toLayer(
     yield* Effect.log(`🔄 Starting external sync workflow for token: ${payload.tokenKey}`)
     yield* Effect.log(`🆔 Execution ID: ${executionId}`)
 
-    const { tokenKey } = payload
+    const { tokenKey, adapter } = payload
+
+    console.log('adapter', adapter)
 
     const adapterOps = yield* AdapterOperations.pipe(
       Effect.provide(PcoAdapterOperationsLayer),
