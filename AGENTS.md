@@ -173,10 +173,12 @@ Examples:
 
 **Error Logging:**
 
-- **NEVER use `instanceof Error` checks** when logging Effect errors
-- Effect errors are typed - log them directly without type checking
+- **NEVER use `instanceof Error` checks** when logging or handling Effect errors
+- Effect errors are typed - use them directly without type checking or conversion
+- **Avoid**: `error instanceof Error ? error.message : String(error)`
 - **Avoid**: `error instanceof Error ? error.message : \`${error}\``
-- **Prefer**: Just log the `error` directly - Effect's logging will handle serialization
+- **Prefer**: Just use the `error` directly - Effect's error handling and logging will handle serialization
+- **When storing errors in data structures**: Store the error object directly, not converted strings
 
 **Example:**
 
@@ -187,7 +189,7 @@ export class ValidationError extends Schema.TaggedError<ValidationError>()(
     field: Schema.String,
     message: Schema.String,
     cause: Schema.optional(Schema.Unknown),
-  }
+  },
 ) {}
 
 // Good error logging
@@ -195,7 +197,7 @@ Effect.tapError((error) =>
   Effect.logError("Operation failed", {
     error, // Log the typed error directly
     context: "additional context",
-  })
+  }),
 );
 
 // Bad error logging - DON'T DO THIS
@@ -203,7 +205,7 @@ Effect.tapError((error) =>
   Effect.logError("Operation failed", {
     error: error instanceof Error ? error.message : `${error}`, // ❌ Wrong!
     context: "additional context",
-  })
+  }),
 );
 ```
 
@@ -280,7 +282,7 @@ const EnvLayer = Layer.mergeAll(
   ExternalSyncWorkflowLayer,
   ExternalSyncEntityWorkflowLayer,
   MyNewWorkflowLayer, // Add here
-  TestWorkflowLayer
+  TestWorkflowLayer,
 );
 ```
 
@@ -375,7 +377,7 @@ effect(
       });
 
       expect(result.path.personId).toBe("456");
-    })
+    }),
 );
 ```
 

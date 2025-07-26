@@ -22,9 +22,11 @@ import {
 import { Chunk, Effect, Layer, Option, pipe, Record, SchemaAST, Stream } from 'effect'
 
 // Get the actual type from the service
-type PcoClientType = Effect.Effect.Success<typeof PcoHttpClient>
+type BasePcoClientType = Effect.Effect.Success<typeof PcoHttpClient>
 
-type PcoEntityClientKeys = Exclude<keyof PcoClientType, '_tag' | 'token'>
+type PcoEntityClientKeys = Exclude<keyof BasePcoClientType, '_tag' | 'token'>
+
+type PcoClientType = Pick<BasePcoClientType, PcoEntityClientKeys>
 
 type EntityClient = PcoClientType[Exclude<keyof PcoClientType, '_tag' | 'token'>]
 
@@ -180,11 +182,19 @@ const mkDeleteEffect = <ClientKey extends PcoEntityClientKeys>(
   )
 }
 
-const mkCrudEffect = <Client extends EntityClient, EntityName extends PcoEntityClientKeys>(
-  operation: CRUDOp['op'],
-  entityClient: Client,
+type CreateAttributes<T extends PcoEntityClientKeys> = Parameters<
+  PcoClientType[T]['create']
+>[0]['payload']['data']['attributes']
+
+type UpdateAttributes<T extends PcoEntityClientKeys> = Parameters<
+  PcoClientType[T]['update']
+>[0]['payload']['data']['attributes']
+
+const mkCrudEffect = <EntityName extends PcoEntityClientKeys, Operation extends CRUDOp['op']>(
+  operation: Operation,
+  entityClient: EntityClient,
   entityName: EntityName,
-  encodedData: unknown,
+  encodedData: Record<string, unknown>,
   externalId: string,
 ): Effect.Effect<unknown, AdapterSyncError, any> => {
   switch (operation) {
@@ -192,7 +202,11 @@ const mkCrudEffect = <Client extends EntityClient, EntityName extends PcoEntityC
       if (!entityClient.create) {
         return Effect.succeed(null)
       }
-      return mkInsertEffect(entityClient.create, entityName, encodedData)
+      return mkInsertEffect(
+        entityClient.create,
+        entityName,
+        encodedData as CreateAttributes<EntityName> & { id: string },
+      )
     }
 
     case 'update':
@@ -200,7 +214,11 @@ const mkCrudEffect = <Client extends EntityClient, EntityName extends PcoEntityC
       if (!entityClient.update) {
         return Effect.succeed(null)
       }
-      return mkUpdateEffect(entityClient.update, entityName, encodedData)
+      return mkUpdateEffect(
+        entityClient.update,
+        entityName,
+        encodedData as UpdateAttributes<EntityName> & { id: string },
+      )
     }
 
     case 'delete':
@@ -357,10 +375,18 @@ export const PcoOperationsLive = Layer.effect(
                       )
                     : yield* transformEntityDataE(entityName, op.value)
 
-                yield* mkCrudEffect(op.op, entityClient, entityName, encodedData, externalId)
+                yield* mkCrudEffect(
+                  op.op,
+                  entityClient,
+                  // We know this is a PcoEntityClientKeys because of the check !entityClient above
+                  entityName as PcoEntityClientKeys,
+                  encodedData,
+                  externalId,
+                )
 
                 return {
                   entityName,
+
                   externalId,
                   operation: op.op,
                   success: true,
@@ -369,7 +395,7 @@ export const PcoOperationsLive = Layer.effect(
                 Effect.catchAll((error) =>
                   Effect.succeed({
                     entityName,
-                    error: error instanceof Error ? error.message : String(error),
+                    error: String(error),
                     externalId,
                     operation: op.op,
                     success: false,
