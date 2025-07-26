@@ -1,4 +1,4 @@
-import { schema } from '@openfaith/db/schema/schema'
+import { schema } from '@openfaith/db'
 import { env } from '@openfaith/shared'
 import { SQL } from 'bun'
 import { drizzle } from 'drizzle-orm/bun-sql'

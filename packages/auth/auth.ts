@@ -1,6 +1,7 @@
 import { redis, resend } from '@openfaith/be-shared'
-import { db, getTableName, schema, usersTable } from '@openfaith/db'
+import { getTableName, schema, usersTable } from '@openfaith/db'
 import { reactInvitationEmail, reactOTPEmail } from '@openfaith/email'
+import { db } from '@openfaith/server'
 import { asyncNoOp, env } from '@openfaith/shared'
 import { betterAuth, type Models } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
