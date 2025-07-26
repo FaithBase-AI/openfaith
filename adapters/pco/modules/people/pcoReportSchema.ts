@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoReportAttributes = Schema.Struct({
@@ -27,5 +27,5 @@ export const PcoReport = mkPcoEntity({
   links: Schema.Struct({}),
   relationships: Schema.Struct({}),
   type: 'Report',
-}).annotations({ [OfSkipEntity]: true, identifier: 'pco-report' })
+}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-report' })
 export type PcoReport = typeof PcoReport.Type

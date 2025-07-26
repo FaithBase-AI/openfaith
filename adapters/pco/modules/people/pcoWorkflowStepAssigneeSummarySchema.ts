@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfEntity, OfFieldName, OfSkipEntity } from '@openfaith/schema'
+import { OfEntity, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoWorkflowStepAssigneeSummaryAttributes = Schema.Struct({
@@ -24,6 +24,6 @@ export const PcoWorkflowStepAssigneeSummary = mkPcoEntity({
 }).annotations({
   [OfEntity]: 'workflow_step_assignee_summary',
   [OfSkipEntity]: true,
-  identifier: 'pco-workflow-step-assignee-summary',
+  [OfIdentifier]: 'pco-workflow-step-assignee-summary',
 })
 export type PcoWorkflowStepAssigneeSummary = typeof PcoWorkflowStepAssigneeSummary.Type

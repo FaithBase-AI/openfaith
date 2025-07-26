@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfEntity, OfFieldName, OfSkipEntity } from '@openfaith/schema'
+import { OfEntity, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoWorkflowShareAttributes = Schema.Struct({
@@ -24,6 +24,6 @@ export const PcoWorkflowShare = mkPcoEntity({
 }).annotations({
   [OfEntity]: 'workflow_share',
   [OfSkipEntity]: true,
-  identifier: 'pco-workflow-share',
+  [OfIdentifier]: 'pco-workflow-share',
 })
 export type PcoWorkflowShare = typeof PcoWorkflowShare.Type

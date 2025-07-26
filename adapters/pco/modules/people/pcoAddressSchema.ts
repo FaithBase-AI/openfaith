@@ -1,6 +1,6 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BaseAddress, OfEntity, OfFieldName } from '@openfaith/schema'
+import { BaseAddress, OfEntity, OfFieldName, OfIdentifier, OfTransformer } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoAddressAttributes = Schema.Struct({
@@ -56,6 +56,10 @@ export const PcoAddress = mkPcoEntity({
     }),
   }),
   type: 'Address',
-}).annotations({ [OfEntity]: 'address', identifier: 'pco-address' })
+}).annotations({
+  [OfEntity]: 'address',
+  [OfIdentifier]: 'pco-address',
+  [OfTransformer]: pcoAddressTransformer,
+})
 
 export type PcoAddress = typeof PcoAddress.Type

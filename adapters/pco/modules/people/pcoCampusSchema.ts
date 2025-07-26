@@ -1,6 +1,13 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { OfCustomField, OfEntity, OfFieldName } from '@openfaith/schema'
+import {
+  BaseCampus,
+  OfCustomField,
+  OfEntity,
+  OfFieldName,
+  OfIdentifier,
+  OfTransformer,
+} from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoCampusAttributes = Schema.Struct({
@@ -79,7 +86,7 @@ export const PcoCampusAttributes = Schema.Struct({
 })
 export type PcoCampusAttributes = typeof PcoCampusAttributes.Type
 
-export const pcoCampusTransformer = pcoToOf(PcoCampusAttributes, Schema.Struct({}), 'campus')
+export const pcoCampusTransformer = pcoToOf(PcoCampusAttributes, BaseCampus, 'campus')
 
 export const PcoCampus = mkPcoEntity({
   attributes: PcoCampusAttributes,
@@ -100,5 +107,9 @@ export const PcoCampus = mkPcoEntity({
     }),
   }),
   type: 'Campus',
-}).annotations({ [OfEntity]: 'campus', identifier: 'pco-campus' })
+}).annotations({
+  [OfEntity]: 'campus',
+  [OfIdentifier]: 'pco-campus',
+  [OfTransformer]: pcoCampusTransformer,
+})
 export type PcoCampus = typeof PcoCampus.Type

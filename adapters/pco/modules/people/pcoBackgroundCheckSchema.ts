@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoBackgroundCheckAttributes = Schema.Struct({
@@ -48,5 +48,5 @@ export const PcoBackgroundCheck = mkPcoEntity({
     }),
   }),
   type: 'BackgroundCheck',
-}).annotations({ [OfSkipEntity]: true, identifier: 'pco-background-check' })
+}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-background-check' })
 export type PcoBackgroundCheck = typeof PcoBackgroundCheck.Type

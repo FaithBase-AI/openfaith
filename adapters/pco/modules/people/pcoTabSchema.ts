@@ -1,6 +1,13 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BaseFolder, OfEntity, OfFieldName } from '@openfaith/schema'
+import {
+  BaseFolder,
+  OfEntity,
+  OfFieldName,
+  OfFolderType,
+  OfIdentifier,
+  OfTransformer,
+} from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoTabAttributes = Schema.Struct({
@@ -37,5 +44,10 @@ export const PcoTab = mkPcoEntity({
     }),
   }),
   type: 'Tab',
-}).annotations({ [OfEntity]: 'folder', folderType: 'pco_custom_field_tab', identifier: 'pco-tab' })
+}).annotations({
+  [OfEntity]: 'folder',
+  [OfFolderType]: 'pco_custom_field_tab',
+  [OfIdentifier]: 'pco-tab',
+  [OfTransformer]: pcoTabTransformer,
+})
 export type PcoTab = typeof PcoTab.Type

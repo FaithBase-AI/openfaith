@@ -58,7 +58,9 @@ export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLaye
             saveDataE(data as any).pipe(
               Effect.mapError((error) => {
                 console.log(error)
-                return new ExternalSyncEntityError({ message: String(error) })
+                return new ExternalSyncEntityError({
+                  message: String(error),
+                })
               }),
             ),
           )

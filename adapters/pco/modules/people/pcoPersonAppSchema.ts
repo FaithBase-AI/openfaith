@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoPersonAppAttributes = Schema.Struct({
@@ -36,5 +36,5 @@ export const PcoPersonApp = mkPcoEntity({
     }),
   }),
   type: 'PersonApp',
-}).annotations({ [OfSkipEntity]: true, identifier: 'pco-person-app' })
+}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-person-app' })
 export type PcoPersonApp = typeof PcoPersonApp.Type

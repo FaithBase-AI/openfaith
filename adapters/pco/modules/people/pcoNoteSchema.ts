@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfFieldName, OfSkipEntity } from '@openfaith/schema'
+import { OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 //     "note": "string",
@@ -62,5 +62,5 @@ export const PcoNote = mkPcoEntity({
     }),
   }),
   type: 'Note',
-}).annotations({ [OfSkipEntity]: true, identifier: 'pco-note' })
+}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-note' })
 export type PcoNote = typeof PcoNote.Type

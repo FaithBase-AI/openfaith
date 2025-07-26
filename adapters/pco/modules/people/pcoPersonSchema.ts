@@ -1,7 +1,14 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BasePerson, OfCustomField, OfEntity, OfFieldName } from '@openfaith/schema'
-import { Schema } from 'effect'
+import {
+  BasePerson,
+  OfCustomField,
+  OfEntity,
+  OfFieldName,
+  OfIdentifier,
+  OfTransformer,
+} from '@openfaith/schema'
+import { type Option, Schema, SchemaAST } from 'effect'
 
 export const PcoPersonAttributes = Schema.Struct({
   accounting_administrator: Schema.Boolean.annotations({
@@ -136,5 +143,18 @@ export const PcoPerson = mkPcoEntity({
     }),
   }),
   type: 'Person',
-}).annotations({ [OfEntity]: 'person', identifier: 'pco-person' })
+}).annotations({
+  [OfEntity]: 'person',
+  [OfIdentifier]: 'pco-person',
+  [OfTransformer]: pcoPersonTransformer,
+})
 export type PcoPerson = typeof PcoPerson.Type
+
+// Helper function to retrieve the transformer from any schema
+export const getTransformer = <A, I, R>(
+  schema: Schema.Schema<A, I, R>,
+): Option.Option<typeof pcoPersonTransformer> =>
+  SchemaAST.getAnnotation<typeof pcoPersonTransformer>(OfTransformer)(schema.ast)
+
+// Convenience function specifically for PcoPerson
+export const getPcoPersonTransformer = () => getTransformer(PcoPerson)

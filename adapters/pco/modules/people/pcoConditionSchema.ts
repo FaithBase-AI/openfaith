@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoConditionAttributes = Schema.Struct({
@@ -52,5 +52,5 @@ export const PcoCondition = mkPcoEntity({
     }),
   }),
   type: 'Condition',
-}).annotations({ [OfSkipEntity]: true, identifier: 'pco-condition' })
+}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-condition' })
 export type PcoCondition = typeof PcoCondition.Type

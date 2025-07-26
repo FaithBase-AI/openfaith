@@ -1,6 +1,13 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BaseFolder, OfEntity, OfFieldName } from '@openfaith/schema'
+import {
+  BaseFolder,
+  OfEntity,
+  OfFieldName,
+  OfFolderType,
+  OfIdentifier,
+  OfTransformer,
+} from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoNoteCategoryAttributes = Schema.Struct({
@@ -43,7 +50,8 @@ export const PcoNoteCategory = mkPcoEntity({
   type: 'NoteCategory',
 }).annotations({
   [OfEntity]: 'folder',
-  folderType: 'pco_note_category',
-  identifier: 'pco-note-category',
+  [OfFolderType]: 'pco_note_category',
+  [OfIdentifier]: 'pco-note-category',
+  [OfTransformer]: pcoNoteCategoryTransformer,
 })
 export type PcoNoteCategory = typeof PcoNoteCategory.Type

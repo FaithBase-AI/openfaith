@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoFormCategoryAttributes = Schema.Struct({
@@ -23,6 +23,6 @@ export const PcoFormCategory = mkPcoEntity({
   links: Schema.Struct({}),
   relationships: Schema.Struct({}),
   type: 'FormCategory',
-}).annotations({ [OfSkipEntity]: true, identifier: 'pco-form-category' })
+}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-form-category' })
 
 export type PcoFormCategory = typeof PcoFormCategory.Type

@@ -1,6 +1,13 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
-import { BaseFolder, OfEntity, OfFieldName } from '@openfaith/schema'
+import {
+  BaseFolder,
+  OfEntity,
+  OfFieldName,
+  OfFolderType,
+  OfIdentifier,
+  OfTransformer,
+} from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoListAttributes = Schema.Struct({
@@ -37,5 +44,10 @@ export const PcoList = mkPcoEntity({
     }),
   }),
   type: 'List',
-}).annotations({ [OfEntity]: 'folder', folderType: 'pco_list', identifier: 'pco-list' })
+}).annotations({
+  [OfEntity]: 'folder',
+  [OfFolderType]: 'pco_list',
+  [OfIdentifier]: 'pco-list',
+  [OfTransformer]: pcoListTransformer,
+})
 export type PcoList = typeof PcoList.Type

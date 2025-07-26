@@ -1,6 +1,8 @@
 import { expect } from 'bun:test'
 import { SqlClient } from '@effect/sql'
 import * as Pg from '@effect/sql-drizzle/Pg'
+import { AdapterTokenError } from '@openfaith/adapter-core/errors/adapterErrors'
+import { AdapterOperations } from '@openfaith/adapter-core/layers/adapterOperations'
 import { TokenKey } from '@openfaith/adapter-core/server'
 import { effect } from '@openfaith/bun-test'
 import type { PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
@@ -13,16 +15,42 @@ import {
 } from '@openfaith/workers/helpers/saveDataE'
 import { createTestTables } from '@openfaith/workers/helpers/test-utils/test-schema'
 import { PgContainer } from '@openfaith/workers/helpers/test-utils/utils-pg'
-import { Effect, Layer } from 'effect'
+import { Effect, Layer, Option, Stream } from 'effect'
 
 // Test TokenKey service
 const TestTokenKey = Layer.succeed(TokenKey, 'test_org_123')
+
+// Mock AdapterOperations service
+const TestAdapterOperations = Layer.succeed(
+  AdapterOperations,
+  AdapterOperations.of({
+    extractUpdatedAt: (response: unknown) => {
+      const entity = response as any
+      return entity?.attributes?.updated_at
+        ? Option.some(entity.attributes.updated_at)
+        : Option.none()
+    },
+    fetchToken: () =>
+      Effect.fail(
+        new AdapterTokenError({
+          adapter: 'test',
+          message: 'Not implemented in tests',
+        }),
+      ),
+    getAdapterTag: () => 'test',
+    getEntityManifest: () => ({}),
+    listEntityData: () => Stream.empty,
+    processEntityData: () => Effect.succeed(undefined),
+    syncEntityData: () => Effect.succeed([]),
+    transformEntityData: (_entityName: string, data: unknown) => Effect.succeed(data),
+  }),
+)
 
 // Database layer with container
 const DrizzlePgLive = Pg.layer.pipe(Layer.provideMerge(PgContainer.ClientLive))
 
 // Combined test layer
-const TestLayer = Layer.mergeAll(DrizzlePgLive, TestTokenKey)
+const TestLayer = Layer.mergeAll(DrizzlePgLive, TestTokenKey, TestAdapterOperations)
 
 // Test data factories based on real database structure
 const createPcoBaseEntity = (

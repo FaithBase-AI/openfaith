@@ -1,12 +1,15 @@
 import { Array, Option, pipe, SchemaAST } from 'effect'
 
-export const OfFieldName = Symbol.for('OfFieldName')
-export const OfCustomField = Symbol.for('ofCustomField')
-export const OfSkipField = Symbol.for('ofSkipField')
-export const OfEntity = Symbol.for('ofEntity')
-export const OfEdge = Symbol.for('ofEdge')
-export const OfFolder = Symbol.for('ofFolder')
-export const OfSkipEntity = Symbol.for('ofSkipEntity')
+export const OfFieldName = Symbol.for('@openfaith/schema/fieldName')
+export const OfCustomField = Symbol.for('@openfaith/schema/customField')
+export const OfSkipField = Symbol.for('@openfaith/schema/skipField')
+export const OfEntity = Symbol.for('@openfaith/schema/entity')
+export const OfEdge = Symbol.for('@openfaith/schema/edge')
+export const OfFolder = Symbol.for('@openfaith/schema/folder')
+export const OfSkipEntity = Symbol.for('@openfaith/schema/skipEntity')
+export const OfTransformer = Symbol.for('@openfaith/schema/transformer')
+export const OfFolderType = Symbol.for('@openfaith/schema/folderType')
+export const OfIdentifier = Symbol.for('@openfaith/schema/identifier')
 
 export type OfEdgeAnnotation = {
   relationshipType: string
@@ -27,6 +30,9 @@ declare module 'effect/Schema' {
       [OfEdge]?: OfEdgeAnnotation
       [OfFolder]?: OfFolderAnnotation
       [OfSkipEntity]?: boolean
+      [OfTransformer]?: unknown
+      [OfFolderType]?: string
+      [OfIdentifier]?: string
     }
   }
 }
