@@ -1,8 +1,8 @@
 import { FetchHttpClient, HttpApiBuilder } from '@effect/platform'
-import { DBLive } from '@openfaith/db'
 import { ZeroMutatorsApi } from '@openfaith/domain'
 import { CoreHandlerLive } from '@openfaith/server/handlers/coreHandler'
 import { ZeroHandlerLive } from '@openfaith/server/handlers/zeroMutatorsHandler'
+import { DBLive } from '@openfaith/server/live/dbLive'
 import { Layer } from 'effect'
 
 // For the frontend, we'll only include handlers that don't require auth

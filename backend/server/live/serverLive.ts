@@ -6,11 +6,11 @@ import {
   HttpServer,
 } from '@effect/platform'
 import { RpcSerialization, RpcServer } from '@effect/rpc'
-import { DBLive } from '@openfaith/db'
 import { AdapterRpc, CoreRpc, ZeroMutatorsApi } from '@openfaith/domain'
 import { AdapterHandlerLive } from '@openfaith/server/handlers/adapterHandler'
 import { CoreHandlerLive } from '@openfaith/server/handlers/coreHandler'
 import { ZeroHandlerLive } from '@openfaith/server/handlers/zeroMutatorsHandler'
+import { DBLive } from '@openfaith/server/live/dbLive'
 import { SessionRpcMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
 import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
 import { Layer } from 'effect'

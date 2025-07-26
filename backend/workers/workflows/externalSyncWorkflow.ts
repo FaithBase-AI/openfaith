@@ -2,7 +2,7 @@ import { Workflow } from '@effect/workflow'
 import { TokenKey } from '@openfaith/adapter-core'
 import { AdapterOperations } from '@openfaith/adapter-core/layers/adapterOperations'
 import { PcoAdapterOperationsLayer } from '@openfaith/pco/pcoAdapterLayer'
-import { ExternalSyncEntityWorkflow } from '@openfaith/workers/workflows/extenralSyncEntityWorkflow'
+import { ExternalSyncEntityWorkflow } from '@openfaith/workers/workflows/externalSyncEntityWorkflow'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
 
 // Define the external sync error
