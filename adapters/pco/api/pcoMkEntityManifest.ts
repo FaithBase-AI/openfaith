@@ -294,8 +294,8 @@ export type ConvertPcoHttpApi<Endpoints extends Endpoint.Any> =
         ? HttpApiEndpoint.HttpApiEndpoint<
             _Name,
             'PATCH',
-            never,
             ExtractPathParams<_TPath>,
+            never,
             PcoBuildPayloadSchemaType<
               _Fields,
               _UpdatableFields,
