@@ -187,7 +187,7 @@ export class ValidationError extends Schema.TaggedError<ValidationError>()(
     field: Schema.String,
     message: Schema.String,
     cause: Schema.optional(Schema.Unknown),
-  },
+  }
 ) {}
 
 // Good error logging
@@ -195,7 +195,7 @@ Effect.tapError((error) =>
   Effect.logError("Operation failed", {
     error, // Log the typed error directly
     context: "additional context",
-  }),
+  })
 );
 
 // Bad error logging - DON'T DO THIS
@@ -203,7 +203,7 @@ Effect.tapError((error) =>
   Effect.logError("Operation failed", {
     error: error instanceof Error ? error.message : `${error}`, // ❌ Wrong!
     context: "additional context",
-  }),
+  })
 );
 ```
 
@@ -280,7 +280,7 @@ const EnvLayer = Layer.mergeAll(
   ExternalSyncWorkflowLayer,
   ExternalSyncEntityWorkflowLayer,
   MyNewWorkflowLayer, // Add here
-  TestWorkflowLayer,
+  TestWorkflowLayer
 );
 ```
 
@@ -322,6 +322,10 @@ Write comprehensive tests that validate both **type-level correctness** and **ru
 - **Test services with Effect's test runtime**
 - **Use Effect's mock layer system**
 - **Follow existing test patterns**
+- **Aim for 100% test coverage on files you write tests for**
+  - Use `bun test --coverage` to generate coverage reports
+  - When writing tests for a file, ensure all functions, branches, and edge cases are covered
+  - Coverage reports help identify untested code paths that need attention
 
 ### Type-Level Testing
 
@@ -371,7 +375,7 @@ effect(
       });
 
       expect(result.path.personId).toBe("456");
-    }),
+    })
 );
 ```
 
