@@ -820,3 +820,135 @@ live('PATCH endpoint should have correct payload type from BuildPayloadSchemaTyp
     const _email = validPayload.attributes.email
   }),
 )
+
+// Additional tests for full coverage of toHttpApiEndpoint function
+
+live('toHttpApiEndpoint should work with GET endpoint', () =>
+  Effect.sync(() => {
+    const getEndpoint = {
+      method: 'GET',
+      name: 'listPeople',
+      path: '/people',
+      query: Schema.Struct({
+        include: Schema.optional(Schema.Array(Schema.String)),
+        per_page: Schema.optional(Schema.Number),
+      }),
+      response: Schema.Struct({
+        data: Schema.Array(
+          Schema.Struct({
+            id: Schema.String,
+            type: Schema.String,
+          }),
+        ),
+      }),
+    }
+
+    const httpEndpoint = toHttpApiEndpoint(getEndpoint)
+
+    expect(httpEndpoint.name).toBe('listPeople')
+    expect(httpEndpoint.method).toBe('GET')
+    expect(httpEndpoint.path).toBe('/people')
+  }),
+)
+
+live('toHttpApiEndpoint should work with GET endpoint with path parameters', () =>
+  Effect.sync(() => {
+    const getEndpoint = {
+      method: 'GET',
+      name: 'getPerson',
+      path: '/people/:personId',
+      query: Schema.Struct({
+        include: Schema.optional(Schema.Array(Schema.String)),
+      }),
+      response: Schema.Struct({
+        data: Schema.Struct({
+          id: Schema.String,
+          type: Schema.String,
+        }),
+      }),
+    }
+
+    const httpEndpoint = toHttpApiEndpoint(getEndpoint)
+
+    expect(httpEndpoint.name).toBe('getPerson')
+    expect(httpEndpoint.method).toBe('GET')
+    expect(httpEndpoint.path).toBe('/people/:personId')
+  }),
+)
+
+live('toHttpApiEndpoint should work with DELETE endpoint', () =>
+  Effect.sync(() => {
+    const deleteEndpoint = {
+      method: 'DELETE',
+      name: 'deletePerson',
+      path: '/people/:personId',
+      response: Schema.Void,
+    }
+
+    const httpEndpoint = toHttpApiEndpoint(deleteEndpoint)
+
+    expect(httpEndpoint.name).toBe('deletePerson')
+    expect(httpEndpoint.method).toBe('DELETE')
+    expect(httpEndpoint.path).toBe('/people/:personId')
+  }),
+)
+
+live('toHttpApiEndpoint should work with DELETE endpoint without path parameters', () =>
+  Effect.sync(() => {
+    const deleteEndpoint = {
+      method: 'DELETE',
+      name: 'deleteAll',
+      path: '/people',
+      response: Schema.Void,
+    }
+
+    const httpEndpoint = toHttpApiEndpoint(deleteEndpoint)
+
+    expect(httpEndpoint.name).toBe('deleteAll')
+    expect(httpEndpoint.method).toBe('DELETE')
+    expect(httpEndpoint.path).toBe('/people')
+  }),
+)
+
+// Error case tests for missing payload
+live('toHttpApiEndpoint should throw error for POST endpoint without payload', () =>
+  Effect.sync(() => {
+    const postEndpointWithoutPayload = {
+      method: 'POST',
+      name: 'createPerson',
+      path: '/people',
+      response: Schema.Struct({
+        data: Schema.Struct({
+          id: Schema.String,
+          type: Schema.String,
+        }),
+      }),
+      // Missing payload property
+    }
+
+    expect(() => toHttpApiEndpoint(postEndpointWithoutPayload)).toThrow(
+      "POST endpoint 'createPerson' must have a payload schema. Please ensure the endpoint definition includes a 'payload' property.",
+    )
+  }),
+)
+
+live('toHttpApiEndpoint should throw error for PATCH endpoint without payload', () =>
+  Effect.sync(() => {
+    const patchEndpointWithoutPayload = {
+      method: 'PATCH',
+      name: 'updatePerson',
+      path: '/people/:personId',
+      response: Schema.Struct({
+        data: Schema.Struct({
+          id: Schema.String,
+          type: Schema.String,
+        }),
+      }),
+      // Missing payload property
+    }
+
+    expect(() => toHttpApiEndpoint(patchEndpointWithoutPayload)).toThrow(
+      "PATCH endpoint 'updatePerson' must have a payload schema. Please ensure the endpoint definition includes a 'payload' property.",
+    )
+  }),
+)
