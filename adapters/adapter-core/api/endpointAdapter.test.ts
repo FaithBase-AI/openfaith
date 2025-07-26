@@ -1,13 +1,13 @@
 import { expect } from 'bun:test'
-import { live } from '@openfaith/bun-test'
-import { Effect, Schema } from 'effect'
 import {
   type BuildPayloadSchemaType,
   type ExtractPathParams,
   extractPathParams,
   generatePathParamsSchema,
   toHttpApiEndpoint,
-} from './endpointAdapter'
+} from '@openfaith/adapter-core/api/endpointAdapter'
+import { live } from '@openfaith/bun-test'
+import { Effect, Schema } from 'effect'
 
 // Tests for extractPathParams function
 live('extractPathParams should extract single path parameter', () =>

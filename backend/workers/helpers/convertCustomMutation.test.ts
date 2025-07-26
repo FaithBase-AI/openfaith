@@ -1,14 +1,14 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
 import type { CustomMutation } from '@openfaith/domain'
-import { Effect } from 'effect'
 import {
   convertCustomMutations,
   convertCustomMutationToCrudMutation,
   type InvalidMutationDataError,
   type InvalidMutationNameError,
   type UnsupportedOperationError,
-} from './convertCustomMutation'
+} from '@openfaith/workers/helpers/convertCustomMutation'
+import { Effect } from 'effect'
 
 const createBaseMutation = (overrides: Partial<CustomMutation> = {}): CustomMutation => ({
   args: [{ id: 'person_123', name: 'John Doe' }],
