@@ -8,41 +8,34 @@ This initiative focuses on creating automatic table generation from Effect Schem
 
 ### 1. Extended Schema Annotation System
 
-#### Table Configuration in UiConfig
+#### Table Configuration in OfUiConfig
+
+The table configuration extends the existing `FieldConfig` interface in `packages/schema/shared/schema.ts`:
 
 ```typescript
-// packages/schema/src/ui/annotations.ts (extended)
+// packages/schema/shared/schema.ts (already implemented)
 export interface FieldConfig {
-  // ... existing field config
-
+  field?: {
+    // ... existing field config
+  };
   table?: {
     header?: string;
     width?: number;
     sortable?: boolean; // AUTO-DETECTED (default: true)
     filterable?: boolean; // AUTO-DETECTED (default: true)
-    hidden?: boolean;
-    // Cell type is AUTO-DETECTED from schema - only override when needed
     cellType?:
       | "text"
       | "email"
-      | "currency"
+      | "number"
       | "boolean"
       | "date"
-      | "tags"
+      | "datetime"
+      | "currency"
       | "badge"
-      | "link"
       | "avatar"
-      | "progress";
-    cellConfig?: {
-      currency?: string; // for currency type
-      dateFormat?: "short" | "long" | "relative"; // for date type
-      truncate?: number; // for text type
-      labels?: { true: string; false: string }; // for boolean type
-      variant?: "default" | "success" | "warning" | "error"; // for badge type
-      linkTarget?: "_blank" | "_self"; // for link type
-      showProgress?: boolean; // for progress type
-      avatarSize?: "sm" | "md" | "lg"; // for avatar type
-    };
+      | "link";
+    hidden?: boolean;
+    pinned?: "left" | "right";
   };
 }
 ```
@@ -52,9 +45,13 @@ export interface FieldConfig {
 #### Example: Person Schema with Table Configuration
 
 ```typescript
-export const Person = Schema.Struct({
+import { OfUiConfig } from "@openfaith/schema/shared/schema";
+import { Schema } from "effect";
+
+export const PersonWithTableSchema = Schema.Struct({
   firstName: Schema.String.annotations({
-    [UiConfig]: {
+    description: "The first name of the person",
+    [OfUiConfig]: {
       field: {
         // type: "text" - AUTO-DETECTED from Schema.String
         label: "First Name",
@@ -67,13 +64,29 @@ export const Person = Schema.Struct({
         // filterable: true - AUTO-DETECTED (default)
         // cellType: "text" - AUTO-DETECTED from Schema.String
       },
-    } satisfies FieldConfig,
+    },
+  }),
+
+  lastName: Schema.String.annotations({
+    description: "The last name of the person",
+    [OfUiConfig]: {
+      field: {
+        label: "Last Name",
+        placeholder: "Enter last name",
+      },
+      table: {
+        header: "Last Name",
+        width: 150,
+      },
+    },
   }),
 
   email: Schema.String.pipe(
-    Schema.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
+    Schema.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, {
+      message: () => "Invalid email address",
+    }),
   ).annotations({
-    [UiConfig]: {
+    [OfUiConfig]: {
       field: {
         // type: "email" - AUTO-DETECTED from email pattern
         label: "Email Address",
@@ -86,11 +99,26 @@ export const Person = Schema.Struct({
         // sortable: true - AUTO-DETECTED (default)
         // filterable: true - AUTO-DETECTED (default)
       },
-    } satisfies FieldConfig,
+    },
+  }),
+
+  age: Schema.Number.annotations({
+    [OfUiConfig]: {
+      field: {
+        label: "Age",
+        min: 0,
+        max: 120,
+      },
+      table: {
+        header: "Age",
+        width: 80,
+        // cellType: "number" - AUTO-DETECTED from Schema.Number
+      },
+    },
   }),
 
   salary: Schema.Number.pipe(Schema.NullOr).annotations({
-    [UiConfig]: {
+    [OfUiConfig]: {
       field: {
         // type: "number" - AUTO-DETECTED from Schema.Number
         label: "Annual Salary",
@@ -102,36 +130,57 @@ export const Person = Schema.Struct({
       table: {
         header: "Salary",
         width: 120,
-        cellType: "currency", // Override auto-detection (would be "text")
-        cellConfig: { currency: "USD" },
+        cellType: "currency", // Override auto-detection (would be "number")
         // sortable: true - AUTO-DETECTED (default)
         filterable: false, // Override auto-detection (would be true)
       },
-    } satisfies FieldConfig,
+    },
   }),
 
   isActive: Schema.Boolean.annotations({
-    [UiConfig]: {
+    [OfUiConfig]: {
       field: {
         // type: "switch" - AUTO-DETECTED from Schema.Boolean
-        label: "Active Status",
-        // required: false - AUTO-DETECTED (Schema.Boolean allows false)
+        label: "Active",
       },
       table: {
         header: "Status",
         width: 100,
         // cellType: "boolean" - AUTO-DETECTED from Schema.Boolean
-        cellConfig: {
-          labels: { true: "Active", false: "Inactive" },
-        },
         // sortable: true - AUTO-DETECTED (default)
         // filterable: true - AUTO-DETECTED (default)
       },
-    } satisfies FieldConfig,
+    },
+  }),
+
+  department: Schema.Literal(
+    "Engineering",
+    "Sales",
+    "Marketing",
+    "HR",
+  ).annotations({
+    [OfUiConfig]: {
+      field: {
+        // type: "select" - AUTO-DETECTED from Schema.Literal union
+        // options: [...] - AUTO-DETECTED from literal values
+        label: "Department",
+        options: [
+          { label: "Engineering", value: "Engineering" },
+          { label: "Sales", value: "Sales" },
+          { label: "Marketing", value: "Marketing" },
+          { label: "Human Resources", value: "HR" },
+        ],
+      },
+      table: {
+        header: "Department",
+        width: 120,
+        cellType: "badge", // Override auto-detection (would be "text")
+      },
+    },
   }),
 
   avatar: Schema.String.pipe(Schema.NullOr).annotations({
-    [UiConfig]: {
+    [OfUiConfig]: {
       field: {
         // type: "text" - AUTO-DETECTED from Schema.String
         label: "Avatar URL",
@@ -142,48 +191,29 @@ export const Person = Schema.Struct({
         header: "Avatar",
         width: 80,
         cellType: "avatar", // Override auto-detection (would be "text")
-        cellConfig: { avatarSize: "md" },
         sortable: false, // Override auto-detection (would be true)
         filterable: false, // Override auto-detection (would be true)
       },
-    } satisfies FieldConfig,
+    },
   }),
 
-  skills: Schema.Array(Schema.String).annotations({
-    [UiConfig]: {
-      field: {
-        // type: "tags" - AUTO-DETECTED from Schema.Array
-        label: "Skills",
-        placeholder: "Add skills...",
-        creatable: true,
-        // required: false - AUTO-DETECTED (arrays can be empty)
-      },
-      table: {
-        header: "Skills",
-        width: 200,
-        // cellType: "tags" - AUTO-DETECTED from Schema.Array
-        sortable: false, // Override auto-detection (would be true)
-        // filterable: true - AUTO-DETECTED (default)
-      },
-    } satisfies FieldConfig,
-  }),
-
-  // Example of hidden field in table
-  internalNotes: Schema.String.pipe(Schema.NullOr).annotations({
-    [UiConfig]: {
+  bio: Schema.String.pipe(Schema.NullOr).annotations({
+    [OfUiConfig]: {
       field: {
         type: "textarea", // Override auto-detection (would be "text")
-        label: "Internal Notes",
-        placeholder: "Internal notes...",
-        rows: 3,
+        label: "Biography",
+        placeholder: "Tell us about yourself...",
+        rows: 4,
         // required: false - AUTO-DETECTED from Schema.NullOr
       },
       table: {
         hidden: true, // This field won't appear in tables
       },
-    } satisfies FieldConfig,
+    },
   }),
 });
+
+export type PersonWithTable = typeof PersonWithTableSchema.Type;
 ```
 
 ### 3. Table Generation Engine
@@ -193,7 +223,7 @@ export const Person = Schema.Struct({
 ```typescript
 // packages/ui/src/table/columnGenerator.ts
 import { Schema, SchemaAST } from "effect";
-import { UiConfig, type FieldConfig } from "@openfaith/schema/ui/annotations";
+import { OfUiConfig, type FieldConfig } from "@openfaith/schema/shared/schema";
 import type { ColumnDef } from "@tanstack/react-table";
 
 export const generateColumns = <T>(
@@ -207,7 +237,7 @@ export const generateColumns = <T>(
     const key = field.key as keyof T;
 
     // Get UI config from annotation
-    const uiConfig = SchemaAST.getAnnotation<FieldConfig>(UiConfig)(
+    const uiConfig = SchemaAST.getAnnotation<FieldConfig>(OfUiConfig)(
       field.schema,
     );
     const tableConfig = uiConfig?.table;
@@ -271,11 +301,12 @@ const autoDetectTableConfig = (
       // Check field name for currency indicators
       if (
         fieldName.toLowerCase().includes("salary") ||
-        fieldName.toLowerCase().includes("price")
+        fieldName.toLowerCase().includes("price") ||
+        fieldName.toLowerCase().includes("cost")
       ) {
         return { ...defaults, cellType: "currency", width: 120 };
       }
-      return { ...defaults, cellType: "text", width: 100 };
+      return { ...defaults, cellType: "number", width: 100 };
 
     case "BooleanKeyword":
       return { ...defaults, cellType: "boolean", width: 100 };
@@ -285,9 +316,6 @@ const autoDetectTableConfig = (
         return { ...defaults, cellType: "badge", width: 120 };
       }
       break;
-
-    case "Array":
-      return { ...defaults, cellType: "tags", width: 200, sortable: false };
 
     default:
       return { ...defaults, cellType: "text" };
@@ -312,10 +340,7 @@ import React from 'react'
 import { Badge } from '@openfaith/ui/components/badge'
 import { Avatar } from '@openfaith/ui/components/avatar'
 
-export const getCellRenderer = (
-  cellType?: string,
-  cellConfig?: FieldConfig['table']['cellConfig']
-) => {
+export const getCellRenderer = (cellType?: string) => {
   if (!cellType) return undefined
 
   return ({ getValue, row }: any) => {
@@ -323,34 +348,34 @@ export const getCellRenderer = (
 
     switch (cellType) {
       case 'text':
-        return renderTextCell(value, cellConfig)
+        return renderTextCell(value)
 
       case 'email':
         return renderEmailCell(value)
 
+      case 'number':
+        return renderNumberCell(value)
+
       case 'currency':
-        return renderCurrencyCell(value, cellConfig?.currency)
+        return renderCurrencyCell(value)
 
       case 'boolean':
-        return renderBooleanCell(value, cellConfig?.labels)
+        return renderBooleanCell(value)
 
       case 'date':
-        return renderDateCell(value, cellConfig?.dateFormat)
+        return renderDateCell(value)
 
-      case 'tags':
-        return renderTagsCell(value)
+      case 'datetime':
+        return renderDateTimeCell(value)
 
       case 'badge':
-        return renderBadgeCell(value, cellConfig?.variant)
+        return renderBadgeCell(value)
 
       case 'link':
-        return renderLinkCell(value, cellConfig?.linkTarget)
+        return renderLinkCell(value)
 
       case 'avatar':
-        return renderAvatarCell(value, cellConfig?.avatarSize, row.original)
-
-      case 'progress':
-        return renderProgressCell(value)
+        return renderAvatarCell(value, row.original)
 
       default:
         return String(value || '')
@@ -358,16 +383,8 @@ export const getCellRenderer = (
   }
 }
 
-const renderTextCell = (value: any, config?: { truncate?: number }) => {
-  const text = String(value || '')
-  if (config?.truncate && text.length > config.truncate) {
-    return (
-      <span title={text} className="truncate">
-        {text.slice(0, config.truncate)}...
-      </span>
-    )
-  }
-  return text
+const renderTextCell = (value: any) => {
+  return String(value || '')
 }
 
 const renderEmailCell = (value: string) => {
@@ -383,70 +400,51 @@ const renderEmailCell = (value: string) => {
   )
 }
 
-const renderCurrencyCell = (value: number, currency = 'USD') => {
+const renderNumberCell = (value: number) => {
+  if (value == null) return ''
+  return value.toLocaleString()
+}
+
+const renderCurrencyCell = (value: number) => {
   if (value == null) return ''
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency
+    currency: 'USD'
   }).format(value)
 }
 
-const renderBooleanCell = (value: boolean, labels = { true: 'Yes', false: 'No' }) => {
+const renderBooleanCell = (value: boolean) => {
   return (
-    <Badge variant={value ? 'success' : 'secondary'}>
-      {labels[value ? 'true' : 'false']}
+    <Badge variant={value ? 'default' : 'secondary'}>
+      {value ? 'Yes' : 'No'}
     </Badge>
   )
 }
 
-const renderDateCell = (value: string, format = 'short') => {
+const renderDateCell = (value: string) => {
   if (!value) return ''
   const date = new Date(value)
-
-  switch (format) {
-    case 'relative':
-      return formatRelativeDate(date)
-    case 'long':
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-    default:
-      return date.toLocaleDateString()
-  }
+  return date.toLocaleDateString()
 }
 
-const renderTagsCell = (value: string[]) => {
-  if (!Array.isArray(value) || value.length === 0) return ''
-
-  return (
-    <div className="flex flex-wrap gap-1">
-      {value.slice(0, 3).map((tag, i) => (
-        <Badge key={i} variant="outline" className="text-xs">
-          {tag}
-        </Badge>
-      ))}
-      {value.length > 3 && (
-        <Badge variant="outline" className="text-xs">
-          +{value.length - 3}
-        </Badge>
-      )}
-    </div>
-  )
-}
-
-const renderBadgeCell = (value: string, variant = 'default') => {
+const renderDateTimeCell = (value: string) => {
   if (!value) return ''
-  return <Badge variant={variant}>{value}</Badge>
+  const date = new Date(value)
+  return date.toLocaleString()
 }
 
-const renderLinkCell = (value: string, target = '_self') => {
+const renderBadgeCell = (value: string) => {
+  if (!value) return ''
+  return <Badge>{value}</Badge>
+}
+
+const renderLinkCell = (value: string) => {
   if (!value) return ''
   return (
     <a
       href={value}
-      target={target}
+      target="_blank"
+      rel="noopener noreferrer"
       className="text-blue-600 hover:underline"
       onClick={(e) => e.stopPropagation()}
     >
@@ -455,7 +453,7 @@ const renderLinkCell = (value: string, target = '_self') => {
   )
 }
 
-const renderAvatarCell = (value: string, size = 'md', row: any) => {
+const renderAvatarCell = (value: string, row: any) => {
   const name = row.firstName && row.lastName
     ? `${row.firstName} ${row.lastName}`
     : row.name || 'Unknown'
@@ -464,23 +462,8 @@ const renderAvatarCell = (value: string, size = 'md', row: any) => {
     <Avatar
       src={value}
       alt={name}
-      size={size}
       fallback={name.split(' ').map(n => n[0]).join('').toUpperCase()}
     />
-  )
-}
-
-const renderProgressCell = (value: number) => {
-  if (value == null) return ''
-  const percentage = Math.min(100, Math.max(0, value))
-
-  return (
-    <div className="w-full bg-gray-200 rounded-full h-2">
-      <div
-        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-        style={{ width: `${percentage}%` }}
-      />
-    </div>
   )
 }
 
@@ -845,7 +828,7 @@ packages/
 ```typescript
 const PersonTable = () => (
   <UniversalTable
-    schema={Person}
+    schema={PersonWithTableSchema}
     data={people}
     onRowClick={(person) => navigate(`/people/${person.id}`)}
   />

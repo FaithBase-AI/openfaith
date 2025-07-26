@@ -11,6 +11,7 @@ export const OfTransformer = Symbol.for('@openfaith/schema/transformer')
 export const OfFolderType = Symbol.for('@openfaith/schema/folderType')
 export const OfIdentifier = Symbol.for('@openfaith/schema/identifier')
 export const OfTable = Symbol.for('@openfaith/schema/table')
+export const OfUiConfig = Symbol.for('@openfaith/schema/uiConfig')
 
 export type OfEdgeAnnotation = {
   relationshipType: string
@@ -19,6 +20,57 @@ export type OfEdgeAnnotation = {
 
 export type OfFolderAnnotation = {
   folderType: string
+}
+
+export interface FieldConfig {
+  field?: {
+    // Field type is AUTO-DETECTED from schema - only override when needed
+    type?:
+      | 'text'
+      | 'email'
+      | 'password'
+      | 'slug'
+      | 'textarea'
+      | 'number'
+      | 'select'
+      | 'combobox'
+      | 'singleCombobox'
+      | 'switch'
+      | 'date'
+      | 'datetime'
+      | 'tags'
+      | 'otp'
+    label?: string
+    placeholder?: string
+    required?: boolean // AUTO-DETECTED from schema optionality
+    options?: Array<{ value: string; label: string }> // AUTO-DETECTED from unions/literals
+    rows?: number // for textarea
+    searchable?: boolean // for combobox
+    creatable?: boolean // for tags/combobox
+    multiple?: boolean
+    min?: number | string
+    max?: number | string
+    step?: number
+  }
+  table?: {
+    header?: string
+    width?: number
+    sortable?: boolean // AUTO-DETECTED (default true)
+    filterable?: boolean // AUTO-DETECTED (default true)
+    cellType?:
+      | 'text'
+      | 'email'
+      | 'number'
+      | 'boolean'
+      | 'date'
+      | 'datetime'
+      | 'currency'
+      | 'badge'
+      | 'avatar'
+      | 'link'
+    hidden?: boolean
+    pinned?: 'left' | 'right'
+  }
 }
 
 declare module 'effect/Schema' {
@@ -35,6 +87,7 @@ declare module 'effect/Schema' {
       [OfFolderType]?: string
       [OfIdentifier]?: string
       [OfTable]?: unknown
+      [OfUiConfig]?: FieldConfig
     }
   }
 }
