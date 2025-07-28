@@ -4,11 +4,21 @@ import { useRxQuery } from '@openfaith/openfaith/shared/hooks/rxHooks'
 import * as OfSchemas from '@openfaith/schema'
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema'
 import { pluralize } from '@openfaith/shared'
-import { BuildingIcon } from '@openfaith/ui/icons/buildingIcon'
 import { CircleIcon } from '@openfaith/ui/icons/circleIcon'
-import { FolderPlusIcon } from '@openfaith/ui/icons/folderPlusIcon'
-import { PersonIcon } from '@openfaith/ui/icons/personIcon'
-import { Array, Effect, HashMap, Option, Order, pipe, Record, Ref, Schema, SchemaAST } from 'effect'
+import {
+  Array,
+  Effect,
+  HashMap,
+  Option,
+  Order,
+  pipe,
+  Record,
+  Ref,
+  Schema,
+  SchemaAST,
+  String,
+} from 'effect'
+import type { ComponentType } from 'react'
 import { useMemo } from 'react'
 
 export class IconLoadError extends Schema.TaggedError<IconLoadError>()('IconLoadError', {
@@ -16,31 +26,44 @@ export class IconLoadError extends Schema.TaggedError<IconLoadError>()('IconLoad
   iconName: Schema.String,
 }) {}
 
-const ICON_MAP = HashMap.fromIterable([
-  ['personIcon', PersonIcon as React.ComponentType],
-  ['buildingIcon', BuildingIcon as React.ComponentType],
-  ['folderPlusIcon', FolderPlusIcon as React.ComponentType],
-  ['circleIcon', CircleIcon as React.ComponentType],
-])
-
 const loadIcon = Effect.fn('loadIcon')(function* (iconName: string) {
   yield* Effect.annotateCurrentSpan('iconName', iconName)
-  const iconFromMap = pipe(ICON_MAP, HashMap.get(iconName))
 
   return yield* pipe(
-    iconFromMap,
-    Option.match({
-      onNone: () => {
-        return Effect.succeed(CircleIcon)
-      },
-      onSome: (IconComponent) => {
-        return Effect.succeed(IconComponent)
-      },
+    Effect.tryPromise({
+      catch: (cause) => new IconLoadError({ cause, iconName }),
+      try: () => import('@openfaith/ui'),
     }),
+    Effect.flatMap((uiModule) =>
+      Effect.gen(function* () {
+        // Convert camelCase iconName to PascalCase using Effect's String utilities
+        // Schema defines icons as: 'personIcon', 'folderPlusIcon', 'buildingIcon'
+        // UI exports them as: 'PersonIcon', 'FolderPlusIcon', 'BuildingIcon'
+        const pascalCaseIconName = pipe(iconName, String.capitalize)
+
+        // Try different naming conventions
+        const possibleNames = [
+          iconName, // exact match (camelCase from schema)
+          pascalCaseIconName, // PascalCase (e.g., personIcon -> PersonIcon)
+        ]
+
+        // Try to find the icon component using Effect's Array utilities
+        for (const name of possibleNames) {
+          const IconComponent = (uiModule as any)[name]
+          if (IconComponent && typeof IconComponent === 'function') {
+            return yield* Effect.succeed(IconComponent as ComponentType)
+          }
+        }
+
+        // If no icon found, return CircleIcon as fallback
+        return yield* Effect.succeed(CircleIcon as ComponentType)
+      }),
+    ),
+    Effect.orElse(() => Effect.succeed(CircleIcon as ComponentType)),
   )
 })
 
-const iconCacheRef = Ref.unsafeMake(HashMap.empty<string, React.ComponentType>())
+const iconCacheRef = Ref.unsafeMake(HashMap.empty<string, ComponentType>())
 
 const getIconComponent = Effect.fn('getIconComponent')(function* (iconName?: string) {
   const effectiveIconName = iconName || 'circleIcon'
@@ -141,7 +164,7 @@ export const useEntityIcons = (entities: Array<EntityNavConfig>) => {
   return {
     iconComponents: pipe(
       query.dataOpt,
-      Option.getOrElse(() => HashMap.empty<string, React.ComponentType>()),
+      Option.getOrElse(() => HashMap.empty<string, ComponentType>()),
     ),
     isError: query.isError,
     isSuccess: query.isSuccess,
