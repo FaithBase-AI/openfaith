@@ -1,8 +1,16 @@
-import { activeOrgIdAtom } from '@openfaith/openfaith/shared/auth/authState'
-import { useAtom } from 'jotai'
+import { useRouter } from "@tanstack/react-router";
+import { Option, pipe } from "effect";
 
 export function useOrgId() {
-  const [activeOrgId] = useAtom(activeOrgIdAtom)
+  const router = useRouter();
+  const { session } = router.options.context;
 
-  return activeOrgId
+  return pipe(
+    session.data,
+    Option.fromNullable,
+    Option.match({
+      onNone: () => "",
+      onSome: (data) => data.activeOrganizationId,
+    }),
+  );
 }
