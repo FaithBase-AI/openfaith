@@ -1,11 +1,9 @@
 import {
   BuildingIcon,
-  CalendarIcon,
   HomeIcon,
   PersonIcon,
   SettingsIcon,
   TerminalIcon,
-  UserCircleIcon,
   UserPlusIcon,
 } from '@openfaith/ui'
 import type { ReactNode } from 'react'
@@ -21,21 +19,6 @@ export const mainNavItems: Array<NavItem> = [
     icon: <HomeIcon />,
     title: 'Dashboard',
     url: '/',
-  },
-  {
-    icon: <PersonIcon />,
-    title: 'People',
-    url: '/people',
-  },
-  {
-    icon: <UserCircleIcon />,
-    title: 'Groups',
-    url: '/groups',
-  },
-  {
-    icon: <CalendarIcon />,
-    title: 'Events',
-    url: '/events',
   },
 ]
 
