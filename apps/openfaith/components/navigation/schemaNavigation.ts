@@ -96,7 +96,7 @@ export const discoverEntityNavigation = (): Array<EntityNavConfig> => {
       const navItem = {
         iconName: navConfig.icon,
         title: navConfig.title,
-        url: navConfig.url || `/${pluralize(tag.toLowerCase())}`,
+        url: navConfig.url || `/${navConfig.module}/${pluralize(tag.toLowerCase())}`,
       }
 
       return Option.some({
