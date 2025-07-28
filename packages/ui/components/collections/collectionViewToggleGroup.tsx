@@ -4,7 +4,11 @@ import type { CollectionTags } from '@openfaith/ui/components/collections/collec
 import { ToggleGroup, ToggleGroupItem } from '@openfaith/ui/components/ui/toggle-group'
 import { ViewCardIcon } from '@openfaith/ui/icons/viewCardIcon'
 import { ViewListIcon } from '@openfaith/ui/icons/viewListIcon'
-import { collectionViewAtomMap } from '@openfaith/ui/shared/globalState'
+import {
+  collectionViewsAtom,
+  getCollectionView,
+  setCollectionView,
+} from '@openfaith/ui/shared/globalState'
 import { useAtom } from 'jotai'
 import type { ComponentPropsWithoutRef, FC } from 'react'
 
@@ -18,13 +22,14 @@ type CollectionViewToggleGroupProps = Omit<
 export const CollectionViewToggleGroup: FC<CollectionViewToggleGroupProps> = (props) => {
   const { _tag, ...domProps } = props
 
-  const [collectionView, setCollectionView] = useAtom(collectionViewAtomMap[_tag])
+  const [collectionViews, setCollectionViews] = useAtom(collectionViewsAtom)
+  const collectionView = getCollectionView(collectionViews, _tag)
 
   return (
     <ToggleGroup
       onValueChange={(x) => {
         if (x === 'table' || x === 'cards') {
-          setCollectionView(x)
+          setCollectionViews((currentViews) => setCollectionView(currentViews, _tag, x))
         }
       }}
       type={'single'}

@@ -2,7 +2,7 @@
 
 import { Button } from '@openfaith/ui/components/ui/button'
 import { ArrowUpDownIcon } from '@openfaith/ui/icons/arrowUpDownIcon'
-import { FilterKeys } from '@openfaith/ui/shared/globalState'
+
 import { cn } from '@openfaith/ui/shared/utils'
 import type { CellContext, Column } from '@tanstack/react-table'
 import { format } from 'date-fns/fp'
@@ -11,13 +11,14 @@ import type { HTMLAttributes, ReactNode } from 'react'
 
 export type CollectionTags = 'channels' | 'prompts' | 'users' | 'orgs' | 'tags' | 'default'
 
-export const collectionTagToFilterKey: Record<CollectionTags, FilterKeys> = {
-  channels: FilterKeys.Channel,
-  default: FilterKeys.Default,
-  orgs: FilterKeys.Org,
-  prompts: FilterKeys.Prompt,
-  tags: FilterKeys.Tag,
-  users: FilterKeys.User,
+// Mapping collection tags to filter keys (now just strings)
+export const collectionTagToFilterKey: Record<CollectionTags, string> = {
+  channels: 'channel-filters',
+  default: 'default-filters',
+  orgs: 'org-filters',
+  prompts: 'prompt-filters',
+  tags: 'tag-filters',
+  users: 'user-filters',
 }
 
 type ColumnHeaderProps<T> = {

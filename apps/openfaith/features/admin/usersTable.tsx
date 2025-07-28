@@ -6,7 +6,7 @@ import {
   useUsersCollection,
 } from '@openfaith/openfaith/data/users/usersData.app'
 import { InviteMemberButton } from '@openfaith/openfaith/features/settings/inviteMemberButton'
-import { type Card, Collection, FilterKeys } from '@openfaith/ui'
+import { type Card, Collection } from '@openfaith/ui'
 import type { UserClientShape } from '@openfaith/zero'
 import type { FC } from 'react'
 
@@ -20,7 +20,7 @@ export const UsersTable: FC = () => {
       columnsDef={usersTableColumns}
       data={usersCollection}
       filterColumnId={'email'}
-      filterKey={FilterKeys.User}
+      filterKey={'user-filters'}
       filterPlaceHolder={'Filter Members'}
       filtersDef={usersFiltersDef}
       limit={limit}

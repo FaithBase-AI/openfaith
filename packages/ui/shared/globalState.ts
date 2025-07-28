@@ -1,55 +1,35 @@
-import type { CollectionTags } from '@openfaith/ui/components/collections/collectionComponents'
-import { Match, pipe } from 'effect'
+import { HashMap, Match, Option, pipe } from 'effect'
+import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
-
-export enum FilterKeys {
-  User = 'user-filters',
-  Org = 'org-filters',
-  Channel = 'channel-filters',
-  Prompt = 'prompt-filters',
-  Tag = 'tag-filters',
-  Default = 'default-filters',
-}
 
 export type CollectionView = 'table' | 'cards'
 
 const getDefaultCollectionView = (): CollectionView => 'table'
 
-const defaultViewAtom = atomWithStorage<CollectionView>('defaultView', getDefaultCollectionView())
-
-const usersCollectionViewAtom = atomWithStorage<CollectionView>(
-  'usersCollectionView',
-  getDefaultCollectionView(),
+// Single atom containing a HashMap of collection views
+export const collectionViewsAtom = atom<HashMap.HashMap<string, CollectionView>>(
+  HashMap.fromIterable([
+    ['default', getDefaultCollectionView()],
+    ['channels', 'cards' as CollectionView],
+  ]),
 )
 
-const orgsCollectionViewAtom = atomWithStorage<CollectionView>(
-  'orgsCollectionView',
-  getDefaultCollectionView(),
-)
+// Helper functions for working with collection views
+export const getCollectionView = (
+  collectionViews: HashMap.HashMap<string, CollectionView>,
+  key: string,
+): CollectionView =>
+  pipe(
+    collectionViews,
+    HashMap.get(key),
+    Option.getOrElse(() => getDefaultCollectionView()),
+  )
 
-const channelsCollectionViewAtom = atomWithStorage<CollectionView>(
-  'channelsCollectionView',
-  'cards',
-)
-
-const promptsCollectionViewAtom = atomWithStorage<CollectionView>(
-  'promptsCollectionView',
-  getDefaultCollectionView(),
-)
-
-const tagsCollectionViewAtom = atomWithStorage<CollectionView>(
-  'tagsCollectionView',
-  getDefaultCollectionView(),
-)
-
-export const collectionViewAtomMap: Record<CollectionTags, typeof defaultViewAtom> = {
-  channels: channelsCollectionViewAtom,
-  default: defaultViewAtom,
-  orgs: orgsCollectionViewAtom,
-  prompts: promptsCollectionViewAtom,
-  tags: tagsCollectionViewAtom,
-  users: usersCollectionViewAtom,
-}
+export const setCollectionView = (
+  collectionViews: HashMap.HashMap<string, CollectionView>,
+  key: string,
+  view: CollectionView,
+): HashMap.HashMap<string, CollectionView> => pipe(collectionViews, HashMap.set(key, view))
 
 export const collectionViewMatch = <T>(match: { table: () => T; cards: () => T }) =>
   pipe(

@@ -6,17 +6,17 @@ import { DebouncedInput } from '@openfaith/ui/components/data-table-filter/ui/de
 import { Button } from '@openfaith/ui/components/ui/button'
 import { SearchIcon } from '@openfaith/ui/icons/searchIcon'
 import { XIcon } from '@openfaith/ui/icons/xIcon'
-import type { FilterKeys } from '@openfaith/ui/shared/globalState'
+
 import { cn } from '@openfaith/ui/shared/utils'
 import { Array, Boolean, Option, pipe, String } from 'effect'
 import { parseAsJson, useQueryState } from 'nuqs'
 
-type CollectionSearchFilterProps<T> = {
+type CollectionSearchFilterProps<_T> = {
   filterPlaceHolder: string
   filterColumnId: string
   className?: string
   inputClassName?: string
-  filterKey: FilterKeys
+  filterKey: string
 }
 
 export const CollectionSearchFilter = <T,>(props: CollectionSearchFilterProps<T>) => {

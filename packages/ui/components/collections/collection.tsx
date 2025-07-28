@@ -15,9 +15,9 @@ import type {
 } from '@openfaith/ui/components/data-table-filter/core/types'
 import { Divider } from '@openfaith/ui/components/ui/divider'
 import {
-  collectionViewAtomMap,
   collectionViewMatch,
-  type FilterKeys,
+  collectionViewsAtom,
+  getCollectionView,
 } from '@openfaith/ui/shared/globalState'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Array, pipe } from 'effect'
@@ -36,7 +36,7 @@ type CollectionProps<
   _tag: CollectionTags
   rowSize?: number
   filtersDef: TColumns
-  filterKey: FilterKeys
+  filterKey: string
   columnsDef: Array<ColumnDef<TData>>
   data: Array<TData>
   filtersOptions?: Partial<Record<OptionColumnIds<TColumns>, Array<ColumnOption> | undefined>>
@@ -79,7 +79,8 @@ export const Collection = <
     data,
   })
 
-  const [collectionView] = useAtom(collectionViewAtomMap[_tag])
+  const [collectionViews] = useAtom(collectionViewsAtom)
+  const collectionView = getCollectionView(collectionViews, _tag)
 
   return (
     <>

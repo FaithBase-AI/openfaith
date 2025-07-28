@@ -9,7 +9,7 @@ import {
   DataTableFilter,
   useDataTableFilters,
 } from '@openfaith/ui/components/data-table-filter/index'
-import type { FilterKeys } from '@openfaith/ui/shared/globalState'
+
 import { parseAsJson, useQueryState } from 'nuqs'
 
 type CollectionFiltersProps<
@@ -18,8 +18,8 @@ type CollectionFiltersProps<
 > = {
   data: Array<TData>
   filtersDef: TColumns
-  filterKey: FilterKeys
-  filtersOptions?: Partial<Record<OptionColumnIds<TColumns>, ColumnOption[] | undefined>>
+  filterKey: string
+  filtersOptions?: Partial<Record<OptionColumnIds<TColumns>, Array<ColumnOption> | undefined>>
 }
 export const CollectionFilters = <
   TData,
