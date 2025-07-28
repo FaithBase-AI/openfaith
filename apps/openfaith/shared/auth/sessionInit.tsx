@@ -10,6 +10,9 @@ export type SessionContextType = {
         userID: string
         email: string
         activeOrganizationId: string | null
+        userRole: string | null
+        orgRole: string | null
+        impersonatedBy: string | null
       }
     | undefined
   login: () => void
@@ -18,7 +21,15 @@ export type SessionContextType = {
 }
 
 export function SessionInit({ children }: { children: React.ReactNode }) {
-  const [cookies] = useCookies(['userid', 'email', 'jwt', 'activeOrganizationId'])
+  const [cookies] = useCookies([
+    'userid',
+    'email',
+    'jwt',
+    'activeOrganizationId',
+    'userRole',
+    'orgRole',
+    'impersonatedBy',
+  ])
 
   const data = useMemo(() => {
     if (!cookies.userid || !cookies.email) {
@@ -31,9 +42,19 @@ export function SessionInit({ children }: { children: React.ReactNode }) {
         Option.getOrNull,
       ),
       email: cookies.email,
+      impersonatedBy: pipe(cookies.impersonatedBy, Option.fromNullable, Option.getOrNull),
+      orgRole: pipe(cookies.orgRole, Option.fromNullable, Option.getOrNull),
       userID: cookies.userid,
+      userRole: pipe(cookies.userRole, Option.fromNullable, Option.getOrNull),
     }
-  }, [cookies.userid, cookies.email, cookies.activeOrganizationId])
+  }, [
+    cookies.userid,
+    cookies.email,
+    cookies.activeOrganizationId,
+    cookies.userRole,
+    cookies.orgRole,
+    cookies.impersonatedBy,
+  ])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: We want to refresh the session when the cookies change
   const session = useMemo(() => {

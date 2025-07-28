@@ -74,9 +74,19 @@ export const auth = betterAuth({
     session: {
       create: {
         before: async (session) => {
-          const org = await db.query.orgUsersTable.findFirst({
+          // Get user role from users table
+          const user = await db.query.usersTable.findFirst({
+            columns: {
+              role: true,
+            },
+            where: (x, d) => d.eq(x.id, session.userId),
+          })
+
+          // Get organization membership and role
+          const orgUser = await db.query.orgUsersTable.findFirst({
             columns: {
               orgId: true,
+              role: true,
             },
             where: (x, d) => d.eq(x.userId, session.userId),
           })
@@ -84,7 +94,10 @@ export const auth = betterAuth({
           return {
             data: {
               ...session,
-              activeOrganizationId: org?.orgId,
+              activeOrganizationId: orgUser?.orgId,
+              impersonatedBy: session.impersonatedBy,
+              orgRole: orgUser?.role,
+              userRole: user?.role,
             },
           }
         },
@@ -146,6 +159,9 @@ export const auth = betterAuth({
                   definePayload: ({ user, session }) => ({
                     ...user,
                     activeOrganizationId: session.activeOrganizationId,
+                    impersonatedBy: session.impersonatedBy,
+                    orgRole: session.orgRole,
+                    userRole: session.userRole,
                   }),
                   expirationTime: '1h',
                 },
@@ -159,8 +175,19 @@ export const auth = betterAuth({
                   Option.getOrUndefined,
                 ),
                 email: session.user.email,
+                impersonatedBy: pipe(
+                  session.session.impersonatedBy,
+                  Option.fromNullable,
+                  Option.getOrUndefined,
+                ),
                 jwt: token,
+                orgRole: pipe(session.session.orgRole, Option.fromNullable, Option.getOrUndefined),
                 userid: session.user.id,
+                userRole: pipe(
+                  session.session.userRole,
+                  Option.fromNullable,
+                  Option.getOrUndefined,
+                ),
               })
 
               return
@@ -175,9 +202,13 @@ export const auth = betterAuth({
           Option.fromNullable,
           Option.map((x) =>
             setCookies(x, {
+              activeOrganizationId: '',
               email: '',
+              impersonatedBy: '',
               jwt: '',
+              orgRole: '',
               userid: '',
+              userRole: '',
             }),
           ),
         )
@@ -191,6 +222,9 @@ export const auth = betterAuth({
         definePayload: ({ user, session }) => ({
           ...user,
           activeOrganizationId: session.activeOrganizationId,
+          impersonatedBy: session.impersonatedBy,
+          orgRole: session.orgRole,
+          userRole: session.userRole,
         }),
         expirationTime: '1h',
       },
@@ -296,6 +330,9 @@ export function setCookies(
     email: string
     jwt: string
     activeOrganizationId?: string | undefined
+    userRole?: string | undefined
+    orgRole?: string | undefined
+    impersonatedBy?: string | undefined
   },
 ) {
   const opts = {

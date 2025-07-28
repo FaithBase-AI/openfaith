@@ -1,4 +1,12 @@
+import { AdminNav } from '@openfaith/openfaith/components/navigation/adminNav'
+import { DevMenu } from '@openfaith/openfaith/components/navigation/devMenu'
 import {
+  mainNavItems,
+  settingsNavItems,
+} from '@openfaith/openfaith/components/navigation/navShared'
+import { SideBarItem } from '@openfaith/openfaith/components/navigation/sideBarItem'
+import {
+  CommentTextIcon,
   cn,
   HomeIcon,
   Sidebar,
@@ -15,15 +23,6 @@ import { Array, pipe } from 'effect'
 import type { ComponentProps, FC } from 'react'
 
 type AppSidebarProps = ComponentProps<typeof Sidebar>
-
-const navItems = [
-  {
-    icon: HomeIcon,
-    title: 'Home',
-    url: '/',
-  },
-  // Add more navigation items here as needed
-]
 
 export const AppNavigation: FC<AppSidebarProps> = (props) => {
   const { className, ...domProps } = props
@@ -46,18 +45,49 @@ export const AppNavigation: FC<AppSidebarProps> = (props) => {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarMenu>
             {pipe(
-              navItems,
-              Array.map((item) => (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton asChild>
-                    <Link to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )),
+              mainNavItems,
+              Array.map((item) => <SideBarItem key={item.url} {...item} />),
             )}
+          </SidebarMenu>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Settings</SidebarGroupLabel>
+          <SidebarMenu>
+            {pipe(
+              settingsNavItems,
+              Array.map((item) => <SideBarItem key={item.url} {...item} />),
+            )}
+          </SidebarMenu>
+        </SidebarGroup>
+
+        <AdminNav />
+
+        <SidebarGroup className='mt-auto'>
+          <SidebarMenu>
+            <DevMenu />
+
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <a
+                  href='https://faithbase.userjot.com/?cursor=1&order=newest&limit=10'
+                  rel='noopener'
+                  target='_blank'
+                >
+                  <CommentTextIcon />
+                  Feedback
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link to='/'>
+                  <HomeIcon />
+                  Home
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

@@ -160,6 +160,12 @@ Examples:
   - Prefer: `pipe(items, Array.filter((item) => item.active))`
   - Avoid: `items.filter((item) => item.active)`
   - Avoid: `Array.filter(items, (item) => item.active)`
+- **Use no-op utilities from `@openfaith/shared` instead of inline functions**
+  - Prefer: `nullOp` instead of `() => null`
+  - Prefer: `noOp` instead of `() => {}`
+  - Prefer: `asyncNoOp` instead of `async () => {}`
+  - Prefer: `asyncNullOp` instead of `async () => null`
+  - Prefer: `nullOpE` instead of `() => Effect.succeed(null)`
 - Follow existing Effect-TS patterns
 
 ### Error Handling Patterns
@@ -451,6 +457,40 @@ This comprehensive testing approach ensures both type safety and functional corr
 - Use Effect Schema for data validation
 - Follow the existing adapter patterns for new integrations
 - Use Effect's error handling instead of throwing exceptions
+
+### No-Op Utilities
+
+Use standardized no-op functions from `@openfaith/shared` instead of creating inline functions:
+
+```typescript
+import {
+  nullOp,
+  noOp,
+  asyncNoOp,
+  asyncNullOp,
+  nullOpE,
+} from "@openfaith/shared";
+
+// ✅ Good - Use standardized no-ops
+Option.match({
+  onNone: nullOp,
+  onSome: (value) => processValue(value),
+});
+
+// ❌ Avoid - Inline functions
+Option.match({
+  onNone: () => null,
+  onSome: (value) => processValue(value),
+});
+```
+
+**Available No-Op Utilities:**
+
+- `nullOp: () => null` - Returns null (most common)
+- `noOp: () => {}` - Returns undefined/void
+- `asyncNoOp: async () => {}` - Async function returning void
+- `asyncNullOp: async () => null` - Async function returning null
+- `nullOpE: () => Effect.succeed(null)` - Effect returning null
 
 ### Package Management
 
