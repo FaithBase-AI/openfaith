@@ -1,3 +1,4 @@
+import { AppNavigationLayout } from '@openfaith/openfaith/components/layouts/appNavigationLayout'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_app')({
@@ -24,5 +25,9 @@ export const Route = createFileRoute('/_app')({
 })
 
 function RouteComponent() {
-  return <Outlet />
+  return (
+    <AppNavigationLayout>
+      <Outlet />
+    </AppNavigationLayout>
+  )
 }

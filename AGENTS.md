@@ -452,6 +452,35 @@ This comprehensive testing approach ensures both type safety and functional corr
 - Follow the existing adapter patterns for new integrations
 - Use Effect's error handling instead of throwing exceptions
 
+### Package Management
+
+When adding new exports to any package:
+
+1. **Always update the index file**: Add exports to the package's `index.ts` for any new components, utilities, or functions
+2. **Use clean imports**: Import from the package root (e.g., `@openfaith/ui`) instead of deep paths
+3. **Export pattern**: Follow the existing pattern in `index.ts`:
+   ```typescript
+   export * from "@openfaith/packagename/path/to/newComponent";
+   ```
+4. **Import pattern**: Use the clean import in consuming code:
+
+   ```typescript
+   // ✅ Good
+   import { Button, Dialog, Separator } from "@openfaith/ui";
+   import { PersonSchema, GroupSchema } from "@openfaith/schema";
+
+   // ❌ Avoid
+   import { Button } from "@openfaith/ui/components/ui/button";
+   import { PersonSchema } from "@openfaith/schema/directory/personSchema";
+   ```
+
+**Special Cases:**
+
+- **Adapters with client/server split**: Some packages like `@openfaith/pco` have separate `client.ts` and `server.ts` entry points for code that can't be shared between environments
+- **Environment-specific exports**: Use separate entry points when exports contain server-only or client-only code
+
+This keeps imports clean and makes it easier to refactor component locations later.
+
 ### Infrastructure Dependencies
 
 - PostgreSQL database must be running
