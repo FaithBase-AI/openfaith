@@ -1,5 +1,14 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "experimental": {
+    "hook": {
+      "session_completed": [
+        {
+          "command": ["afplay", "/System/Library/Sounds/Glass.aiff"]
+        }
+      ]
+    }
+  },
   "layout": "stretch",
   "mcp": {
     "context7": {

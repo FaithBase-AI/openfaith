@@ -18,7 +18,7 @@ export const mainNavItems: Array<NavItem> = [
   {
     icon: <HomeIcon />,
     title: 'Dashboard',
-    url: '/',
+    url: '/dashboard',
   },
 ]
 
@@ -44,25 +44,12 @@ export const adminNavItems: Array<NavItem> = [
   {
     icon: <BuildingIcon />,
     title: 'Organizations',
-    url: '/admin/organizations',
+    url: '/admin/orgs',
   },
   {
     icon: <PersonIcon />,
     title: 'Users',
     url: '/admin/users',
-  },
-  {
-    icon: <SettingsIcon />,
-    title: 'System',
-    url: '/admin/system',
-  },
-]
-
-export const salesNavItems: Array<NavItem> = [
-  {
-    icon: <SettingsIcon />,
-    title: 'Pages',
-    url: '/sales/pages',
   },
 ]
 

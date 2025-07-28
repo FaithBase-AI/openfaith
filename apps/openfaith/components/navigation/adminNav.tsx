@@ -1,4 +1,4 @@
-import { adminNavItems, salesNavItems } from '@openfaith/openfaith/components/navigation/navShared'
+import { adminNavItems } from '@openfaith/openfaith/components/navigation/navShared'
 import { SideBarItem } from '@openfaith/openfaith/components/navigation/sideBarItem'
 import { nullOp } from '@openfaith/shared'
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu } from '@openfaith/ui'
@@ -23,17 +23,6 @@ export const AdminNav = () => {
             <SidebarMenu>
               {pipe(
                 adminNavItems,
-                Array.map((x) => <SideBarItem key={x.url} {...x} />),
-              )}
-            </SidebarMenu>
-          </SidebarGroup>
-
-          <SidebarGroup>
-            <SidebarGroupLabel className={'gap-2'}>Sales</SidebarGroupLabel>
-
-            <SidebarMenu>
-              {pipe(
-                salesNavItems,
                 Array.map((x) => <SideBarItem key={x.url} {...x} />),
               )}
             </SidebarMenu>

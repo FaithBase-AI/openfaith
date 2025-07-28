@@ -19,6 +19,12 @@ import { Route as OauthProviderRouteImport } from './routes/oauth/$provider'
 import { Route as OnboardingCreateOrgRouteImport } from './routes/_onboarding/create-org'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppSettingsTeamRouteImport } from './routes/_app/settings/team'
+import { Route as AppSettingsIntegrationsRouteImport } from './routes/_app/settings/integrations'
+import { Route as AppSettingsGeneralRouteImport } from './routes/_app/settings/general'
+import { Route as AppDevLogsRouteImport } from './routes/_app/dev/logs'
+import { Route as AppAdminUsersRouteImport } from './routes/_app/admin/users'
+import { Route as AppAdminOrgsRouteImport } from './routes/_app/admin/orgs'
 import { ServerRoute as ApiAuthRefreshServerRouteImport } from './routes/api/auth/refresh'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
 import { ServerRoute as ApiApiSplatServerRouteImport } from './routes/api/api.$'
@@ -62,6 +68,36 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppSettingsTeamRoute = AppSettingsTeamRouteImport.update({
+  id: '/settings/team',
+  path: '/settings/team',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppSettingsIntegrationsRoute = AppSettingsIntegrationsRouteImport.update({
+  id: '/settings/integrations',
+  path: '/settings/integrations',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppSettingsGeneralRoute = AppSettingsGeneralRouteImport.update({
+  id: '/settings/general',
+  path: '/settings/general',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppDevLogsRoute = AppDevLogsRouteImport.update({
+  id: '/dev/logs',
+  path: '/dev/logs',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppAdminOrgsRoute = AppAdminOrgsRouteImport.update({
+  id: '/admin/orgs',
+  path: '/admin/orgs',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const ApiAuthRefreshServerRoute = ApiAuthRefreshServerRouteImport.update({
   id: '/api/auth/refresh',
   path: '/api/auth/refresh',
@@ -84,6 +120,12 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof AuthSignInRoute
   '/create-org': typeof OnboardingCreateOrgRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/admin/orgs': typeof AppAdminOrgsRoute
+  '/admin/users': typeof AppAdminUsersRoute
+  '/dev/logs': typeof AppDevLogsRoute
+  '/settings/general': typeof AppSettingsGeneralRoute
+  '/settings/integrations': typeof AppSettingsIntegrationsRoute
+  '/settings/team': typeof AppSettingsTeamRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -91,6 +133,12 @@ export interface FileRoutesByTo {
   '/sign-in': typeof AuthSignInRoute
   '/create-org': typeof OnboardingCreateOrgRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/admin/orgs': typeof AppAdminOrgsRoute
+  '/admin/users': typeof AppAdminUsersRoute
+  '/dev/logs': typeof AppDevLogsRoute
+  '/settings/general': typeof AppSettingsGeneralRoute
+  '/settings/integrations': typeof AppSettingsIntegrationsRoute
+  '/settings/team': typeof AppSettingsTeamRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -102,6 +150,12 @@ export interface FileRoutesById {
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_onboarding/create-org': typeof OnboardingCreateOrgRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/_app/admin/orgs': typeof AppAdminOrgsRoute
+  '/_app/admin/users': typeof AppAdminUsersRoute
+  '/_app/dev/logs': typeof AppDevLogsRoute
+  '/_app/settings/general': typeof AppSettingsGeneralRoute
+  '/_app/settings/integrations': typeof AppSettingsIntegrationsRoute
+  '/_app/settings/team': typeof AppSettingsTeamRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,8 +165,25 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/create-org'
     | '/oauth/$provider'
+    | '/admin/orgs'
+    | '/admin/users'
+    | '/dev/logs'
+    | '/settings/general'
+    | '/settings/integrations'
+    | '/settings/team'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/sign-in' | '/create-org' | '/oauth/$provider'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/sign-in'
+    | '/create-org'
+    | '/oauth/$provider'
+    | '/admin/orgs'
+    | '/admin/users'
+    | '/dev/logs'
+    | '/settings/general'
+    | '/settings/integrations'
+    | '/settings/team'
   id:
     | '__root__'
     | '/'
@@ -123,6 +194,12 @@ export interface FileRouteTypes {
     | '/_auth/sign-in'
     | '/_onboarding/create-org'
     | '/oauth/$provider'
+    | '/_app/admin/orgs'
+    | '/_app/admin/users'
+    | '/_app/dev/logs'
+    | '/_app/settings/general'
+    | '/_app/settings/integrations'
+    | '/_app/settings/team'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -220,6 +297,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/settings/team': {
+      id: '/_app/settings/team'
+      path: '/settings/team'
+      fullPath: '/settings/team'
+      preLoaderRoute: typeof AppSettingsTeamRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/settings/integrations': {
+      id: '/_app/settings/integrations'
+      path: '/settings/integrations'
+      fullPath: '/settings/integrations'
+      preLoaderRoute: typeof AppSettingsIntegrationsRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/settings/general': {
+      id: '/_app/settings/general'
+      path: '/settings/general'
+      fullPath: '/settings/general'
+      preLoaderRoute: typeof AppSettingsGeneralRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/dev/logs': {
+      id: '/_app/dev/logs'
+      path: '/dev/logs'
+      fullPath: '/dev/logs'
+      preLoaderRoute: typeof AppDevLogsRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/admin/users': {
+      id: '/_app/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AppAdminUsersRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/admin/orgs': {
+      id: '/_app/admin/orgs'
+      path: '/admin/orgs'
+      fullPath: '/admin/orgs'
+      preLoaderRoute: typeof AppAdminOrgsRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
   }
 }
 declare module '@tanstack/react-start/server' {
@@ -250,10 +369,22 @@ declare module '@tanstack/react-start/server' {
 
 interface AppRouteRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
+  AppAdminOrgsRoute: typeof AppAdminOrgsRoute
+  AppAdminUsersRoute: typeof AppAdminUsersRoute
+  AppDevLogsRoute: typeof AppDevLogsRoute
+  AppSettingsGeneralRoute: typeof AppSettingsGeneralRoute
+  AppSettingsIntegrationsRoute: typeof AppSettingsIntegrationsRoute
+  AppSettingsTeamRoute: typeof AppSettingsTeamRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
+  AppAdminOrgsRoute: AppAdminOrgsRoute,
+  AppAdminUsersRoute: AppAdminUsersRoute,
+  AppDevLogsRoute: AppDevLogsRoute,
+  AppSettingsGeneralRoute: AppSettingsGeneralRoute,
+  AppSettingsIntegrationsRoute: AppSettingsIntegrationsRoute,
+  AppSettingsTeamRoute: AppSettingsTeamRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
