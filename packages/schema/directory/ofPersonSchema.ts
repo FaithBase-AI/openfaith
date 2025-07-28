@@ -1,5 +1,5 @@
 import { peopleTable } from '@openfaith/db'
-import { OfTable } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -41,6 +41,16 @@ export const BasePerson = Schema.Struct({
   type: Schema.Literal('default'),
 }).annotations({
   [OfTable]: peopleTable,
+  [OfUiConfig]: {
+    navigation: {
+      description: 'Manage people in your organization',
+      enabled: true,
+      icon: 'personIcon',
+      module: 'directory',
+      order: 1,
+      title: 'People',
+    },
+  } satisfies FieldConfig,
 })
 export type BasePerson = typeof BasePerson.Type
 

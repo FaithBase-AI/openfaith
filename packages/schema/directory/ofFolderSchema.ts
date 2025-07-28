@@ -1,3 +1,4 @@
+import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -31,6 +32,17 @@ export const BaseFolder = Schema.Struct({
     description:
       'Foreign key to parent folder ID. If null, this is a root-level folder. If populated, creates a hierarchy.',
   }).pipe(Schema.NullOr),
+}).annotations({
+  [OfUiConfig]: {
+    navigation: {
+      description: 'Organize content with hierarchical folders',
+      enabled: true,
+      icon: 'folderPlusIcon',
+      module: 'collection',
+      order: 3,
+      title: 'Folders',
+    },
+  } satisfies FieldConfig,
 })
 export type BaseFolder = typeof BaseFolder.Type
 

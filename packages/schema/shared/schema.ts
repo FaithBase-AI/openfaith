@@ -71,6 +71,22 @@ export interface FieldConfig {
     hidden?: boolean
     pinned?: 'left' | 'right'
   }
+  navigation?: {
+    enabled: boolean
+    title: string
+    icon?: string // Icon name from your icon system
+    url?: string // Auto-generated if not provided
+    module:
+      | 'directory'
+      | 'domain'
+      | 'collection'
+      | 'schedule'
+      | 'giving'
+      | 'management'
+      | 'external'
+    order?: number
+    description?: string
+  }
 }
 
 declare module 'effect/Schema' {

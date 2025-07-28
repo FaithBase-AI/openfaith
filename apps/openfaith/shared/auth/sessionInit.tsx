@@ -35,6 +35,7 @@ export function SessionInit({ children }: { children: React.ReactNode }) {
     if (!cookies.userid || !cookies.email) {
       return undefined
     }
+
     return {
       activeOrganizationId: pipe(
         cookies.activeOrganizationId,

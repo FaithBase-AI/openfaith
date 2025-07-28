@@ -4,7 +4,12 @@ import {
   mainNavItems,
   settingsNavItems,
 } from '@openfaith/openfaith/components/navigation/navShared'
+import {
+  getNavigationByModule,
+  useEntityIcons,
+} from '@openfaith/openfaith/components/navigation/schemaNavigation'
 import { SideBarItem } from '@openfaith/openfaith/components/navigation/sideBarItem'
+import { OrgSwitcher } from '@openfaith/openfaith/components/orgSwitcher'
 import {
   CommentTextIcon,
   cn,
@@ -19,30 +24,40 @@ import {
   SidebarMenuItem,
 } from '@openfaith/ui'
 import { Link } from '@tanstack/react-router'
-import { Array, pipe } from 'effect'
-import type { ComponentProps, FC } from 'react'
+import { Array, HashMap, Option, pipe, Record } from 'effect'
+import { type ComponentProps, createElement, type FC } from 'react'
 
 type AppSidebarProps = ComponentProps<typeof Sidebar>
 
 export const AppNavigation: FC<AppSidebarProps> = (props) => {
   const { className, ...domProps } = props
 
+  const navigationByModule = getNavigationByModule()
+
+  const allEntities = pipe(navigationByModule, Record.values, Array.flatten)
+
+  const { iconComponents } = useEntityIcons(allEntities)
+
+  const moduleSections = pipe(
+    navigationByModule,
+    Record.toEntries,
+    Array.map(([moduleKey, entities]) => ({
+      entities,
+      key: moduleKey,
+      label: moduleKey.charAt(0).toUpperCase() + moduleKey.slice(1),
+    })),
+  )
+
   return (
     <Sidebar className={cn(className)} collapsible={'icon'} variant='inset' {...domProps}>
       <SidebarHeader>
-        <div className='flex items-center gap-2 px-2 py-1'>
-          <div className='flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground'>
-            <span className='font-bold text-xs'>OF</span>
-          </div>
-          <div className='grid flex-1 text-left text-sm leading-tight'>
-            <span className='truncate font-semibold'>OpenFaith</span>
-          </div>
-        </div>
+        <OrgSwitcher />
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Core Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Core</SidebarGroupLabel>
           <SidebarMenu>
             {pipe(
               mainNavItems,
@@ -51,6 +66,35 @@ export const AppNavigation: FC<AppSidebarProps> = (props) => {
           </SidebarMenu>
         </SidebarGroup>
 
+        {/* Dynamic Module Sections */}
+        {pipe(
+          moduleSections,
+          Array.map((section) => (
+            <SidebarGroup key={section.key}>
+              <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
+              <SidebarMenu>
+                {pipe(
+                  allEntities,
+                  Array.map((entity) => (
+                    <SideBarItem
+                      icon={pipe(
+                        iconComponents,
+                        HashMap.get(entity.tag),
+                        Option.map(createElement),
+                        Option.getOrNull,
+                      )}
+                      key={entity.tag}
+                      title={entity.navItem.title}
+                      url={entity.navItem.url}
+                    />
+                  )),
+                )}
+              </SidebarMenu>
+            </SidebarGroup>
+          )),
+        )}
+
+        {/* Settings */}
         <SidebarGroup>
           <SidebarGroupLabel>Settings</SidebarGroupLabel>
           <SidebarMenu>

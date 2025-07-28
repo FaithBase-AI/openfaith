@@ -95,7 +95,6 @@ export const auth = betterAuth({
             data: {
               ...session,
               activeOrganizationId: orgUser?.orgId,
-              impersonatedBy: session.impersonatedBy,
               orgRole: orgUser?.role,
               userRole: user?.role,
             },
@@ -168,25 +167,50 @@ export const auth = betterAuth({
               }))
 
             if (session && token) {
+              // Cookie will set it self to undefined as a string, so we are doing this spread.
               setCookies(ctx.context.responseHeaders as Headers, {
-                activeOrganizationId: pipe(
+                ...pipe(
                   session.session.activeOrganizationId,
                   Option.fromNullable,
-                  Option.getOrUndefined,
+                  Option.match({
+                    onNone: () => ({}),
+                    onSome: (x) => ({
+                      activeOrganizationId: x,
+                    }),
+                  }),
                 ),
                 email: session.user.email,
-                impersonatedBy: pipe(
+                ...pipe(
                   session.session.impersonatedBy,
                   Option.fromNullable,
-                  Option.getOrUndefined,
+                  Option.match({
+                    onNone: () => ({}),
+                    onSome: (x) => ({
+                      impersonatedBy: x,
+                    }),
+                  }),
                 ),
                 jwt: token,
-                orgRole: pipe(session.session.orgRole, Option.fromNullable, Option.getOrUndefined),
+                ...pipe(
+                  session.session.orgRole,
+                  Option.fromNullable,
+                  Option.match({
+                    onNone: () => ({}),
+                    onSome: (x) => ({
+                      orgRole: x,
+                    }),
+                  }),
+                ),
                 userid: session.user.id,
-                userRole: pipe(
+                ...pipe(
                   session.session.userRole,
                   Option.fromNullable,
-                  Option.getOrUndefined,
+                  Option.match({
+                    onNone: () => ({}),
+                    onSome: (x) => ({
+                      userRole: x,
+                    }),
+                  }),
                 ),
               })
 

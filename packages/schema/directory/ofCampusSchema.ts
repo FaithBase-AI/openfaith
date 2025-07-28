@@ -1,5 +1,5 @@
 import { campusesTable } from '@openfaith/db'
-import { OfTable } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -68,6 +68,16 @@ export const BaseCampus = Schema.Struct({
   }).pipe(Schema.NullOr),
 }).annotations({
   [OfTable]: campusesTable,
+  [OfUiConfig]: {
+    navigation: {
+      description: 'Manage church campuses and locations',
+      enabled: true,
+      icon: 'buildingIcon',
+      module: 'domain',
+      order: 2,
+      title: 'Campuses',
+    },
+  } satisfies FieldConfig,
 })
 export type BaseCampus = typeof BaseCampus.Type
 

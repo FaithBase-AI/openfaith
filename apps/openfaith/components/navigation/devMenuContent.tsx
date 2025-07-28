@@ -50,17 +50,6 @@ export const DevMenuContent: FC<DevMenuContentProps> = (props) => {
           onSome: (x) => <p>{x}</p>,
         }),
       )}
-
-      <p>{orgId}</p>
-      <p>{userId}</p>
-      {pipe(
-        impersonatedBy,
-        Option.fromNullable,
-        Option.match({
-          onNone: nullOp,
-          onSome: (x) => <p>{x}</p>,
-        }),
-      )}
     </div>
   )
 }

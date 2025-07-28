@@ -96,7 +96,10 @@ infra/                   # Infrastructure services
 
 **Core Patterns:**
 
-- Use `Effect.gen` for async operations instead of async/await
+- **NEVER use async/await - always use Effect**: Use `Effect.gen` for all asynchronous operations
+- **NO Promise-based code**: Convert all Promise-based APIs to Effect using `Effect.promise` or `Effect.tryPromise`
+- **NO async functions**: All functions should return `Effect<A, E, R>` instead of `Promise<A>`
+- **Use `Effect.fn` for Effect functions with parameters**: When creating Effect functions that take parameters, wrap them with `Effect.fn` for better tracing and debugging
 - Prefer `pipe` for function composition over method chaining
 - Use Effect's service pattern for dependency injection
 - Define tagged errors using `Schema.TaggedError` (not `Data.TaggedError`)
@@ -153,19 +156,105 @@ Examples:
   - Avoid: `mutation.args[0]`
   - Prefer: `Array.get(items, index)` with `Option.match`
   - Avoid: `items[index]`
-- **Use Effect's Array utilities instead of native array methods**
-  - Prefer: `pipe(items, Array.map((item) => item.name))`
-  - Avoid: `items.map((item) => item.name)`
-  - Avoid: `Array.map(items, (item) => item.name)`
-  - Prefer: `pipe(items, Array.filter((item) => item.active))`
-  - Avoid: `items.filter((item) => item.active)`
-  - Avoid: `Array.filter(items, (item) => item.active)`
+- **Use Effect's Array utilities for ALL data transformation and manipulation**
+  - **Always use `pipe(array, Array.method(...))` pattern** for consistency with Effect-TS throughout the codebase
+  - **Business logic transformations:**
+    - Prefer: `pipe(items, Array.map((item) => item.name))`
+    - Avoid: `items.map((item) => item.name)`
+    - Avoid: `Array.map(items, (item) => item.name)`
+    - Prefer: `pipe(items, Array.filter((item) => item.active))`
+    - Avoid: `items.filter((item) => item.active)`
+    - Avoid: `Array.filter(items, (item) => item.active)`
+  - **JSX rendering (same pattern):**
+    - Prefer: `{pipe(items, Array.map((item) => <Component key={item.id} {...item} />))}`
+    - Avoid: `{items.map((item) => <Component key={item.id} {...item} />)}`
+  - **Data processing, API responses, database results - all use the same pattern**
+  - This ensures consistency across all array operations in the codebase
+- **Use Effect's Record utilities instead of native Object methods**
+  - Prefer: `pipe(obj, Record.keys)` instead of `Object.keys(obj)`
+  - Prefer: `pipe(obj, Record.values)` instead of `Object.values(obj)`
+  - Prefer: `pipe(obj, Record.entries)` instead of `Object.entries(obj)`
+  - Prefer: `pipe(obj, Record.map((value) => transform(value)))` instead of manual object iteration
+  - Use Effect's Record utilities for all object manipulation and transformation
+- **Use Effect's collection utilities instead of native JavaScript collections**
+  - **HashMap instead of Map**: Prefer `HashMap.empty()`, `HashMap.set()`, `HashMap.get()`, `HashMap.fromIterable()`
+    - Prefer: `HashMap.empty<string, number>()` instead of `new Map<string, number>()`
+    - Prefer: `pipe(hashMap, HashMap.set(key, value))` instead of `map.set(key, value)`
+    - Prefer: `pipe(hashMap, HashMap.get(key))` instead of `map.get(key)` (returns `Option<V>`)
+    - Prefer: `HashMap.fromIterable(pairs)` instead of `new Map(pairs)`
+  - **HashSet instead of Set**: Prefer `HashSet.empty()`, `HashSet.add()`, `HashSet.has()`, `HashSet.fromIterable()`
+    - Import: `import { HashSet } from "effect"`
+    - Prefer: `HashSet.empty<string>()` instead of `new Set<string>()`
+    - Prefer: `pipe(hashSet, HashSet.add(value))` instead of `set.add(value)`
+    - Prefer: `pipe(hashSet, HashSet.has(value))` instead of `set.has(value)`
+    - Prefer: `HashSet.fromIterable(values)` instead of `new Set(values)`
+  - **For mutable state**: Use `Ref.make()` with immutable collections for Effect-based state management
+    - Pattern: `const cacheRef = Ref.make(HashMap.empty<K, V>())`
+    - Update: `yield* Ref.update(cacheRef, (cache) => pipe(cache, HashMap.set(key, value)))`
 - **Use no-op utilities from `@openfaith/shared` instead of inline functions**
   - Prefer: `nullOp` instead of `() => null`
   - Prefer: `noOp` instead of `() => {}`
-  - Prefer: `asyncNoOp` instead of `async () => {}`
-  - Prefer: `asyncNullOp` instead of `async () => null`
   - Prefer: `nullOpE` instead of `() => Effect.succeed(null)`
+  - **NEVER use async no-ops**: Use `nullOpE` instead of `async () => null` or `async () => {}`
+- **React import patterns**
+  - **NEVER import React as default**: `import React from 'react'`
+  - **ALWAYS use named imports**: `import { useState, useEffect } from 'react'`
+  - **For JSX.Element types**: `import type { ReactNode } from 'react'`
+  - **For component types**: `import type { ComponentType } from 'react'`
+  - **Examples**:
+    - **Prefer**: `import { createElement } from 'react'`
+    - **Avoid**: `import React from 'react'; React.createElement(...)`
+    - **Prefer**: `import { useState, useCallback } from 'react'`
+    - **Avoid**: `import React, { useState, useCallback } from 'react'`
+- **NO async/await in application code - use Effect instead**
+  - **Avoid**: `async function loadData() { ... }`
+  - **Prefer**: `const loadData = Effect.gen(function* () { ... })`
+  - **Avoid**: `await fetch(url)` in application code
+  - **Prefer**: `yield* Effect.tryPromise(() => fetch(url))`
+  - **Avoid**: `Promise.all([a, b, c])`
+  - **Prefer**: `Effect.all([a, b, c])`
+  - **Exception**: async/await is allowed ONLY inside `Effect.promise` and `Effect.tryPromise` functions:
+    - **Allowed**: `Effect.tryPromise(async () => { const response = await fetch(url); return response.json(); })`
+    - **Allowed**: `Effect.promise(() => someAsyncFunction())`
+- **NEVER use try/catch blocks anywhere in the codebase**
+  - **COMPLETELY FORBIDDEN**: `try { ... } catch (e) { ... }` blocks are anti-patterns in Effect-TS
+  - **Why forbidden**: try/catch breaks Effect's error channel and prevents proper error composition
+  - **Instead of try/catch**: Use Effect's error composition with `orElse`, `catchAll`, `catchTag`, `catchSome`
+  - **For unsafe operations**: Use `Effect.tryPromise`, `Effect.try`, or `Effect.sync` with proper error handling
+  - **For validation**: Use Effect Schema parsing which returns `ParseResult.ParseError` in the error channel
+  - **For fallbacks**: Use `Effect.orElse(() => fallbackEffect)` instead of try/catch
+  - **Example anti-pattern**:
+    ```typescript
+    // ❌ NEVER DO THIS - Breaks Effect's error handling
+    const badFunction = () => {
+      try {
+        return someRiskyOperation();
+      } catch (error) {
+        return null;
+      }
+    };
+    ```
+  - **Correct Effect pattern**:
+    ```typescript
+    // ✅ Correct - Use Effect's error channel
+    const goodFunction = Effect.gen(function* () {
+      return yield* pipe(
+        Effect.try(() => someRiskyOperation()),
+        Effect.orElse(() => Effect.succeed(null)),
+      );
+    });
+    ```
+- **Use `Effect.fn` for parameterized Effect functions**
+  - **Always use `Effect.fn` when creating Effect functions that accept parameters**
+  - Provides better tracing, debugging, and observability
+  - **Pattern**: `const myFunction = Effect.fn('functionName')(function* (param1, param2) { ... })`
+  - **Examples**:
+    - **Prefer**: `const loadIcon = Effect.fn('loadIcon')(function* (iconName: string) { ... })`
+    - **Avoid**: `const loadIcon = (iconName: string) => Effect.gen(function* () { ... })`
+    - **Prefer**: `const processEntity = Effect.fn('processEntity')(function* (entity: Entity, config: Config) { ... })`
+    - **Avoid**: `const processEntity = (entity: Entity, config: Config) => Effect.gen(function* () { ... })`
+  - Use descriptive function names in the first parameter for better tracing
+  - Include `yield* Effect.annotateCurrentSpan()` calls to add parameter values to traces
 - Follow existing Effect-TS patterns
 
 ### Error Handling Patterns
@@ -176,6 +265,7 @@ Examples:
 - Use the correct syntax: `Schema.TaggedError<ErrorClass>()(tagName, fields)`
 - Define error fields using Schema types (e.g., `Schema.String`, `Schema.Unknown`)
 - Use `Schema.optional()` for optional fields
+- **REQUIRED for `Effect.tryPromise`**: Always provide proper error handling with tagged errors
 
 **Error Logging:**
 
@@ -213,6 +303,34 @@ Effect.tapError((error) =>
     context: "additional context",
   }),
 );
+```
+
+**Effect.tryPromise Requirements:**
+
+- **ALWAYS use the object form with proper error handling**
+- **NEVER use the simple function form**: `Effect.tryPromise(() => promise)`
+- **ALWAYS provide tagged error handling**: Use `Schema.TaggedError` for the catch function
+
+```typescript
+// ❌ Wrong - No error handling
+const loadData = Effect.tryPromise(() => fetch(url));
+
+// ❌ Wrong - Generic error handling
+const loadData = Effect.tryPromise({
+  try: () => fetch(url),
+  catch: (error) => error, // Generic error, not typed
+});
+
+// ✅ Correct - Proper tagged error handling
+class NetworkError extends Schema.TaggedError<NetworkError>()("NetworkError", {
+  operation: Schema.String,
+  cause: Schema.optional(Schema.Unknown),
+}) {}
+
+const loadData = Effect.tryPromise({
+  try: () => fetch(url),
+  catch: (cause) => new NetworkError({ operation: "fetch", cause }),
+});
 ```
 
 **Import Pattern:**
@@ -453,10 +571,101 @@ This comprehensive testing approach ensures both type safety and functional corr
 ### Common Patterns
 
 - Use `workspace:*` for internal package references
-- Wrap all async operations in Effect
+- **Convert ALL async operations to Effect** - no exceptions
+- **NO Promise-based code anywhere** - use Effect equivalents
 - Use Effect Schema for data validation
 - Follow the existing adapter patterns for new integrations
 - Use Effect's error handling instead of throwing exceptions
+
+### Async/Promise Conversion Guide
+
+**Converting Promises to Effect:**
+
+```typescript
+// ❌ Wrong - Promise-based
+const fetchData = async (url: string) => {
+  const response = await fetch(url);
+  return response.json();
+};
+
+// ❌ Wrong - Effect.tryPromise without proper error handling
+const fetchData = (url: string) =>
+  Effect.gen(function* () {
+    const response = yield* Effect.tryPromise(() => fetch(url));
+    const data = yield* Effect.tryPromise(() => response.json());
+    return data;
+  });
+
+// ✅ Correct - Effect-based with proper tagged errors
+class FetchError extends Schema.TaggedError<FetchError>()("FetchError", {
+  url: Schema.String,
+  cause: Schema.optional(Schema.Unknown),
+}) {}
+
+const fetchData = (url: string) =>
+  Effect.gen(function* () {
+    const response = yield* Effect.tryPromise({
+      try: () => fetch(url),
+      catch: (cause) => new FetchError({ url, cause }),
+    });
+    const data = yield* Effect.tryPromise({
+      try: () => response.json(),
+      catch: (cause) => new FetchError({ url, cause }),
+    });
+    return data;
+  });
+
+// ❌ Wrong - Promise.all
+const loadMultiple = async () => {
+  const [a, b, c] = await Promise.all([fetchA(), fetchB(), fetchC()]);
+  return { a, b, c };
+};
+
+// ✅ Correct - Effect.all
+const loadMultiple = Effect.gen(function* () {
+  const [a, b, c] = yield* Effect.all([fetchA(), fetchB(), fetchC()]);
+  return { a, b, c };
+});
+```
+
+**React Integration:**
+
+```typescript
+// ❌ Wrong - useEffect with async
+useEffect(() => {
+  const loadData = async () => {
+    const data = await fetchData();
+    setData(data);
+  };
+  loadData();
+}, []);
+
+// ❌ Wrong - useEffect with Effect (anti-pattern)
+useEffect(() => {
+  const program = pipe(
+    fetchData(),
+    Effect.tap((data) => Effect.sync(() => setData(data))),
+    Effect.catchAll((error) => Effect.logError("Failed to load data", error)),
+  );
+
+  Effect.runPromise(program);
+}, []);
+
+// ✅ Correct - Effect-RX with proper hooks
+const dataRx = Rx.fn(() => fetchData());
+
+const MyComponent = () => {
+  const query = useRxQuery(dataRx);
+
+  return pipe(
+    query.dataOpt,
+    Option.match({
+      onNone: () => <div>Loading...</div>,
+      onSome: (data) => <div>{data}</div>
+    })
+  );
+};
+```
 
 ### No-Op Utilities
 
@@ -488,9 +697,8 @@ Option.match({
 
 - `nullOp: () => null` - Returns null (most common)
 - `noOp: () => {}` - Returns undefined/void
-- `asyncNoOp: async () => {}` - Async function returning void
-- `asyncNullOp: async () => null` - Async function returning null
 - `nullOpE: () => Effect.succeed(null)` - Effect returning null
+- **DEPRECATED**: `asyncNoOp` and `asyncNullOp` - use `nullOpE` instead
 
 ### Package Management
 
