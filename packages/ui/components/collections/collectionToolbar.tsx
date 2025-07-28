@@ -9,7 +9,6 @@ import type {
   OptionColumnIds,
 } from '@openfaith/ui/components/data-table-filter/core/types'
 import { ToolbarRoot, ToolbarSeparator } from '@openfaith/ui/components/ui/toolbar'
-
 import { cn } from '@openfaith/ui/shared/utils'
 import type { Table } from '@tanstack/react-table'
 import { Array, Boolean, Option, pipe } from 'effect'

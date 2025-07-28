@@ -6,7 +6,6 @@ import { DebouncedInput } from '@openfaith/ui/components/data-table-filter/ui/de
 import { Button } from '@openfaith/ui/components/ui/button'
 import { SearchIcon } from '@openfaith/ui/icons/searchIcon'
 import { XIcon } from '@openfaith/ui/icons/xIcon'
-
 import { cn } from '@openfaith/ui/shared/utils'
 import { Array, Boolean, Option, pipe, String } from 'effect'
 import { parseAsJson, useQueryState } from 'nuqs'
@@ -95,6 +94,7 @@ export const CollectionSearchFilter = <T,>(props: CollectionSearchFilterProps<T>
   }
 
   return (
+    // biome-ignore lint/a11y/noLabelWithoutControl: this is a label
     <label
       className={cn('relative flex w-40 shrink-0 flex-row items-center gap-2 lg:w-64!', className)}
     >

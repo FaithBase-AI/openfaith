@@ -25,16 +25,19 @@ import {
 } from '@openfaith/ui'
 import { Link } from '@tanstack/react-router'
 import { Array, HashMap, Option, pipe, Record } from 'effect'
-import { type ComponentProps, createElement, type FC } from 'react'
+import { type ComponentProps, createElement, type FC, useMemo } from 'react'
 
 type AppSidebarProps = ComponentProps<typeof Sidebar>
 
 export const AppNavigation: FC<AppSidebarProps> = (props) => {
   const { className, ...domProps } = props
 
-  const navigationByModule = getNavigationByModule()
+  const navigationByModule = useMemo(() => getNavigationByModule(), [])
 
-  const allEntities = pipe(navigationByModule, Record.values, Array.flatten)
+  const allEntities = useMemo(
+    () => pipe(navigationByModule, Record.values, Array.flatten),
+    [navigationByModule],
+  )
 
   const { iconComponents } = useEntityIcons(allEntities)
 
@@ -55,7 +58,6 @@ export const AppNavigation: FC<AppSidebarProps> = (props) => {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Core Navigation */}
         <SidebarGroup>
           <SidebarGroupLabel>Core</SidebarGroupLabel>
           <SidebarMenu>
@@ -66,7 +68,6 @@ export const AppNavigation: FC<AppSidebarProps> = (props) => {
           </SidebarMenu>
         </SidebarGroup>
 
-        {/* Dynamic Module Sections */}
         {pipe(
           moduleSections,
           Array.map((section) => (
@@ -74,7 +75,7 @@ export const AppNavigation: FC<AppSidebarProps> = (props) => {
               <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
               <SidebarMenu>
                 {pipe(
-                  allEntities,
+                  section.entities,
                   Array.map((entity) => (
                     <SideBarItem
                       icon={pipe(
@@ -94,7 +95,6 @@ export const AppNavigation: FC<AppSidebarProps> = (props) => {
           )),
         )}
 
-        {/* Settings */}
         <SidebarGroup>
           <SidebarGroupLabel>Settings</SidebarGroupLabel>
           <SidebarMenu>

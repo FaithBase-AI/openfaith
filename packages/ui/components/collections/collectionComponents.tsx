@@ -2,7 +2,6 @@
 
 import { Button } from '@openfaith/ui/components/ui/button'
 import { ArrowUpDownIcon } from '@openfaith/ui/icons/arrowUpDownIcon'
-
 import { cn } from '@openfaith/ui/shared/utils'
 import type { CellContext, Column } from '@tanstack/react-table'
 import { format } from 'date-fns/fp'

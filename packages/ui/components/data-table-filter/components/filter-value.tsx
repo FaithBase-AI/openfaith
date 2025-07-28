@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/noUnusedFunctionParameters: this is the way */
 import { numberFilterOperators } from '@openfaith/ui/components/data-table-filter/core/operators'
 import type {
   Column,

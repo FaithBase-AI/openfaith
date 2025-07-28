@@ -9,7 +9,6 @@ import {
   DataTableFilter,
   useDataTableFilters,
 } from '@openfaith/ui/components/data-table-filter/index'
-
 import { parseAsJson, useQueryState } from 'nuqs'
 
 type CollectionFiltersProps<

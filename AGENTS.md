@@ -16,6 +16,21 @@ OpenFaith is a local-first church management system built with Effect-TS that pr
 - `bun run check` - Run comprehensive quality checks (format, lint, typecheck, test)
 - `bun run test` - Run tests across all packages
 
+### Development Server Policy
+
+**NEVER automatically start the dev server (`bun run dev`) or any long-running processes.** Always ask the user to start these services themselves. This prevents:
+
+- Interrupting existing development sessions
+- Port conflicts and resource contention
+- Unexpected process termination
+- Loss of user control over their development environment
+
+**Instead of starting servers:**
+
+- Ask the user to run the appropriate command
+- Provide clear instructions on what to test
+- Wait for user feedback on results
+
 ### Code Quality
 
 - `bun run format` - Check code formatting with Biome

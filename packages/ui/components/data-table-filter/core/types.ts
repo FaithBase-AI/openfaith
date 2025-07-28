@@ -116,8 +116,10 @@ export type ColumnConfig<
 }
 
 export type OptionColumnId<T> = T extends ColumnConfig<
+  // biome-ignore lint/correctness/noUnusedVariables: this is the way
   infer TData,
   'option' | 'multiOption',
+  // biome-ignore lint/correctness/noUnusedVariables: this is the way
   infer TVal,
   infer TId
 >
@@ -128,6 +130,7 @@ export type OptionColumnIds<T extends ReadonlyArray<ColumnConfig<any, any, any, 
   [K in keyof T]: OptionColumnId<T[K]>
 }[number]
 
+// biome-ignore lint/correctness/noUnusedVariables: this is the way
 export type NumberColumnId<T> = T extends ColumnConfig<infer TData, 'number', infer TVal, infer TId>
   ? TId
   : never
