@@ -1,4 +1,4 @@
-import { mkTableName, nullOp } from '@openfaith/shared'
+import { mkZeroTableName, nullOp } from '@openfaith/shared'
 import { getBaseEntitiesQuery } from '@openfaith/zero/baseQueries'
 import { useZero } from '@openfaith/zero/useZero'
 import { useQuery } from '@rocicorp/zero/react'
@@ -33,19 +33,18 @@ export const useSchemaCollection = <T>(
 
   const query = useMemo(() => {
     if (!enabled) return null
+
     return pipe(
       entityTag,
       Option.match({
         onNone: () => null,
         onSome: (tag) => {
-          // Convert entity tag to table name (person -> people, address -> addresses)
-          const tableName = mkTableName(String.capitalize(tag))
+          const tableName = mkZeroTableName(String.capitalize(tag))
           return getBaseEntitiesQuery(z, tableName)
         },
       }),
     )
   }, [z, entityTag, enabled])
-
   const [data, info] = useQuery(query as Parameters<typeof useQuery>[0])
 
   return useMemo(
@@ -61,7 +60,6 @@ export const useSchemaCollection = <T>(
   )
 }
 
-// Helper function to extract entity tag from schema AST
 const extractEntityTag = (ast: SchemaAST.AST): Option.Option<string> => {
   if (SchemaAST.isTypeLiteral(ast)) {
     const propertySignatures = ast.propertySignatures

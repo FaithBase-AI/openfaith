@@ -139,6 +139,11 @@ export const mkEntityName = flow(String.snakeToPascal, singularize)
 export const mkTableName = flow(String.pascalToSnake, pluralize)
 
 /**
+ * Converts entity name to Zero schema table name (Person -> people, PhoneNumber -> phoneNumbers)
+ */
+export const mkZeroTableName = flow(String.uncapitalize, pluralize)
+
+/**
  * Converts table name to entity type for IDs (people -> person, phone_numbers -> phonenumber)
  */
 export const mkEntityType = flow(String.snakeToPascal, String.toLowerCase, singularize)

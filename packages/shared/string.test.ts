@@ -5,6 +5,7 @@ import {
   mkEntityType,
   mkTableName,
   mkUrlParamName,
+  mkZeroTableName,
   pluralize,
   singularize,
 } from '@openfaith/shared/string'
@@ -358,6 +359,29 @@ effect('mkTableName converts entity names to table names correctly', () =>
     expect(mkTableName('UserProfileSetting')).toBe('user_profile_settings')
     expect(mkTableName('EmailAddress')).toBe('email_addresses')
     expect(mkTableName('ContactPhoneNumber')).toBe('contact_phone_numbers')
+  }),
+)
+
+// Test mkZeroTableName function
+effect('mkZeroTableName converts entity names to Zero schema table names correctly', () =>
+  Effect.gen(function* () {
+    // Basic PascalCase to camelCase with pluralization
+    expect(mkZeroTableName('Person')).toBe('people')
+    expect(mkZeroTableName('PhoneNumber')).toBe('phoneNumbers')
+    expect(mkZeroTableName('Address')).toBe('addresses')
+    expect(mkZeroTableName('Group')).toBe('groups')
+    expect(mkZeroTableName('Child')).toBe('children')
+    expect(mkZeroTableName('Campus')).toBe('campuses')
+
+    // Single word entities
+    expect(mkZeroTableName('User')).toBe('users')
+    expect(mkZeroTableName('Item')).toBe('items')
+    expect(mkZeroTableName('File')).toBe('files')
+
+    // Complex PascalCase patterns (camelCase result)
+    expect(mkZeroTableName('UserProfileSetting')).toBe('userProfileSettings')
+    expect(mkZeroTableName('EmailAddress')).toBe('emailAddresses')
+    expect(mkZeroTableName('ContactPhoneNumber')).toBe('contactPhoneNumbers')
   }),
 )
 

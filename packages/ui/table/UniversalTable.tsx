@@ -43,11 +43,15 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
     filtering = {},
   } = props
 
+  const entityInfo = useMemo(() => {
+    return extractEntityInfo(schema)
+  }, [schema])
+
   // Use schema collection hook to fetch data if no data prop is provided
   const collectionResult = useSchemaCollection(schema, {
     enabled: !data,
     limit: pagination.limit,
-    pageSize: pagination.pageSize, // Only fetch if no data is provided
+    pageSize: pagination.pageSize,
   })
 
   const columns = useMemo(() => {
@@ -57,10 +61,6 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
   const filtersDef = useMemo(() => {
     return [] as const
   }, [])
-
-  const entityInfo = useMemo(() => {
-    return extractEntityInfo(schema)
-  }, [schema])
 
   const entityName = entityInfo.entityName || 'items'
 
@@ -92,6 +92,7 @@ const extractEntityInfo = <T,>(schema: Schema.Schema<T>) => {
   const ast = schema.ast
 
   const entityAnnotation = SchemaAST.getAnnotation<string>(OfEntity)(ast)
+
   const entityName = pipe(
     entityAnnotation,
     Option.match({
