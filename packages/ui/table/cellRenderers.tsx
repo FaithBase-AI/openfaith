@@ -11,6 +11,10 @@ export const getCellRenderer = (cellType?: string) => {
       case 'text':
         return renderTextCell(value)
 
+      case 'content':
+      case 'description':
+        return renderContentCell(value)
+
       case 'email':
         return renderEmailCell(value)
 
@@ -45,10 +49,19 @@ export const getCellRenderer = (cellType?: string) => {
 }
 
 /**
- * Renders a simple text cell
+ * Renders a simple text cell with proper styling for multi-line content
  */
 const renderTextCell = (value: any) => {
-  return String(value || '')
+  const content = String(value || '')
+  return <div className='whitespace-pre-wrap text-sm'>{content}</div>
+}
+
+/**
+ * Renders a content/description cell with proper styling for multi-line content
+ */
+const renderContentCell = (value: any) => {
+  const content = String(value || '')
+  return <div className='whitespace-pre-wrap text-sm'>{content}</div>
 }
 
 /**

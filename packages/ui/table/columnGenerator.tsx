@@ -1,3 +1,4 @@
+import { ColumnHeader } from '@openfaith/ui/components/collections/collectionComponents'
 import { autoDetectCellConfig } from '@openfaith/ui/form/autoDetection'
 import {
   extractSchemaFields,
@@ -8,10 +9,15 @@ import type { ColumnDef } from '@tanstack/react-table'
 import type { Schema } from 'effect'
 import { getCellRenderer } from './cellRenderers'
 
+// Helper function to create header with ColumnHeader component
+const createColumnHeader = (column: any, title: string) => {
+  return <ColumnHeader column={column}>{title}</ColumnHeader>
+}
+
 /**
  * Generates column definitions from a schema for TanStack Table
  */
-export const generateColumns = <T>(
+export const generateColumns = <T,>(
   schema: Schema.Schema<T>,
   overrides: Partial<Record<keyof T, Partial<ColumnDef<T>>>> = {},
 ): Array<ColumnDef<T>> => {
@@ -37,7 +43,10 @@ export const generateColumns = <T>(
       cell: getCellRenderer(tableConfig?.cellType || autoConfig?.cellType),
       enableColumnFilter: tableConfig?.filterable ?? autoConfig?.filterable ?? true,
       enableSorting: tableConfig?.sortable ?? autoConfig?.sortable ?? true,
-      header: tableConfig?.header || autoConfig?.header || formatLabel(String(key)),
+      header: ({ column }) => {
+        const title = tableConfig?.header || autoConfig?.header || formatLabel(String(key))
+        return createColumnHeader(column, title)
+      },
       size: tableConfig?.width || autoConfig?.width || getDefaultWidth(autoConfig?.cellType),
       ...overrides[key],
     }
@@ -86,7 +95,7 @@ const getDefaultWidth = (cellType?: string): number => {
 /**
  * Generates a simple column definition for quick prototyping
  */
-export const generateSimpleColumns = <T>(schema: Schema.Schema<T>): Array<ColumnDef<T>> => {
+export const generateSimpleColumns = <T,>(schema: Schema.Schema<T>): Array<ColumnDef<T>> => {
   const fields = extractSchemaFields(schema)
 
   return fields.map((field) => ({
