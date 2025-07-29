@@ -4,7 +4,7 @@ import {
   type CollectionCardComponent,
   CollectionCardView,
 } from '@openfaith/ui/components/collections/collectionCardView'
-import type { CollectionTags } from '@openfaith/ui/components/collections/collectionComponents'
+
 import { CollectionTableView } from '@openfaith/ui/components/collections/collectionTableView'
 import { CollectionToolbar } from '@openfaith/ui/components/collections/collectionToolbar'
 import { useCreateTable } from '@openfaith/ui/components/collections/useCreateTable'
@@ -33,7 +33,7 @@ type CollectionProps<
   filterColumnId: string
   Actions?: ReactNode
   CollectionCard?: CollectionCardComponent<TData, E>
-  _tag: CollectionTags
+  _tag: string
   rowSize?: number
   filtersDef: TColumns
   filterKey: string

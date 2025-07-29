@@ -70,7 +70,7 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
 
   return (
     <Collection
-      _tag='default'
+      _tag={entityInfo.entityTag || 'default'}
       Actions={Actions || null}
       CollectionCard={CollectionCard}
       columnsDef={columns}

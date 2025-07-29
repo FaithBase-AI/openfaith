@@ -1,6 +1,5 @@
 'use client'
 
-import type { CollectionTags } from '@openfaith/ui/components/collections/collectionComponents'
 import { ToggleGroup, ToggleGroupItem } from '@openfaith/ui/components/ui/toggle-group'
 import { ViewCardIcon } from '@openfaith/ui/icons/viewCardIcon'
 import { ViewListIcon } from '@openfaith/ui/icons/viewListIcon'
@@ -16,7 +15,7 @@ type CollectionViewToggleGroupProps = Omit<
   ComponentPropsWithoutRef<typeof ToggleGroup>,
   'value' | 'onValueChange' | 'defaultValue' | 'type'
 > & {
-  _tag: CollectionTags
+  _tag: string
 }
 
 export const CollectionViewToggleGroup: FC<CollectionViewToggleGroupProps> = (props) => {

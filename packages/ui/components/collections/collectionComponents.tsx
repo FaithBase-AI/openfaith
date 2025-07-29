@@ -8,18 +8,6 @@ import { format } from 'date-fns/fp'
 import { pipe } from 'effect'
 import type { HTMLAttributes, ReactNode } from 'react'
 
-export type CollectionTags = 'channels' | 'prompts' | 'users' | 'orgs' | 'tags' | 'default'
-
-// Mapping collection tags to filter keys (now just strings)
-export const collectionTagToFilterKey: Record<CollectionTags, string> = {
-  channels: 'channel-filters',
-  default: 'default-filters',
-  orgs: 'org-filters',
-  prompts: 'prompt-filters',
-  tags: 'tag-filters',
-  users: 'user-filters',
-}
-
 type ColumnHeaderProps<T> = {
   column: Column<T>
   children?: ReactNode

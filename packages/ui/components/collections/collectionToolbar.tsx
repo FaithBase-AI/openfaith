@@ -1,5 +1,5 @@
 import { nullOp } from '@openfaith/shared'
-import type { CollectionTags } from '@openfaith/ui/components/collections/collectionComponents'
+
 import { CollectionFilters } from '@openfaith/ui/components/collections/collectionFilters'
 import { CollectionSearchFilter } from '@openfaith/ui/components/collections/collectionSearchFilter'
 import { CollectionViewToggleGroup } from '@openfaith/ui/components/collections/collectionViewToggleGroup'
@@ -24,7 +24,7 @@ type CollectionToolbarProps<
   filterColumnId: string
   Actions?: ReactNode
   className?: string
-  _tag: CollectionTags
+  _tag: string
   filtersDef: TColumns
   filterKey: string
   filtersOptions?: Partial<Record<OptionColumnIds<TColumns>, Array<ColumnOption> | undefined>>
