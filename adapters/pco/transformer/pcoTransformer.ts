@@ -13,15 +13,43 @@ type MergeShape = Record<string, unknown> & {
 }
 type FieldShape<T> = readonly [string, T] | readonly ['customFields', CustomFieldSchema]
 
-export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Struct.Fields>(
-  from: Schema.Struct<From>,
-  to: Schema.Struct<To>,
+// Helper function to extract fields from any schema (including extended structs)
+const extractFields = (schema: Schema.Schema.Any): Record<string, { ast: SchemaAST.AST }> => {
+  const ast = schema.ast
+
+  if (ast._tag === 'TypeLiteral') {
+    return pipe(
+      ast.propertySignatures,
+      Array.map((prop) => [prop.name as string, { ast: prop.type }] as const),
+      Record.fromEntries,
+    )
+  }
+
+  if (ast._tag === 'Transformation' && ast.from._tag === 'TypeLiteral') {
+    return pipe(
+      ast.from.propertySignatures,
+      Array.map((prop) => [prop.name as string, { ast: prop.type }] as const),
+      Record.fromEntries,
+    )
+  }
+
+  // Fallback for Schema.Struct types
+  if ('fields' in schema) {
+    return (schema as any).fields
+  }
+
+  return {}
+}
+
+export const pcoToOf = <From extends Schema.Schema.Any, To extends Schema.Schema.Any>(
+  from: From,
+  to: To,
   tag: string,
 ) => {
   return Schema.transform(from, to, {
     decode: (fromItem) =>
       pipe(
-        from.fields,
+        extractFields(from),
         Record.toEntries,
         Array.filterMap(([key, field]) => {
           const fieldKeyOpt = SchemaAST.getAnnotation<string>(OfFieldName)(
@@ -119,7 +147,7 @@ export const pcoToOf = <From extends Schema.Struct.Fields, To extends Schema.Str
       const { customFields, ...rest } = toItem as MergeShape
 
       const standardFields = pipe(
-        from.fields,
+        extractFields(from),
         Record.toEntries,
         Array.filterMap(([pcoKey, field]) => {
           const fieldAst = 'ast' in field ? field.ast : field
