@@ -23,10 +23,7 @@ import { Route as AppGroupRouteRouteImport } from './routes/_app/$group/route'
 import { Route as AppSettingsTeamRouteImport } from './routes/_app/settings/team'
 import { Route as AppSettingsIntegrationsRouteImport } from './routes/_app/settings/integrations'
 import { Route as AppSettingsGeneralRouteImport } from './routes/_app/settings/general'
-import { Route as AppDomainEntityRouteImport } from './routes/_app/domain.$entity'
-import { Route as AppDirectoryEntityRouteImport } from './routes/_app/directory.$entity'
 import { Route as AppDevLogsRouteImport } from './routes/_app/dev/logs'
-import { Route as AppCollectionEntityRouteImport } from './routes/_app/collection.$entity'
 import { Route as AppAdminUsersRouteImport } from './routes/_app/admin/users'
 import { Route as AppAdminOrgsRouteImport } from './routes/_app/admin/orgs'
 import { Route as AppGroupEntityRouteRouteImport } from './routes/_app/$group/$entity/route'
@@ -95,24 +92,9 @@ const AppSettingsGeneralRoute = AppSettingsGeneralRouteImport.update({
   path: '/settings/general',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppDomainEntityRoute = AppDomainEntityRouteImport.update({
-  id: '/domain/$entity',
-  path: '/domain/$entity',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppDirectoryEntityRoute = AppDirectoryEntityRouteImport.update({
-  id: '/directory/$entity',
-  path: '/directory/$entity',
-  getParentRoute: () => AppRouteRoute,
-} as any)
 const AppDevLogsRoute = AppDevLogsRouteImport.update({
   id: '/dev/logs',
   path: '/dev/logs',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppCollectionEntityRoute = AppCollectionEntityRouteImport.update({
-  id: '/collection/$entity',
-  path: '/collection/$entity',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
@@ -166,10 +148,7 @@ export interface FileRoutesByFullPath {
   '/$group/$entity': typeof AppGroupEntityRouteRouteWithChildren
   '/admin/orgs': typeof AppAdminOrgsRoute
   '/admin/users': typeof AppAdminUsersRoute
-  '/collection/$entity': typeof AppCollectionEntityRoute
   '/dev/logs': typeof AppDevLogsRoute
-  '/directory/$entity': typeof AppDirectoryEntityRoute
-  '/domain/$entity': typeof AppDomainEntityRoute
   '/settings/general': typeof AppSettingsGeneralRoute
   '/settings/integrations': typeof AppSettingsIntegrationsRoute
   '/settings/team': typeof AppSettingsTeamRoute
@@ -185,10 +164,7 @@ export interface FileRoutesByTo {
   '/oauth/$provider': typeof OauthProviderRoute
   '/admin/orgs': typeof AppAdminOrgsRoute
   '/admin/users': typeof AppAdminUsersRoute
-  '/collection/$entity': typeof AppCollectionEntityRoute
   '/dev/logs': typeof AppDevLogsRoute
-  '/directory/$entity': typeof AppDirectoryEntityRoute
-  '/domain/$entity': typeof AppDomainEntityRoute
   '/settings/general': typeof AppSettingsGeneralRoute
   '/settings/integrations': typeof AppSettingsIntegrationsRoute
   '/settings/team': typeof AppSettingsTeamRoute
@@ -209,10 +185,7 @@ export interface FileRoutesById {
   '/_app/$group/$entity': typeof AppGroupEntityRouteRouteWithChildren
   '/_app/admin/orgs': typeof AppAdminOrgsRoute
   '/_app/admin/users': typeof AppAdminUsersRoute
-  '/_app/collection/$entity': typeof AppCollectionEntityRoute
   '/_app/dev/logs': typeof AppDevLogsRoute
-  '/_app/directory/$entity': typeof AppDirectoryEntityRoute
-  '/_app/domain/$entity': typeof AppDomainEntityRoute
   '/_app/settings/general': typeof AppSettingsGeneralRoute
   '/_app/settings/integrations': typeof AppSettingsIntegrationsRoute
   '/_app/settings/team': typeof AppSettingsTeamRoute
@@ -231,10 +204,7 @@ export interface FileRouteTypes {
     | '/$group/$entity'
     | '/admin/orgs'
     | '/admin/users'
-    | '/collection/$entity'
     | '/dev/logs'
-    | '/directory/$entity'
-    | '/domain/$entity'
     | '/settings/general'
     | '/settings/integrations'
     | '/settings/team'
@@ -250,10 +220,7 @@ export interface FileRouteTypes {
     | '/oauth/$provider'
     | '/admin/orgs'
     | '/admin/users'
-    | '/collection/$entity'
     | '/dev/logs'
-    | '/directory/$entity'
-    | '/domain/$entity'
     | '/settings/general'
     | '/settings/integrations'
     | '/settings/team'
@@ -273,10 +240,7 @@ export interface FileRouteTypes {
     | '/_app/$group/$entity'
     | '/_app/admin/orgs'
     | '/_app/admin/users'
-    | '/_app/collection/$entity'
     | '/_app/dev/logs'
-    | '/_app/directory/$entity'
-    | '/_app/domain/$entity'
     | '/_app/settings/general'
     | '/_app/settings/integrations'
     | '/_app/settings/team'
@@ -407,32 +371,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsGeneralRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/_app/domain/$entity': {
-      id: '/_app/domain/$entity'
-      path: '/domain/$entity'
-      fullPath: '/domain/$entity'
-      preLoaderRoute: typeof AppDomainEntityRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/_app/directory/$entity': {
-      id: '/_app/directory/$entity'
-      path: '/directory/$entity'
-      fullPath: '/directory/$entity'
-      preLoaderRoute: typeof AppDirectoryEntityRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
     '/_app/dev/logs': {
       id: '/_app/dev/logs'
       path: '/dev/logs'
       fullPath: '/dev/logs'
       preLoaderRoute: typeof AppDevLogsRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/_app/collection/$entity': {
-      id: '/_app/collection/$entity'
-      path: '/collection/$entity'
-      fullPath: '/collection/$entity'
-      preLoaderRoute: typeof AppCollectionEntityRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/admin/users': {
@@ -528,10 +471,7 @@ interface AppRouteRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppAdminOrgsRoute: typeof AppAdminOrgsRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
-  AppCollectionEntityRoute: typeof AppCollectionEntityRoute
   AppDevLogsRoute: typeof AppDevLogsRoute
-  AppDirectoryEntityRoute: typeof AppDirectoryEntityRoute
-  AppDomainEntityRoute: typeof AppDomainEntityRoute
   AppSettingsGeneralRoute: typeof AppSettingsGeneralRoute
   AppSettingsIntegrationsRoute: typeof AppSettingsIntegrationsRoute
   AppSettingsTeamRoute: typeof AppSettingsTeamRoute
@@ -542,10 +482,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppAdminOrgsRoute: AppAdminOrgsRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
-  AppCollectionEntityRoute: AppCollectionEntityRoute,
   AppDevLogsRoute: AppDevLogsRoute,
-  AppDirectoryEntityRoute: AppDirectoryEntityRoute,
-  AppDomainEntityRoute: AppDomainEntityRoute,
   AppSettingsGeneralRoute: AppSettingsGeneralRoute,
   AppSettingsIntegrationsRoute: AppSettingsIntegrationsRoute,
   AppSettingsTeamRoute: AppSettingsTeamRoute,

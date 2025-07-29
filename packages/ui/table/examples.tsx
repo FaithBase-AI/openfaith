@@ -222,7 +222,6 @@ export const CustomPersonTable = () => (
     }}
     pagination={{ pageSize: 50 }}
     schema={PersonWithTableSchema}
-    selection={{ enableMultiRowSelection: true, enableRowSelection: true }}
   />
 )
 
@@ -232,8 +231,9 @@ export const AdvancedPersonTable = () => (
     className='rounded-lg shadow-lg'
     data={samplePeople}
     filtering={{
-      columnFilters: true,
-      globalFilter: true,
+      filterColumnId: 'name',
+      filterKey: 'people-filter',
+      filterPlaceHolder: 'Search people...',
     }}
     onRowClick={(person) => {
       console.log('Selected person:', person)
@@ -242,28 +242,14 @@ export const AdvancedPersonTable = () => (
       console.log('Bulk selected people:', people)
     }}
     pagination={{
+      limit: 100,
       pageSize: 25,
-      showPagination: true,
     }}
     schema={PersonWithTableSchema}
-    selection={{
-      enableMultiRowSelection: true,
-      enableRowSelection: true,
-    }}
-    sorting={{
-      multiSort: true,
-      sortBy: 'lastName',
-      sortOrder: 'asc',
-    }}
   />
 )
 
 // Example 4: Simple Table (minimal configuration)
 export const SimplePersonTable = () => (
-  <UniversalTable
-    data={samplePeople}
-    filtering={{ columnFilters: false, globalFilter: false }}
-    pagination={{ showPagination: false }}
-    schema={PersonWithTableSchema}
-  />
+  <UniversalTable data={samplePeople} schema={PersonWithTableSchema} />
 )
