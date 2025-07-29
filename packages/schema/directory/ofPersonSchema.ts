@@ -39,6 +39,12 @@ export const BasePerson = Schema.Struct({
     description: 'The full name of the person',
   }).pipe(Schema.NullOr),
   type: Schema.Literal('default'),
+})
+export type BasePerson = typeof BasePerson.Type
+
+export const Person = Schema.Struct({
+  ...BasePerson.fields,
+  ...IdentificationFieldsSchema.fields,
 }).annotations({
   [OfEntity]: 'person',
   [OfTable]: peopleTable,
@@ -52,12 +58,6 @@ export const BasePerson = Schema.Struct({
       title: 'People',
     },
   } satisfies FieldConfig,
-})
-export type BasePerson = typeof BasePerson.Type
-
-export const Person = Schema.Struct({
-  ...BasePerson.fields,
-  ...IdentificationFieldsSchema.fields,
 })
 
 export type Person = typeof Person.Type

@@ -66,6 +66,12 @@ export const BaseCampus = Schema.Struct({
   zip: Schema.String.annotations({
     description: 'Zip code',
   }).pipe(Schema.NullOr),
+})
+export type BaseCampus = typeof BaseCampus.Type
+
+export const Campus = Schema.Struct({
+  ...BaseCampus.fields,
+  ...IdentificationFieldsSchema.fields,
 }).annotations({
   [OfEntity]: 'campus',
   [OfTable]: campusesTable,
@@ -79,12 +85,6 @@ export const BaseCampus = Schema.Struct({
       title: 'Campuses',
     },
   } satisfies FieldConfig,
-})
-export type BaseCampus = typeof BaseCampus.Type
-
-export const Campus = Schema.Struct({
-  ...BaseCampus.fields,
-  ...IdentificationFieldsSchema.fields,
 })
 
 export type Campus = typeof Campus.Type
