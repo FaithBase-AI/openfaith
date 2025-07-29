@@ -24,7 +24,6 @@ export type OfFolderAnnotation = {
 
 export interface FieldConfig {
   field?: {
-    // Field type is AUTO-DETECTED from schema - only override when needed
     type?:
       | 'text'
       | 'email'
@@ -42,11 +41,11 @@ export interface FieldConfig {
       | 'otp'
     label?: string
     placeholder?: string
-    required?: boolean // AUTO-DETECTED from schema optionality
-    options?: Array<{ value: string; label: string }> // AUTO-DETECTED from unions/literals
-    rows?: number // for textarea
-    searchable?: boolean // for combobox
-    creatable?: boolean // for tags/combobox
+    required?: boolean
+    options?: Array<{ value: string; label: string }>
+    rows?: number
+    searchable?: boolean
+    creatable?: boolean
     multiple?: boolean
     min?: number | string
     max?: number | string
@@ -55,8 +54,8 @@ export interface FieldConfig {
   table?: {
     header?: string
     width?: number
-    sortable?: boolean // AUTO-DETECTED (default true)
-    filterable?: boolean // AUTO-DETECTED (default true)
+    sortable?: boolean
+    filterable?: boolean
     cellType?:
       | 'text'
       | 'email'
@@ -74,8 +73,8 @@ export interface FieldConfig {
   navigation?: {
     enabled: boolean
     title: string
-    icon?: string // Icon name from your icon system
-    url?: string // Auto-generated if not provided
+    icon?: string
+    url?: string
     module:
       | 'directory'
       | 'domain'
@@ -83,6 +82,8 @@ export interface FieldConfig {
       | 'schedule'
       | 'giving'
       | 'management'
+      | 'drive'
+      | 'system'
       | 'external'
     order?: number
     description?: string
@@ -125,12 +126,10 @@ export const getUnderlyingType = (
     }
   }
 
-  // Handle refinement types (e.g., minLength, maxLength, etc.)
   if (SchemaAST.isRefinement(ast)) {
     return getUnderlyingType(ast.from)
   }
 
-  // Handle transformation types
   if (SchemaAST.isTransformation(ast)) {
     return getUnderlyingType(ast.from)
   }
@@ -143,7 +142,6 @@ export const getUnderlyingType = (
     case 'BooleanKeyword':
       return 'boolean' as const
     case 'Literal':
-      // Determine the type based on the literal value
       if (typeof ast.literal === 'string') {
         return 'string' as const
       }

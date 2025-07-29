@@ -48,30 +48,32 @@ effect('UniversalTable uses default values when props not provided', () =>
     const props: UniversalTableProps<TestData> = {
       columnOverrides: {},
       data: testData,
-      filtering: { columnFilters: true, globalFilter: true },
-      pagination: { pageSize: 10, showPagination: true },
+      filtering: {
+        filterColumnId: 'name',
+        filterKey: 'test-filter',
+        filterPlaceHolder: 'Search...',
+      },
+      pagination: { limit: 100, pageSize: 10 },
       schema: TestSchema,
-      selection: { enableMultiRowSelection: false, enableRowSelection: false },
-      sorting: { multiSort: false },
     }
 
     expect(props.pagination?.pageSize).toBe(10)
   }),
 )
 
-effect('UniversalTable accepts sorting configuration', () =>
+effect('UniversalTable accepts pagination configuration', () =>
   Effect.gen(function* () {
     const props: UniversalTableProps<TestData> = {
       data: testData,
-      schema: TestSchema,
-      sorting: {
-        multiSort: true,
-        sortBy: 'name' as keyof TestData,
-        sortOrder: 'desc',
+      pagination: {
+        limit: 200,
+        pageSize: 25,
       },
+      schema: TestSchema,
     }
 
-    expect(props.sorting?.multiSort).toBe(true)
+    expect(props.pagination?.pageSize).toBe(25)
+    expect(props.pagination?.limit).toBe(200)
   }),
 )
 
@@ -79,23 +81,29 @@ effect('UniversalTable accepts filtering configuration', () =>
   Effect.gen(function* () {
     const props: UniversalTableProps<TestData> = {
       data: testData,
-      filtering: { columnFilters: false, globalFilter: true },
+      filtering: {
+        filterColumnId: 'email',
+        filterKey: 'email-filter',
+        filterPlaceHolder: 'Search emails...',
+      },
       schema: TestSchema,
     }
 
-    expect(props.filtering?.globalFilter).toBe(true)
+    expect(props.filtering?.filterColumnId).toBe('email')
+    expect(props.filtering?.filterPlaceHolder).toBe('Search emails...')
   }),
 )
 
-effect('UniversalTable accepts selection configuration', () =>
+effect('UniversalTable accepts Actions component', () =>
   Effect.gen(function* () {
+    const ActionsComponent = () => 'Actions'
     const props: UniversalTableProps<TestData> = {
+      Actions: ActionsComponent(),
       data: testData,
       schema: TestSchema,
-      selection: { enableMultiRowSelection: true, enableRowSelection: true },
     }
 
-    expect(props.selection?.enableRowSelection).toBe(true)
+    expect(props.Actions).toBeDefined()
   }),
 )
 
@@ -130,18 +138,15 @@ effect('UniversalTable accepts event handlers', () =>
   }),
 )
 
-effect('UniversalTable accepts table options', () =>
+effect('UniversalTable accepts loading state', () =>
   Effect.gen(function* () {
     const props: UniversalTableProps<TestData> = {
       data: testData,
+      loading: true,
       schema: TestSchema,
-      tableOptions: {
-        enableColumnResizing: true,
-        enableRowSelection: true,
-      },
     }
 
-    expect(props.tableOptions?.enableColumnResizing).toBe(true)
+    expect(props.loading).toBe(true)
   }),
 )
 
@@ -196,19 +201,23 @@ effect('UniversalTable props interface is properly typed', () =>
   Effect.gen(function* () {
     // This test validates that the TypeScript interface is working correctly
     const validProps: UniversalTableProps<TestData> = {
+      Actions: 'Actions Component',
+      CollectionCard: 'Collection Card Component',
       className: 'test-class',
       columnOverrides: {
         name: { header: 'Name Override' },
       },
       data: testData,
-      filtering: { globalFilter: true },
+      filtering: {
+        filterColumnId: 'name',
+        filterKey: 'test-filter',
+        filterPlaceHolder: 'Search...',
+      },
+      loading: false,
       onRowClick: (row) => console.log('Row clicked:', row),
       onRowSelect: (rows) => console.log('Rows selected:', rows),
-      pagination: { pageSize: 25 },
+      pagination: { limit: 100, pageSize: 25 },
       schema: TestSchema,
-      selection: { enableMultiRowSelection: false, enableRowSelection: true },
-      sorting: { multiSort: true },
-      tableOptions: { enableColumnResizing: true },
     }
 
     // Verify all properties are accessible
@@ -216,12 +225,12 @@ effect('UniversalTable props interface is properly typed', () =>
     expect(validProps.schema).toBeDefined()
     expect(validProps.columnOverrides).toBeDefined()
     expect(validProps.pagination).toBeDefined()
-    expect(validProps.sorting).toBeDefined()
     expect(validProps.filtering).toBeDefined()
-    expect(validProps.selection).toBeDefined()
     expect(validProps.onRowClick).toBeDefined()
     expect(validProps.onRowSelect).toBeDefined()
     expect(validProps.className).toBeDefined()
-    expect(validProps.tableOptions).toBeDefined()
+    expect(validProps.Actions).toBeDefined()
+    expect(validProps.CollectionCard).toBeDefined()
+    expect(validProps.loading).toBeDefined()
   }),
 )

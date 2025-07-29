@@ -1,3 +1,4 @@
+import { type FieldConfig, OfEntity, OfUiConfig } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -36,6 +37,18 @@ export type BaseEdge = typeof BaseEdge.Type
 export const Edge = Schema.Struct({
   ...BaseEdge.fields,
   ...IdentificationFieldsSchema.fields,
+}).annotations({
+  [OfEntity]: 'edge',
+  [OfUiConfig]: {
+    navigation: {
+      description: 'Manage entity relationships and connections',
+      enabled: true,
+      icon: 'linkIcon',
+      module: 'system',
+      order: 6,
+      title: 'Edges',
+    },
+  } satisfies FieldConfig,
 })
 
 export type Edge = typeof Edge.Type

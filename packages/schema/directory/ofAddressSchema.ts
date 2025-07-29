@@ -1,5 +1,5 @@
 import { addressesTable } from '@openfaith/db'
-import { OfTable } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -44,6 +44,18 @@ export type BaseAddress = typeof BaseAddress.Type
 export const Address = Schema.Struct({
   ...BaseAddress.fields,
   ...IdentificationFieldsSchema.fields,
+}).annotations({
+  [OfEntity]: 'address',
+  [OfUiConfig]: {
+    navigation: {
+      description: 'Manage contact addresses',
+      enabled: true,
+      icon: 'pinIcon',
+      module: 'directory',
+      order: 4,
+      title: 'Addresses',
+    },
+  } satisfies FieldConfig,
 })
 
 export type Address = typeof Address.Type

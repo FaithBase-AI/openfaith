@@ -1,5 +1,5 @@
 import { peopleTable } from '@openfaith/db'
-import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -40,6 +40,7 @@ export const BasePerson = Schema.Struct({
   }).pipe(Schema.NullOr),
   type: Schema.Literal('default'),
 }).annotations({
+  [OfEntity]: 'person',
   [OfTable]: peopleTable,
   [OfUiConfig]: {
     navigation: {

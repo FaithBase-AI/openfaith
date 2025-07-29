@@ -215,12 +215,30 @@ Examples:
   - **NEVER import React as default**: `import React from 'react'`
   - **ALWAYS use named imports**: `import { useState, useEffect } from 'react'`
   - **For JSX.Element types**: `import type { ReactNode } from 'react'`
-  - **For component types**: `import type { ComponentType } from 'react'`
+  - **For component types**: `import type { ComponentType, FC } from 'react'`
   - **Examples**:
     - **Prefer**: `import { createElement } from 'react'`
     - **Avoid**: `import React from 'react'; React.createElement(...)`
     - **Prefer**: `import { useState, useCallback } from 'react'`
     - **Avoid**: `import React, { useState, useCallback } from 'react'`
+    - **Prefer**: `import type { FC } from 'react'` for component typing
+    - **Avoid**: `import React, { FC } from 'react'`
+- **React component props patterns**
+  - **NEVER destructure props in function parameters**
+  - **ALWAYS use props object with destructuring inside the component**
+  - **Use `FC` type when possible for better type inference and consistency**
+  - **Patterns**:
+    - **With FC**: `const Button: FC<ButtonProps> = (props) => { const { children, onClick, disabled = false } = props; ... }`
+    - **With generics**: `const MyComponent = <T,>(props: MyComponentProps<T>) => { const { data, onSelect = nullOp } = props; ... }`
+  - **Examples**:
+    - **Prefer**: `const Button: FC<ButtonProps> = (props) => { const { children, onClick, disabled = false } = props; ... }`
+    - **Avoid**: `const Button = ({ children, onClick, disabled = false }: ButtonProps) => { ... }`
+    - **Prefer**: `const MyComponent = <T,>(props: MyComponentProps<T>) => { const { data, onSelect = nullOp } = props; ... }`
+    - **Avoid**: `const MyComponent = <T,>({ data, onSelect = nullOp }: MyComponentProps<T>) => { ... }`
+  - **When to use each**:
+    - **Use `FC<Props>`**: For non-generic components (most common case)
+    - **Use generic function**: For components that need generic type parameters
+  - This pattern improves readability and makes it easier to access the full props object when needed
 - **NO async/await in application code - use Effect instead**
   - **Avoid**: `async function loadData() { ... }`
   - **Prefer**: `const loadData = Effect.gen(function* () { ... })`

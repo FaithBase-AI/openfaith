@@ -1,5 +1,5 @@
 import { campusesTable } from '@openfaith/db'
-import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -67,6 +67,7 @@ export const BaseCampus = Schema.Struct({
     description: 'Zip code',
   }).pipe(Schema.NullOr),
 }).annotations({
+  [OfEntity]: 'campus',
   [OfTable]: campusesTable,
   [OfUiConfig]: {
     navigation: {
