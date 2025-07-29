@@ -2,8 +2,6 @@
  * Gets the appropriate cell renderer for a given cell type
  */
 export const getCellRenderer = (cellType?: string) => {
-  if (!cellType) return undefined
-
   return ({ getValue, row }: any) => {
     const value = getValue()
 
@@ -43,7 +41,8 @@ export const getCellRenderer = (cellType?: string) => {
         return renderAvatarCell(value, row.original)
 
       default:
-        return String(value || '')
+        // Default text renderer for fields without specific cellType
+        return renderTextCell(value)
     }
   }
 }

@@ -14,36 +14,48 @@ const BaseCustomFieldSchema = Schema.Struct({
 })
 type BaseCustomFieldSchema = typeof BaseCustomFieldSchema.Type
 
-export const StringFieldSchema = Schema.TaggedStruct('string', {
-  ...BaseCustomFieldSchema.fields,
-  value: Schema.String.annotations({
-    description: 'The value of the custom field',
-  }).pipe(Schema.NullishOr),
-})
+export const StringFieldSchema = BaseCustomFieldSchema.pipe(
+  Schema.extend(
+    Schema.TaggedStruct('string', {
+      value: Schema.String.annotations({
+        description: 'The value of the custom field',
+      }).pipe(Schema.NullishOr),
+    }),
+  ),
+)
 export type StringFieldSchema = typeof StringFieldSchema.Type
 
-export const NumberFieldSchema = Schema.TaggedStruct('number', {
-  ...BaseCustomFieldSchema.fields,
-  value: Schema.Number.annotations({
-    description: 'The value of the custom field',
-  }).pipe(Schema.NullishOr),
-})
+export const NumberFieldSchema = BaseCustomFieldSchema.pipe(
+  Schema.extend(
+    Schema.TaggedStruct('number', {
+      value: Schema.Number.annotations({
+        description: 'The value of the custom field',
+      }).pipe(Schema.NullishOr),
+    }),
+  ),
+)
 export type NumberFieldSchema = typeof NumberFieldSchema.Type
 
-export const BooleanFieldSchema = Schema.TaggedStruct('boolean', {
-  ...BaseCustomFieldSchema.fields,
-  value: Schema.Boolean.annotations({
-    description: 'The value of the custom field',
-  }).pipe(Schema.NullishOr),
-})
+export const BooleanFieldSchema = BaseCustomFieldSchema.pipe(
+  Schema.extend(
+    Schema.TaggedStruct('boolean', {
+      value: Schema.Boolean.annotations({
+        description: 'The value of the custom field',
+      }).pipe(Schema.NullishOr),
+    }),
+  ),
+)
 export type BooleanFieldSchema = typeof BooleanFieldSchema.Type
 
-export const DateFieldSchema = Schema.TaggedStruct('date', {
-  ...BaseCustomFieldSchema.fields,
-  value: Schema.String.annotations({
-    description: 'The value of the custom field as an ISO date string',
-  }).pipe(Schema.optional),
-})
+export const DateFieldSchema = BaseCustomFieldSchema.pipe(
+  Schema.extend(
+    Schema.TaggedStruct('date', {
+      value: Schema.String.annotations({
+        description: 'The value of the custom field as an ISO date string',
+      }).pipe(Schema.optional),
+    }),
+  ),
+)
 export type DateFieldSchema = typeof DateFieldSchema.Type
 
 export const CustomFieldSchema = Schema.Union(

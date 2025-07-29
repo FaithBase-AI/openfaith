@@ -9,6 +9,11 @@ import type { ColumnDef } from '@tanstack/react-table'
 import type { Schema } from 'effect'
 import { getCellRenderer } from './cellRenderers'
 
+// Helper function to get field description from schema
+const getFieldDescription = (ast: any): string | undefined => {
+  return ast.annotations?.description
+}
+
 // Helper function to create header with ColumnHeader component
 const createColumnHeader = (column: any, title: string) => {
   return <ColumnHeader column={column}>{title}</ColumnHeader>
@@ -22,7 +27,7 @@ export const generateColumns = <T,>(
   overrides: Partial<Record<keyof T, Partial<ColumnDef<T>>>> = {},
 ): Array<ColumnDef<T>> => {
   const fields = extractSchemaFields(schema)
-  const columns: Array<ColumnDef<T>> = []
+  const columnsWithOrder: Array<{ column: ColumnDef<T>; order: number }> = []
 
   for (const field of fields) {
     const key = field.key as keyof T
@@ -33,6 +38,31 @@ export const generateColumns = <T,>(
 
     // Skip hidden fields
     if (tableConfig?.hidden) continue
+
+    // Skip system fields that should always be hidden (based on field key and context)
+    const systemFieldsToHide = [
+      'createdBy',
+      'updatedBy',
+      'deletedAt',
+      'deletedBy',
+      'inactivatedAt',
+      'inactivatedBy',
+      'customFields',
+      'tags',
+    ]
+    if (systemFieldsToHide.includes(field.key)) continue
+
+    // Skip identification fields (only if they match system field descriptions)
+    if (field.key === 'id' || field.key === 'orgId' || field.key === 'externalIds') {
+      // Check if this looks like a system field by checking for system-like descriptions
+      const description = getFieldDescription(field.schema)
+      if (description?.includes('typeid') || description?.includes('external ids')) {
+        continue
+      }
+    }
+
+    // Skip entity type fields
+    if (field.key === '_tag' || field.key === 'type') continue
 
     // Fallback to auto-detection if no config provided
     const autoConfig = tableConfig || autoDetectCellConfig(field.schema, field.key)
@@ -59,10 +89,14 @@ export const generateColumns = <T,>(
       }
     }
 
-    columns.push(column)
+    // Get order from table config, fallback to a high number to put unordered columns at the end
+    const order = tableConfig?.order ?? 999
+
+    columnsWithOrder.push({ column, order })
   }
 
-  return columns
+  // Sort columns by order, then return just the column definitions
+  return columnsWithOrder.sort((a, b) => a.order - b.order).map(({ column }) => column)
 }
 
 /**

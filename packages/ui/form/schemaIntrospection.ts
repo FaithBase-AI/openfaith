@@ -45,9 +45,39 @@ export const getUiConfig = (schema: Schema.Schema.AnyNoContext): FieldConfig | u
 
 /**
  * Gets UI configuration from AST annotations
+ * Handles Union types created by Schema.NullOr by looking at the first non-null type
  */
 export const getUiConfigFromAST = (ast: SchemaAST.AST): FieldConfig | undefined => {
-  return pipe(SchemaAST.getAnnotation<FieldConfig>(OfUiConfig)(ast), Option.getOrUndefined)
+  // First, try to get annotations directly from the AST
+  const directConfig = pipe(
+    SchemaAST.getAnnotation<FieldConfig>(OfUiConfig)(ast),
+    Option.getOrUndefined,
+  )
+  if (directConfig) {
+    return directConfig
+  }
+
+  // If this is a Union (likely from Schema.NullOr), check the first non-null type
+  if (SchemaAST.isUnion(ast) && ast.types.length > 0) {
+    // Look for the first type that has UI config annotations
+    for (const type of ast.types) {
+      // Skip null and undefined types
+      if ((type._tag === 'Literal' && type.literal === null) || type._tag === 'UndefinedKeyword') {
+        continue
+      }
+
+      // Check this type for UI config
+      const unionConfig = pipe(
+        SchemaAST.getAnnotation<FieldConfig>(OfUiConfig)(type),
+        Option.getOrUndefined,
+      )
+      if (unionConfig) {
+        return unionConfig
+      }
+    }
+  }
+
+  return undefined
 }
 
 /**

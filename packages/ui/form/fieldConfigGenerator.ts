@@ -78,6 +78,7 @@ export const generateColumnConfigs = <T>(
       filterable: true,
       header: formatLabel(String(key)),
       hidden: false,
+      order: 0,
       pinned: 'left',
       sortable: true,
       width: 150,

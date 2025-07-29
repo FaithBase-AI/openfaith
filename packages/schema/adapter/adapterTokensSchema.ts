@@ -20,8 +20,5 @@ export const BaseAdapterToken = Schema.Struct({
 })
 export type BaseAdapterToken = typeof BaseAdapterToken.Type
 
-export const AdapterToken = Schema.Struct({
-  ...BaseAdapterToken.fields,
-  ...IdentificationFieldsSchema.fields,
-})
+export const AdapterToken = BaseAdapterToken.pipe(Schema.extend(IdentificationFieldsSchema))
 export type AdapterToken = typeof AdapterToken.Type

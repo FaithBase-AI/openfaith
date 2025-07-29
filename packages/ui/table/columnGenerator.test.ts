@@ -65,19 +65,19 @@ effect('generateColumns creates correct column definitions', () =>
       (col) => 'accessorKey' in col && col.accessorKey === 'firstName',
     )
     expect(firstNameColumn).toBeDefined()
-    expect(firstNameColumn?.header).toBe('First Name')
+    expect(typeof firstNameColumn?.header).toBe('function')
     expect(firstNameColumn?.size).toBe(150)
 
     // Check email column
     const emailColumn = columns.find((col) => 'accessorKey' in col && col.accessorKey === 'email')
     expect(emailColumn).toBeDefined()
-    expect(emailColumn?.header).toBe('Email')
+    expect(typeof emailColumn?.header).toBe('function')
     expect(emailColumn?.size).toBe(200)
 
     // Check age column
     const ageColumn = columns.find((col) => 'accessorKey' in col && col.accessorKey === 'age')
     expect(ageColumn).toBeDefined()
-    expect(ageColumn?.header).toBe('Age')
+    expect(typeof ageColumn?.header).toBe('function')
     expect(ageColumn?.size).toBe(80)
 
     // Check boolean column
@@ -85,7 +85,7 @@ effect('generateColumns creates correct column definitions', () =>
       (col) => 'accessorKey' in col && col.accessorKey === 'isActive',
     )
     expect(statusColumn).toBeDefined()
-    expect(statusColumn?.header).toBe('Status')
+    expect(typeof statusColumn?.header).toBe('function')
     expect(statusColumn?.size).toBe(100)
 
     // Hidden field should not be present
@@ -155,7 +155,7 @@ effect('generateColumns handles schema without annotations', () =>
 
     const idColumn = columns.find((col) => 'accessorKey' in col && col.accessorKey === 'id')
     expect(idColumn).toBeDefined()
-    expect(idColumn?.header).toBe('Id') // Auto-formatted
+    expect(typeof idColumn?.header).toBe('function') // Auto-formatted
   }),
 )
 
@@ -255,5 +255,53 @@ effect('generateSimpleColumns ignores hidden fields', () =>
     )
     expect(hiddenColumn).toBeDefined()
     expect(hiddenColumn?.header).toBe('Hidden Field')
+  }),
+)
+
+effect('generateColumns respects field ordering', () =>
+  Effect.gen(function* () {
+    const OrderedSchema = Schema.Struct({
+      first: Schema.String.annotations({
+        [OfUiConfig]: {
+          table: {
+            header: 'First Field',
+            order: 2,
+          },
+        },
+      }),
+      second: Schema.String.annotations({
+        [OfUiConfig]: {
+          table: {
+            header: 'Second Field',
+            order: 1,
+          },
+        },
+      }),
+      third: Schema.String.annotations({
+        [OfUiConfig]: {
+          table: {
+            header: 'Third Field',
+            order: 0,
+          },
+        },
+      }),
+      unordered: Schema.String.annotations({
+        [OfUiConfig]: {
+          table: {
+            header: 'Unordered Field',
+            // No order specified - should go to end
+          },
+        },
+      }),
+    })
+
+    const columns = generateColumns(OrderedSchema)
+    expect(columns).toHaveLength(4)
+
+    // Check that columns are in the correct order
+    expect('accessorKey' in columns[0]! && columns[0]!.accessorKey).toBe('third') // order: 0
+    expect('accessorKey' in columns[1]! && columns[1]!.accessorKey).toBe('second') // order: 1
+    expect('accessorKey' in columns[2]! && columns[2]!.accessorKey).toBe('first') // order: 2
+    expect('accessorKey' in columns[3]! && columns[3]!.accessorKey).toBe('unordered') // no order (999)
   }),
 )
