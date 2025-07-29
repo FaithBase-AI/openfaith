@@ -1,5 +1,5 @@
 import { peopleTable } from '@openfaith/db'
-import { type FieldConfig, OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -14,7 +14,7 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
           table: {
             hidden: true,
           },
-        } satisfies FieldConfig,
+        },
       }),
       anniversary: Schema.String.annotations({
         description: 'The anniversary of the person',
@@ -24,7 +24,7 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
             order: 8,
             sortable: true,
           },
-        } satisfies FieldConfig,
+        },
       }).pipe(Schema.NullOr),
       avatar: Schema.String.annotations({
         description: 'The avatar of the person',
@@ -34,7 +34,7 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
             order: 0,
             width: 60,
           },
-        } satisfies FieldConfig,
+        },
       }).pipe(Schema.NullOr),
       birthdate: Schema.String.annotations({
         description: 'The birthdate of the person',
@@ -44,7 +44,7 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
             order: 7,
             sortable: true,
           },
-        } satisfies FieldConfig,
+        },
       }).pipe(Schema.NullOr),
       firstName: Schema.String.annotations({
         description: 'The first name of the person',
@@ -54,7 +54,7 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
             order: 2,
             sortable: true,
           },
-        } satisfies FieldConfig,
+        },
       }).pipe(Schema.NullOr),
       gender: Schema.Literal('male', 'female')
         .annotations({
@@ -66,7 +66,7 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
               order: 6,
               sortable: true,
             },
-          } satisfies FieldConfig,
+          },
         })
         .pipe(Schema.NullOr),
       lastName: Schema.String.annotations({
@@ -77,7 +77,7 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
             order: 3,
             sortable: true,
           },
-        } satisfies FieldConfig,
+        },
       }).pipe(Schema.NullOr),
       membership: Schema.String.annotations({
         description: 'The membership of the person',
@@ -88,7 +88,7 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
             order: 9,
             sortable: true,
           },
-        } satisfies FieldConfig,
+        },
       }).pipe(Schema.NullOr),
       middleName: Schema.String.annotations({
         description: 'The middle name of the person',
@@ -97,7 +97,7 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
             order: 4,
             sortable: true,
           },
-        } satisfies FieldConfig,
+        },
       }).pipe(Schema.NullOr),
       name: Schema.String.annotations({
         description: 'The full name of the person',
@@ -108,14 +108,14 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
             pinned: 'left',
             sortable: true,
           },
-        } satisfies FieldConfig,
+        },
       }).pipe(Schema.NullOr),
       type: Schema.Literal('default').annotations({
         [OfUiConfig]: {
           table: {
             hidden: true,
           },
-        } satisfies FieldConfig,
+        },
       }),
     }),
   ),
@@ -134,7 +134,7 @@ export const Person = BasePerson.pipe(Schema.extend(IdentificationFieldsSchema))
       order: 1,
       title: 'People',
     },
-  } satisfies FieldConfig,
+  },
 })
 
 export type Person = typeof Person.Type

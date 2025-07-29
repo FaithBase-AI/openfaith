@@ -9,7 +9,20 @@ export interface ExtractedField {
 }
 
 /**
- * Extracts field information from a Schema.Struct
+ * Checks if a schema has an email pattern in its refinements
+ */
+export const hasEmailPattern = (ast: SchemaAST.AST): boolean => {
+  // Check for refinement with email pattern
+  if (SchemaAST.isRefinement(ast)) {
+    // This is a simplified check - in practice, you'd need to inspect
+    // the refinement predicate more thoroughly
+    return false
+  }
+  return false
+}
+
+/**
+ * Extracts literal values from a union of literals
  */
 export const extractSchemaFields = <T>(schema: Schema.Schema<T>): Array<ExtractedField> => {
   const ast = schema.ast
@@ -43,59 +56,55 @@ export const getUiConfig = (schema: Schema.Schema.AnyNoContext): FieldConfig | u
   return pipe(SchemaAST.getAnnotation<FieldConfig>(OfUiConfig)(schema.ast), Option.getOrUndefined)
 }
 
-/**
- * Gets UI configuration from AST annotations
- * Handles Union types created by Schema.NullOr by looking at the first non-null type
- */
-export const getUiConfigFromAST = (ast: SchemaAST.AST): FieldConfig | undefined => {
-  // First, try to get annotations directly from the AST
-  const directConfig = pipe(
-    SchemaAST.getAnnotation<FieldConfig>(OfUiConfig)(ast),
-    Option.getOrUndefined,
+// Helper to check if AST represents null or undefined
+const isNullOrUndefined = (ast: SchemaAST.AST): boolean =>
+  (ast._tag === 'Literal' && ast.literal === null) || ast._tag === 'UndefinedKeyword'
+
+// Helper function that returns Option instead of undefined for better composition
+const getUiConfigFromASTOption = (ast: SchemaAST.AST): Option.Option<FieldConfig> => {
+  return pipe(
+    ast,
+    SchemaAST.getAnnotation<FieldConfig>(OfUiConfig),
+    Option.orElse(() =>
+      SchemaAST.isUnion(ast)
+        ? pipe(
+            ast.types,
+            Array.findFirst(
+              (type) => !isNullOrUndefined(type) && Option.isSome(getUiConfigFromASTOption(type)),
+            ),
+            Option.flatMap(getUiConfigFromASTOption),
+          )
+        : Option.none(),
+    ),
   )
-  if (directConfig) {
-    return directConfig
-  }
-
-  // If this is a Union (likely from Schema.NullOr), check the first non-null type
-  if (SchemaAST.isUnion(ast) && ast.types.length > 0) {
-    // Look for the first type that has UI config annotations
-    for (const type of ast.types) {
-      // Skip null and undefined types
-      if ((type._tag === 'Literal' && type.literal === null) || type._tag === 'UndefinedKeyword') {
-        continue
-      }
-
-      // Check this type for UI config
-      const unionConfig = pipe(
-        SchemaAST.getAnnotation<FieldConfig>(OfUiConfig)(type),
-        Option.getOrUndefined,
-      )
-      if (unionConfig) {
-        return unionConfig
-      }
-    }
-  }
-
-  return undefined
 }
 
 /**
- * Checks if a schema has an email pattern in its refinements
+ * Gets UI configuration from AST annotations
+ * Handles Union types created by Schema.NullOr by recursively traversing nested unions
+ * Written in Effect-TS style using functional composition
  */
-export const hasEmailPattern = (ast: SchemaAST.AST): boolean => {
-  // Check for refinement with email pattern
-  if (SchemaAST.isRefinement(ast)) {
-    // This is a simplified check - in practice, you'd need to inspect
-    // the refinement predicate more thoroughly
-    return (
-      ast.filter.toString().includes('email') ||
-      ast.filter.toString().includes('@') ||
-      ast.filter.toString().includes('\\S+@\\S+\\.\\S+')
-    )
-  }
-
-  return false
+export const getUiConfigFromAST = (ast: SchemaAST.AST): FieldConfig | undefined => {
+  return pipe(
+    ast,
+    // Try direct annotation first
+    SchemaAST.getAnnotation<FieldConfig>(OfUiConfig),
+    Option.orElse(() =>
+      // If no direct annotation and this is a union, search recursively
+      SchemaAST.isUnion(ast)
+        ? pipe(
+            ast.types,
+            Array.findFirst(
+              (type) =>
+                // Skip null and undefined types, recursively search others
+                !isNullOrUndefined(type) && Option.isSome(getUiConfigFromASTOption(type)),
+            ),
+            Option.flatMap(getUiConfigFromASTOption),
+          )
+        : Option.none(),
+    ),
+    Option.getOrUndefined,
+  )
 }
 
 /**

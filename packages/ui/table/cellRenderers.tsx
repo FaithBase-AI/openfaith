@@ -116,26 +116,49 @@ const renderBooleanCell = (value: boolean) => {
 /**
  * Renders a date cell with locale formatting
  */
-const renderDateCell = (value: string) => {
+const renderDateCell = (value: string | number) => {
   if (!value) return ''
-  const date = new Date(value)
+
+  // Handle numeric timestamps (convert string numbers to actual numbers)
+  const numericValue = typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : value
+
+  const date = new Date(numericValue)
   return date.toLocaleDateString()
 }
 
 /**
  * Renders a datetime cell with locale formatting
  */
-const renderDateTimeCell = (value: string) => {
+const renderDateTimeCell = (value: string | number) => {
   if (!value) return ''
-  const date = new Date(value)
+
+  // Handle numeric timestamps (convert string numbers to actual numbers)
+  const numericValue = typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : value
+
+  const date = new Date(numericValue)
   return date.toLocaleString()
 }
 
 /**
  * Renders a badge cell
  */
-const renderBadgeCell = (value: string) => {
-  if (!value) return ''
+const renderBadgeCell = (value: string | boolean) => {
+  if (value === null || value === undefined || value === '') return ''
+
+  // Handle boolean values
+  if (typeof value === 'boolean') {
+    return (
+      <span
+        className={`inline-flex items-center rounded-full px-2.5 py-0.5 font-medium text-xs ${
+          value ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+        }`}
+      >
+        {value ? 'Yes' : 'No'}
+      </span>
+    )
+  }
+
+  // Handle string values
   return (
     <span className='inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 font-medium text-blue-800 text-xs'>
       {value}
