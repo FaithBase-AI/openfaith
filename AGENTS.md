@@ -35,10 +35,6 @@ OpenFaith is a local-first church management system built with Effect-TS that pr
 
 - `bun run format` - Check code formatting with Biome
 - `bun run format:fix` - Fix code formatting issues automatically. Run this after all changes before handing back to user
-- `bun run lint:biome` - Run Biome linter
-- `bun run lint:biome:fix` - Fix Biome linting issues
-- `bun run lint:eslint` - Run ESLint with caching
-- `bun run lint:eslint:fix` - Fix ESLint issues automatically
 
 ### Database & Infrastructure
 
@@ -171,6 +167,26 @@ Examples:
   - Avoid: `mutation.args[0]`
   - Prefer: `Array.get(items, index)` with `Option.match`
   - Avoid: `items[index]`
+- **NEVER use single-line if statements**
+  - **ALWAYS use block statements with curly braces for if statements**
+  - **Prefer**: Multi-line format for better readability and consistency
+  - **Examples**:
+    - **Avoid**: `if (!entity.navConfig.enabled) return Option.none()`
+    - **Prefer**:
+      ```typescript
+      if (!entity.navConfig.enabled) {
+        return Option.none();
+      }
+      ```
+    - **Avoid**: `if (condition) doSomething()`
+    - **Prefer**:
+      ```typescript
+      if (condition) {
+        doSomething();
+      }
+      ```
+  - This applies to all control flow statements: if, else, for, while, etc.
+  - Improves code readability, makes debugging easier, and prevents errors when adding additional statements
 
 ## CRITICAL RULE: Effect Array Utilities - NEVER USE NATIVE ARRAY METHODS
 
@@ -193,19 +209,19 @@ Array.from(iterable);
 // ✅ REQUIRED - Effect Array utilities with pipe
 pipe(
   items,
-  Array.map((item) => item.name),
+  Array.map((item) => item.name)
 );
 pipe(
   items,
-  Array.filter((item) => item.active),
+  Array.filter((item) => item.active)
 );
 pipe(
   items,
-  Array.forEach((item) => Effect.log(item)),
+  Array.forEach((item) => Effect.log(item))
 );
 pipe(
   items,
-  Array.findFirst((item) => item.id === targetId),
+  Array.findFirst((item) => item.id === targetId)
 );
 pipe(iterable, Array.fromIterable);
 ```
@@ -237,6 +253,59 @@ pipe(iterable, Array.fromIterable);
 
 **This ensures consistency across ALL array operations in the codebase - no exceptions allowed.**
 
+## CRITICAL RULE: Effect String Utilities - NEVER USE NATIVE STRING METHODS
+
+**⚠️ ABSOLUTELY FORBIDDEN ⚠️ - Native String Methods:**
+
+- **NEVER use `.charAt()`, `.slice()`, `.substring()`, `.indexOf()`, `.includes()`, `.startsWith()`, `.endsWith()` on strings**
+- **NEVER use `.toUpperCase()`, `.toLowerCase()`, `.trim()`, `.split()`, `.replace()` on strings**
+- **NEVER use `.match()`, `.search()`, `.padStart()`, `.padEnd()` on strings**
+- **NEVER use template literal string manipulation without Effect String utilities**
+
+**✅ REQUIRED PATTERN - Always Use Effect's String utilities:**
+
+```typescript
+// ❌ FORBIDDEN - Native string methods
+const result = str.charAt(0).toUpperCase() + str.slice(1);
+const isValid = str.endsWith("s");
+const parts = str.split(" ");
+const trimmed = str.trim();
+const replaced = str.replace(/old/g, "new");
+
+// ✅ REQUIRED - Effect String utilities
+const result = pipe(
+  str,
+  String.charAt(0),
+  String.toUpperCase,
+  (firstChar) => `${firstChar}${pipe(str, String.slice(1))}`
+);
+const isValid = pipe(str, String.endsWith("s"));
+const parts = pipe(str, String.split(" "));
+const trimmed = pipe(str, String.trim);
+const replaced = pipe(str, String.replace(/old/g, "new"));
+```
+
+**Key Effect String Methods to Use:**
+
+- `String.charAt()` - Get character at index
+- `String.slice()` - Extract substring
+- `String.substring()` - Extract substring (alternative)
+- `String.indexOf()` - Find index of substring
+- `String.includes()` - Check if string contains substring
+- `String.startsWith()` - Check if string starts with substring
+- `String.endsWith()` - Check if string ends with substring
+- `String.toUpperCase()` - Convert to uppercase
+- `String.toLowerCase()` - Convert to lowercase
+- `String.capitalize()` - Capitalize first letter
+- `String.trim()` - Remove whitespace
+- `String.split()` - Split string into array
+- `String.replace()` - Replace substring
+- `String.match()` - Match against regex
+- `String.isEmpty()` - Check if string is empty
+- `String.isNonEmpty()` - Check if string is not empty
+
+**String manipulation must ALWAYS use Effect's String utilities with pipe - no exceptions allowed.**
+
 - **Use Effect's Record utilities instead of native Object methods**
   - Prefer: `pipe(obj, Record.keys)` instead of `Object.keys(obj)`
   - Prefer: `pipe(obj, Record.values)` instead of `Object.values(obj)`
@@ -263,6 +332,19 @@ pipe(iterable, Array.fromIterable);
   - Prefer: `noOp` instead of `() => {}`
   - Prefer: `nullOpE` instead of `() => Effect.succeed(null)`
   - **NEVER use async no-ops**: Use `nullOpE` instead of `async () => null` or `async () => {}`
+- **Use string utilities from `@openfaith/shared` for text transformations**
+  - **`pluralize(word: string)`**: Converts singular words to plural (handles irregular plurals like "person" → "people")
+  - **`singularize(word: string)`**: Converts plural words to singular (handles irregular singulars like "people" → "person")
+  - **`mkEntityName`**: Converts table name to entity name (people → Person, addresses → Address)
+  - **`mkTableName`**: Converts entity name to table name (Person → people, Address → addresses)
+  - **`mkZeroTableName`**: Converts entity name to Zero schema table name (Person → people, PhoneNumber → phoneNumbers)
+  - **`mkEntityType`**: Converts table name to entity type for IDs (people → person, phone_numbers → phonenumber)
+  - **`mkUrlParamName`**: Converts entity name to URL parameter name (Person → personId, PhoneNumber → phoneNumberId)
+  - **Examples**:
+    - **Prefer**: `singularize("Groups")` → "Group" instead of manual string manipulation
+    - **Prefer**: `pluralize("Person")` → "People" instead of adding "s"
+    - **Prefer**: `mkEntityName("phone_numbers")` → "PhoneNumber" instead of manual case conversion
+    - These utilities handle complex English pluralization rules and irregular cases automatically
 - **React import patterns**
   - **NEVER import React as default**: `import React from 'react'`
   - **ALWAYS use named imports**: `import { useState, useEffect } from 'react'`
@@ -325,7 +407,7 @@ pipe(iterable, Array.fromIterable);
     const goodFunction = Effect.gen(function* () {
       return yield* pipe(
         Effect.try(() => someRiskyOperation()),
-        Effect.orElse(() => Effect.succeed(null)),
+        Effect.orElse(() => Effect.succeed(null))
       );
     });
     ```
@@ -370,7 +452,7 @@ export class ValidationError extends Schema.TaggedError<ValidationError>()(
     field: Schema.String,
     message: Schema.String,
     cause: Schema.optional(Schema.Unknown),
-  },
+  }
 ) {}
 
 // Good error logging
@@ -378,7 +460,7 @@ Effect.tapError((error) =>
   Effect.logError("Operation failed", {
     error, // Log the typed error directly
     context: "additional context",
-  }),
+  })
 );
 
 // Bad error logging - DON'T DO THIS
@@ -386,7 +468,7 @@ Effect.tapError((error) =>
   Effect.logError("Operation failed", {
     error: error instanceof Error ? error.message : `${error}`, // ❌ Wrong!
     context: "additional context",
-  }),
+  })
 );
 ```
 
@@ -491,7 +573,7 @@ const EnvLayer = Layer.mergeAll(
   ExternalSyncWorkflowLayer,
   ExternalSyncEntityWorkflowLayer,
   MyNewWorkflowLayer, // Add here
-  TestWorkflowLayer,
+  TestWorkflowLayer
 );
 ```
 
@@ -586,7 +668,7 @@ effect(
       });
 
       expect(result.path.personId).toBe("456");
-    }),
+    })
 );
 ```
 
