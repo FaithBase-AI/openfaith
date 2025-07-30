@@ -6,6 +6,9 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   createdAt: Schema.String.annotations({
     description: 'The datetime the record was created',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         cellType: 'datetime',
         order: 10,
@@ -104,6 +107,9 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   updatedAt: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
     description: 'The datetime the record was updated',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         cellType: 'datetime',
         order: 11,
