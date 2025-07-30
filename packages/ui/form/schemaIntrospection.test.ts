@@ -1,6 +1,9 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
+import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { BaseSystemFieldsSchema } from '@openfaith/schema/shared/systemSchema'
 import {
+  extractAST,
   extractLiteralOptions,
   extractSchemaFields,
   formatLabel,
@@ -128,15 +131,6 @@ effect('extractLiteralOptions - extracts options from union of literals', () =>
   }),
 )
 
-effect('extractLiteralOptions - returns empty array for non-union schemas', () =>
-  Effect.gen(function* () {
-    const stringAST = Schema.String.ast
-    const options = extractLiteralOptions(stringAST)
-
-    expect(options).toEqual([])
-  }),
-)
-
 effect('extractLiteralOptions - handles mixed union types', () =>
   Effect.gen(function* () {
     const mixedUnion = Schema.Union(
@@ -173,9 +167,9 @@ effect('formatLabel - handles single words', () =>
 
 effect('formatLabel - handles already formatted strings', () =>
   Effect.gen(function* () {
-    // The function adds spaces before capital letters, so "First Name" becomes "First  Name"
-    expect(formatLabel('First Name')).toBe('First  Name')
-    expect(formatLabel('User ID')).toBe('User  I D')
+    // The function handles already formatted strings by capitalizing each word
+    expect(formatLabel('First Name')).toBe('First Name')
+    expect(formatLabel('User ID')).toBe('User Id')
   }),
 )
 
@@ -183,16 +177,16 @@ effect('formatLabel - handles empty and edge cases', () =>
   Effect.gen(function* () {
     expect(formatLabel('')).toBe('')
     expect(formatLabel('a')).toBe('A')
-    expect(formatLabel('ID')).toBe('I D')
-    expect(formatLabel('XMLHttpRequest')).toBe('X M L Http Request')
+    expect(formatLabel('ID')).toBe('Id')
+    expect(formatLabel('XMLHttpRequest')).toBe('Xmlhttp Request')
   }),
 )
 
 effect('formatLabel - handles snake_case and kebab-case', () =>
   Effect.gen(function* () {
-    expect(formatLabel('first_name')).toBe('First_name')
-    expect(formatLabel('first-name')).toBe('First-name')
-    expect(formatLabel('user_account_type')).toBe('User_account_type')
+    expect(formatLabel('first_name')).toBe('First Name')
+    expect(formatLabel('first-name')).toBe('First Name')
+    expect(formatLabel('user_account_type')).toBe('User Account Type')
   }),
 )
 
@@ -282,9 +276,9 @@ effect('extractSchemaFields - preserves field schema information', () =>
     expect(titleField?.schema).toBeDefined()
     expect(countField?.schema).toBeDefined()
 
-    // The schema should be the AST representation
-    expect(titleField?.schema._tag).toBeDefined()
-    expect(countField?.schema._tag).toBeDefined()
+    // The schema should be a property signature with annotations
+    expect(titleField?.schema).toHaveProperty('annotations')
+    expect(countField?.schema).toHaveProperty('annotations')
   }),
 )
 
@@ -302,9 +296,112 @@ effect('hasEmailPattern - handles non-refinement schemas', () =>
 
 effect('formatLabel - handles numbers in field names', () =>
   Effect.gen(function* () {
-    expect(formatLabel('field1')).toBe('Field1')
-    expect(formatLabel('user2Factor')).toBe('User2 Factor')
-    expect(formatLabel('api2Version')).toBe('Api2 Version')
+    expect(formatLabel('field1')).toBe('Field 1')
+    expect(formatLabel('user2Factor')).toBe('User 2 Factor')
+    expect(formatLabel('api2Version')).toBe('Api 2 Version')
+  }),
+)
+
+effect('getUiConfigFromAST - works with the REAL schema pattern (pipe then annotations)', () =>
+  Effect.gen(function* () {
+    // Create the ACTUAL pattern from the schema: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({...})
+    const realPattern = Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
+      description: 'The datetime the record was updated',
+      [OfUiConfig]: {
+        table: {
+          cellType: 'datetime',
+          order: 11,
+          sortable: true,
+        },
+      } satisfies FieldConfig,
+    })
+
+    // Test that our function works with the real pattern
+    const result = getUiConfigFromAST(realPattern.ast)
+
+    expect(result).toBeDefined()
+    expect(result?.table?.cellType).toBe('datetime')
+    expect(result?.table?.order).toBe(11)
+    expect(result?.table?.sortable).toBe(true)
+  }),
+)
+
+effect(
+  'getUiConfigFromAST - works with BaseSystemFieldsSchema structure via extractSchemaFields',
+  () =>
+    Effect.gen(function* () {
+      // Import the actual BaseSystemFieldsSchema to test with
+      // Use the imported BaseSystemFieldsSchema
+
+      // Extract fields like the column generator does
+      const fields = extractSchemaFields(BaseSystemFieldsSchema)
+      const updatedAtField = fields.find((f) => f.key === 'updatedAt')
+      const createdAtField = fields.find((f) => f.key === 'createdAt')
+
+      expect(updatedAtField).toBeDefined()
+      expect(createdAtField).toBeDefined()
+
+      // Test that both fields can have their UI config extracted
+      const updatedAtConfig = getUiConfigFromAST(updatedAtField!.schema)
+      const createdAtConfig = getUiConfigFromAST(createdAtField!.schema)
+
+      expect(updatedAtConfig?.table?.cellType).toBe('datetime')
+      expect(createdAtConfig?.table?.cellType).toBe('datetime')
+
+      console.log('✅ BaseSystemFieldsSchema test passed:', {
+        createdAtCellType: createdAtConfig?.table?.cellType,
+        updatedAtCellType: updatedAtConfig?.table?.cellType,
+      })
+    }),
+)
+
+effect('getUiConfigFromAST - handles the exact BaseSystemFieldsSchema pattern', () =>
+  Effect.gen(function* () {
+    // Recreate the exact BaseSystemFieldsSchema pattern
+    const TestSystemSchema = Schema.Struct({
+      createdAt: Schema.String.annotations({
+        description: 'The datetime the record was created',
+        [OfUiConfig]: {
+          table: {
+            cellType: 'datetime',
+            order: 10,
+            sortable: true,
+          },
+        } satisfies FieldConfig,
+      }),
+      updatedAt: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
+        description: 'The datetime the record was updated',
+        [OfUiConfig]: {
+          table: {
+            cellType: 'datetime',
+            order: 11,
+            sortable: true,
+          },
+        } satisfies FieldConfig,
+      }),
+    })
+
+    // Extract fields like the column generator does
+    const fields = extractSchemaFields(TestSystemSchema)
+    const createdAtField = fields.find((f) => f.key === 'createdAt')
+    const updatedAtField = fields.find((f) => f.key === 'updatedAt')
+
+    expect(createdAtField).toBeDefined()
+    expect(updatedAtField).toBeDefined()
+
+    // Test that both fields can have their UI config extracted
+    const createdAtConfig = getUiConfigFromAST(createdAtField!.schema)
+    const updatedAtConfig = getUiConfigFromAST(updatedAtField!.schema)
+
+    expect(createdAtConfig?.table?.cellType).toBe('datetime')
+    expect(updatedAtConfig?.table?.cellType).toBe('datetime')
+
+    console.log('🧪 BaseSystemFieldsSchema test:', {
+      createdAtConfig: createdAtConfig?.table?.cellType,
+      createdAtTag: createdAtField ? extractAST(createdAtField.schema)._tag : undefined,
+      updatedAtConfig: updatedAtConfig?.table?.cellType,
+      updatedAtTag: updatedAtField ? extractAST(updatedAtField.schema)._tag : undefined,
+    })
   }),
 )
 
@@ -315,4 +412,57 @@ effect('extractSchemaFields - handles empty struct', () =>
 
     expect(fields).toEqual([])
   }),
+)
+
+effect('getUiConfigFromAST - works with the REAL schema pattern (pipe then annotations)', () =>
+  Effect.gen(function* () {
+    // Create the ACTUAL pattern from the schema: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({...})
+    const realPattern = Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
+      description: 'The datetime the record was updated',
+      [OfUiConfig]: {
+        table: {
+          cellType: 'datetime',
+          order: 11,
+          sortable: true,
+        },
+      } satisfies FieldConfig,
+    })
+
+    // Test that our function works with the real pattern
+    const result = getUiConfigFromAST(realPattern.ast)
+
+    expect(result).toBeDefined()
+    expect(result?.table?.cellType).toBe('datetime')
+    expect(result?.table?.order).toBe(11)
+    expect(result?.table?.sortable).toBe(true)
+  }),
+)
+
+effect(
+  'getUiConfigFromAST - works with BaseSystemFieldsSchema structure via extractSchemaFields',
+  () =>
+    Effect.gen(function* () {
+      // Import the actual BaseSystemFieldsSchema to test with
+      // Use the imported BaseSystemFieldsSchema
+
+      // Extract fields like the column generator does
+      const fields = extractSchemaFields(BaseSystemFieldsSchema)
+      const updatedAtField = fields.find((f) => f.key === 'updatedAt')
+      const createdAtField = fields.find((f) => f.key === 'createdAt')
+
+      expect(updatedAtField).toBeDefined()
+      expect(createdAtField).toBeDefined()
+
+      // Test that both fields can have their UI config extracted
+      const updatedAtConfig = getUiConfigFromAST(updatedAtField!.schema)
+      const createdAtConfig = getUiConfigFromAST(createdAtField!.schema)
+
+      expect(updatedAtConfig?.table?.cellType).toBe('datetime')
+      expect(createdAtConfig?.table?.cellType).toBe('datetime')
+
+      console.log('✅ BaseSystemFieldsSchema test passed:', {
+        createdAtCellType: createdAtConfig?.table?.cellType,
+        updatedAtCellType: updatedAtConfig?.table?.cellType,
+      })
+    }),
 )

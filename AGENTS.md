@@ -171,20 +171,72 @@ Examples:
   - Avoid: `mutation.args[0]`
   - Prefer: `Array.get(items, index)` with `Option.match`
   - Avoid: `items[index]`
-- **Use Effect's Array utilities for ALL data transformation and manipulation**
-  - **Always use `pipe(array, Array.method(...))` pattern** for consistency with Effect-TS throughout the codebase
-  - **Business logic transformations:**
-    - Prefer: `pipe(items, Array.map((item) => item.name))`
-    - Avoid: `items.map((item) => item.name)`
-    - Avoid: `Array.map(items, (item) => item.name)`
-    - Prefer: `pipe(items, Array.filter((item) => item.active))`
-    - Avoid: `items.filter((item) => item.active)`
-    - Avoid: `Array.filter(items, (item) => item.active)`
-  - **JSX rendering (same pattern):**
-    - Prefer: `{pipe(items, Array.map((item) => <Component key={item.id} {...item} />))}`
-    - Avoid: `{items.map((item) => <Component key={item.id} {...item} />)}`
-  - **Data processing, API responses, database results - all use the same pattern**
-  - This ensures consistency across all array operations in the codebase
+
+## CRITICAL RULE: Effect Array Utilities - NEVER USE NATIVE ARRAY METHODS
+
+**⚠️ ABSOLUTELY FORBIDDEN ⚠️ - Native Array Methods:**
+
+- **NEVER use `.map()`, `.filter()`, `.forEach()`, `.find()`, `.some()`, `.every()`, `.reduce()` on arrays**
+- **NEVER use `Array.from()`, `Array.isArray()`, or any native Array static methods**
+- **NEVER use `for...of`, `for...in`, or traditional `for` loops for array iteration**
+
+**✅ REQUIRED PATTERN - Always Use `pipe(array, Array.method(...))`:**
+
+```typescript
+// ❌ FORBIDDEN - Native array methods
+items.map((item) => item.name);
+items.filter((item) => item.active);
+items.forEach((item) => console.log(item));
+items.find((item) => item.id === targetId);
+Array.from(iterable);
+
+// ✅ REQUIRED - Effect Array utilities with pipe
+pipe(
+  items,
+  Array.map((item) => item.name),
+);
+pipe(
+  items,
+  Array.filter((item) => item.active),
+);
+pipe(
+  items,
+  Array.forEach((item) => Effect.log(item)),
+);
+pipe(
+  items,
+  Array.findFirst((item) => item.id === targetId),
+);
+pipe(iterable, Array.fromIterable);
+```
+
+**Use Effect's Array utilities for ALL array operations - no exceptions:**
+
+- **Business logic transformations**: Always `pipe(array, Array.method(...))`
+- **JSX rendering**: Always `pipe(array, Array.map(...))` in JSX
+- **Data processing**: All API responses, database results use the same pattern
+- **Any array manipulation**: Grouping, sorting, filtering - all use Effect's Array utilities
+- **Type definitions and interfaces**: When working with ASTs or object properties that are arrays
+
+**Key Effect Array Methods to Use:**
+
+- `Array.map()` - Transform each element
+- `Array.filter()` - Filter elements by predicate
+- `Array.forEach()` - Side effects for each element
+- `Array.findFirst()` - Find first matching element (returns `Option`)
+- `Array.findLast()` - Find last matching element (returns `Option`)
+- `Array.some()` - Test if any element matches
+- `Array.every()` - Test if all elements match
+- `Array.reduce()` - Reduce array to single value
+- `Array.groupBy()` - Group elements by key
+- `Array.partition()` - Split array into two based on predicate
+- `Array.fromIterable()` - Convert iterable to array
+- `Array.head()` - Get first element (returns `Option`)
+- `Array.tail()` - Get all but first element (returns `Option`)
+- `Array.get()` - Safe array access by index (returns `Option`)
+
+**This ensures consistency across ALL array operations in the codebase - no exceptions allowed.**
+
 - **Use Effect's Record utilities instead of native Object methods**
   - Prefer: `pipe(obj, Record.keys)` instead of `Object.keys(obj)`
   - Prefer: `pipe(obj, Record.values)` instead of `Object.values(obj)`

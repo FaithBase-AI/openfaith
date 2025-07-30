@@ -1,6 +1,7 @@
 import { ColumnHeader } from '@openfaith/ui/components/collections/collectionComponents'
 import { autoDetectCellConfig } from '@openfaith/ui/form/autoDetection'
 import {
+  extractAST,
   extractSchemaFields,
   formatLabel,
   getUiConfigFromAST,
@@ -65,7 +66,7 @@ export const generateColumns = <T,>(
     if (field.key === '_tag' || field.key === 'type') continue
 
     // Fallback to auto-detection if no config provided
-    const autoConfig = tableConfig || autoDetectCellConfig(field.schema, field.key)
+    const autoConfig = tableConfig || autoDetectCellConfig(extractAST(field.schema), field.key)
 
     // Build column definition
     const column: ColumnDef<T> = {

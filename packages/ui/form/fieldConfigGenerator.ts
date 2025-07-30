@@ -1,6 +1,7 @@
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
 import { autoDetectCellConfig, autoDetectFieldConfig } from '@openfaith/ui/form/autoDetection'
 import {
+  extractAST,
   extractSchemaFields,
   formatLabel,
   getUiConfigFromAST,
@@ -25,7 +26,7 @@ export const generateFieldConfigs = <T>(
     const fieldConfig = uiConfig?.field
 
     // Fallback to auto-detection if no config provided
-    const autoConfig = fieldConfig || autoDetectFieldConfig(field.schema, field.key)
+    const autoConfig = fieldConfig || autoDetectFieldConfig(extractAST(field.schema), field.key)
 
     // Apply defaults and overrides
     const finalConfig: Required<FieldConfig['field']> = {
@@ -70,7 +71,7 @@ export const generateColumnConfigs = <T>(
     const tableConfig = uiConfig?.table
 
     // Fallback to auto-detection if no config provided
-    const autoConfig = tableConfig || autoDetectCellConfig(field.schema, field.key)
+    const autoConfig = tableConfig || autoDetectCellConfig(extractAST(field.schema), field.key)
 
     // Apply defaults and overrides
     const finalConfig: Required<FieldConfig['table']> = {
