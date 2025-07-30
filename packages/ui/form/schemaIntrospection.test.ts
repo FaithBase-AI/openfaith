@@ -1,7 +1,5 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
-import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
-import { BaseSystemFieldsSchema } from '@openfaith/schema/shared/systemSchema'
 import {
   extractAST,
   extractLiteralOptions,
@@ -10,7 +8,9 @@ import {
   getUiConfig,
   getUiConfigFromAST,
   hasEmailPattern,
-} from '@openfaith/ui/form/schemaIntrospection'
+} from '@openfaith/schema'
+import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { BaseSystemFieldsSchema } from '@openfaith/schema/shared/systemSchema'
 import { Effect, Schema } from 'effect'
 
 // Test schemas

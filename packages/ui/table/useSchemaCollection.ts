@@ -1,8 +1,9 @@
+import { extractEntityTag } from '@openfaith/schema'
 import { mkZeroTableName, nullOp } from '@openfaith/shared'
 import { getBaseEntitiesQuery } from '@openfaith/zero/baseQueries'
 import { useZero } from '@openfaith/zero/useZero'
 import { useQuery } from '@rocicorp/zero/react'
-import { Array, Option, pipe, type Schema, SchemaAST, String } from 'effect'
+import { Option, pipe, type Schema, String } from 'effect'
 import { useMemo } from 'react'
 
 export interface SchemaCollectionResult<T> {
@@ -58,23 +59,4 @@ export const useSchemaCollection = <T>(
     }),
     [data, info, pageSize, limit],
   )
-}
-
-const extractEntityTag = (ast: SchemaAST.AST): Option.Option<string> => {
-  if (SchemaAST.isTypeLiteral(ast)) {
-    const propertySignatures = ast.propertySignatures
-    const tagProperty = pipe(
-      propertySignatures,
-      Array.findFirst((prop) => prop.name === '_tag'),
-    )
-
-    if (Option.isSome(tagProperty)) {
-      const tagAST = tagProperty.value.type
-      if (SchemaAST.isLiteral(tagAST) && typeof tagAST.literal === 'string') {
-        return Option.some(tagAST.literal)
-      }
-    }
-  }
-
-  return Option.none()
 }

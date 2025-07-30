@@ -11,7 +11,9 @@ export interface ExtractedField {
 /**
  * Extracts field information from a Schema.Struct
  */
-export const extractSchemaFields = <T>(schema: Schema.Schema<T>): Array<ExtractedField> => {
+export const extractSchemaFields = <T>(
+  schema: Schema.Schema<T> | { ast: SchemaAST.AST },
+): Array<ExtractedField> => {
   const ast = schema.ast
 
   if (ast._tag !== 'TypeLiteral') {
@@ -49,11 +51,9 @@ export const getUiConfig = (schema: Schema.Schema.AnyNoContext): FieldConfig | u
   return pipe(SchemaAST.getAnnotation<FieldConfig>(OfUiConfig)(schema.ast), Option.getOrUndefined)
 }
 
-// Helper to check if AST represents null or undefined
 const isNullOrUndefined = (ast: SchemaAST.AST): boolean =>
   (ast._tag === 'Literal' && ast.literal === null) || ast._tag === 'UndefinedKeyword'
 
-// Helper function that returns Option instead of undefined for better composition
 const getUiConfigFromASTOption = (ast: SchemaAST.AST): Option.Option<FieldConfig> => {
   return pipe(
     ast,
@@ -83,26 +83,20 @@ export const extractAST = (schema: SchemaAST.AST | SchemaAST.PropertySignature):
  * Handles Union types created by Schema.NullOr by recursively traversing nested unions
  * Written in Effect-TS style using functional composition
  */
-export const getUiConfigFromAST = (
-  ast: any, // Accept any AST-like object to handle various SchemaAST types
-): FieldConfig | undefined => {
-  // If this is a PropertySignature, check its annotations first
+export const getUiConfigFromAST = (ast: any): FieldConfig | undefined => {
   if (ast && typeof ast === 'object' && 'annotations' in ast && 'type' in ast) {
     const directAnnotation = SchemaAST.getAnnotation<FieldConfig>(OfUiConfig)(ast)
     if (Option.isSome(directAnnotation)) {
       return directAnnotation.value
     }
-    // If no annotation on the property signature, check the type
+
     return getUiConfigFromAST(ast.type)
   }
 
-  // Handle regular AST types
   return pipe(
     ast,
-    // Try direct annotation first
     SchemaAST.getAnnotation<FieldConfig>(OfUiConfig),
     Option.orElse(() =>
-      // If no direct annotation and this is a union, search recursively
       SchemaAST.isUnion(ast)
         ? pipe(
             ast.types,
@@ -119,17 +113,14 @@ export const getUiConfigFromAST = (
  * Checks if a schema has an email pattern in its refinements
  */
 export const hasEmailPattern = (ast: SchemaAST.AST): boolean => {
-  // Check for refinement with email pattern
   if (SchemaAST.isRefinement(ast)) {
-    // This is a simplified check - in practice, you'd need to inspect
-    // the refinement predicate more thoroughly
     return false
   }
   return false
 }
 
 /**
- * Extracts literal values from a union of literals
+ * Extracts literal values from a union of literals with proper capitalization
  */
 export const extractLiteralOptions = (
   ast: SchemaAST.AST,
@@ -138,10 +129,10 @@ export const extractLiteralOptions = (
     const literalValues = pipe(
       ast.types,
       Array.filterMap((type) => {
-        if (type._tag === 'Literal') {
+        if (type._tag === 'Literal' && typeof type.literal === 'string') {
           return Option.some({
-            label: `${type.literal}`,
-            value: `${type.literal}`,
+            label: capitalizeWord(type.literal),
+            value: type.literal,
           })
         }
         return Option.none()
@@ -151,6 +142,15 @@ export const extractLiteralOptions = (
     return literalValues
   }
 
+  if (ast._tag === 'Literal' && typeof ast.literal === 'string') {
+    return [
+      {
+        label: capitalizeWord(ast.literal),
+        value: ast.literal,
+      },
+    ]
+  }
+
   return []
 }
 
@@ -158,22 +158,26 @@ export const extractLiteralOptions = (
  * Capitalizes the first letter of a word using Effect-TS patterns
  */
 const capitalizeWord = (word: string): string => {
-  if (String.isEmpty(word)) return word
-  return word.charAt(0).toUpperCase() + pipe(word, String.toLowerCase).slice(1)
+  if (pipe(word, String.isEmpty)) return word
+  const firstChar = pipe(
+    word,
+    String.charAt(0),
+    Option.getOrElse(() => ''),
+  )
+  const restOfWord = pipe(word, String.toLowerCase, String.slice(1))
+  return pipe(firstChar, String.toUpperCase) + restOfWord
 }
 
 /**
  * Formats a field name into a human-readable label using Effect-TS String utilities
  */
 export const formatLabel = (fieldName: string): string => {
-  if (String.isEmpty(fieldName)) return ''
+  if (pipe(fieldName, String.isEmpty)) return ''
 
-  // Handle already formatted strings (containing spaces)
   if (pipe(fieldName, String.includes(' '))) {
     return pipe(fieldName, String.split(' '), Array.map(capitalizeWord), Array.join(' '))
   }
 
-  // Handle snake_case and kebab-case
   if (pipe(fieldName, String.includes('_')) || pipe(fieldName, String.includes('-'))) {
     return pipe(
       fieldName,
@@ -184,14 +188,35 @@ export const formatLabel = (fieldName: string): string => {
     )
   }
 
-  // Handle camelCase and PascalCase
   return pipe(
     fieldName,
-    String.replace(/([a-z])([A-Z])/g, '$1 $2'), // Insert space before capital letters
-    String.replace(/([a-z])(\d)/g, '$1 $2'), // Insert space before numbers
-    String.replace(/(\d)([A-Z])/g, '$1 $2'), // Insert space between numbers and capital letters
+    String.replace(/([a-z])([A-Z])/g, '$1 $2'),
+    String.replace(/([a-z])(\d)/g, '$1 $2'),
+    String.replace(/(\d)([A-Z])/g, '$1 $2'),
     String.split(' '),
     Array.map(capitalizeWord),
     Array.join(' '),
   )
+}
+
+/**
+ * Extracts the entity tag from a schema AST
+ */
+export const extractEntityTag = (ast: SchemaAST.AST): Option.Option<string> => {
+  if (SchemaAST.isTypeLiteral(ast)) {
+    const propertySignatures = ast.propertySignatures
+    const tagProperty = pipe(
+      propertySignatures,
+      Array.findFirst((prop) => prop.name === '_tag'),
+    )
+
+    if (Option.isSome(tagProperty)) {
+      const tagAST = tagProperty.value.type
+      if (SchemaAST.isLiteral(tagAST) && typeof tagAST.literal === 'string') {
+        return Option.some(tagAST.literal)
+      }
+    }
+  }
+
+  return Option.none()
 }

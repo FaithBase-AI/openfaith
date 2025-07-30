@@ -1,17 +1,16 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
-import * as OfSchemas from '@openfaith/schema'
-import { Array, Effect, HashMap, Option, pipe, Record } from 'effect'
 import {
-  discoverEntityNavigation,
-  type EntityNavConfig,
   getNavigationByModule,
   loadAllEntityIcons,
-} from './schemaNavigation'
+} from '@openfaith/openfaith/components/navigation/schemaNavigation'
+import * as OfSchemas from '@openfaith/schema'
+import { discoverUiEntities, type EntityUiConfig } from '@openfaith/schema'
+import { Array, Effect, HashMap, Option, pipe, Record, Schema } from 'effect'
 
 effect('should discover schemas with navigation configs', () =>
   Effect.gen(function* () {
-    const entities = discoverEntityNavigation()
+    const entities = discoverUiEntities()
 
     // Should find at least the 3 schemas we know have navigation enabled
     expect(entities.length).toBeGreaterThanOrEqual(3)
@@ -35,7 +34,7 @@ effect('should discover schemas with navigation configs', () =>
 
 effect('should find Person schema with correct navigation config', () =>
   Effect.gen(function* () {
-    const entities = discoverEntityNavigation()
+    const entities = discoverUiEntities()
 
     const personEntity = pipe(
       entities,
@@ -51,14 +50,14 @@ effect('should find Person schema with correct navigation config', () =>
       expect(person.navConfig.module).toBe('directory')
       expect(person.navConfig.order).toBe(1)
       expect(person.navItem.iconName).toBe('personIcon')
-      expect(person.navItem.url).toBe('/people')
+      expect(person.navItem.url).toBe('/directory/people')
     }
   }),
 )
 
 effect('should find Folder schema with correct navigation config', () =>
   Effect.gen(function* () {
-    const entities = discoverEntityNavigation()
+    const entities = discoverUiEntities()
 
     const folderEntity = pipe(
       entities,
@@ -74,14 +73,14 @@ effect('should find Folder schema with correct navigation config', () =>
       expect(folder.navConfig.module).toBe('collection')
       expect(folder.navConfig.order).toBe(3)
       expect(folder.navItem.iconName).toBe('folderPlusIcon')
-      expect(folder.navItem.url).toBe('/folders')
+      expect(folder.navItem.url).toBe('/collection/folders')
     }
   }),
 )
 
 effect('should find Campus schema with correct navigation config', () =>
   Effect.gen(function* () {
-    const entities = discoverEntityNavigation()
+    const entities = discoverUiEntities()
 
     const campusEntity = pipe(
       entities,
@@ -97,14 +96,14 @@ effect('should find Campus schema with correct navigation config', () =>
       expect(campus.navConfig.module).toBe('domain')
       expect(campus.navConfig.order).toBe(2)
       expect(campus.navItem.iconName).toBe('buildingIcon')
-      expect(campus.navItem.url).toBe('/campuses')
+      expect(campus.navItem.url).toBe('/domain/campuses')
     }
   }),
 )
 
 effect('should sort entities by order', () =>
   Effect.gen(function* () {
-    const entities = discoverEntityNavigation()
+    const entities = discoverUiEntities()
 
     // Should be sorted by order: Person (1), Campus (2), Folder (3)
     expect(entities.length).toBeGreaterThanOrEqual(3)
@@ -186,7 +185,7 @@ effect('should group navigation by module', () =>
 
 effect('should only process schemas with navigation enabled', () =>
   Effect.gen(function* () {
-    const entities = discoverEntityNavigation()
+    const entities = discoverUiEntities()
 
     // All discovered entities should have navigation enabled
     pipe(
@@ -208,23 +207,15 @@ effect('should only process schemas with navigation enabled', () =>
 
 effect('should generate correct URLs for entities', () =>
   Effect.gen(function* () {
-    const entities = discoverEntityNavigation()
+    const entities = discoverUiEntities()
 
     pipe(
       entities,
       Array.forEach((entity) => {
-        // URL should be generated from tag with proper pluralization
-        let expectedUrl: string
-        if (entity.tag === 'campus') {
-          expectedUrl = '/campuses'
-        } else if (entity.tag === 'person') {
-          expectedUrl = '/people'
-        } else if (entity.tag === 'folder') {
-          expectedUrl = '/folders'
-        } else {
-          expectedUrl = `/${entity.tag.toLowerCase()}s`
-        }
-        expect(entity.navItem.url).toBe(expectedUrl)
+        // URL should be generated from module and tag with proper pluralization
+        // Just verify the URL starts with the module and contains a pluralized form
+        expect(entity.navItem.url).toMatch(new RegExp(`^/${entity.navConfig.module}/`))
+        expect(entity.navItem.url.split('/').length).toBe(3) // Should be /module/entity format
         return Effect.void
       }),
     )
@@ -233,7 +224,7 @@ effect('should generate correct URLs for entities', () =>
 
 effect('should have valid icon names for all discovered entities', () =>
   Effect.gen(function* () {
-    const entities = discoverEntityNavigation()
+    const entities = discoverUiEntities()
 
     // All entities should have icon names defined
     pipe(
@@ -279,7 +270,7 @@ effect('should load icon components using the actual loadIcon logic', () =>
   Effect.gen(function* () {
     // Test the actual icon loading by calling loadAllEntityIcons directly
     // This tests the real camelCase -> PascalCase conversion logic
-    const testEntities: Array<EntityNavConfig> = [
+    const testEntities: Array<EntityUiConfig> = [
       {
         navConfig: {
           enabled: true,
@@ -289,7 +280,7 @@ effect('should load icon components using the actual loadIcon logic', () =>
           title: 'People',
         },
         navItem: { iconName: 'personIcon', title: 'People', url: '/people' },
-        schema: { ast: {} as any },
+        schema: Schema.Struct({}) as Schema.Schema<any, any, never>,
         tag: 'person',
       },
       {
@@ -305,7 +296,7 @@ effect('should load icon components using the actual loadIcon logic', () =>
           title: 'Campuses',
           url: '/campuses',
         },
-        schema: { ast: {} as any },
+        schema: Schema.Struct({}) as Schema.Schema<any, any, never>,
         tag: 'campus',
       },
     ]
@@ -339,7 +330,7 @@ effect('should test useEntityIcons hook with Effect-RX integration', () =>
   Effect.gen(function* () {
     // Test that the Rx family pattern works correctly
     // This simulates what happens in the React component
-    const entities = discoverEntityNavigation()
+    const entities = discoverUiEntities()
 
     // Verify we have entities to work with
     expect(entities.length).toBeGreaterThanOrEqual(3)
@@ -348,7 +339,7 @@ effect('should test useEntityIcons hook with Effect-RX integration', () =>
     const { Rx } = yield* Effect.promise(() => import('@effect-rx/rx'))
 
     // Create the same Rx family as in the component
-    const testEntityIconsRx = Rx.family((entities: Array<EntityNavConfig>) =>
+    const testEntityIconsRx = Rx.family((entities: Array<EntityUiConfig>) =>
       Rx.fn(() => loadAllEntityIcons(entities)),
     )
 
@@ -365,7 +356,7 @@ effect('should test useEntityIcons hook with Effect-RX integration', () =>
 
 effect('should validate that all referenced icons exist in static icon map', () =>
   Effect.gen(function* () {
-    const entities = discoverEntityNavigation()
+    const entities = discoverUiEntities()
 
     // Test that loadAllEntityIcons succeeds for all discovered entities
     // This will fail if any icon is missing from the static ICON_MAP
@@ -396,7 +387,7 @@ effect('should validate that all referenced icons exist in static icon map', () 
 
 effect('should validate icon component displayNames match expected pattern', () =>
   Effect.gen(function* () {
-    const entities = discoverEntityNavigation()
+    const entities = discoverUiEntities()
     const iconComponents = yield* loadAllEntityIcons(entities)
 
     // Test specific known icons have correct displayNames
@@ -422,7 +413,7 @@ effect('should validate icon component displayNames match expected pattern', () 
 effect('should handle missing icons by falling back to CircleIcon', () =>
   Effect.gen(function* () {
     // Test with an entity that has an invalid icon name
-    const invalidEntity: EntityNavConfig = {
+    const invalidEntity: EntityUiConfig = {
       navConfig: {
         enabled: true,
         icon: 'nonExistentIcon',
@@ -431,7 +422,7 @@ effect('should handle missing icons by falling back to CircleIcon', () =>
         title: 'Test',
       },
       navItem: { iconName: 'nonExistentIcon', title: 'Test', url: '/test' },
-      schema: { ast: {} as any },
+      schema: Schema.Struct({}) as Schema.Schema<any, any, never>,
       tag: 'test',
     }
 

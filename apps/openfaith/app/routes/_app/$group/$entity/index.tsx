@@ -1,5 +1,5 @@
-import { discoverEntityNavigation } from '@openfaith/openfaith/components/navigation/schemaNavigation'
 import * as OfSchemas from '@openfaith/schema'
+import { discoverUiEntities } from '@openfaith/schema'
 import { pluralize } from '@openfaith/shared'
 import { UniversalTable } from '@openfaith/ui'
 import { createFileRoute } from '@tanstack/react-router'
@@ -15,7 +15,7 @@ function RouteComponent() {
 
   // Discover entity configuration from schemas
   const entityConfig = useMemo(() => {
-    const entities = discoverEntityNavigation()
+    const entities = discoverUiEntities()
     return pipe(
       entities,
       Array.findFirst((e) => {

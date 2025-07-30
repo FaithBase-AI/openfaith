@@ -1,11 +1,11 @@
 import { expect } from 'bun:test'
+import { effect } from '@openfaith/bun-test'
 import {
   getPcoPersonTransformer,
   getTransformer,
   PcoPerson,
   pcoPersonTransformer,
-} from '@openfaith/adapters/pco/modules/people/pcoPersonSchema'
-import { effect } from '@openfaith/bun-test'
+} from '@openfaith/pco/modules/people/pcoPersonSchema'
 import { OfTransformer } from '@openfaith/schema'
 import { Effect, Option, Schema } from 'effect'
 

@@ -1,23 +1,8 @@
 import { Rx } from '@effect-rx/rx-react'
-import type { NavItem } from '@openfaith/openfaith/components/navigation/navShared'
 import { useRxQuery } from '@openfaith/openfaith/shared/hooks/rxHooks'
-import * as OfSchemas from '@openfaith/schema'
-import { type FieldConfig, OfUiConfig } from '@openfaith/schema'
-import { pluralize } from '@openfaith/shared'
+import { discoverUiEntities, type EntityUiConfig } from '@openfaith/schema'
 import { CircleIcon } from '@openfaith/ui/icons/circleIcon'
-import {
-  Array,
-  Effect,
-  HashMap,
-  Option,
-  Order,
-  pipe,
-  Record,
-  Ref,
-  Schema,
-  SchemaAST,
-  String,
-} from 'effect'
+import { Array, Effect, HashMap, Option, pipe, Ref, Schema, String } from 'effect'
 import type { ComponentType } from 'react'
 import { useMemo } from 'react'
 
@@ -88,55 +73,8 @@ const getIconComponent = Effect.fn('getIconComponent')(function* (iconName?: str
   )
 })
 
-export interface EntityNavConfig {
-  schema: { ast: SchemaAST.AST }
-  tag: string
-  navConfig: NonNullable<FieldConfig['navigation']>
-  navItem: Omit<NavItem, 'icon'> & { iconName?: string }
-}
-
-export const discoverEntityNavigation = (): Array<EntityNavConfig> => {
-  return pipe(
-    OfSchemas,
-    Record.toEntries,
-    Array.filterMap(([, schema]) => {
-      if (!Schema.isSchema(schema)) {
-        return Option.none()
-      }
-
-      const schemaObj = schema
-
-      const uiConfig = SchemaAST.getAnnotation<FieldConfig>(OfUiConfig)(schemaObj.ast)
-      const navConfig = Option.getOrUndefined(uiConfig)?.navigation
-
-      if (!navConfig?.enabled) return Option.none()
-
-      const tagOpt = extractEntityTagOpt(schemaObj)
-      if (Option.isNone(tagOpt)) return Option.none()
-
-      const tag = tagOpt.value
-
-      const navItem = {
-        iconName: navConfig.icon,
-        title: navConfig.title,
-        url: navConfig.url || `/${navConfig.module}/${pluralize(tag.toLowerCase())}`,
-      }
-
-      return Option.some({
-        navConfig,
-        navItem,
-        schema: schemaObj,
-        tag,
-      })
-    }),
-    Array.sort(
-      Order.mapInput(Order.number, (item: EntityNavConfig) => item.navConfig.order ?? 999),
-    ),
-  )
-}
-
 export const loadAllEntityIcons = Effect.fn('loadAllEntityIcons')(function* (
-  entities: Array<EntityNavConfig>,
+  entities: Array<EntityUiConfig>,
 ) {
   yield* Effect.annotateCurrentSpan('entityCount', entities.length)
 
@@ -156,7 +94,7 @@ export const loadAllEntityIcons = Effect.fn('loadAllEntityIcons')(function* (
   return HashMap.fromIterable(iconPairs)
 })
 
-export const useEntityIcons = (entities: Array<EntityNavConfig>) => {
+export const useEntityIcons = (entities: Array<EntityUiConfig>) => {
   const entityIconsRx = useMemo(() => Rx.make(() => loadAllEntityIcons(entities)), [entities])
 
   const query = useRxQuery(entityIconsRx)
@@ -173,29 +111,10 @@ export const useEntityIcons = (entities: Array<EntityNavConfig>) => {
 }
 
 export const getNavigationByModule = () => {
-  const entities = discoverEntityNavigation()
+  const entities = discoverUiEntities()
 
   return pipe(
     entities,
     Array.groupBy((entity) => entity.navConfig.module),
   )
-}
-
-const extractEntityTagOpt = (schema: { ast: SchemaAST.AST }): Option.Option<string> => {
-  if (SchemaAST.isTypeLiteral(schema.ast)) {
-    const propertySignatures = schema.ast.propertySignatures
-    const tagProperty = pipe(
-      propertySignatures,
-      Array.findFirst((prop) => prop.name === '_tag'),
-    )
-
-    if (Option.isSome(tagProperty)) {
-      const tagAST = tagProperty.value.type
-      if (SchemaAST.isLiteral(tagAST) && typeof tagAST.literal === 'string') {
-        return Option.some(tagAST.literal)
-      }
-    }
-  }
-
-  return Option.none()
 }

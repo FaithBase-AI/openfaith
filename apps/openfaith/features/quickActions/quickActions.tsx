@@ -2,7 +2,6 @@
 
 import { authClient } from '@openfaith/auth/authClient'
 import { CreateOrgQuickAction } from '@openfaith/openfaith/features/quickActions/createOrgQuickAction'
-import { CreatePersonQuickAction } from '@openfaith/openfaith/features/quickActions/createPersonQuickAction'
 import { InviteMemberQuickAction } from '@openfaith/openfaith/features/quickActions/inviteMemberQuickAction'
 import {
   QuickActionsDescription,
@@ -14,6 +13,7 @@ import {
   quickActionsIsOpenAtom,
   useCommandMenuOptions,
 } from '@openfaith/openfaith/features/quickActions/quickActionsState'
+import { SchemaQuickActions } from '@openfaith/openfaith/features/quickActions/SchemaQuickActionsComponent'
 import { nullOp } from '@openfaith/shared'
 import {
   Command,
@@ -83,7 +83,7 @@ export const QuickActions: FC = () => {
             <>
               <InviteMemberQuickAction />
               <CreateOrgQuickAction />
-              <CreatePersonQuickAction />
+              <SchemaQuickActions />
             </>
           ),
         }),

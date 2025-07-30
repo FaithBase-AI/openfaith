@@ -1,6 +1,6 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
-import { autoDetectCellConfig, autoDetectFieldConfig } from '@openfaith/ui/form/autoDetection'
+import { autoDetectCellConfig, autoDetectFieldConfig } from '@openfaith/schema'
 import { Effect, Schema } from 'effect'
 
 // Test schemas

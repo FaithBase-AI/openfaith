@@ -31,6 +31,7 @@ export const env = createEnv({
     ZERO_PUSH_URL: z.string(),
 
     // Config
+    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
     // Auth
     BETTER_AUTH_SECRET: z.string(),

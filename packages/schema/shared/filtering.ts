@@ -1,11 +1,23 @@
+import type { ExtractedField } from '@openfaith/schema/shared/introspection'
+import { getUiConfigFromAST } from '@openfaith/schema/shared/introspection'
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
-import type { ExtractedField } from '@openfaith/ui/form/schemaIntrospection'
-import { getUiConfigFromAST } from '@openfaith/ui/form/schemaIntrospection'
 import { Array, pipe } from 'effect'
 
-// Helper function to get field description from schema
-const getFieldDescription = (ast: any): string | undefined => {
-  return ast.annotations?.description
+const getFieldDescription = (field: ExtractedField): string | undefined => {
+  if (
+    field.schema.annotations?.description &&
+    typeof field.schema.annotations.description === 'string'
+  ) {
+    return field.schema.annotations.description
+  }
+
+  if (
+    field.schema.type.annotations?.description &&
+    typeof field.schema.type.annotations.description === 'string'
+  ) {
+    return field.schema.type.annotations.description
+  }
+  return undefined
 }
 
 /**
@@ -62,18 +74,20 @@ export const shouldHideField = (field: ExtractedField, context: 'table' | 'form'
   const uiConfig = getUiConfigFromAST(field.schema)
   const contextConfig = context === 'table' ? uiConfig?.table : uiConfig?.field
 
-  // Check explicit hidden annotation for the context
-  if (contextConfig?.hidden) return true
+  if (contextConfig?.hidden) {
+    return true
+  }
 
-  // Skip system fields that should always be hidden
-  if (isSystemField(field.key)) return true
+  if (isSystemField(field.key)) {
+    return true
+  }
 
-  // Skip entity type fields
-  if (isEntityTypeField(field.key)) return true
+  if (isEntityTypeField(field.key)) {
+    return true
+  }
 
-  // Skip identification fields if they match system field descriptions
   if (isIdentificationField(field.key)) {
-    const description = getFieldDescription(field.schema)
+    const description = getFieldDescription(field)
     if (description?.includes('typeid') || description?.includes('external ids')) {
       return true
     }
