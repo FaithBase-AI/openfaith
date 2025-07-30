@@ -14,6 +14,9 @@ export const quickActionsIsOpenAtom = atom<boolean>(false)
 export const inviteMemberIsOpenAtom = atom<boolean>(false)
 export const createOrgIsOpenAtom = atom<boolean>(false)
 export const schemaQuickActionStatesAtom = atom<HashMap.HashMap<string, boolean>>(HashMap.empty())
+export const schemaEditStatesAtom = atom<
+  HashMap.HashMap<string, { isOpen: boolean; editData: any }>
+>(HashMap.empty())
 
 export const getSchemaQuickActionState = (
   schemaQuickActionStates: HashMap.HashMap<string, boolean>,
@@ -30,6 +33,30 @@ export const setSchemaQuickActionState = (
   key: string,
   isOpen: boolean,
 ): HashMap.HashMap<string, boolean> => pipe(schemaQuickActionStates, HashMap.set(key, isOpen))
+
+export const getSchemaEditState = (
+  schemaEditStates: HashMap.HashMap<string, { isOpen: boolean; editData: any }>,
+  key: string,
+): { isOpen: boolean; editData: any } =>
+  pipe(
+    schemaEditStates,
+    HashMap.get(key),
+    Option.getOrElse(() => ({ editData: null, isOpen: false })),
+  )
+
+export const setSchemaEditState = (
+  schemaEditStates: HashMap.HashMap<string, { isOpen: boolean; editData: any }>,
+  key: string,
+  isOpen: boolean,
+  editData?: any,
+): HashMap.HashMap<string, { isOpen: boolean; editData: any }> =>
+  pipe(
+    schemaEditStates,
+    HashMap.set(key, {
+      editData: editData ?? null,
+      isOpen,
+    }),
+  )
 
 export function useCommandMenuOptions() {
   const setQuickActionsIsOpen = useSetAtom(quickActionsIsOpenAtom)

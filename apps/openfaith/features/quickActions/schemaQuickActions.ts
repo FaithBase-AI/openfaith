@@ -1,7 +1,10 @@
 import { useEntityIcons } from '@openfaith/openfaith/components/navigation/schemaNavigation'
 import {
+  getSchemaEditState,
   getSchemaQuickActionState,
+  schemaEditStatesAtom,
   schemaQuickActionStatesAtom,
+  setSchemaEditState,
   setSchemaQuickActionState,
 } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import type { CommandMenuType } from '@openfaith/openfaith/features/quickActions/quickActionsTypes'
@@ -84,5 +87,35 @@ export const useSchemaQuickActions = () => {
     iconComponents,
     quickActions,
     setIsOpen,
+  }
+}
+
+export const useSchemaEditActions = () => {
+  const [editStates, setEditStates] = useAtom(schemaEditStatesAtom)
+  const quickActions = useMemo(() => discoverQuickActions(), [])
+  const { iconComponents } = useEntityIcons(quickActions)
+
+  const getEditState = (entityTag: string): { isOpen: boolean; editData: any } =>
+    getSchemaEditState(editStates, `edit${entityTag}`)
+
+  const setEditState = (entityTag: string, isOpen: boolean, editData?: any) => {
+    setEditStates((current) => setSchemaEditState(current, `edit${entityTag}`, isOpen, editData))
+  }
+
+  const openEdit = (entityTag: string, editData: any) => {
+    setEditState(entityTag, true, editData)
+  }
+
+  const closeEdit = (entityTag: string) => {
+    setEditState(entityTag, false)
+  }
+
+  return {
+    closeEdit,
+    getEditState,
+    iconComponents,
+    openEdit,
+    quickActions,
+    setEditState,
   }
 }

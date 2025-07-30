@@ -1,10 +1,20 @@
 import { OfEntity } from '@openfaith/schema/shared/schema'
 import { nullOp } from '@openfaith/shared'
 import { Collection } from '@openfaith/ui/components/collections/collection'
+import { Button } from '@openfaith/ui/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@openfaith/ui/components/ui/dropdown-menu'
+import { EditIcon } from '@openfaith/ui/icons/editIcon'
+import { MoreVerticalIcon } from '@openfaith/ui/icons/moreVerticalIcon'
 import { generateColumns } from '@openfaith/ui/table/columnGenerator'
 import { useSchemaCollection } from '@openfaith/ui/table/useSchemaCollection'
+import { useUniversalTableEdit } from '@openfaith/ui/table/useUniversalTableEdit'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Option, pipe, type Schema, SchemaAST } from 'effect'
+import { Array, Option, pipe, type Schema, SchemaAST } from 'effect'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 
@@ -14,6 +24,7 @@ export interface UniversalTableProps<T> {
   columnOverrides?: Partial<Record<keyof T, Partial<ColumnDef<T>>>>
   onRowClick?: (row: T) => void
   onRowSelect?: (rows: Array<T>) => void
+  onEditRow?: (row: T) => void
   className?: string
   Actions?: ReactNode
   CollectionCard?: any // CollectionCardComponent type
@@ -37,17 +48,20 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
     columnOverrides = {},
     // onRowClick,
     // onRowSelect,
+    onEditRow: providedOnEditRow,
     Actions,
     CollectionCard,
     pagination = { limit: 100, nextPage: nullOp, pageSize: 20 },
     filtering = {},
   } = props
 
+  const { onEditRow: autoOnEditRow } = useUniversalTableEdit(schema)
+  const onEditRow = providedOnEditRow || autoOnEditRow
+
   const entityInfo = useMemo(() => {
     return extractEntityInfo(schema)
   }, [schema])
 
-  // Use schema collection hook to fetch data if no data prop is provided
   const collectionResult = useSchemaCollection(schema, {
     enabled: !data,
     limit: pagination.limit,
@@ -55,8 +69,39 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
   })
 
   const columns = useMemo(() => {
-    return generateColumns(schema, columnOverrides)
-  }, [schema, columnOverrides])
+    const baseColumns = generateColumns(schema, columnOverrides)
+
+    const actionsColumn: ColumnDef<T> = {
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className={'ml-auto'} size={'icon-xs'} variant={'secondary'}>
+              <MoreVerticalIcon className={'size-4'} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align={'end'} side={'bottom'}>
+            {onEditRow && (
+              <DropdownMenuItem
+                onClick={() => {
+                  onEditRow(row.original)
+                }}
+              >
+                <EditIcon className={'mr-2 size-4'} />
+                <p className={'mr-auto mb-auto ml-0'}>Edit</p>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+      enableHiding: false,
+      enableSorting: false,
+      header: () => null,
+      id: 'actions',
+      size: 56,
+    }
+
+    return pipe(baseColumns, Array.append(actionsColumn))
+  }, [schema, columnOverrides, onEditRow])
 
   const filtersDef = useMemo(() => {
     return [] as const
@@ -64,7 +109,6 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
 
   const entityName = entityInfo.entityName || 'items'
 
-  // Use provided data or fetched data from collection
   const finalData = data || collectionResult.data
   const finalNextPage = pagination.nextPage || collectionResult.nextPage
 
