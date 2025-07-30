@@ -896,6 +896,45 @@ When adding new exports to any package:
 
 This keeps imports clean and makes it easier to refactor component locations later.
 
+### Component Migration Pattern
+
+When moving components between packages to resolve architectural constraints:
+
+**✅ CORRECT PATTERN - Move, Nuke, Fix Imports:**
+
+1. **Move**: Copy the component to the new location (e.g., from `apps/` to `packages/ui/`)
+2. **Export**: Add the component to the destination package's `index.ts`
+3. **Nuke**: Delete the original file completely - never leave re-export files
+4. **Fix Imports**: Update all import statements to use the new location
+
+**❌ ANTI-PATTERN - Re-export Files:**
+
+- **NEVER create re-export files** like `export { Component } from '@new/location'`
+- **NEVER leave stub files** that just forward exports
+- Re-export files create confusion, add indirection, and make refactoring harder
+
+**Example Migration:**
+
+```typescript
+// ❌ Wrong - Don't create re-export files
+// apps/old-location/component.tsx
+export { MyComponent } from "@openfaith/ui";
+
+// ✅ Correct - Complete migration
+// 1. Move component to packages/ui/components/myComponent.tsx
+// 2. Add to packages/ui/index.ts: export * from '@openfaith/ui/components/myComponent'
+// 3. Delete apps/old-location/component.tsx entirely
+// 4. Update all imports: import { MyComponent } from '@openfaith/ui'
+```
+
+**Benefits of Move-Nuke-Fix Pattern:**
+
+- Clear component ownership and location
+- No indirection or confusion about where components live
+- Easier to find and maintain components
+- Cleaner import paths
+- Prevents circular dependencies
+
 ### Infrastructure Dependencies
 
 - PostgreSQL database must be running

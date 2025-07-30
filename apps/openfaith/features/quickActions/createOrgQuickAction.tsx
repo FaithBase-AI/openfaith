@@ -1,13 +1,14 @@
 'use client'
 
 import { OrgForm } from '@openfaith/openfaith/features/auth/orgForm'
+import { createOrgIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import {
+  GroupIcon,
   QuickActionsHeader,
   QuickActionsTitle,
   QuickActionsWrapper,
-} from '@openfaith/openfaith/features/quickActions/quickActionsComponents'
-import { createOrgIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
-import { GroupIcon, Separator } from '@openfaith/ui'
+  Separator,
+} from '@openfaith/ui'
 import { useAtom } from 'jotai'
 import type { FC } from 'react'
 

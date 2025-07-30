@@ -2,11 +2,10 @@
 
 import { authClient } from '@openfaith/auth/authClient'
 import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
-import { QuickActionForm } from '@openfaith/openfaith/features/quickActions/quickActionsComponents'
 import { createOrgIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import { useChangeOrg } from '@openfaith/openfaith/shared/auth/useChangeOrg'
 import { asyncNoOp } from '@openfaith/shared'
-import { ArrowRightIcon, Button, useAppForm } from '@openfaith/ui'
+import { ArrowRightIcon, Button, QuickActionForm, useAppForm } from '@openfaith/ui'
 import type { OrgClientShape } from '@openfaith/zero'
 import { useRouter } from '@tanstack/react-router'
 import { Match, Option, pipe, Schema, String } from 'effect'

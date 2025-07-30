@@ -4,11 +4,6 @@ import { authClient } from '@openfaith/auth/authClient'
 import { CreateOrgQuickAction } from '@openfaith/openfaith/features/quickActions/createOrgQuickAction'
 import { InviteMemberQuickAction } from '@openfaith/openfaith/features/quickActions/inviteMemberQuickAction'
 import {
-  QuickActionsDescription,
-  QuickActionsTitle,
-  QuickActionsWrapper,
-} from '@openfaith/openfaith/features/quickActions/quickActionsComponents'
-import {
   disableQuickActionsAtom,
   quickActionsIsOpenAtom,
   useCommandMenuOptions,
@@ -22,6 +17,9 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  QuickActionsDescription,
+  QuickActionsTitle,
+  QuickActionsWrapper,
 } from '@openfaith/ui'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { Array, Option, pipe } from 'effect'

@@ -1,9 +1,8 @@
 'use client'
 
 import { inviteMemberE } from '@openfaith/auth/authClient'
-import { QuickActionForm } from '@openfaith/openfaith/features/quickActions/quickActionsComponents'
 import { inviteMemberIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
-import { Button, useAppForm } from '@openfaith/ui'
+import { Button, QuickActionForm, useAppForm } from '@openfaith/ui'
 import { Effect, pipe, Schema } from 'effect'
 import { useSetAtom } from 'jotai'
 import type { FC } from 'react'

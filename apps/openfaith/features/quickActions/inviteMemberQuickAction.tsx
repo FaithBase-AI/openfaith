@@ -1,13 +1,13 @@
 'use client'
 
+import { inviteMemberIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
+import { InviteMemberForm } from '@openfaith/openfaith/features/settings/inviteMemberForm'
 import {
   QuickActionsHeader,
   QuickActionsTitle,
   QuickActionsWrapper,
-} from '@openfaith/openfaith/features/quickActions/quickActionsComponents'
-import { inviteMemberIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
-import { InviteMemberForm } from '@openfaith/openfaith/features/settings/inviteMemberForm'
-import { UserPlusIcon } from '@openfaith/ui'
+  UserPlusIcon,
+} from '@openfaith/ui'
 import { useAtom } from 'jotai'
 import type { FC } from 'react'
 
