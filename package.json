@@ -7,6 +7,7 @@
     "@opentelemetry/sdk-trace-base": "2.0.1",
     "@opentelemetry/sdk-trace-web": "2.0.1",
     "@tybys/wasm-util": "^0.9.0",
+    "react-hotkeys-hook": "^5.1.0",
     "tailwind-merge": "3.3.0"
   },
   "devDependencies": {

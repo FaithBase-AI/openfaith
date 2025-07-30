@@ -1,6 +1,7 @@
 import { AutoBreadcrumbs } from '@openfaith/openfaith/components/breadcrumbs/autoBreadcrumbs'
 import { AppNavigation } from '@openfaith/openfaith/components/navigation/appNavigation'
 import { UserNav } from '@openfaith/openfaith/components/navigation/userNav'
+import { QuickActions } from '@openfaith/openfaith/features/quickActions/quickActions'
 import {
   Separator,
   SidebarInset,
@@ -54,6 +55,8 @@ export const AppNavigationLayout = (props: AppNavigationLayoutProps) => {
         </header>
         <div className='-mt-2 flex flex-1 flex-col overflow-hidden pt-2'>{children}</div>
       </SidebarInset>
+
+      <QuickActions />
     </SidebarProvider>
   )
 }

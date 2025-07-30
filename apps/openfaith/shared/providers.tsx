@@ -1,6 +1,6 @@
 'use client'
 
-import { Toaster } from '@openfaith/ui'
+import { GlobalMediaQueries, Toaster } from '@openfaith/ui'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { ThemeProvider } from 'next-themes'
 import { NuqsAdapter } from 'nuqs/adapters/react'
@@ -24,6 +24,7 @@ export const Providers: FC<ProvidersProps> = (props) => {
             <ZeroInit>
               {children}
 
+              <GlobalMediaQueries />
               <TanStackRouterDevtools position='bottom-right' />
               <Toaster />
             </ZeroInit>
