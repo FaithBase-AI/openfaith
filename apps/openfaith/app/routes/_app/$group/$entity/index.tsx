@@ -1,7 +1,7 @@
 import * as OfSchemas from '@openfaith/schema'
 import { discoverUiEntities } from '@openfaith/schema'
-import { pluralize } from '@openfaith/shared'
-import { UniversalTable } from '@openfaith/ui'
+import { pluralize, singularize } from '@openfaith/shared'
+import { Button, PlusIcon, UniversalTable } from '@openfaith/ui'
 import { createFileRoute } from '@tanstack/react-router'
 import { Array, Option, pipe, Record, Schema } from 'effect'
 import { useMemo } from 'react'
@@ -83,6 +83,12 @@ function RouteComponent() {
             onSome: (schema) => (
               <div className='flex flex-1 flex-col overflow-hidden'>
                 <UniversalTable
+                  Actions={
+                    <Button className='ml-auto' size='sm'>
+                      <PlusIcon />
+                      Create {pipe(config.navItem.title, singularize)}
+                    </Button>
+                  }
                   filtering={{
                     filterColumnId: 'name',
                     filterKey: `${group}-${entity}-filter`,
