@@ -1,16 +1,25 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
+import { PcoAddress, pcoAddressTransformer } from '@openfaith/pco/modules/people/pcoAddressSchema'
+import { PcoCampus, pcoCampusTransformer } from '@openfaith/pco/modules/people/pcoCampusSchema'
+import {
+  PcoListCategory,
+  pcoListCategoryTransformer,
+} from '@openfaith/pco/modules/people/pcoListCategorySchema'
+import { PcoList, pcoListTransformer } from '@openfaith/pco/modules/people/pcoListSchema'
+import {
+  PcoNoteCategory,
+  pcoNoteCategoryTransformer,
+} from '@openfaith/pco/modules/people/pcoNoteCategorySchema'
+// Import all the schemas and transformers we updated
+import { PcoPerson, pcoPersonTransformer } from '@openfaith/pco/modules/people/pcoPersonSchema'
+import {
+  PcoPhoneNumber,
+  pcoPhoneNumberTransformer,
+} from '@openfaith/pco/modules/people/pcoPhoneNumberSchema'
+import { PcoTab, pcoTabTransformer } from '@openfaith/pco/modules/people/pcoTabSchema'
 import { OfTransformer } from '@openfaith/schema'
 import { Effect, Option, SchemaAST } from 'effect'
-import { PcoAddress, pcoAddressTransformer } from './pcoAddressSchema'
-import { PcoCampus, pcoCampusTransformer } from './pcoCampusSchema'
-import { PcoListCategory, pcoListCategoryTransformer } from './pcoListCategorySchema'
-import { PcoList, pcoListTransformer } from './pcoListSchema'
-import { PcoNoteCategory, pcoNoteCategoryTransformer } from './pcoNoteCategorySchema'
-// Import all the schemas and transformers we updated
-import { PcoPerson, pcoPersonTransformer } from './pcoPersonSchema'
-import { PcoPhoneNumber, pcoPhoneNumberTransformer } from './pcoPhoneNumberSchema'
-import { PcoTab, pcoTabTransformer } from './pcoTabSchema'
 
 // Helper function to retrieve transformer from any schema
 const getTransformerFromSchema = (schema: { ast: SchemaAST.AST }): Option.Option<unknown> =>

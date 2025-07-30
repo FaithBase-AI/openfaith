@@ -1,11 +1,13 @@
-import type { FieldConfig } from '@openfaith/schema/shared/schema'
-import { autoDetectCellConfig, autoDetectFieldConfig } from '@openfaith/ui/form/autoDetection'
-import { getContextConfig, getVisibleFields } from '@openfaith/ui/form/fieldFiltering'
 import {
+  autoDetectCellConfig,
+  autoDetectFieldConfig,
   extractAST,
   extractSchemaFields,
   formatLabel,
-} from '@openfaith/ui/form/schemaIntrospection'
+  getContextConfig,
+  getVisibleFields,
+} from '@openfaith/schema'
+import type { FieldConfig } from '@openfaith/schema/shared/schema'
 import type { Schema } from 'effect'
 
 /**

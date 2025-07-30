@@ -44,7 +44,7 @@ import {
   listPhoneNumbersDefinition,
   updatePhoneNumberDefinition,
 } from '@openfaith/pco/modules/people/pcoPhoneNumberEndpoints'
-import { mkTableName } from '@openfaith/shared/string'
+import { mkTableName } from '@openfaith/shared'
 import { Array, pipe, Record, Schema } from 'effect'
 
 export const pcoEntityManifest = mkPcoEntityManifest({

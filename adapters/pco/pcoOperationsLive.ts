@@ -14,7 +14,7 @@ import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { extractPcoUpdatedAt } from '@openfaith/pco/helpers/extractUpdatedAt'
 import { OfSkipEntity } from '@openfaith/schema'
-import { mkUrlParamName } from '@openfaith/shared/string'
+import { mkUrlParamName } from '@openfaith/shared'
 import {
   transformEntityDataE,
   transformPartialEntityDataE,

@@ -8,7 +8,7 @@ import { effect, layer } from '@openfaith/bun-test'
 import type { CRUDMutation, CRUDOp } from '@openfaith/domain'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import { makeMockPcoHttpClient } from '@openfaith/pco/api/pcoApiMock'
-import { mkEntityName } from '@openfaith/shared/string'
+import { mkEntityName } from '@openfaith/shared'
 import {
   type CrudOperation,
   type EntityClient,

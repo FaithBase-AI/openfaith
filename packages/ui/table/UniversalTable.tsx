@@ -1,12 +1,12 @@
 import { OfEntity } from '@openfaith/schema/shared/schema'
 import { nullOp } from '@openfaith/shared'
 import { Collection } from '@openfaith/ui/components/collections/collection'
+import { generateColumns } from '@openfaith/ui/table/columnGenerator'
+import { useSchemaCollection } from '@openfaith/ui/table/useSchemaCollection'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Option, pipe, type Schema, SchemaAST } from 'effect'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
-import { generateColumns } from './columnGenerator'
-import { useSchemaCollection } from './useSchemaCollection'
 
 export interface UniversalTableProps<T> {
   schema: Schema.Schema<T>

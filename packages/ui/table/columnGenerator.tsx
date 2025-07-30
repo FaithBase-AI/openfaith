@@ -1,15 +1,16 @@
-import type { FieldConfig } from '@openfaith/schema/shared/schema'
-import { ColumnHeader } from '@openfaith/ui/components/collections/collectionComponents'
-import { autoDetectCellConfig } from '@openfaith/ui/form/autoDetection'
-import { getContextConfig, getVisibleFields } from '@openfaith/ui/form/fieldFiltering'
 import {
+  autoDetectCellConfig,
   extractAST,
   extractSchemaFields,
   formatLabel,
-} from '@openfaith/ui/form/schemaIntrospection'
+  getContextConfig,
+  getVisibleFields,
+} from '@openfaith/schema'
+import type { FieldConfig } from '@openfaith/schema/shared/schema'
+import { ColumnHeader } from '@openfaith/ui/components/collections/collectionComponents'
+import { getCellRenderer } from '@openfaith/ui/table/cellRenderers'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { Schema } from 'effect'
-import { getCellRenderer } from './cellRenderers'
 
 // Helper function to create header with ColumnHeader component
 const createColumnHeader = (column: any, title: string) => {

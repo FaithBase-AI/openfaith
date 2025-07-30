@@ -1,6 +1,4 @@
 import { expect } from 'bun:test'
-import { effect } from '@openfaith/bun-test'
-import { Effect, Schema } from 'effect'
 import type {
   Any,
   BaseAny,
@@ -15,7 +13,9 @@ import type {
   Method,
   PatchEndpointDefinition,
   PostEndpointDefinition,
-} from './endpointTypes'
+} from '@openfaith/adapter-core/api/endpointTypes'
+import { effect } from '@openfaith/bun-test'
+import { Effect, Schema } from 'effect'
 
 // Test schemas for endpoint definitions
 const TestApiSchema = Schema.Struct({

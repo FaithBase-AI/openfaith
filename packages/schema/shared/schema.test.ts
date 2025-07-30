@@ -1,6 +1,5 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
-import { Effect, Option, Schema, SchemaAST } from 'effect'
 import {
   OfCustomField,
   OfEdge,
@@ -12,7 +11,8 @@ import {
   OfSkipEntity,
   OfSkipField,
   OfTransformer,
-} from './schema'
+} from '@openfaith/schema/shared/schema'
+import { Effect, Option, Schema, SchemaAST } from 'effect'
 
 effect('Schema symbols: all symbols should be properly defined', () =>
   Effect.gen(function* () {

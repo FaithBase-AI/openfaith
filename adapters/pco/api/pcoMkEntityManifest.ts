@@ -10,7 +10,7 @@ import {
   mkPcoSingleSchema,
   type PcoBuildPayloadSchemaType,
 } from '@openfaith/pco/api/pcoResponseSchemas'
-import { mkEntityName, mkTableName } from '@openfaith/shared/string'
+import { mkEntityName, mkTableName } from '@openfaith/shared'
 import type { CaseTransform } from '@openfaith/shared/types'
 import { Array, Option, pipe, Record, Schema } from 'effect'
 import type { NonEmptyReadonlyArray } from 'effect/Array'

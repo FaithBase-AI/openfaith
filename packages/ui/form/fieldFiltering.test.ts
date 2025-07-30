@@ -1,8 +1,6 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
-import type { ExtractedField } from '@openfaith/ui/form/schemaIntrospection'
-import { Effect, Schema } from 'effect'
 import {
   ENTITY_TYPE_FIELDS,
   getContextConfig,
@@ -13,7 +11,9 @@ import {
   isSystemField,
   SYSTEM_FIELDS_TO_HIDE,
   shouldHideField,
-} from './fieldFiltering'
+} from '@openfaith/ui/form/fieldFiltering'
+import type { ExtractedField } from '@openfaith/ui/form/schemaIntrospection'
+import { Effect, Schema } from 'effect'
 
 // Helper to create mock ExtractedField
 const createMockField = (

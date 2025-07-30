@@ -5,7 +5,7 @@ import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import type { pcoPersonTransformer } from '@openfaith/pco/server'
 import { OfFieldName } from '@openfaith/schema'
 
-import { mkEntityName, mkEntityType, mkUrlParamName } from '@openfaith/shared/string'
+import { mkEntityName, mkEntityType, mkUrlParamName } from '@openfaith/shared'
 import { getPcoEntityMetadata } from '@openfaith/workers/helpers/schemaRegistry'
 import { Array, Effect, Option, pipe, Record, Schema, SchemaAST } from 'effect'
 
