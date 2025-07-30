@@ -1,10 +1,11 @@
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
-import { Form } from '@openfaith/ui/components/formFields/form'
 import { useAppForm } from '@openfaith/ui/components/formFields/tsForm'
+import { QuickActionForm } from '@openfaith/ui/components/quickActions/quickActionsComponents'
+import { Button } from '@openfaith/ui/components/ui/button'
 import { getComponentProps, getFieldComponentName } from '@openfaith/ui/form/fieldComponentMapping'
 import { generateFieldConfigs } from '@openfaith/ui/form/fieldConfigGenerator'
 import { createValidator, validateFormData } from '@openfaith/ui/form/validation'
-import type { Schema } from 'effect'
+import { Array, pipe, Record, type Schema } from 'effect'
 import React from 'react'
 
 export interface UniversalFormProps<T> {
@@ -14,6 +15,7 @@ export interface UniversalFormProps<T> {
   fieldOverrides?: Partial<Record<keyof T, Partial<FieldConfig['field']>>>
   className?: string
   children?: (form: any, fields: Record<keyof T, Required<FieldConfig['field']>>) => React.ReactNode
+  loading?: boolean
 }
 
 /**
@@ -26,13 +28,13 @@ export function UniversalForm<T>({
   fieldOverrides = {},
   className,
   children,
+  loading = false,
 }: UniversalFormProps<T>) {
   const fieldConfigs = generateFieldConfigs(schema, fieldOverrides)
 
   const form = useAppForm({
     defaultValues: (defaultValues ?? {}) as T,
     onSubmit: async ({ value }: { value: T }) => {
-      // Validate with Effect Schema before submitting
       const validation = validateFormData(schema, value)
       if (!validation.isValid) {
         console.error('Schema validation failed:', validation.errors)
@@ -46,44 +48,48 @@ export function UniversalForm<T>({
     return <div className={className}>{children(form, fieldConfigs)}</div>
   }
 
-  // Default auto-generated layout
+  const formFields = pipe(
+    fieldConfigs,
+    Record.toEntries,
+    Array.map(([key, config]) => {
+      const typedConfig = config as Required<NonNullable<FieldConfig['field']>>
+
+      const componentProps = getComponentProps(typedConfig)
+      const componentName = getFieldComponentName(typedConfig.type)
+
+      return (
+        <form.AppField
+          key={key}
+          name={key}
+          validators={{
+            onChange: createValidator(typedConfig, schema, key as keyof T),
+          }}
+        >
+          {(field) => {
+            const FieldComponent = (field as any)[componentName]
+            return <FieldComponent {...componentProps} />
+          }}
+        </form.AppField>
+      )
+    }),
+  )
+
   return (
-    <Form className={className} form={form}>
-      <div className='space-y-4'>
-        {Object.entries(fieldConfigs).map(([key, config]) => {
-          // Type assertion is safe here because generateFieldConfigs returns Required configs
-          const typedConfig = config as Required<NonNullable<FieldConfig['field']>>
-
-          const componentProps = getComponentProps(typedConfig)
-          const componentName = getFieldComponentName(typedConfig.type)
-
-          return (
-            <form.AppField
-              key={key}
-              name={key}
-              validators={{
-                onChange: createValidator(typedConfig, schema, key as keyof T),
-              }}
-            >
-              {(field) => {
-                // Access the field component from the registered components
-                const FieldComponent = (field as any)[componentName]
-                return <FieldComponent {...componentProps} />
-              }}
-            </form.AppField>
-          )
-        })}
-      </div>
-
-      <div className='mt-6 flex gap-2'>
-        <button className='btn btn-primary' disabled={form.state.isSubmitting} type='submit'>
-          {form.state.isSubmitting ? 'Submitting...' : 'Submit'}
-        </button>
-        <button className='btn btn-secondary' onClick={() => form.reset()} type='button'>
-          Reset
-        </button>
-      </div>
-    </Form>
+    <QuickActionForm
+      Actions={
+        <>
+          <Button className='mr-auto' disabled={form.state.isSubmitting || loading} type='submit'>
+            {form.state.isSubmitting || loading ? 'Submitting...' : 'Submit'}
+          </Button>
+          <Button disabled={loading} onClick={() => form.reset()} type='button' variant='outline'>
+            Reset
+          </Button>
+        </>
+      }
+      className={className}
+      form={form}
+      Primary={<div className='flex flex-1 flex-col gap-3'>{formFields}</div>}
+    />
   )
 }
 

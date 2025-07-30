@@ -1,4 +1,5 @@
 import type { useZero } from '@openfaith/zero/useZero'
+import type { TableMutator, TableSchema } from '@rocicorp/zero'
 import { Schema } from 'effect'
 
 export class EntityNotFoundError extends Schema.TaggedError<EntityNotFoundError>()(
@@ -39,4 +40,19 @@ export const getBaseEntityQuery = (
   const entitiesQuery = getBaseEntitiesQuery(z, entityName)
   // @ts-expect-error - id is a valid field for all entities
   return entitiesQuery.where('id', entityId).one()
+}
+
+export const getBaseMutator = (
+  z: ReturnType<typeof useZero>,
+  entityName: string,
+  operation: keyof TableMutator<TableSchema>,
+) => {
+  if (entityName in z.mutate) {
+    return z.mutate[entityName as keyof typeof z.mutate]?.[operation]
+  }
+
+  throw new EntityNotFoundError({
+    availableEntities: Object.keys(z.mutate),
+    entityName,
+  })
 }

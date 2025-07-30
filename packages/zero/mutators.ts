@@ -25,7 +25,6 @@ export function createMutators(
       update: (tx: EffectTransaction<ZSchema>, input: UpdatePersonInput) =>
         Effect.gen(function* () {
           const tokenKey = yield* TokenKey
-
           console.log(tokenKey)
 
           if (!authData) {
