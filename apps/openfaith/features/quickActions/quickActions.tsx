@@ -2,6 +2,7 @@
 
 import { authClient } from '@openfaith/auth/authClient'
 import { CreateOrgQuickAction } from '@openfaith/openfaith/features/quickActions/createOrgQuickAction'
+import { CreatePersonQuickAction } from '@openfaith/openfaith/features/quickActions/createPersonQuickAction'
 import { InviteMemberQuickAction } from '@openfaith/openfaith/features/quickActions/inviteMemberQuickAction'
 import {
   QuickActionsDescription,
@@ -82,6 +83,7 @@ export const QuickActions: FC = () => {
             <>
               <InviteMemberQuickAction />
               <CreateOrgQuickAction />
+              <CreatePersonQuickAction />
             </>
           ),
         }),

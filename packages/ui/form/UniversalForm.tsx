@@ -1,6 +1,7 @@
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
+import { Form } from '@openfaith/ui/components/formFields/form'
 import { useAppForm } from '@openfaith/ui/components/formFields/tsForm'
-import { getComponentProps, getFieldComponent } from '@openfaith/ui/form/fieldComponentMapping'
+import { getComponentProps, getFieldComponentName } from '@openfaith/ui/form/fieldComponentMapping'
 import { generateFieldConfigs } from '@openfaith/ui/form/fieldConfigGenerator'
 import { createValidator, validateFormData } from '@openfaith/ui/form/validation'
 import type { Schema } from 'effect'
@@ -47,34 +48,29 @@ export function UniversalForm<T>({
 
   // Default auto-generated layout
   return (
-    <form
-      className={className}
-      onSubmit={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        form.handleSubmit()
-      }}
-    >
+    <Form className={className} form={form}>
       <div className='space-y-4'>
         {Object.entries(fieldConfigs).map(([key, config]) => {
           // Type assertion is safe here because generateFieldConfigs returns Required configs
           const typedConfig = config as Required<NonNullable<FieldConfig['field']>>
 
+          const componentProps = getComponentProps(typedConfig)
+          const componentName = getFieldComponentName(typedConfig.type)
+
           return (
-            <form.Field
+            <form.AppField
               key={key}
               name={key}
               validators={{
                 onChange: createValidator(typedConfig, schema, key as keyof T),
               }}
             >
-              {(field: any) => {
-                const Component = getFieldComponent(typedConfig.type)
-                const componentProps = getComponentProps(typedConfig)
-
-                return <Component field={field} {...componentProps} />
+              {(field) => {
+                // Access the field component from the registered components
+                const FieldComponent = (field as any)[componentName]
+                return <FieldComponent {...componentProps} />
               }}
-            </form.Field>
+            </form.AppField>
           )
         })}
       </div>
@@ -87,7 +83,7 @@ export function UniversalForm<T>({
           Reset
         </button>
       </div>
-    </form>
+    </Form>
   )
 }
 

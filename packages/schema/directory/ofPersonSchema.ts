@@ -11,6 +11,9 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
     Schema.Struct({
       _tag: Schema.Literal('person').annotations({
         [OfUiConfig]: {
+          field: {
+            hidden: true,
+          },
           table: {
             hidden: true,
           },
@@ -112,6 +115,9 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
       }).pipe(Schema.NullOr),
       type: Schema.Literal('default').annotations({
         [OfUiConfig]: {
+          field: {
+            hidden: true,
+          },
           table: {
             hidden: true,
           },

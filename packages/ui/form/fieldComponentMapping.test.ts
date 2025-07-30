@@ -49,6 +49,7 @@ effect('getComponentProps - returns base props for all field types', () =>
   Effect.gen(function* () {
     const baseConfig = {
       creatable: false,
+      hidden: false,
       label: 'Test Field',
       max: 100,
       min: 0,
@@ -74,6 +75,7 @@ effect('getComponentProps - textarea specific props', () =>
   Effect.gen(function* () {
     const textareaConfig = {
       creatable: false,
+      hidden: false,
       label: 'Description',
       max: 100,
       min: 0,
@@ -98,6 +100,7 @@ effect('getComponentProps - number specific props', () =>
   Effect.gen(function* () {
     const numberConfig = {
       creatable: false,
+      hidden: false,
       label: 'Age',
       max: 120,
       min: 0,
@@ -124,6 +127,7 @@ effect('getComponentProps - select specific props', () =>
   Effect.gen(function* () {
     const selectConfig = {
       creatable: false,
+      hidden: false,
       label: 'Status',
       max: 100,
       min: 0,
@@ -152,6 +156,7 @@ effect('getComponentProps - combobox specific props', () =>
   Effect.gen(function* () {
     const comboboxConfig = {
       creatable: false,
+      hidden: false,
       label: 'Categories',
       max: 100,
       min: 0,
@@ -180,6 +185,7 @@ effect('getComponentProps - singleCombobox specific props', () =>
   Effect.gen(function* () {
     const singleComboboxConfig = {
       creatable: false,
+      hidden: false,
       label: 'Category',
       max: 100,
       min: 0,
@@ -208,6 +214,7 @@ effect('getComponentProps - tags specific props', () =>
   Effect.gen(function* () {
     const tagsConfig = {
       creatable: true,
+      hidden: false,
       label: 'Tags',
       max: 100,
       min: 0,
@@ -235,6 +242,7 @@ effect('getComponentProps - email specific props', () =>
   Effect.gen(function* () {
     const emailConfig = {
       creatable: false,
+      hidden: false,
       label: 'Email',
       max: 100,
       min: 0,
@@ -258,6 +266,7 @@ effect('getComponentProps - password specific props', () =>
   Effect.gen(function* () {
     const passwordConfig = {
       creatable: false,
+      hidden: false,
       label: 'Password',
       max: 100,
       min: 0,
@@ -281,6 +290,7 @@ effect('getComponentProps - date specific props', () =>
   Effect.gen(function* () {
     const dateConfig = {
       creatable: false,
+      hidden: false,
       label: 'Birth Date',
       max: 100,
       min: 0,
@@ -305,6 +315,7 @@ effect('getComponentProps - datetime specific props', () =>
   Effect.gen(function* () {
     const datetimeConfig = {
       creatable: false,
+      hidden: false,
       label: 'Event Time',
       max: 100,
       min: 0,
@@ -329,6 +340,7 @@ effect('getComponentProps - switch specific props', () =>
   Effect.gen(function* () {
     const switchConfig = {
       creatable: false,
+      hidden: false,
       label: 'Is Active',
       max: 100,
       min: 0,
@@ -352,6 +364,7 @@ effect('getComponentProps - otp specific props', () =>
   Effect.gen(function* () {
     const otpConfig = {
       creatable: false,
+      hidden: false,
       label: 'Verification Code',
       max: 100,
       min: 0,
@@ -376,6 +389,7 @@ effect('getComponentProps - slug specific props', () =>
   Effect.gen(function* () {
     const slugConfig = {
       creatable: false,
+      hidden: false,
       label: 'URL Slug',
       max: 100,
       min: 0,
@@ -400,6 +414,7 @@ effect('getComponentProps - default case returns base props', () =>
   Effect.gen(function* () {
     const unknownConfig = {
       creatable: false,
+      hidden: false,
       label: 'Unknown Field',
       max: 100,
       min: 0,

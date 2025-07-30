@@ -42,6 +42,7 @@ export interface FieldConfig {
     label?: string
     placeholder?: string
     required?: boolean
+    hidden?: boolean
     options?: Array<{ value: string; label: string }>
     rows?: number
     searchable?: boolean

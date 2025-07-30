@@ -36,7 +36,8 @@ effect('generateFieldConfigs - generates configs for all schema fields', () =>
     expect(configs!.age).toBeDefined()
     expect(configs!.isActive).toBeDefined()
     expect(configs!.bio).toBeDefined()
-    expect(configs!.tags).toBeDefined()
+    // tags is filtered out as a system field
+    expect(configs!.tags).toBeUndefined()
 
     // Check required field detection
     expect(configs.id!.required).toBe(true) // Not optional
@@ -50,7 +51,7 @@ effect('generateFieldConfigs - generates configs for all schema fields', () =>
     expect(configs.email!.type).toBe('text') // Email pattern not detected in AST, falls back to text
     expect(configs.isActive!.type).toBe('switch')
     expect(configs.bio!.type).toBe('textarea') // Should detect 'bio' as textarea
-    expect(configs.tags!.type).toBe('tags') // Array should be tags
+    // tags field is filtered out as a system field
 
     // Check default values
     expect(configs.name!.label).toBe('Name')
@@ -108,7 +109,8 @@ effect('generateColumnConfigs - generates table configs for all schema fields', 
     expect(configs!.age).toBeDefined()
     expect(configs!.isActive).toBeDefined()
     expect(configs!.bio).toBeDefined()
-    expect(configs!.tags).toBeDefined()
+    // tags is filtered out as a system field
+    expect(configs!.tags).toBeUndefined()
 
     // Check auto-detected cell types
     expect(configs.id!.cellType).toBe('number')
@@ -304,7 +306,8 @@ effect('generateColumnConfigs - handles complex cell types', () =>
     expect(configs.link!.cellType).toBe('link')
     expect(configs.website!.cellType).toBe('link')
     expect(configs.status!.cellType).toBe('badge')
-    expect(configs.type!.cellType).toBe('badge')
+    // type field is filtered out as an entity type field
+    expect(configs.type).toBeUndefined()
     expect(configs.category!.cellType).toBe('badge')
     expect(configs.price!.cellType).toBe('currency')
     expect(configs.cost!.cellType).toBe('currency')

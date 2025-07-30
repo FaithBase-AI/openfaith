@@ -41,6 +41,32 @@ export const getFieldComponent = (fieldType?: FieldType): ComponentType<any> => 
 }
 
 /**
+ * Maps field types to their corresponding component names for TanStack Form
+ */
+export const getFieldComponentName = (fieldType?: FieldType): string => {
+  const componentNameMap = {
+    combobox: 'ComboboxField',
+    date: 'DatePickerField',
+    datetime: 'DateTimeField',
+    email: 'InputField',
+    number: 'InputField',
+    otp: 'OTPField',
+    password: 'InputField',
+    select: 'SelectField',
+    singleCombobox: 'SingleComboboxField',
+    slug: 'SlugInputField',
+    switch: 'SwitchField',
+    tags: 'TagInputField',
+    text: 'InputField',
+    textarea: 'TextareaField',
+  } as const
+
+  if (!fieldType) return 'InputField'
+
+  return componentNameMap[fieldType] || 'InputField'
+}
+
+/**
  * Gets component-specific props based on field configuration
  */
 export const getComponentProps = (config: FieldConfigType) => {

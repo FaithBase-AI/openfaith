@@ -2,7 +2,7 @@ import { testFunctionRx } from '@openfaith/openfaith/data/rpcState'
 import type { CommandMenuType } from '@openfaith/openfaith/features/quickActions/quickActionsTypes'
 import { useSignOut } from '@openfaith/openfaith/shared/auth/useSignOut'
 import { useRxMutation } from '@openfaith/openfaith/shared/hooks/rxHooks'
-import { GroupIcon, SignOutIcon, TerminalIcon, UserPlusIcon } from '@openfaith/ui'
+import { GroupIcon, PersonIcon, SignOutIcon, TerminalIcon, UserPlusIcon } from '@openfaith/ui'
 import { Boolean, pipe } from 'effect'
 import { atom, useSetAtom } from 'jotai'
 import { useMemo } from 'react'
@@ -14,10 +14,13 @@ export const inviteMemberIsOpenAtom = atom<boolean>(false)
 
 export const createOrgIsOpenAtom = atom<boolean>(false)
 
+export const createPersonIsOpenAtom = atom<boolean>(false)
+
 export function useCommandMenuOptions() {
   const setQuickActionsIsOpen = useSetAtom(quickActionsIsOpenAtom)
   const setInviteMemberIsOpen = useSetAtom(inviteMemberIsOpenAtom)
   const setCreateOrgIsOpen = useSetAtom(createOrgIsOpenAtom)
+  const setCreatePersonIsOpen = useSetAtom(createPersonIsOpenAtom)
   const signOut = useSignOut()
   const { mutate: testFunction } = useRxMutation(testFunctionRx)
 
@@ -37,6 +40,14 @@ export function useCommandMenuOptions() {
         onSelect: () => {
           setQuickActionsIsOpen(false)
           setCreateOrgIsOpen(true)
+        },
+      },
+      {
+        icon: <PersonIcon />,
+        name: 'Create Person',
+        onSelect: () => {
+          setQuickActionsIsOpen(false)
+          setCreatePersonIsOpen(true)
         },
       },
       {
@@ -65,6 +76,13 @@ export function useCommandMenuOptions() {
         }),
       ),
     ],
-    [setCreateOrgIsOpen, setInviteMemberIsOpen, setQuickActionsIsOpen, signOut, testFunction],
+    [
+      setCreateOrgIsOpen,
+      setCreatePersonIsOpen,
+      setInviteMemberIsOpen,
+      setQuickActionsIsOpen,
+      signOut,
+      testFunction,
+    ],
   )
 }

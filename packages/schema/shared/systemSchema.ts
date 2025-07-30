@@ -16,6 +16,9 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   createdBy: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
     description: 'The typeid of the user who created the record',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         hidden: true,
       },
@@ -24,6 +27,9 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   customFields: Schema.Array(CustomFieldSchema).annotations({
     description: 'The custom fields for the record',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         hidden: true,
       },
@@ -32,6 +38,9 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   deletedAt: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
     description: 'The datetime the record was deleted',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         hidden: true,
       },
@@ -40,6 +49,9 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   deletedBy: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
     description: 'The typeid of the user who deleted the record',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         hidden: true,
       },
@@ -48,6 +60,9 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   inactivatedAt: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
     description: 'The datetime the record was inactivated',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         hidden: true,
       },
@@ -56,6 +71,9 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   inactivatedBy: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
     description: 'The typeid of the user who inactivated the record',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         hidden: true,
       },
@@ -75,6 +93,9 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   tags: Schema.Array(Schema.String).annotations({
     description: 'The tags for the record',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         hidden: true,
       },
@@ -93,6 +114,9 @@ export const BaseSystemFieldsSchema = Schema.Struct({
   updatedBy: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
     description: 'The typeid of the user who updated the record',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         hidden: true,
       },
@@ -109,6 +133,9 @@ export const IdentificationFieldsSchema = Schema.Struct({
   ).annotations({
     description: 'The external ids for the record (e.g. PCO, CCB, etc.)',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         hidden: true,
       },
@@ -117,6 +144,9 @@ export const IdentificationFieldsSchema = Schema.Struct({
   id: Schema.String.annotations({
     description: 'The typeid for the record',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         hidden: true,
       },
@@ -125,6 +155,9 @@ export const IdentificationFieldsSchema = Schema.Struct({
   orgId: Schema.String.annotations({
     description: 'The typeid for the organization',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         hidden: true,
       },

@@ -1,10 +1,10 @@
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
 import { autoDetectCellConfig, autoDetectFieldConfig } from '@openfaith/ui/form/autoDetection'
+import { getContextConfig, getVisibleFields } from '@openfaith/ui/form/fieldFiltering'
 import {
   extractAST,
   extractSchemaFields,
   formatLabel,
-  getUiConfigFromAST,
 } from '@openfaith/ui/form/schemaIntrospection'
 import type { Schema } from 'effect'
 
@@ -16,20 +16,20 @@ export const generateFieldConfigs = <T>(
   overrides: Partial<Record<keyof T, Partial<FieldConfig['field']>>> = {},
 ): Record<keyof T, Required<FieldConfig['field']>> => {
   const fields = extractSchemaFields(schema)
+  const visibleFields = getVisibleFields(fields, 'form') // Use shared filtering logic
   const result = {} as Record<keyof T, Required<FieldConfig['field']>>
 
-  for (const field of fields) {
+  for (const field of visibleFields) {
     const key = field.key as keyof T
 
-    // Get UI config from annotation
-    const uiConfig = getUiConfigFromAST(field.schema)
-    const fieldConfig = uiConfig?.field
+    // Get field config using shared utility
+    const fieldConfig = getContextConfig(field, 'form') as FieldConfig['field']
 
     // Fallback to auto-detection if no config provided
     const autoConfig = fieldConfig || autoDetectFieldConfig(extractAST(field.schema), field.key)
 
     // Apply defaults and overrides
-    const finalConfig: Required<FieldConfig['field']> = {
+    const baseConfig = {
       creatable: false,
       label: formatLabel(String(key)),
       max: 100,
@@ -45,6 +45,12 @@ export const generateFieldConfigs = <T>(
       ...autoConfig,
       ...fieldConfig,
       ...overrides[key],
+    } as const
+
+    // Only set hidden if it's explicitly provided, otherwise default to false
+    const finalConfig: Required<FieldConfig['field']> = {
+      ...baseConfig,
+      hidden: baseConfig.hidden ?? false,
     }
 
     result[key] = finalConfig
@@ -61,24 +67,23 @@ export const generateColumnConfigs = <T>(
   overrides: Partial<Record<keyof T, Partial<FieldConfig['table']>>> = {},
 ): Record<keyof T, Required<FieldConfig['table']>> => {
   const fields = extractSchemaFields(schema)
+  const visibleFields = getVisibleFields(fields, 'table') // Use shared filtering logic
   const result = {} as Record<keyof T, Required<FieldConfig['table']>>
 
-  for (const field of fields) {
+  for (const field of visibleFields) {
     const key = field.key as keyof T
 
-    // Get UI config from annotation
-    const uiConfig = getUiConfigFromAST(field.schema)
-    const tableConfig = uiConfig?.table
+    // Get table config using shared utility
+    const tableConfig = getContextConfig(field, 'table') as FieldConfig['table']
 
     // Fallback to auto-detection if no config provided
     const autoConfig = tableConfig || autoDetectCellConfig(extractAST(field.schema), field.key)
 
     // Apply defaults and overrides
-    const finalConfig: Required<FieldConfig['table']> = {
+    const baseConfig = {
       cellType: 'text',
       filterable: true,
       header: formatLabel(String(key)),
-      hidden: false,
       order: 0,
       pinned: 'left',
       sortable: true,
@@ -86,6 +91,12 @@ export const generateColumnConfigs = <T>(
       ...autoConfig,
       ...tableConfig,
       ...overrides[key],
+    } as const
+
+    // Only set hidden if it's explicitly provided, otherwise default to false
+    const finalConfig: Required<FieldConfig['table']> = {
+      ...baseConfig,
+      hidden: baseConfig.hidden ?? false,
     }
 
     result[key] = finalConfig

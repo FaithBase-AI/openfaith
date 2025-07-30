@@ -1,8 +1,109 @@
-# Form Generation Initiative
+# Form Generation
 
 ## Overview
 
-This initiative focuses on creating automatic form generation from Effect Schema definitions, leveraging our existing TanStack Form infrastructure and UI components. The goal is to reduce form development time by 80% while maintaining full type safety and customization capabilities.
+OpenFaith uses annotation-driven form generation that automatically creates forms from Effect schemas. The system respects field visibility, types, and validation rules defined in schema annotations, providing a consistent experience between tables and forms.
+
+## Field Visibility
+
+Fields can be hidden from forms using the `field.hidden` annotation:
+
+```typescript
+const MySchema = Schema.Struct({
+  visibleField: Schema.String.annotations({
+    [OfUiConfig]: {
+      field: {
+        type: "text",
+        label: "Visible Field",
+      },
+    },
+  }),
+  hiddenField: Schema.String.annotations({
+    [OfUiConfig]: {
+      field: {
+        hidden: true, // This field won't appear in forms
+      },
+    },
+  }),
+});
+```
+
+## System Field Filtering
+
+System fields are automatically hidden from forms based on:
+
+1. **Explicit annotations**: `field: { hidden: true }`
+2. **System field names**: `createdBy`, `updatedBy`, `deletedAt`, `deletedBy`, `inactivatedAt`, `inactivatedBy`, `customFields`, `tags`
+3. **Entity type fields**: `_tag`, `type`
+4. **System identification fields**: `id`, `orgId`, `externalIds` (when they have system descriptions containing "typeid" or "external ids")
+
+## Form Generation
+
+Use `UniversalForm` to automatically generate forms:
+
+```typescript
+import { UniversalForm } from '@openfaith/ui'
+import { Person } from '@openfaith/schema/directory/ofPersonSchema'
+
+const CreatePersonForm = () => {
+  return (
+    <UniversalForm
+      schema={Person} // System fields automatically filtered out
+      onSubmit={(data) => console.log(data)}
+      defaultValues={{
+        status: 'active',
+      }}
+      fieldOverrides={{
+        gender: {
+          type: 'select',
+          options: [
+            { label: 'Male', value: 'male' },
+            { label: 'Female', value: 'female' },
+          ],
+        },
+        birthdate: {
+          type: 'date',
+          placeholder: 'Select birthdate',
+        },
+      }}
+    />
+  )
+}
+```
+
+The form will automatically include only user-facing fields, excluding all system fields marked as hidden.
+
+## Consistency with Tables
+
+The form generation system shares the same field filtering logic as table generation, ensuring consistent behavior:
+
+- Fields hidden in forms are controlled by `field.hidden`
+- Fields hidden in tables are controlled by `table.hidden`
+- System fields are automatically filtered in both contexts
+- The same schema annotations drive both table columns and form fields
+
+## Quick Actions Integration
+
+Forms integrate seamlessly with the quick actions system:
+
+```typescript
+import { CreatePersonQuickAction } from "@openfaith/openfaith/features/quickActions/createPersonQuickAction";
+
+// The CreatePersonQuickAction uses UniversalForm with the Person schema
+// All system fields are automatically filtered out
+// Only user-facing fields like name, firstName, lastName, email, etc. are shown
+```
+
+This annotation-driven approach ensures that:
+
+- **No manual field omission is needed** - the schema annotations drive everything
+- **Consistent behavior** between tables and forms
+- **Maintainable code** - adding new system fields only requires marking them as `hidden: true`
+- **Type safety** - all field configurations are validated at compile time
+
+---
+
+# Original Form Generation Initiative (Implementation Details)
 
 ## Technical Approach
 

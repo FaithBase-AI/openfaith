@@ -1,19 +1,15 @@
+import type { FieldConfig } from '@openfaith/schema/shared/schema'
 import { ColumnHeader } from '@openfaith/ui/components/collections/collectionComponents'
 import { autoDetectCellConfig } from '@openfaith/ui/form/autoDetection'
+import { getContextConfig, getVisibleFields } from '@openfaith/ui/form/fieldFiltering'
 import {
   extractAST,
   extractSchemaFields,
   formatLabel,
-  getUiConfigFromAST,
 } from '@openfaith/ui/form/schemaIntrospection'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { Schema } from 'effect'
 import { getCellRenderer } from './cellRenderers'
-
-// Helper function to get field description from schema
-const getFieldDescription = (ast: any): string | undefined => {
-  return ast.annotations?.description
-}
 
 // Helper function to create header with ColumnHeader component
 const createColumnHeader = (column: any, title: string) => {
@@ -28,42 +24,14 @@ export const generateColumns = <T,>(
   overrides: Partial<Record<keyof T, Partial<ColumnDef<T>>>> = {},
 ): Array<ColumnDef<T>> => {
   const fields = extractSchemaFields(schema)
+  const visibleFields = getVisibleFields(fields, 'table') // Use shared filtering logic
   const columnsWithOrder: Array<{ column: ColumnDef<T>; order: number }> = []
 
-  for (const field of fields) {
+  for (const field of visibleFields) {
     const key = field.key as keyof T
 
-    // Get UI config from annotation
-    const uiConfig = getUiConfigFromAST(field.schema)
-    const tableConfig = uiConfig?.table
-
-    // Skip hidden fields
-    if (tableConfig?.hidden) continue
-
-    // Skip system fields that should always be hidden (based on field key and context)
-    const systemFieldsToHide = [
-      'createdBy',
-      'updatedBy',
-      'deletedAt',
-      'deletedBy',
-      'inactivatedAt',
-      'inactivatedBy',
-      'customFields',
-      'tags',
-    ]
-    if (systemFieldsToHide.includes(field.key)) continue
-
-    // Skip identification fields (only if they match system field descriptions)
-    if (field.key === 'id' || field.key === 'orgId' || field.key === 'externalIds') {
-      // Check if this looks like a system field by checking for system-like descriptions
-      const description = getFieldDescription(field.schema)
-      if (description?.includes('typeid') || description?.includes('external ids')) {
-        continue
-      }
-    }
-
-    // Skip entity type fields
-    if (field.key === '_tag' || field.key === 'type') continue
+    // Get table config using shared utility
+    const tableConfig = getContextConfig(field, 'table') as FieldConfig['table']
 
     // Fallback to auto-detection if no config provided
     const autoConfig = tableConfig || autoDetectCellConfig(extractAST(field.schema), field.key)
