@@ -1,5 +1,5 @@
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
-import { Array, Option, pipe, type Schema, SchemaAST } from 'effect'
+import { Array, Option, pipe, type Schema, SchemaAST, String } from 'effect'
 
 export interface ExtractedField {
   key: string
@@ -30,11 +30,14 @@ export const extractSchemaFields = <T>(schema: Schema.Schema<T>): Array<Extracte
 }
 
 /**
- * Checks if a schema allows null values
+ * Checks if a schema allows null values using Effect-TS patterns
  */
 const isNullableSchema = (ast: SchemaAST.AST): boolean => {
   if (SchemaAST.isUnion(ast)) {
-    return ast.types.some((t) => t._tag === 'Literal' && t.literal === null)
+    return pipe(
+      ast.types,
+      Array.some((t) => t._tag === 'Literal' && t.literal === null),
+    )
   }
   return false
 }
@@ -137,8 +140,8 @@ export const extractLiteralOptions = (
       Array.filterMap((type) => {
         if (type._tag === 'Literal') {
           return Option.some({
-            label: String(type.literal),
-            value: String(type.literal),
+            label: `${type.literal}`,
+            value: `${type.literal}`,
           })
         }
         return Option.none()
@@ -152,34 +155,43 @@ export const extractLiteralOptions = (
 }
 
 /**
- * Formats a field name into a human-readable label
+ * Capitalizes the first letter of a word using Effect-TS patterns
+ */
+const capitalizeWord = (word: string): string => {
+  if (String.isEmpty(word)) return word
+  return word.charAt(0).toUpperCase() + pipe(word, String.toLowerCase).slice(1)
+}
+
+/**
+ * Formats a field name into a human-readable label using Effect-TS String utilities
  */
 export const formatLabel = (fieldName: string): string => {
-  if (!fieldName) return ''
+  if (String.isEmpty(fieldName)) return ''
 
   // Handle already formatted strings (containing spaces)
-  if (fieldName.includes(' ')) {
-    return fieldName
-      .split(' ')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ')
+  if (pipe(fieldName, String.includes(' '))) {
+    return pipe(fieldName, String.split(' '), Array.map(capitalizeWord), Array.join(' '))
   }
 
   // Handle snake_case and kebab-case
-  if (fieldName.includes('_') || fieldName.includes('-')) {
-    return fieldName
-      .replace(/[_-]/g, ' ')
-      .split(' ')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ')
+  if (pipe(fieldName, String.includes('_')) || pipe(fieldName, String.includes('-'))) {
+    return pipe(
+      fieldName,
+      String.replace(/[_-]/g, ' '),
+      String.split(' '),
+      Array.map(capitalizeWord),
+      Array.join(' '),
+    )
   }
 
   // Handle camelCase and PascalCase
-  return fieldName
-    .replace(/([a-z])([A-Z])/g, '$1 $2') // Insert space before capital letters
-    .replace(/([a-z])(\d)/g, '$1 $2') // Insert space before numbers
-    .replace(/(\d)([A-Z])/g, '$1 $2') // Insert space between numbers and capital letters
-    .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
+  return pipe(
+    fieldName,
+    String.replace(/([a-z])([A-Z])/g, '$1 $2'), // Insert space before capital letters
+    String.replace(/([a-z])(\d)/g, '$1 $2'), // Insert space before numbers
+    String.replace(/(\d)([A-Z])/g, '$1 $2'), // Insert space between numbers and capital letters
+    String.split(' '),
+    Array.map(capitalizeWord),
+    Array.join(' '),
+  )
 }
