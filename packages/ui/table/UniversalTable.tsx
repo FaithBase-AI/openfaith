@@ -11,6 +11,7 @@ import {
 import { EditIcon } from '@openfaith/ui/icons/editIcon'
 import { MoreVerticalIcon } from '@openfaith/ui/icons/moreVerticalIcon'
 import { generateColumns } from '@openfaith/ui/table/columnGenerator'
+import { generateFilterConfig } from '@openfaith/ui/table/filterGenerator'
 import { useSchemaCollection } from '@openfaith/ui/table/useSchemaCollection'
 import { useUniversalTableEdit } from '@openfaith/ui/table/useUniversalTableEdit'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -104,8 +105,8 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
   }, [schema, columnOverrides, onEditRow])
 
   const filtersDef = useMemo(() => {
-    return [] as const
-  }, [])
+    return generateFilterConfig(schema)
+  }, [schema])
 
   const entityName = entityInfo.entityName || 'items'
 
