@@ -170,8 +170,20 @@ effect("Type validation: API endpoints have correct structure", () =>
 2. **Identify test scenarios**: success cases, error cases, edge cases, type validation
 3. **Choose appropriate test utilities** from @openfaith/bun-test
 4. **Write comprehensive tests** following Effect-TS patterns
-5. **Verify test coverage** using `bun test --coverage`
-6. **Run tests** to ensure they pass and provide good feedback
+5. **Run tests immediately** using `bun run test` to ensure they work correctly
+6. **Fix any test failures** by debugging and correcting the test implementation
+7. **Verify test coverage** using `bun test --coverage` after tests pass
+8. **Iterate until all tests pass** and provide good feedback
+
+### Test Validation Requirements
+
+- **ALWAYS run `bun run test` after writing tests** to verify they work
+- **ALWAYS run `bun run typecheck` after writing tests** to ensure TypeScript compilation passes
+- **Fix any compilation errors** or test failures immediately
+- **Ensure tests actually test the intended functionality** by verifying they can fail
+- **Debug test failures** by examining error messages and fixing root causes
+- **Re-run tests** after fixes to confirm they pass consistently
+- **Ensure all TypeScript types are correct** - no `any` types, proper null checks, correct property access
 
 ## Documentation Research
 
