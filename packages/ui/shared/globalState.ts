@@ -44,3 +44,6 @@ export const isSmScreenAtom = atomWithStorage<boolean>('isSmScreen', false)
 export const isMdScreenAtom = atomWithStorage<boolean>('isMdScreen', false)
 export const isLgScreenAtom = atomWithStorage<boolean>('isLgScreen', false)
 export const isXlScreenAtom = atomWithStorage<boolean>('isXlScreen', false)
+
+// Details pane state atoms
+export const detailsPaneStickyAtom = atom(false)
