@@ -51,6 +51,7 @@ export interface FieldConfig {
     min?: number | string
     max?: number | string
     step?: number
+    order?: number
   }
   table?: {
     header?: string

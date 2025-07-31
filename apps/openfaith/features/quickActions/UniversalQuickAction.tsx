@@ -6,7 +6,6 @@ import {
   QuickActionsHeader,
   QuickActionsTitle,
   QuickActionsWrapper,
-  Separator,
   UniversalForm,
   useSchemaInsert,
   useSchemaUpdate,
@@ -92,16 +91,12 @@ export const UniversalQuickAction: FC<UniversalQuickActionProps> = (props) => {
         </QuickActionsTitle>
       </QuickActionsHeader>
 
-      <Separator />
-
-      <div className='p-4'>
-        <UniversalForm
-          defaultValues={defaultValues}
-          loading={isPending}
-          onSubmit={handleSubmit}
-          schema={quickAction.schema}
-        />
-      </div>
+      <UniversalForm
+        defaultValues={defaultValues}
+        loading={isPending}
+        onSubmit={handleSubmit}
+        schema={quickAction.schema}
+      />
     </QuickActionsWrapper>
   )
 }

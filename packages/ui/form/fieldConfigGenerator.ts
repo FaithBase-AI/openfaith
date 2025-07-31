@@ -8,7 +8,7 @@ import {
   getVisibleFields,
 } from '@openfaith/schema'
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
-import type { Schema } from 'effect'
+import { Array, Order, pipe, type Schema } from 'effect'
 
 /**
  * Generates field configurations for all fields in a schema
@@ -19,46 +19,59 @@ export const generateFieldConfigs = <T>(
 ): Record<keyof T, Required<FieldConfig['field']>> => {
   const fields = extractSchemaFields(schema)
   const visibleFields = getVisibleFields(fields, 'form') // Use shared filtering logic
-  const result = {} as Record<keyof T, Required<FieldConfig['field']>>
 
-  for (const field of visibleFields) {
-    const key = field.key as keyof T
+  const fieldsWithOrder = pipe(
+    visibleFields,
+    Array.map((field) => {
+      const key = field.key as keyof T
 
-    // Get field config using shared utility
-    const fieldConfig = getContextConfig(field, 'form') as FieldConfig['field']
+      // Get field config using shared utility
+      const fieldConfig = getContextConfig(field, 'form') as FieldConfig['field']
 
-    // Fallback to auto-detection if no config provided
-    const autoConfig = fieldConfig || autoDetectFieldConfig(extractAST(field.schema), field.key)
+      // Fallback to auto-detection if no config provided
+      const autoConfig = fieldConfig || autoDetectFieldConfig(extractAST(field.schema), field.key)
 
-    // Apply defaults and overrides
-    const baseConfig = {
-      creatable: false,
-      label: formatLabel(String(key)),
-      max: 100,
-      min: 0,
-      multiple: false,
-      options: [],
-      placeholder: '',
-      required: !field.isOptional && !field.isNullable,
-      rows: 3,
-      searchable: false,
-      step: 1,
-      type: 'text',
-      ...autoConfig,
-      ...fieldConfig,
-      ...overrides[key],
-    } as const
+      // Apply defaults and overrides
+      const baseConfig = {
+        creatable: false,
+        label: formatLabel(String(key)),
+        max: 100,
+        min: 0,
+        multiple: false,
+        options: [],
+        placeholder: '',
+        required: !field.isOptional && !field.isNullable,
+        rows: 3,
+        searchable: false,
+        step: 1,
+        type: 'text',
+        ...autoConfig,
+        ...fieldConfig,
+        ...overrides[key],
+      } as const
 
-    // Only set hidden if it's explicitly provided, otherwise default to false
-    const finalConfig: Required<FieldConfig['field']> = {
-      ...baseConfig,
-      hidden: baseConfig.hidden ?? false,
-    }
+      // Only set hidden if it's explicitly provided, otherwise default to false
+      const finalConfig: Required<FieldConfig['field']> = {
+        ...baseConfig,
+        hidden: baseConfig.hidden ?? false,
+        order: baseConfig.order ?? 999,
+      }
 
-    result[key] = finalConfig
-  }
+      // Get order from field config, fallback to a high number to put unordered fields at the end
+      const order = fieldConfig?.order ?? 999
 
-  return result
+      return { config: finalConfig, key, order }
+    }),
+  )
+
+  return pipe(
+    fieldsWithOrder,
+    Array.sort(Order.struct({ order: Order.number })),
+    Array.reduce({} as Record<keyof T, Required<FieldConfig['field']>>, (acc, { key, config }) => ({
+      ...acc,
+      [key]: config,
+    })),
+  )
 }
 
 /**
@@ -70,41 +83,45 @@ export const generateColumnConfigs = <T>(
 ): Record<keyof T, Required<FieldConfig['table']>> => {
   const fields = extractSchemaFields(schema)
   const visibleFields = getVisibleFields(fields, 'table') // Use shared filtering logic
-  const result = {} as Record<keyof T, Required<FieldConfig['table']>>
 
-  for (const field of visibleFields) {
-    const key = field.key as keyof T
+  return pipe(
+    visibleFields,
+    Array.map((field) => {
+      const key = field.key as keyof T
 
-    // Get table config using shared utility
-    const tableConfig = getContextConfig(field, 'table') as FieldConfig['table']
+      // Get table config using shared utility
+      const tableConfig = getContextConfig(field, 'table') as FieldConfig['table']
 
-    // Fallback to auto-detection if no config provided
-    const autoConfig = tableConfig || autoDetectCellConfig(extractAST(field.schema), field.key)
+      // Fallback to auto-detection if no config provided
+      const autoConfig = tableConfig || autoDetectCellConfig(extractAST(field.schema), field.key)
 
-    // Apply defaults and overrides
-    const baseConfig = {
-      cellType: 'text',
-      filterable: true,
-      header: formatLabel(String(key)),
-      order: 0,
-      pinned: 'left',
-      sortable: true,
-      width: 150,
-      ...autoConfig,
-      ...tableConfig,
-      ...overrides[key],
-    } as const
+      // Apply defaults and overrides
+      const baseConfig = {
+        cellType: 'text',
+        filterable: true,
+        header: formatLabel(String(key)),
+        order: 0,
+        pinned: 'left',
+        sortable: true,
+        width: 150,
+        ...autoConfig,
+        ...tableConfig,
+        ...overrides[key],
+      } as const
 
-    // Only set hidden if it's explicitly provided, otherwise default to false
-    const finalConfig: Required<FieldConfig['table']> = {
-      ...baseConfig,
-      hidden: baseConfig.hidden ?? false,
-    }
+      // Only set hidden if it's explicitly provided, otherwise default to false
+      const finalConfig: Required<FieldConfig['table']> = {
+        ...baseConfig,
+        hidden: baseConfig.hidden ?? false,
+      }
 
-    result[key] = finalConfig
-  }
-
-  return result
+      return { config: finalConfig, key }
+    }),
+    Array.reduce({} as Record<keyof T, Required<FieldConfig['table']>>, (acc, { key, config }) => ({
+      ...acc,
+      [key]: config,
+    })),
+  )
 }
 
 /**

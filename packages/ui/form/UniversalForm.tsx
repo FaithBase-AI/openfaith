@@ -5,8 +5,8 @@ import { Button } from '@openfaith/ui/components/ui/button'
 import { getComponentProps, getFieldComponentName } from '@openfaith/ui/form/fieldComponentMapping'
 import { generateFieldConfigs } from '@openfaith/ui/form/fieldConfigGenerator'
 import { createValidator, validateFormData } from '@openfaith/ui/form/validation'
-import { Array, pipe, Record, type Schema } from 'effect'
-import React from 'react'
+import { Array, Order, pipe, Record, type Schema } from 'effect'
+import { type ReactNode, useMemo } from 'react'
 
 export interface UniversalFormProps<T> {
   schema: Schema.Schema<T>
@@ -14,7 +14,7 @@ export interface UniversalFormProps<T> {
   onSubmit: (data: T) => void | Promise<void>
   fieldOverrides?: Partial<Record<keyof T, Partial<FieldConfig['field']>>>
   className?: string
-  children?: (form: any, fields: Record<keyof T, Required<FieldConfig['field']>>) => React.ReactNode
+  children?: (form: any, fields: Record<keyof T, Required<FieldConfig['field']>>) => ReactNode
   loading?: boolean
 }
 
@@ -51,7 +51,13 @@ export function UniversalForm<T>({
   const formFields = pipe(
     fieldConfigs,
     Record.toEntries,
-    Array.map(([key, config]) => {
+    Array.map(([key, config]) => ({
+      config,
+      key,
+      order: config?.order ?? 999,
+    })),
+    Array.sort(Order.struct({ order: Order.number })),
+    Array.map(({ key, config }) => {
       const typedConfig = config as Required<NonNullable<FieldConfig['field']>>
 
       const componentProps = getComponentProps(typedConfig)
@@ -59,8 +65,8 @@ export function UniversalForm<T>({
 
       return (
         <form.AppField
-          key={key}
-          name={key}
+          key={String(key)}
+          name={key as string}
           validators={{
             onChange: createValidator(typedConfig, schema, key as keyof T),
           }}
@@ -100,7 +106,7 @@ export function useFieldConfigs<T>(
   schema: Schema.Schema<T>,
   overrides: Partial<Record<keyof T, Partial<FieldConfig['field']>>> = {},
 ) {
-  return React.useMemo(() => {
+  return useMemo(() => {
     return generateFieldConfigs(schema, overrides)
   }, [schema, overrides])
 }
@@ -113,7 +119,7 @@ export function useFieldConfig<T>(
   fieldName: keyof T,
   overrides: Partial<FieldConfig['field']> = {},
 ) {
-  return React.useMemo(() => {
+  return useMemo(() => {
     const configs = generateFieldConfigs(schema, {
       [fieldName]: overrides,
     } as any)

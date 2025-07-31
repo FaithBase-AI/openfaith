@@ -44,7 +44,7 @@ export const QuickActionsWrapper: FC<QuickActionsWrapperProps> = (props) => {
         <Dialog {...domProps}>
           <DialogContent
             className={cn(
-              'top-[clamp(16px,calc((100vh-512px)/2),192px)] flex max-h-[calc(100vh-32px)] w-full translate-y-0 flex-col gap-0 overflow-hidden p-0 shadow-lg sm:max-w-3xl',
+              `top-[clamp(16px,calc((100vh-512px)/2),192px)] flex max-h-[calc(100vh-clamp(16px,calc((100vh-512px)/2),192px)*2)] w-full translate-y-0 flex-col gap-0 overflow-hidden p-0 shadow-lg sm:max-w-3xl`,
               dialogContentClassName,
             )}
             hideCloseButton

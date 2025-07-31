@@ -42,6 +42,10 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
       birthdate: Schema.String.annotations({
         description: 'The birthdate of the person',
         [OfUiConfig]: {
+          field: {
+            order: 5,
+            type: 'date',
+          },
           table: {
             cellType: 'date',
             order: 7,
@@ -52,6 +56,9 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
       firstName: Schema.String.annotations({
         description: 'The first name of the person',
         [OfUiConfig]: {
+          field: {
+            order: 1,
+          },
           table: {
             filterable: true,
             order: 2,
@@ -63,6 +70,14 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
         .annotations({
           description: 'The gender of the person. He made them male and female.',
           [OfUiConfig]: {
+            field: {
+              options: [
+                { label: 'Male', value: 'male' },
+                { label: 'Female', value: 'female' },
+              ],
+              order: 4,
+              type: 'select',
+            },
             table: {
               cellType: 'badge',
               filterable: true,
@@ -75,6 +90,9 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
       lastName: Schema.String.annotations({
         description: 'The last name of the person',
         [OfUiConfig]: {
+          field: {
+            order: 2,
+          },
           table: {
             filterable: true,
             order: 3,
@@ -96,6 +114,9 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
       middleName: Schema.String.annotations({
         description: 'The middle name of the person',
         [OfUiConfig]: {
+          field: {
+            order: 3,
+          },
           table: {
             order: 4,
             sortable: true,

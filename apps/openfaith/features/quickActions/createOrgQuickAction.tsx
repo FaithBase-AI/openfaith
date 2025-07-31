@@ -7,7 +7,6 @@ import {
   QuickActionsHeader,
   QuickActionsTitle,
   QuickActionsWrapper,
-  Separator,
 } from '@openfaith/ui'
 import { useAtom } from 'jotai'
 import type { FC } from 'react'
@@ -25,8 +24,6 @@ export const CreateOrgQuickAction: FC = () => {
           </span>
         </QuickActionsTitle>
       </QuickActionsHeader>
-
-      <Separator />
 
       <OrgForm _tag={'create'} />
     </QuickActionsWrapper>

@@ -15,6 +15,7 @@ import {
   Tailwind,
   Text,
 } from '@react-email/components'
+import type { FC } from 'react'
 
 interface BetterAuthInviteUserEmailProps {
   username?: string
@@ -26,15 +27,9 @@ interface BetterAuthInviteUserEmailProps {
   appName: string
 }
 
-export const InviteUserEmail = ({
-  username,
-  invitedByUsername,
-  invitedByEmail,
-  teamName,
-  teamImage,
-  inviteLink,
-  appName,
-}: BetterAuthInviteUserEmailProps) => {
+export const InviteUserEmail: FC<BetterAuthInviteUserEmailProps> = (props) => {
+  const { username, invitedByUsername, invitedByEmail, teamName, teamImage, inviteLink, appName } =
+    props
   const previewText = `Join ${invitedByUsername} on ${appName}`
   return (
     <Html>
