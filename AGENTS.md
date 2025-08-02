@@ -130,6 +130,12 @@ Examples:
 - Structure data fetching with Effect patterns
 - Use `useRxQuery` and `useRxMutation` hooks
 - All client operations should use Effect for error handling
+- **React hooks with Option types**: When using React hooks (useMemo, useCallback, etc.) with Option types, use `useStableMemo` from `@openfaith/ui/shared/hooks/memo` with proper Equivalence
+  - **Required for Option types**: `useStableMemo` prevents unnecessary re-renders when Option values haven't actually changed
+  - **Import**: `import { useStableMemo } from '@openfaith/ui/shared/hooks/memo'`
+  - **Pattern**: `useStableMemo(() => computation, [deps], Equivalence.equivalence)`
+  - **Example**: `const entityConfigOpt = useStableMemo(() => findEntity(), [group, entity], Option.getEquivalence(Equivalence.strict))`
+  - **Why required**: Option.some(value) !== Option.some(value) in JavaScript, causing unnecessary re-renders with regular useMemo
 
 **Backend Specific:**
 
@@ -145,6 +151,12 @@ Examples:
 - **No semicolons (`;`) at the end of lines**
 - **Trailing commas required**
 - **2-space indentation**
+- **Option variable naming**: Variables that contain `Option` types MUST end with `Opt` suffix
+  - **Prefer**: `const entityConfigOpt = Option.some(config)`
+  - **Avoid**: `const entityConfig = Option.some(config)`
+  - **Prefer**: `const userDataOpt = pipe(users, Array.head)`
+  - **Avoid**: `const userData = pipe(users, Array.head)`
+  - This makes it immediately clear that the variable is an Option and requires Option.match or similar handling
 - **Use absolute imports based on package tsconfig, not relative imports**
   - Always use absolute imports that match the package structure
   - Prefer: `@openfaith/server/live/httpAuthMiddlewareLive`

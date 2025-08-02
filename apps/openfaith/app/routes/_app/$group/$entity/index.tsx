@@ -1,9 +1,10 @@
-import * as OfSchemas from '@openfaith/schema'
+import { useSchemaQuickActions } from '@openfaith/openfaith/features/quickActions/schemaQuickActions'
 import { discoverUiEntities } from '@openfaith/schema'
 import { pluralize, singularize } from '@openfaith/shared'
 import { Button, PlusIcon, UniversalTable } from '@openfaith/ui'
+import { useStableMemo } from '@openfaith/ui/shared/hooks/memo'
 import { createFileRoute } from '@tanstack/react-router'
-import { Array, Option, pipe, Record, Schema } from 'effect'
+import { Array, Equivalence, Option, pipe, String } from 'effect'
 import { useMemo } from 'react'
 
 export const Route = createFileRoute('/_app/$group/$entity/')({
@@ -12,56 +13,60 @@ export const Route = createFileRoute('/_app/$group/$entity/')({
 
 function RouteComponent() {
   const { group, entity } = Route.useParams()
+  const { setIsOpen } = useSchemaQuickActions()
 
   // Discover entity configuration from schemas
-  const entityConfig = useMemo(() => {
-    const entities = discoverUiEntities()
-    return pipe(
-      entities,
-      Array.findFirst((e) => {
-        const entityPlural = pluralize(e.tag.toLowerCase())
-        return e.navConfig.module === group && entityPlural === entity
+  const entityConfigOpt = useMemo(
+    () =>
+      pipe(
+        discoverUiEntities(),
+        Array.findFirst((e) => {
+          const entityPlural = pipe(e.tag, String.toLowerCase, pluralize)
+          return e.navConfig.module === group && entityPlural === entity
+        }),
+      ),
+    [group, entity],
+  )
+
+  // Extract schema from entity config (it's already included)
+  const entitySchemaOpt = useStableMemo(
+    () =>
+      pipe(
+        entityConfigOpt,
+        Option.map((config) => config.schema),
+      ),
+    [entityConfigOpt],
+    Equivalence.array(Option.getEquivalence(Equivalence.strict())),
+  )
+
+  // Generate the quick action key for this entity
+  const quickActionKeyOpt = useStableMemo(
+    () =>
+      pipe(
+        entityConfigOpt,
+        Option.map((config) => {
+          return `create${pipe(config.tag, String.capitalize)}`
+        }),
+      ),
+    [entityConfigOpt],
+    Equivalence.array(Option.getEquivalence(Equivalence.strict())),
+  )
+
+  // Handle create button click
+  const handleCreateClick = () => {
+    pipe(
+      quickActionKeyOpt,
+      Option.match({
+        onNone: () => {},
+        onSome: (key) => {
+          setIsOpen(key, true)
+        },
       }),
     )
-  }, [group, entity])
-
-  // Get the actual schema from OfSchemas based on the entity tag
-  const entitySchema = useMemo(() => {
-    return pipe(
-      entityConfig,
-      Option.flatMap((config) => {
-        // Find the schema from OfSchemas that matches the entity tag
-        return pipe(
-          OfSchemas,
-          Record.toEntries,
-          Array.findFirst(([, schema]) => {
-            if (!Schema.isSchema(schema)) return false
-
-            // Check if this schema has the matching _tag
-            const schemaObj = schema as any
-            try {
-              // Try to get the _tag literal from the schema AST
-              if (schemaObj.ast?.propertySignatures) {
-                const tagProperty = schemaObj.ast.propertySignatures.find(
-                  (prop: any) => prop.name === '_tag',
-                )
-                if (tagProperty?.type?.literal === config.tag) {
-                  return true
-                }
-              }
-            } catch {
-              // Ignore errors in schema inspection
-            }
-            return false
-          }),
-          Option.map(([, schema]) => schema as Schema.Schema<any>),
-        )
-      }),
-    )
-  }, [entityConfig])
+  }
 
   return pipe(
-    entityConfig,
+    entityConfigOpt,
     Option.match({
       onNone: () => (
         <div>
@@ -73,34 +78,32 @@ function RouteComponent() {
       ),
       onSome: (config) =>
         pipe(
-          entitySchema,
+          entitySchemaOpt,
           Option.match({
             onNone: () => (
               <div>
-                <p>for entityfound not Schema : {config.tag}</p>
+                <p>Schema not found for entity: {config.tag}</p>
               </div>
             ),
             onSome: (schema) => (
-              <div className='flex flex-1 flex-col overflow-hidden'>
-                <UniversalTable
-                  Actions={
-                    <Button className='ml-auto' size='sm'>
-                      <PlusIcon />
-                      Create {pipe(config.navItem.title, singularize)}
-                    </Button>
-                  }
-                  filtering={{
-                    filterColumnId: 'name',
-                    filterKey: `${group}-${entity}-filter`,
-                    filterPlaceHolder: `Search ${String(config.navItem.title).toLowerCase()}...`,
-                  }}
-                  pagination={{
-                    limit: 100,
-                    pageSize: 20,
-                  }}
-                  schema={schema}
-                />
-              </div>
+              <UniversalTable
+                Actions={
+                  <Button className='ml-auto' onClick={handleCreateClick} size='sm'>
+                    <PlusIcon />
+                    Create {pipe(config.navItem.title, singularize)}
+                  </Button>
+                }
+                filtering={{
+                  filterColumnId: 'name',
+                  filterKey: `${group}-${entity}-filter`,
+                  filterPlaceHolder: `Search ${pipe(config.navItem.title, String.toLowerCase)}...`,
+                }}
+                pagination={{
+                  limit: 100,
+                  pageSize: 20,
+                }}
+                schema={schema}
+              />
             ),
           }),
         ),
