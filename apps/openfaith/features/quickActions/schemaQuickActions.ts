@@ -29,13 +29,7 @@ export const discoverQuickActions = (): Array<QuickActionConfig> => {
         return Option.none()
       }
 
-      const quickActionKey = pipe(
-        entity.tag,
-        String.charAt(0),
-        Option.map(String.toUpperCase),
-        Option.getOrElse(() => ''),
-        (firstChar) => `create${firstChar}${pipe(entity.tag, String.slice(1))}`,
-      )
+      const quickActionKey = `create${pipe(entity.tag, String.capitalize)}`
       const title = typeof entity.navItem.title === 'string' ? entity.navItem.title : 'Item'
       const createTitle = `Create ${singularize(title)}`
 
@@ -48,11 +42,17 @@ export const discoverQuickActions = (): Array<QuickActionConfig> => {
   )
 }
 
-export const useSchemaQuickActions = () => {
-  const [quickActionStates, setQuickActionStates] = useAtom(schemaQuickActionStatesAtom)
-
+// Shared hook for common quick action logic
+const useQuickActionsBase = () => {
   const quickActions = useMemo(() => discoverQuickActions(), [])
   const { iconComponents } = useEntityIcons(quickActions)
+
+  return { iconComponents, quickActions }
+}
+
+export const useSchemaQuickActions = () => {
+  const [quickActionStates, setQuickActionStates] = useAtom(schemaQuickActionStatesAtom)
+  const { quickActions, iconComponents } = useQuickActionsBase()
 
   const commandMenuItems = useMemo((): ReadonlyArray<CommandMenuType> => {
     return pipe(
@@ -92,8 +92,7 @@ export const useSchemaQuickActions = () => {
 
 export const useSchemaEditActions = () => {
   const [editStates, setEditStates] = useAtom(schemaEditStatesAtom)
-  const quickActions = useMemo(() => discoverQuickActions(), [])
-  const { iconComponents } = useEntityIcons(quickActions)
+  const { quickActions, iconComponents } = useQuickActionsBase()
 
   const getEditState = (entityTag: string): { isOpen: boolean; editData: any } =>
     getSchemaEditState(editStates, `edit${entityTag}`)
