@@ -434,6 +434,81 @@ const replaced = pipe(str, String.replace(/old/g, "new"));
     - **Avoid**: `const processEntity = (entity: Entity, config: Config) => Effect.gen(function* () { ... })`
   - Use descriptive function names in the first parameter for better tracing
   - Include `yield* Effect.annotateCurrentSpan()` calls to add parameter values to traces
+
+## CRITICAL RULE: Type Safety - NEVER USE `any` OR TYPE CASTING
+
+**⚠️ ABSOLUTELY FORBIDDEN ⚠️ - Type Safety Violations:**
+
+- **NEVER use `any` type**: Always use proper types, even if it requires more work
+- **NEVER use type casting with `as`**: Use proper type guards, schema validation, or Effect utilities
+- **NEVER use `unknown` without proper validation**: Always validate unknown types with Effect Schema
+- **NEVER use `@ts-ignore` or `@ts-expect-error`**: Fix the underlying type issue instead
+
+**✅ REQUIRED PATTERNS - Type-Safe Alternatives:**
+
+```typescript
+// ❌ FORBIDDEN - any types and casting
+const data: any = response.data;
+const user = data as User;
+const items = response.items as Array<Item>;
+
+// ✅ REQUIRED - Proper type validation
+const UserSchema = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  email: Schema.String,
+});
+
+const parseUser = (data: unknown) =>
+  Schema.decodeUnknown(UserSchema)(data);
+
+// ✅ REQUIRED - Effect Schema for runtime validation
+const processResponse = Effect.gen(function* () {
+  const response = yield* fetchData();
+  const user = yield* parseUser(response.data);
+  return user;
+});
+```
+
+**Type Safety Best Practices:**
+
+- **Use Effect Schema for all data validation**: Runtime type checking with compile-time types
+- **Define proper interfaces**: Create specific types for all data structures
+- **Use type guards**: Create functions that properly narrow types
+- **Leverage Effect's type utilities**: Use `Effect.succeed`, `Effect.fail`, etc. for type-safe operations
+- **Handle external data safely**: Always validate data from APIs, databases, or user input
+
+**Exceptions (VERY RARE):**
+
+- **Legacy integration points**: When interfacing with poorly-typed third-party libraries, use `unknown` and immediate validation
+- **Dynamic programming scenarios**: Use Effect Schema to validate dynamic data structures
+- **Temporary migration**: Mark with TODO comments and timeline for proper typing
+
+**Examples of proper type handling:**
+
+```typescript
+// ❌ Wrong - any and casting
+const processApiResponse = (response: any) => {
+  const items = response.data.items as Item[];
+  return items.map(item => item.name);
+};
+
+// ✅ Correct - Schema validation and Effect patterns
+const ApiResponseSchema = Schema.Struct({
+  data: Schema.Struct({
+    items: Schema.Array(ItemSchema),
+  }),
+});
+
+const processApiResponse = Effect.fn('processApiResponse')(function* (response: unknown) {
+  const validatedResponse = yield* Schema.decodeUnknown(ApiResponseSchema)(response);
+  return pipe(
+    validatedResponse.data.items,
+    Array.map(item => item.name)
+  );
+});
+```
+
 - Follow existing Effect-TS patterns
 
 ### Error Handling Patterns
