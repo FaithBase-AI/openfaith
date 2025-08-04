@@ -27,7 +27,7 @@ type SelectFieldProps = {
   placeholder?: string
   className?: string
   required?: boolean
-  options: ReadonlyArray<{ name: string; value: string; disabled?: boolean }>
+  options: ReadonlyArray<{ label: string; value: string; disabled?: boolean }>
 } & Omit<ComponentProps<typeof Select>, 'onChange' | 'value'>
 
 export function SelectField(props: SelectFieldProps) {
@@ -94,7 +94,7 @@ export function SelectField(props: SelectFieldProps) {
             options,
             Array.map((x) => (
               <SelectItem disabled={x.disabled} key={x.value} value={x.value}>
-                {x.name}
+                {x.label}
               </SelectItem>
             )),
           )}

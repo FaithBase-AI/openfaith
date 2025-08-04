@@ -79,8 +79,8 @@ export const InviteMemberForm: FC = () => {
               <field.SelectField
                 label='Role'
                 options={[
-                  { name: 'Member', value: 'member' },
-                  { name: 'Admin', value: 'admin' },
+                  { label: 'Member', value: 'member' },
+                  { label: 'Admin', value: 'admin' },
                 ]}
                 placeholder='Select a role'
                 required
