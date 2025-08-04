@@ -1,11 +1,13 @@
 'use client'
 
-import { formatLabel, nullOp, pluralize } from '@openfaith/shared'
+import { asyncNoOp, formatLabel, pluralize } from '@openfaith/shared'
+import { useChangeDetailsPaneEntityId } from '@openfaith/ui/components/detailsPane/detailsPaneHelpers'
 import { Button } from '@openfaith/ui/components/ui/button'
 import { ShortcutKey } from '@openfaith/ui/components/ui/shortcut-key'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@openfaith/ui/components/ui/tooltip'
 import { ChevronDownIcon } from '@openfaith/ui/icons/chevronDownIcon'
 import { ChevronUpIcon } from '@openfaith/ui/icons/chevronUpIcon'
+import { Link } from '@tanstack/react-router'
 import { Array, Boolean, Option, pipe } from 'effect'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
@@ -15,13 +17,13 @@ type DetailsTopBarButtonsProps<T extends { id: string }> = {
   id: string
   collection: ReadonlyArray<T>
   entityType: string
-  onNavigate?: (id: string) => void
 }
 
 export const DetailsTopBarButtons = <T extends { id: string }>(
   props: DetailsTopBarButtonsProps<T>,
 ): ReactNode => {
-  const { id, collection, entityType, onNavigate = nullOp } = props
+  const { id, collection, entityType } = props
+  const changeDetailsPaneEntityId = useChangeDetailsPaneEntityId()
 
   const indexOpt = useMemo(
     () =>
@@ -32,7 +34,7 @@ export const DetailsTopBarButtons = <T extends { id: string }>(
     [collection, id],
   )
 
-  const getNeighborItem = (direction: 'increment' | 'decrement') =>
+  const getNeighborItemNavigation = (direction: 'increment' | 'decrement') =>
     pipe(
       indexOpt,
       Option.filter((x) =>
@@ -55,6 +57,15 @@ export const DetailsTopBarButtons = <T extends { id: string }>(
           ),
         ),
       ),
+      Option.match({
+        onNone: () => ({
+          forceNav: asyncNoOp,
+          onClick: asyncNoOp,
+          search: (prev: any) => prev,
+          to: '.',
+        }),
+        onSome: (item) => changeDetailsPaneEntityId(item.id, entityType),
+      }),
     )
 
   const displayType = useMemo(() => {
@@ -68,40 +79,17 @@ export const DetailsTopBarButtons = <T extends { id: string }>(
   const isFirstItem = currentIndex === 0
   const isLastItem = currentIndex + 1 === collection.length
 
-  const navigateToPrevious = () => {
-    pipe(
-      getNeighborItem('decrement'),
-      Option.match({
-        onNone: nullOp,
-        onSome: (item) => onNavigate(item.id),
-      }),
-    )
-  }
-
-  const navigateToNext = () => {
-    pipe(
-      getNeighborItem('increment'),
-      Option.match({
-        onNone: nullOp,
-        onSome: (item) => onNavigate(item.id),
-      }),
-    )
-  }
-
-  useHotkeys(['k'], navigateToPrevious, { enabled: !isFirstItem })
-  useHotkeys(['j'], navigateToNext, { enabled: !isLastItem })
+  useHotkeys(['k'], getNeighborItemNavigation('decrement').forceNav)
+  useHotkeys(['j'], getNeighborItemNavigation('increment').forceNav)
 
   return (
     <>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            disabled={isFirstItem}
-            onClick={navigateToPrevious}
-            size={'icon-sm'}
-            variant={'secondary'}
-          >
-            <ChevronUpIcon className={'size-4'} />
+          <Button asChild disabled={isFirstItem} size={'icon-sm'} variant={'secondary'}>
+            <Link {...getNeighborItemNavigation('decrement')}>
+              <ChevronUpIcon className={'size-4'} />
+            </Link>
           </Button>
         </TooltipTrigger>
         <TooltipContent className={'inline-flex gap-2'}>
@@ -111,13 +99,10 @@ export const DetailsTopBarButtons = <T extends { id: string }>(
 
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            disabled={isLastItem}
-            onClick={navigateToNext}
-            size={'icon-sm'}
-            variant={'secondary'}
-          >
-            <ChevronDownIcon className={'size-4'} />
+          <Button asChild disabled={isLastItem} size={'icon-sm'} variant={'secondary'}>
+            <Link {...getNeighborItemNavigation('increment')}>
+              <ChevronDownIcon className={'size-4'} />
+            </Link>
           </Button>
         </TooltipTrigger>
         <TooltipContent className={'inline-flex gap-2'}>

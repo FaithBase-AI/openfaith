@@ -10,7 +10,7 @@ const buttonDisplayClassNames =
 const buttonVariants = cva(
   cn(
     buttonDisplayClassNames,
-    'group relative whitespace-nowrap rounded-lg font-medium text-sm ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+    'group relative whitespace-nowrap rounded-lg font-medium text-sm ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50',
   ),
   {
     compoundVariants: [
@@ -91,12 +91,17 @@ const Button = ({
 }: ButtonProps) => {
   const Comp = asChild ? Slot : 'button'
 
+  console.log({
+    disabled,
+    loading,
+  })
+
   return (
     <Comp
       className={cn(buttonVariants({ size, variant }), className)}
+      data-disabled={disabled || loading}
       data-loading={loading}
       data-slot='button'
-      disabled={disabled || loading}
       {...props}
     >
       <NewSlottable asChild={asChild} child={children}>

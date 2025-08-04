@@ -1,3 +1,4 @@
+import { nullOp } from '@openfaith/shared'
 import type {
   DetailsPaneEntity,
   DetailsPaneParams,
@@ -5,6 +6,7 @@ import type {
 import { DetailsPaneParams as DetailsPaneParamsSchema } from '@openfaith/ui/components/detailsPane/detailsPaneTypes'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Array, Boolean, Option, pipe, Schema } from 'effect'
+import type { MouseEvent } from 'react'
 import { useCallback, useMemo } from 'react'
 
 export function useDetailsPaneState() {
@@ -133,5 +135,59 @@ export function useOpenEntityDetailsPaneTabUrl(opts: { entityId: string; entityT
       }
     },
     [detailsPaneState, entityId, entityType],
+  )
+}
+
+export function useChangeDetailsPaneEntityId() {
+  const [detailsPaneState, setDetailsPaneState] = useDetailsPaneState()
+
+  return useCallback(
+    (id: string, entityType: string) => {
+      return pipe(
+        detailsPaneState,
+        Array.last,
+        Option.map((entry) => ({
+          ...entry,
+          entityId: id,
+          entityType,
+        })),
+        Option.match({
+          onNone: () => ({
+            forceNav: () => {},
+            onClick: () => {},
+            search: (prev: any) => prev,
+            to: '.',
+          }),
+          onSome: (updatedEntry) => {
+            const updatedState = pipe(
+              detailsPaneState,
+              Array.modify(detailsPaneState.length - 1, () => updatedEntry),
+            ) as DetailsPaneParams
+
+            return {
+              forceNav: () => setDetailsPaneState(updatedState),
+              onClick: (event: MouseEvent<HTMLAnchorElement>) => {
+                pipe(
+                  event.nativeEvent.ctrlKey || event.nativeEvent.metaKey,
+                  Boolean.match({
+                    onFalse: () => {
+                      event.preventDefault()
+                      setDetailsPaneState(updatedState)
+                    },
+                    onTrue: nullOp,
+                  }),
+                )
+              },
+              search: (prev: any) => ({
+                ...prev,
+                detailsPane: updatedState,
+              }),
+              to: '.',
+            }
+          },
+        }),
+      )
+    },
+    [detailsPaneState, setDetailsPaneState],
   )
 }
