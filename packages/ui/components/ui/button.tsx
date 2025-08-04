@@ -91,11 +91,6 @@ const Button = ({
 }: ButtonProps) => {
   const Comp = asChild ? Slot : 'button'
 
-  console.log({
-    disabled,
-    loading,
-  })
-
   return (
     <Comp
       className={cn(buttonVariants({ size, variant }), className)}
