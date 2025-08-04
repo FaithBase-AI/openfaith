@@ -4,7 +4,7 @@ import {
   PersonIcon,
   SettingsIcon,
   TerminalIcon,
-  UserPlusIcon,
+  UserCircleIcon,
 } from '@openfaith/ui'
 import type { ReactNode } from 'react'
 
@@ -29,7 +29,7 @@ export const settingsNavItems: Array<NavItem> = [
     url: '/settings/general',
   },
   {
-    icon: <UserPlusIcon />,
+    icon: <UserCircleIcon />,
     title: 'Team',
     url: '/settings/team',
   },
