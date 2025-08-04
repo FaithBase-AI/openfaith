@@ -22,7 +22,7 @@
     "dev:db-down": "docker compose --env-file .env -f ./docker-compose.yml down",
     "dev:db-up": "docker compose --env-file .env -f ./docker-compose.yml up",
     "format": "biome check",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsgo --noEmit"
   },
   "type": "module",
   "version": "0.1.0"

@@ -96,6 +96,7 @@ export const CollectionTableView = <TData,>(props: CollectionTableViewProps<TDat
                               }),
                             )}
 
+                            {/** biome-ignore lint/a11y/useSemanticElements: this is the way */}
                             <div
                               aria-label='Resize column'
                               aria-valuenow={y.column.getSize()}

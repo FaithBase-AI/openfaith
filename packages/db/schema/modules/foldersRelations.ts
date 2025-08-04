@@ -1,3 +1,4 @@
+import { edgesTable } from '@openfaith/db/schema/modules/edgesSchema'
 import { foldersTable } from '@openfaith/db/schema/modules/foldersSchema'
 import { orgsTable } from '@openfaith/db/schema/orgsSchema'
 import { relations } from 'drizzle-orm'
@@ -20,4 +21,6 @@ export const folderRelations = relations(foldersTable, ({ one, many }) => ({
     references: [foldersTable.id],
     relationName: 'FolderHierarchy',
   }),
+  sourceEdges: many(edgesTable),
+  targetEdges: many(edgesTable),
 }))

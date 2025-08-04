@@ -1,7 +1,7 @@
 'use client'
 
+import { inviteMemberIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import { Button, UserPlusIcon } from '@openfaith/ui'
-import { inviteMemberIsOpenAtom } from 'features/quickActions/quickActionsState'
 import { useSetAtom } from 'jotai'
 import type { ComponentPropsWithoutRef, FC } from 'react'
 

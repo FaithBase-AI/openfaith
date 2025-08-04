@@ -17,7 +17,7 @@
     "dev": "zero-cache-dev -p zeroSchema.mts",
     "format": "biome check",
     "generate": "drizzle-zero generate -s drizzle-zero.config.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsgo --noEmit"
   },
   "type": "module",
   "version": "0.1.0"

@@ -59,7 +59,7 @@
     "dev": "bunx --bun vite dev --port 3000",
     "format": "biome check",
     "start": "bun .output/server/index.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsgo --noEmit"
   },
   "type": "module",
   "version": "0.1.0"

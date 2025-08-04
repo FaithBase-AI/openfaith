@@ -20,7 +20,7 @@
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
     "format": "biome check",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsgo --noEmit"
   },
   "type": "module",
   "version": "0.3.0"
