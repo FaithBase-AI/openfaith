@@ -8,6 +8,10 @@ export const usersRelations = relations(usersTable, ({ many }) => ({
   adapterTokens: many(adapterTokensTable),
   orgUsers: many(orgUsersTable),
   sentInvitations: many(invitationsTable),
-  sourceEdges: many(edgesTable),
-  targetEdges: many(edgesTable),
+  sourceEdges: many(edgesTable, {
+    relationName: 'UserSourceEdges',
+  }),
+  targetEdges: many(edgesTable, {
+    relationName: 'UserTargetEdges',
+  }),
 }))

@@ -8,6 +8,10 @@ export const addressRelations = relations(addressesTable, ({ one, many }) => ({
     fields: [addressesTable.orgId],
     references: [orgsTable.id],
   }),
-  sourceEdges: many(edgesTable),
-  targetEdges: many(edgesTable),
+  sourceEdges: many(edgesTable, {
+    relationName: 'AddressSourceEdges',
+  }),
+  targetEdges: many(edgesTable, {
+    relationName: 'AddressTargetEdges',
+  }),
 }))

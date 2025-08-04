@@ -39,12 +39,156 @@ export const schema = {
     },
     addresses: {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      sourceEdges: [
+        {
+          cardinality: 'many',
+          destField: ['sourceEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+      targetEdges: [
+        {
+          cardinality: 'many',
+          destField: ['targetEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
     },
     campuses: {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      sourceEdges: [
+        {
+          cardinality: 'many',
+          destField: ['sourceEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+      targetEdges: [
+        {
+          cardinality: 'many',
+          destField: ['targetEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
     },
     edges: {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      sourceAddress: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'addresses',
+          sourceField: ['sourceEntityId'],
+        },
+      ],
+      sourceCampus: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'campuses',
+          sourceField: ['sourceEntityId'],
+        },
+      ],
+      sourceFolder: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'folders',
+          sourceField: ['sourceEntityId'],
+        },
+      ],
+      sourceOrg: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['sourceEntityId'],
+        },
+      ],
+      sourcePerson: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'people',
+          sourceField: ['sourceEntityId'],
+        },
+      ],
+      sourcePhoneNumber: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'phoneNumbers',
+          sourceField: ['sourceEntityId'],
+        },
+      ],
+      sourceUser: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'users',
+          sourceField: ['sourceEntityId'],
+        },
+      ],
+      targetAddress: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'addresses',
+          sourceField: ['targetEntityId'],
+        },
+      ],
+      targetCampus: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'campuses',
+          sourceField: ['targetEntityId'],
+        },
+      ],
+      targetFolder: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'folders',
+          sourceField: ['targetEntityId'],
+        },
+      ],
+      targetOrg: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['targetEntityId'],
+        },
+      ],
+      targetPerson: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'people',
+          sourceField: ['targetEntityId'],
+        },
+      ],
+      targetPhoneNumber: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'phoneNumbers',
+          sourceField: ['targetEntityId'],
+        },
+      ],
+      targetUser: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'users',
+          sourceField: ['targetEntityId'],
+        },
+      ],
     },
     externalLinks: {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
@@ -65,6 +209,22 @@ export const schema = {
           destField: ['id'],
           destSchema: 'folders',
           sourceField: ['parentFolderId'],
+        },
+      ],
+      sourceEdges: [
+        {
+          cardinality: 'many',
+          destField: ['sourceEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+      targetEdges: [
+        {
+          cardinality: 'many',
+          destField: ['targetEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
         },
       ],
     },
@@ -171,6 +331,22 @@ export const schema = {
           sourceField: ['id'],
         },
       ],
+      sourceEdges: [
+        {
+          cardinality: 'many',
+          destField: ['sourceEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+      targetEdges: [
+        {
+          cardinality: 'many',
+          destField: ['targetEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
     },
     orgUsers: {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
@@ -201,9 +377,41 @@ export const schema = {
     },
     people: {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      sourceEdges: [
+        {
+          cardinality: 'many',
+          destField: ['sourceEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+      targetEdges: [
+        {
+          cardinality: 'many',
+          destField: ['targetEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
     },
     phoneNumbers: {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      sourceEdges: [
+        {
+          cardinality: 'many',
+          destField: ['sourceEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+      targetEdges: [
+        {
+          cardinality: 'many',
+          destField: ['targetEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
     },
     users: {
       adapterTokens: [
@@ -227,6 +435,22 @@ export const schema = {
           cardinality: 'many',
           destField: ['inviterId'],
           destSchema: 'invitations',
+          sourceField: ['id'],
+        },
+      ],
+      sourceEdges: [
+        {
+          cardinality: 'many',
+          destField: ['sourceEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+      targetEdges: [
+        {
+          cardinality: 'many',
+          destField: ['targetEntityId'],
+          destSchema: 'edges',
           sourceField: ['id'],
         },
       ],
@@ -1031,6 +1255,15 @@ export const schema = {
           >,
           optional: false,
           type: 'string',
+        },
+        syncing: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'externalLinksTable',
+            'syncing'
+          >,
+          optional: true,
+          type: 'boolean',
         },
         updatedAt: {
           customType: null as unknown as ZeroCustomType<

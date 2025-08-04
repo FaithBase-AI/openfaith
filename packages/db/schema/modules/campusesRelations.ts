@@ -9,6 +9,10 @@ export const campusRelations = relations(campusesTable, ({ one, many }) => ({
     fields: [campusesTable.orgId],
     references: [orgsTable.id],
   }),
-  sourceEdges: many(edgesTable),
-  targetEdges: many(edgesTable),
+  sourceEdges: many(edgesTable, {
+    relationName: 'CampusSourceEdges',
+  }),
+  targetEdges: many(edgesTable, {
+    relationName: 'CampusTargetEdges',
+  }),
 }))

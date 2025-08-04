@@ -8,6 +8,10 @@ export const phoneNumbersRelations = relations(phoneNumbersTable, ({ one, many }
     fields: [phoneNumbersTable.orgId],
     references: [orgsTable.id],
   }),
-  sourceEdges: many(edgesTable),
-  targetEdges: many(edgesTable),
+  sourceEdges: many(edgesTable, {
+    relationName: 'PhoneNumberSourceEdges',
+  }),
+  targetEdges: many(edgesTable, {
+    relationName: 'PhoneNumberTargetEdges',
+  }),
 }))

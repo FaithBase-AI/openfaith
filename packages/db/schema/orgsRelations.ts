@@ -25,8 +25,12 @@ export const orgsRelations = relations(orgsTable, ({ many, one }) => ({
     fields: [orgsTable.id],
     references: [orgSettingsTable.orgId],
   }),
-  sourceEdges: many(edgesTable),
-  targetEdges: many(edgesTable),
+  sourceEdges: many(edgesTable, {
+    relationName: 'OrgSourceEdges',
+  }),
+  targetEdges: many(edgesTable, {
+    relationName: 'OrgTargetEdges',
+  }),
 }))
 
 export const orgUsersRelations = relations(orgUsersTable, ({ one, many }) => ({

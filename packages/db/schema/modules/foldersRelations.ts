@@ -21,6 +21,10 @@ export const folderRelations = relations(foldersTable, ({ one, many }) => ({
     references: [foldersTable.id],
     relationName: 'FolderHierarchy',
   }),
-  sourceEdges: many(edgesTable),
-  targetEdges: many(edgesTable),
+  sourceEdges: many(edgesTable, {
+    relationName: 'FolderSourceEdges',
+  }),
+  targetEdges: many(edgesTable, {
+    relationName: 'FolderTargetEdges',
+  }),
 }))
