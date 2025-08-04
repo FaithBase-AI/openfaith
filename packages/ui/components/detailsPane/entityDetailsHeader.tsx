@@ -1,7 +1,6 @@
 import { useEntitySchema, useSchemaEntity } from '@openfaith/schema'
 import { formatLabel } from '@openfaith/shared'
 import { IconWrapper } from '@openfaith/ui/components/icons/iconWrapper'
-import { Skeleton } from '@openfaith/ui/components/ui/skeleton'
 import { useEntityIcon } from '@openfaith/ui/shared/entityIconHooks'
 import { Option, Schema } from 'effect'
 import type { FC } from 'react'
@@ -22,7 +21,7 @@ export const EntityDetailsHeader: FC<EntityDetailsHeaderProps> = (props) => {
   const { entityId, entityType } = props
 
   const schemaOpt = useEntitySchema(entityType)
-  const { IconComponent, loading: iconLoading } = useEntityIcon(entityType)
+  const { IconComponent } = useEntityIcon(entityType)
 
   // Always call the hook, but conditionally enable it
   const fallbackSchema = Schema.Struct({ id: Schema.String })
@@ -38,20 +37,6 @@ export const EntityDetailsHeader: FC<EntityDetailsHeaderProps> = (props) => {
     onSome: (entity: EntityData) =>
       entity.name || entity.title || `${formatLabel(entityType)} ${entityId}`,
   })
-
-  if (entityResult.loading || iconLoading) {
-    return (
-      <div className={'flex flex-row items-center gap-3'}>
-        <IconWrapper className={'text-muted-foreground'} size={6}>
-          <IconComponent />
-        </IconWrapper>
-        <div className={'flex flex-col'}>
-          <Skeleton className={'h-6 w-32'} />
-          <Skeleton className={'mt-1 h-4 w-24'} />
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className={'flex flex-row items-center gap-3'}>

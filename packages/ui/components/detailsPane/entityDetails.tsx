@@ -50,8 +50,10 @@ export const EntityDetails: FC<EntityDetailsProps> = (props) => {
 
   const schemaOpt = useEntitySchema(entityType)
 
+  // Always call the hook with fallback schema to prevent loading flash
+  const fallbackSchema = { fields: [] } as any
   const entityResult = useSchemaEntity(
-    Option.getOrElse(schemaOpt, () => null as any),
+    Option.getOrElse(schemaOpt, () => fallbackSchema),
     entityId,
     { enabled: Option.isSome(schemaOpt) },
   )
@@ -65,14 +67,6 @@ export const EntityDetails: FC<EntityDetailsProps> = (props) => {
         </ScrollArea>
       ),
       onSome: (schema) => {
-        if (entityResult.loading) {
-          return (
-            <ScrollArea viewportClassName={'pt-3 pb-4'}>
-              <div className={'p-4'}>Loading...</div>
-            </ScrollArea>
-          )
-        }
-
         const fields = extractSchemaFields(schema)
         const visibleFields = getVisibleFields(fields, 'table')
 
