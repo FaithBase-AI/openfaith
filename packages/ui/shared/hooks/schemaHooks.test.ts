@@ -1,5 +1,6 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
+import { noOp } from '@openfaith/shared'
 import {
   getSchemaByEntityType,
   SchemaInsertError,
@@ -9,7 +10,7 @@ import {
   useSchemaEntity,
   useSchemaInsert,
   useSchemaUpdate,
-} from '@openfaith/schema/shared/hooks'
+} from '@openfaith/ui/shared/hooks/schemaHooks'
 import { Effect, Option, Schema } from 'effect'
 
 // Test schemas
@@ -176,7 +177,7 @@ effect('Type validation: SchemaCollectionResult has correct structure', () =>
       error: null,
       limit: 100,
       loading: false,
-      nextPage: () => {},
+      nextPage: noOp,
       pageSize: 20,
     }
 

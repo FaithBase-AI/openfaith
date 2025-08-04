@@ -1,14 +1,9 @@
 'use client'
 
-import {
-  extractSchemaFields,
-  getContextConfig,
-  getVisibleFields,
-  useEntitySchema,
-  useSchemaEntity,
-} from '@openfaith/schema'
+import { extractSchemaFields, getContextConfig, getVisibleFields } from '@openfaith/schema'
 import { formatLabel } from '@openfaith/shared'
 import { ScrollArea } from '@openfaith/ui/components/ui/scroll-area'
+import { useEntitySchema, useSchemaEntity } from '@openfaith/ui/shared/hooks/schemaHooks'
 import { getCellRenderer } from '@openfaith/ui/table/cellRenderers'
 import { Array, Option, pipe } from 'effect'
 import type { FC } from 'react'

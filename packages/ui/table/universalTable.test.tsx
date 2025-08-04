@@ -1,10 +1,11 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
-import { UniversalTable, type UniversalTableProps } from '@openfaith/ui/table/universalTable'
+import type { UniversalTableProps } from '@openfaith/ui/table/universalTable'
 import { Effect, Schema } from 'effect'
 
-// Test schema and data
+// Test schema with entity tag (required for schema hooks)
 const TestSchema = Schema.Struct({
+  _tag: Schema.Literal('TestEntity'),
   email: Schema.String,
   hiddenField: Schema.String,
   id: Schema.Number,
@@ -14,73 +15,40 @@ const TestSchema = Schema.Struct({
 
 type TestData = Schema.Schema.Type<typeof TestSchema>
 
-const testData: Array<TestData> = [
-  {
-    email: 'john@example.com',
-    hiddenField: 'hidden1',
-    id: 1,
-    isActive: true,
-    name: 'John',
-  },
-  {
-    email: 'jane@example.com',
-    hiddenField: 'hidden2',
-    id: 2,
-    isActive: false,
-    name: 'Jane',
-  },
-]
-
 effect('UniversalTable accepts required props', () =>
   Effect.gen(function* () {
     const props: UniversalTableProps<TestData> = {
-      data: testData,
       schema: TestSchema,
     }
 
     expect(props.schema).toBe(TestSchema)
-    expect(props.data).toBe(testData)
   }),
 )
 
-effect('UniversalTable uses default values when props not provided', () =>
+effect('UniversalTable accepts optional props', () =>
   Effect.gen(function* () {
     const props: UniversalTableProps<TestData> = {
-      columnOverrides: {},
-      data: testData,
+      columnOverrides: {
+        name: {
+          header: 'Full Name',
+        },
+      },
       filtering: {
         filterColumnId: 'name',
         filterKey: 'test-filter',
         filterPlaceHolder: 'Search...',
       },
-      pagination: { limit: 100, pageSize: 10 },
       schema: TestSchema,
     }
 
-    expect(props.pagination?.pageSize).toBe(10)
-  }),
-)
-
-effect('UniversalTable accepts pagination configuration', () =>
-  Effect.gen(function* () {
-    const props: UniversalTableProps<TestData> = {
-      data: testData,
-      pagination: {
-        limit: 200,
-        pageSize: 25,
-      },
-      schema: TestSchema,
-    }
-
-    expect(props.pagination?.pageSize).toBe(25)
-    expect(props.pagination?.limit).toBe(200)
+    expect(props.columnOverrides?.name?.header).toBe('Full Name')
+    expect(props.filtering?.filterColumnId).toBe('name')
   }),
 )
 
 effect('UniversalTable accepts filtering configuration', () =>
   Effect.gen(function* () {
     const props: UniversalTableProps<TestData> = {
-      data: testData,
       filtering: {
         filterColumnId: 'email',
         filterKey: 'email-filter',
@@ -96,38 +64,24 @@ effect('UniversalTable accepts filtering configuration', () =>
 
 effect('UniversalTable accepts Actions component', () =>
   Effect.gen(function* () {
-    const ActionsComponent = () => 'Actions'
+    const ActionsComponent = 'Actions'
     const props: UniversalTableProps<TestData> = {
-      Actions: ActionsComponent(),
-      data: testData,
+      Actions: ActionsComponent,
       schema: TestSchema,
     }
 
-    expect(props.Actions).toBeDefined()
-  }),
-)
-
-effect('UniversalTable accepts column overrides', () =>
-  Effect.gen(function* () {
-    const props: UniversalTableProps<TestData> = {
-      columnOverrides: {
-        name: { header: 'Full Name', size: 200 },
-      },
-      data: testData,
-      schema: TestSchema,
-    }
-
-    expect(props.columnOverrides?.name?.header).toBe('Full Name')
+    expect(props.Actions).toBe(ActionsComponent)
   }),
 )
 
 effect('UniversalTable accepts event handlers', () =>
   Effect.gen(function* () {
-    const onRowClick = (row: TestData) => console.log(row)
-    const onRowSelect = (rows: Array<TestData>) => console.log(rows)
+    const onRowClick = (row: TestData) => row
+    const onRowSelect = (rows: Array<TestData>) => rows
+    const onEditRow = (row: TestData) => row
 
     const props: UniversalTableProps<TestData> = {
-      data: testData,
+      onEditRow,
       onRowClick,
       onRowSelect,
       schema: TestSchema,
@@ -135,13 +89,24 @@ effect('UniversalTable accepts event handlers', () =>
 
     expect(typeof props.onRowClick).toBe('function')
     expect(typeof props.onRowSelect).toBe('function')
+    expect(typeof props.onEditRow).toBe('function')
   }),
 )
 
-effect('UniversalTable accepts loading state', () =>
+effect('UniversalTable accepts className', () =>
   Effect.gen(function* () {
     const props: UniversalTableProps<TestData> = {
-      data: testData,
+      className: 'custom-table-class',
+      schema: TestSchema,
+    }
+
+    expect(props.className).toBe('custom-table-class')
+  }),
+)
+
+effect('UniversalTable accepts loading state override', () =>
+  Effect.gen(function* () {
+    const props: UniversalTableProps<TestData> = {
       loading: true,
       schema: TestSchema,
     }
@@ -150,87 +115,63 @@ effect('UniversalTable accepts loading state', () =>
   }),
 )
 
-effect('UniversalTable accepts className', () =>
+effect('UniversalTable accepts column overrides', () =>
   Effect.gen(function* () {
     const props: UniversalTableProps<TestData> = {
-      className: 'custom-table-class',
-      data: testData,
+      columnOverrides: {
+        email: {
+          header: 'Email Address',
+          size: 200,
+        },
+        name: {
+          header: 'Full Name',
+        },
+      },
       schema: TestSchema,
     }
 
-    expect(props.className).toBe('custom-table-class')
+    expect(props.columnOverrides?.email?.header).toBe('Email Address')
+    expect(props.columnOverrides?.email?.size).toBe(200)
+    expect(props.columnOverrides?.name?.header).toBe('Full Name')
   }),
 )
 
-effect('UniversalTable works with empty data', () =>
+// Type-level tests
+effect('UniversalTable props should be type-safe', () =>
   Effect.gen(function* () {
-    const props: UniversalTableProps<TestData> = {
-      data: [],
+    // This test validates that the TypeScript compiler correctly enforces the prop types
+    const validProps: UniversalTableProps<TestData> = {
       schema: TestSchema,
     }
 
-    expect(props.data).toHaveLength(0)
+    // Test that schema is required
+    expect(validProps.schema).toBeDefined()
+
+    // Test that all optional props can be omitted
+    expect(validProps.columnOverrides).toBeUndefined()
+    expect(validProps.onRowClick).toBeUndefined()
+    expect(validProps.onRowSelect).toBeUndefined()
+    expect(validProps.onEditRow).toBeUndefined()
+    expect(validProps.className).toBeUndefined()
+    expect(validProps.Actions).toBeUndefined()
+    expect(validProps.filtering).toBeUndefined()
+    expect(validProps.loading).toBeUndefined()
   }),
 )
 
-effect('UniversalTable works with minimal schema', () =>
+effect('UniversalTable should work with different schema types', () =>
   Effect.gen(function* () {
-    const MinimalSchema = Schema.Struct({
+    const SimpleSchema = Schema.Struct({
+      _tag: Schema.Literal('Simple'),
       id: Schema.Number,
     })
 
-    type MinimalData = Schema.Schema.Type<typeof MinimalSchema>
+    type SimpleData = Schema.Schema.Type<typeof SimpleSchema>
 
-    const props: UniversalTableProps<MinimalData> = {
-      data: [{ id: 1 }],
-      schema: MinimalSchema,
+    const props: UniversalTableProps<SimpleData> = {
+      schema: SimpleSchema,
     }
 
-    expect(props.data).toHaveLength(1)
-  }),
-)
-
-effect('UniversalTable component is a valid React component', () =>
-  Effect.gen(function* () {
-    expect(typeof UniversalTable).toBe('function')
-    expect(UniversalTable.name).toBe('UniversalTable')
-  }),
-)
-
-effect('UniversalTable props interface is properly typed', () =>
-  Effect.gen(function* () {
-    // This test validates that the TypeScript interface is working correctly
-    const validProps: UniversalTableProps<TestData> = {
-      Actions: 'Actions Component',
-      CollectionCard: 'Collection Card Component',
-      className: 'test-class',
-      columnOverrides: {
-        name: { header: 'Name Override' },
-      },
-      data: testData,
-      filtering: {
-        filterColumnId: 'name',
-        filterKey: 'test-filter',
-        filterPlaceHolder: 'Search...',
-      },
-      loading: false,
-      onRowClick: (row) => console.log('Row clicked:', row),
-      onRowSelect: (rows) => console.log('Rows selected:', rows),
-      pagination: { limit: 100, pageSize: 25 },
-      schema: TestSchema,
-    }
-
-    // Verify all properties are accessible
-    expect(validProps.data).toBeDefined()
-    expect(validProps.schema).toBeDefined()
-    expect(validProps.columnOverrides).toBeDefined()
-    expect(validProps.pagination).toBeDefined()
-    expect(validProps.filtering).toBeDefined()
-    expect(validProps.onRowClick).toBeDefined()
-    expect(validProps.onRowSelect).toBeDefined()
-    expect(validProps.className).toBeDefined()
-    expect(validProps.Actions).toBeDefined()
-    expect(validProps.CollectionCard).toBeDefined()
-    expect(validProps.loading).toBeDefined()
+    expect(props.schema).toBe(SimpleSchema)
   }),
 )

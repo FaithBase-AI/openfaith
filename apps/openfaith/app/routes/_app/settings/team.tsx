@@ -6,9 +6,5 @@ export const Route = createFileRoute('/_app/settings/team')({
 })
 
 function RouteComponent() {
-  return (
-    <div className='flex flex-1 flex-col p-6'>
-      <OrgUsersTable />
-    </div>
-  )
+  return <OrgUsersTable />
 }

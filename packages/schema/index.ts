@@ -9,7 +9,7 @@ export * from '@openfaith/schema/shared/customFieldsSchema'
 export * from '@openfaith/schema/shared/defaultValues'
 export * from '@openfaith/schema/shared/entityDiscovery'
 export * from '@openfaith/schema/shared/filtering'
-export * from '@openfaith/schema/shared/hooks'
+
 export * from '@openfaith/schema/shared/introspection'
 export * from '@openfaith/schema/shared/recordTypes'
 export * from '@openfaith/schema/shared/schema'

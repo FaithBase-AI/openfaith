@@ -2,14 +2,17 @@ import { Rx } from '@effect-rx/rx-react'
 import { useRxMutation } from '@openfaith/openfaith/shared/hooks/rxHooks'
 import { discoverUiEntities } from '@openfaith/schema/shared/entityDiscovery'
 import { extractEntityTag } from '@openfaith/schema/shared/introspection'
-import { getEntityId, mkZeroTableName, nullOp } from '@openfaith/shared'
+import { getEntityId, mkZeroTableName } from '@openfaith/shared'
 import { toast } from '@openfaith/ui/components/ui/sonner'
+import { useFilterQuery } from '@openfaith/ui/shared/hooks/useFilterQuery'
+import type { ZSchema } from '@openfaith/zero'
 import {
   getBaseEntitiesQuery,
   getBaseEntityQuery,
   getBaseMutator,
 } from '@openfaith/zero/baseQueries'
 import { useZero } from '@openfaith/zero/useZero'
+import type { Query } from '@rocicorp/zero'
 import { useQuery } from '@rocicorp/zero/react'
 import { Array, Effect, Option, pipe, Schema, type Schema as SchemaType, String } from 'effect'
 import type { Option as OptionType } from 'effect/Option'
@@ -282,60 +285,50 @@ export const useSchemaUpdate = <T>(
   return mutation
 }
 
-// Schema Collection Hook
-export interface SchemaCollectionResult<T> {
-  data: Array<T>
-  loading: boolean
-  error: string | null
-  nextPage: () => void
-  pageSize: number
-  limit: number
-}
-
-/**
- * Hook that provides collection data for a given schema using Zero queries
+/*
+ * Hook that provides collection data for a given schema using Zero queries with filtering support
  */
-export const useSchemaCollection = <T>(
-  schema: SchemaType.Schema<T>,
-  options: {
-    pageSize?: number
-    limit?: number
-    enabled?: boolean
-  } = {},
-): SchemaCollectionResult<T> => {
-  const { pageSize = 20, limit = 100, enabled = true } = options
+export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> }) => {
+  const { schema } = params
 
-  const z = useZero()
+  const entityTag = extractEntityTag(schema.ast)
 
-  const entityTag = useMemo(() => extractEntityTag(schema.ast), [schema])
+  const filterKey = pipe(
+    entityTag,
+    Option.match({
+      onNone: () => 'default',
+      onSome: (tag) => `${String.toLowerCase(tag)}Filters`,
+    }),
+  )
 
-  const query = useMemo(() => {
-    if (!enabled) return null
-
+  const queryFn = (z: ReturnType<typeof useZero>) => {
     return pipe(
       entityTag,
       Option.match({
         onNone: () => null,
         onSome: (tag) => {
           const tableName = mkZeroTableName(String.capitalize(tag))
+
           return getBaseEntitiesQuery(z, tableName)
         },
       }),
     )
-  }, [z, entityTag, enabled])
-  const [data, info] = useQuery(query as Parameters<typeof useQuery>[0])
+  }
 
-  return useMemo(
-    () => ({
-      data: (data || []) as Array<T>,
-      error: null,
-      limit,
-      loading: info.type !== 'complete',
-      nextPage: nullOp,
-      pageSize,
-    }),
-    [data, info, pageSize, limit],
-  )
+  const { info, limit, nextPage, pageSize, result } = useFilterQuery({
+    filterKey,
+    query: queryFn as (
+      z: ReturnType<typeof useZero>,
+    ) => Query<ZSchema, keyof ZSchema['tables'] & string, T>,
+  })
+
+  return {
+    collection: (result || []) as Array<T>,
+    limit,
+    loading: info.type !== 'complete',
+    nextPage,
+    pageSize,
+  }
 }
 
 // Schema Entity Hook

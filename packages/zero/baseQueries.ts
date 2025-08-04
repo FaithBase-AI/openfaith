@@ -21,6 +21,13 @@ export const getBaseOrgsQuery = (z: ReturnType<typeof useZero>) =>
 export const getBaseOrgQuery = (z: ReturnType<typeof useZero>, orgId: string) =>
   getBaseOrgsQuery(z).where('id', orgId).one()
 
+// OrgUsers
+export const getBaseOrgUsersQuery = (z: ReturnType<typeof useZero>) =>
+  z.query.orgUsers.whereExists('user').related('user')
+
+export const getBaseOrgUserQuery = (z: ReturnType<typeof useZero>, userId: string) =>
+  z.query.orgUsers.related('user').where('id', userId).one()
+
 export const getBaseEntitiesQuery = (z: ReturnType<typeof useZero>, entityName: string) => {
   if (entityName in z.query) {
     return z.query[entityName as keyof typeof z.query]

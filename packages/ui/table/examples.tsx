@@ -4,6 +4,7 @@ import { Schema } from 'effect'
 
 // Example schema with table annotations
 export const PersonWithTableSchema = Schema.Struct({
+  _tag: Schema.Literal('Person'),
   age: Schema.Number.annotations({
     [OfUiConfig]: {
       field: {
@@ -146,6 +147,7 @@ export type PersonWithTable = typeof PersonWithTableSchema.Type
 // Sample data
 export const samplePeople: Array<PersonWithTable> = [
   {
+    _tag: 'Person' as const,
     age: 30,
     avatar:
       'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face',
@@ -158,6 +160,7 @@ export const samplePeople: Array<PersonWithTable> = [
     salary: 75000,
   },
   {
+    _tag: 'Person' as const,
     age: 28,
     avatar:
       'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face',
@@ -170,6 +173,7 @@ export const samplePeople: Array<PersonWithTable> = [
     salary: 68000,
   },
   {
+    _tag: 'Person' as const,
     age: 35,
     avatar: null,
     bio: 'Marketing specialist with creative background.',
@@ -181,6 +185,7 @@ export const samplePeople: Array<PersonWithTable> = [
     salary: null,
   },
   {
+    _tag: 'Person' as const,
     age: 32,
     avatar:
       'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=32&h=32&fit=crop&crop=face',
@@ -195,9 +200,9 @@ export const samplePeople: Array<PersonWithTable> = [
 ]
 
 // Example 1: Fully Automatic Table
+// Note: UniversalTable now gets data from schema hooks automatically
 export const AutomaticPersonTable = () => (
   <UniversalTable
-    data={samplePeople}
     onRowClick={(person) => {
       console.log('Clicked person:', person)
     }}
@@ -216,11 +221,9 @@ export const CustomPersonTable = () => (
         },
       },
     }}
-    data={samplePeople}
     onRowSelect={(selectedPeople) => {
       console.log('Selected people:', selectedPeople)
     }}
-    pagination={{ pageSize: 50 }}
     schema={PersonWithTableSchema}
   />
 )
@@ -229,9 +232,8 @@ export const CustomPersonTable = () => (
 export const AdvancedPersonTable = () => (
   <UniversalTable
     className='rounded-lg shadow-lg'
-    data={samplePeople}
     filtering={{
-      filterColumnId: 'name',
+      filterColumnId: 'firstName',
       filterKey: 'people-filter',
       filterPlaceHolder: 'Search people...',
     }}
@@ -241,15 +243,9 @@ export const AdvancedPersonTable = () => (
     onRowSelect={(people) => {
       console.log('Bulk selected people:', people)
     }}
-    pagination={{
-      limit: 100,
-      pageSize: 25,
-    }}
     schema={PersonWithTableSchema}
   />
 )
 
 // Example 4: Simple Table (minimal configuration)
-export const SimplePersonTable = () => (
-  <UniversalTable data={samplePeople} schema={PersonWithTableSchema} />
-)
+export const SimplePersonTable = () => <UniversalTable schema={PersonWithTableSchema} />

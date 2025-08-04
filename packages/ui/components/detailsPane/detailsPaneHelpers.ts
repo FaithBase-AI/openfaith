@@ -1,4 +1,4 @@
-import { nullOp } from '@openfaith/shared'
+import { noOp, nullOp } from '@openfaith/shared'
 import type {
   DetailsPaneEntity,
   DetailsPaneParams,
@@ -153,8 +153,8 @@ export function useChangeDetailsPaneEntityId() {
         })),
         Option.match({
           onNone: () => ({
-            forceNav: () => {},
-            onClick: () => {},
+            forceNav: noOp,
+            onClick: noOp,
             search: (prev: any) => prev,
             to: '.',
           }),

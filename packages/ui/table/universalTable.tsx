@@ -1,5 +1,4 @@
-import { extractEntityInfo, useSchemaCollection } from '@openfaith/schema'
-import { nullOp } from '@openfaith/shared'
+import { extractEntityInfo } from '@openfaith/schema'
 import { Collection } from '@openfaith/ui/components/collections/collection'
 import { Button } from '@openfaith/ui/components/ui/button'
 import {
@@ -10,6 +9,7 @@ import {
 } from '@openfaith/ui/components/ui/dropdown-menu'
 import { EditIcon } from '@openfaith/ui/icons/editIcon'
 import { MoreVerticalIcon } from '@openfaith/ui/icons/moreVerticalIcon'
+import { useSchemaCollection } from '@openfaith/ui/shared/hooks/schemaHooks'
 import { generateColumns } from '@openfaith/ui/table/columnGenerator'
 import { generateFilterConfig } from '@openfaith/ui/table/filterGenerator'
 import { useUniversalTableEdit } from '@openfaith/ui/table/useUniversalTableEdit'
@@ -20,7 +20,6 @@ import { useMemo } from 'react'
 
 export interface UniversalTableProps<T> {
   schema: Schema.Schema<T>
-  data?: Array<T> // Optional - if not provided, will fetch from Zero
   columnOverrides?: Partial<Record<keyof T, Partial<ColumnDef<T>>>>
   onRowClick?: (row: T) => void
   onRowSelect?: (rows: Array<T>) => void
@@ -28,11 +27,7 @@ export interface UniversalTableProps<T> {
   className?: string
   Actions?: ReactNode
   CollectionCard?: any // CollectionCardComponent type
-  pagination?: {
-    pageSize?: number
-    limit?: number
-    nextPage?: () => void
-  }
+
   filtering?: {
     filterColumnId?: string
     filterPlaceHolder?: string
@@ -44,14 +39,12 @@ export interface UniversalTableProps<T> {
 export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
   const {
     schema,
-    data,
     columnOverrides = {},
     // onRowClick,
     // onRowSelect,
     onEditRow: providedOnEditRow,
     Actions,
     CollectionCard,
-    pagination = { limit: 100, nextPage: nullOp, pageSize: 20 },
     filtering = {},
   } = props
 
@@ -62,11 +55,7 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
     return extractEntityInfo(schema)
   }, [schema])
 
-  const collectionResult = useSchemaCollection(schema, {
-    enabled: !data,
-    limit: pagination.limit,
-    pageSize: pagination.pageSize,
-  })
+  const { collection, nextPage, pageSize, limit } = useSchemaCollection({ schema })
 
   const columns = useMemo(() => {
     const baseColumns = generateColumns(schema, columnOverrides)
@@ -109,25 +98,20 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
 
   const entityName = entityInfo.entityName || 'items'
 
-  const finalData = data || collectionResult.data
-  const finalNextPage = pagination.nextPage || collectionResult.nextPage
-
   return (
     <Collection
       _tag={entityInfo.entityTag || 'default'}
       Actions={Actions || null}
       CollectionCard={CollectionCard}
       columnsDef={columns}
-      data={finalData}
+      data={collection}
       filterColumnId={filtering.filterColumnId || 'name'}
       filterKey={filtering.filterKey || `${entityName}-filter`}
       filterPlaceHolder={filtering.filterPlaceHolder || `Search ${entityName}...`}
       filtersDef={filtersDef}
-      filtersOptions={undefined}
-      limit={pagination.limit || collectionResult.limit}
-      nextPage={finalNextPage}
-      pageSize={pagination.pageSize || collectionResult.pageSize}
-      rowSize={undefined}
+      limit={limit}
+      nextPage={nextPage}
+      pageSize={pageSize}
     />
   )
 }

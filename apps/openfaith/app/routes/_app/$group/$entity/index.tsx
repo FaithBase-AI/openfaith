@@ -1,6 +1,6 @@
 import { useSchemaQuickActions } from '@openfaith/openfaith/features/quickActions/schemaQuickActions'
 import { discoverUiEntities } from '@openfaith/schema'
-import { pluralize, singularize } from '@openfaith/shared'
+import { noOp, pluralize, singularize } from '@openfaith/shared'
 import { Button, PlusIcon, UniversalTable } from '@openfaith/ui'
 import { useStableMemo } from '@openfaith/ui/shared/hooks/memo'
 import { createFileRoute } from '@tanstack/react-router'
@@ -57,7 +57,7 @@ function RouteComponent() {
     pipe(
       quickActionKeyOpt,
       Option.match({
-        onNone: () => {},
+        onNone: noOp,
         onSome: (key) => {
           setIsOpen(key, true)
         },
@@ -97,10 +97,6 @@ function RouteComponent() {
                   filterColumnId: 'name',
                   filterKey: `${group}-${entity}-filter`,
                   filterPlaceHolder: `Search ${pipe(config.navItem.title, String.toLowerCase)}...`,
-                }}
-                pagination={{
-                  limit: 100,
-                  pageSize: 20,
                 }}
                 schema={schema}
               />

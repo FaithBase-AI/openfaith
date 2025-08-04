@@ -2,11 +2,14 @@ import { authClient } from '@openfaith/auth/authClient'
 import { OrgRole } from '@openfaith/openfaith/data/orgs/orgsShared'
 import { useOrgId } from '@openfaith/openfaith/data/users/useOrgId'
 import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
-import { useStableMemo } from '@openfaith/ui'
-import { getBaseOrgQuery, useZero } from '@openfaith/zero'
-import type { OrgUserClientShape } from '@openfaith/zero/clientShapes'
+import {
+  getBaseOrgQuery,
+  getBaseOrgUsersQuery,
+  type OrgUserClientShape,
+  useZero,
+} from '@openfaith/zero'
 import { useQuery } from '@rocicorp/zero/react'
-import { Array, Equivalence, Option, pipe, String } from 'effect'
+import { Array, Option, pipe } from 'effect'
 
 export function useAuthOrgOpt() {
   const { data, isPending } = authClient.useActiveOrganization()
@@ -31,34 +34,22 @@ export function useOrgOpt() {
 }
 
 export function useOrgUsers() {
-  const { orgOpt, loading } = useOrgOpt()
+  const orgId = useOrgId()
 
-  const orgUsersCollection = useStableMemo(
-    () =>
-      pipe(
-        orgOpt,
-        Option.match({
-          onNone: (): Array<OrgUserClientShape> => [],
-          onSome: (x) => x.orgUsers || [],
-        }),
-      ),
-    [orgOpt],
-    Equivalence.tuple(
-      Option.getEquivalence(
-        Equivalence.struct({
-          orgUsers: Array.getEquivalence(
-            Equivalence.struct({
-              id: String.Equivalence,
-            }),
-          ),
-        }),
-      ),
-    ),
+  const z = useZero()
+
+  const [orgUsersCollection, info] = useQuery(
+    getBaseOrgUsersQuery(z).where('orgId', orgId),
+    orgId !== 'noOrganization',
   )
 
   return {
-    loading,
-    orgUsersCollection,
+    loading: info.type !== 'complete',
+    orgUsersCollection: pipe(
+      orgUsersCollection,
+      Option.fromNullable,
+      Option.getOrElse(() => []),
+    ) as Array<OrgUserClientShape>,
   }
 }
 
