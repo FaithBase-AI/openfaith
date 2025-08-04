@@ -18,8 +18,7 @@
     "@typescript/native-preview": "^7.0.0-dev.20250804.1",
     "jest": "^30.0.5",
     "jscodeshift": "^17.3.0",
-    "turbo": "2.5.5",
-    "typescript": "5.8.3"
+    "turbo": "2.5.5"
   },
   "name": "openfaith",
   "packageManager": "bun@1.2.19",
@@ -91,7 +90,7 @@
       "superjson": "2.2.2",
       "tailwindcss": "4.1.8",
       "typeid-js": "1.2.0",
-      "typescript": "5.8.3"
+      "typescript": "5.9.2"
     },
     "packages": [
       "adapters/*",
