@@ -13,7 +13,6 @@ import { OrgSwitcher } from '@openfaith/openfaith/components/orgSwitcher'
 import { formatLabel } from '@openfaith/shared'
 import {
   CommentTextIcon,
-  cn,
   HomeIcon,
   Sidebar,
   SidebarContent,
@@ -45,12 +44,10 @@ const moduleSections = pipe(
 type AppSidebarProps = ComponentProps<typeof Sidebar>
 
 export const AppNavigation: FC<AppSidebarProps> = (props) => {
-  const { className, ...domProps } = props
-
   const { iconComponents } = useEntityIcons(allEntities)
 
   return (
-    <Sidebar className={cn(className)} collapsible={'icon'} variant='inset' {...domProps}>
+    <Sidebar collapsible={'icon'} variant='inset' {...props}>
       <SidebarHeader>
         <OrgSwitcher />
       </SidebarHeader>

@@ -1,11 +1,12 @@
 /// <reference types="vite/client" />
 import { NotFound } from '@openfaith/openfaith/components/notFound'
 import type { SessionContextType } from '@openfaith/openfaith/shared/auth/sessionInit'
+import { Providers } from '@openfaith/openfaith/shared/providers'
 import appCss from '@openfaith/openfaith/styles/app.css?url'
+import { HeightWrapper } from '@openfaith/ui'
 import type { Mutators, ZSchema } from '@openfaith/zero'
 import type { Zero } from '@rocicorp/zero'
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
-import { Providers } from 'shared/providers'
 
 export interface RouterAppContext {
   zero: Zero<ZSchema, Mutators>
@@ -44,9 +45,11 @@ function RootDocument() {
       <head>
         <HeadContent />
       </head>
-      <body className='font-regular tracking-wide antialiased'>
+      <body className='overscroll-none font-sans antialiased'>
         <Providers>
-          <Outlet />
+          <HeightWrapper>
+            <Outlet />
+          </HeightWrapper>
         </Providers>
         <Scripts />
       </body>
