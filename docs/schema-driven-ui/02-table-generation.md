@@ -84,7 +84,7 @@ export const PersonWithTableSchema = Schema.Struct({
   email: Schema.String.pipe(
     Schema.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, {
       message: () => "Invalid email address",
-    }),
+    })
   ).annotations({
     [OfUiConfig]: {
       field: {
@@ -157,7 +157,7 @@ export const PersonWithTableSchema = Schema.Struct({
     "Engineering",
     "Sales",
     "Marketing",
-    "HR",
+    "HR"
   ).annotations({
     [OfUiConfig]: {
       field: {
@@ -228,7 +228,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 export const generateColumns = <T>(
   schema: Schema.Schema<T>,
-  overrides: Partial<Record<keyof T, Partial<ColumnDef<T>>>> = {},
+  overrides: Partial<Record<keyof T, Partial<ColumnDef<T>>>> = {}
 ): ColumnDef<T>[] => {
   const fields = extractSchemaFields(schema);
   const columns: ColumnDef<T>[] = [];
@@ -238,7 +238,7 @@ export const generateColumns = <T>(
 
     // Get UI config from annotation
     const uiConfig = SchemaAST.getAnnotation<FieldConfig>(OfUiConfig)(
-      field.schema,
+      field.schema
     );
     const tableConfig = uiConfig?.table;
 
@@ -268,7 +268,7 @@ export const generateColumns = <T>(
 // Auto-detect table config from schema when no annotation is provided
 const autoDetectTableConfig = (
   schema: Schema.Schema.AnyNoContext,
-  fieldName: string,
+  fieldName: string
 ): Partial<FieldConfig["table"]> => {
   const ast = schema.ast;
 

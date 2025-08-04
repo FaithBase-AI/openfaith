@@ -1,5 +1,6 @@
 'use client'
 
+import { formatLabel } from '@openfaith/shared'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,7 +10,7 @@ import {
   BreadcrumbSeparator,
 } from '@openfaith/ui'
 import { Link, useRouterState } from '@tanstack/react-router'
-import { Array, pipe, String } from 'effect'
+import { Array, pipe } from 'effect'
 import type { ReactNode } from 'react'
 
 // Define breadcrumb renderers for specific route patterns
@@ -22,24 +23,11 @@ const renderBreadcrumb = (segment: string): ReactNode => {
   // Handle dynamic segments (starting with $)
   if (segment.startsWith('$')) {
     const paramName = segment.slice(1)
-    // Convert camelCase to readable format
-    return pipe(
-      paramName,
-      String.split(/(?=[A-Z])/), // Split on camelCase
-      Array.map(String.toLowerCase),
-      Array.join(' '),
-      String.capitalize,
-    )
+    return formatLabel(paramName)
   }
 
-  // For regular segments, convert kebab-case or snake_case to Title Case
-  return pipe(
-    segment,
-    String.replace(/-|_/g, ' '),
-    String.split(' '),
-    Array.map(String.capitalize),
-    Array.join(' '),
-  )
+  // For regular segments, use formatLabel to handle all cases
+  return formatLabel(segment)
 }
 
 const buildBreadcrumbPath = (segments: Array<string>, index: number): string => {

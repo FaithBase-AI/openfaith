@@ -4,7 +4,7 @@ import {
   useSchemaEditActions,
   useSchemaQuickActions,
 } from '@openfaith/openfaith/features/quickActions/schemaQuickActions'
-import { UniversalQuickAction } from '@openfaith/openfaith/features/quickActions/UniversalQuickAction'
+import { UniversalQuickAction } from '@openfaith/openfaith/features/quickActions/universalQuickAction'
 import { Array, pipe } from 'effect'
 import type { FC } from 'react'
 

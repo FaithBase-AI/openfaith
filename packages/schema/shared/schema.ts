@@ -69,6 +69,7 @@ export interface FieldConfig {
       | 'badge'
       | 'avatar'
       | 'link'
+      | 'entityLink'
     hidden?: boolean
     pinned?: 'left' | 'right'
     order?: number

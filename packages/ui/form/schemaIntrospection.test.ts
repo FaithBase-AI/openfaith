@@ -4,13 +4,13 @@ import {
   extractAST,
   extractLiteralOptions,
   extractSchemaFields,
-  formatLabel,
   getUiConfig,
   getUiConfigFromAST,
   hasEmailPattern,
 } from '@openfaith/schema'
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { BaseSystemFieldsSchema } from '@openfaith/schema/shared/systemSchema'
+import { formatLabel } from '@openfaith/shared'
 import { Effect, Schema } from 'effect'
 
 // Test schemas

@@ -10,6 +10,7 @@ import {
 } from '@openfaith/openfaith/components/navigation/schemaNavigation'
 import { SideBarItem } from '@openfaith/openfaith/components/navigation/sideBarItem'
 import { OrgSwitcher } from '@openfaith/openfaith/components/orgSwitcher'
+import { formatLabel } from '@openfaith/shared'
 import {
   CommentTextIcon,
   cn,
@@ -25,31 +26,28 @@ import {
 } from '@openfaith/ui'
 import { Link } from '@tanstack/react-router'
 import { Array, HashMap, Option, pipe, Record } from 'effect'
-import { type ComponentProps, createElement, type FC, useMemo } from 'react'
+import { type ComponentProps, createElement, type FC } from 'react'
+
+const navigationByModule = getNavigationByModule()
+
+const allEntities = pipe(navigationByModule, Record.values, Array.flatten)
+
+const moduleSections = pipe(
+  navigationByModule,
+  Record.toEntries,
+  Array.map(([moduleKey, entities]) => ({
+    entities,
+    key: moduleKey,
+    label: formatLabel(moduleKey),
+  })),
+)
 
 type AppSidebarProps = ComponentProps<typeof Sidebar>
 
 export const AppNavigation: FC<AppSidebarProps> = (props) => {
   const { className, ...domProps } = props
 
-  const navigationByModule = useMemo(() => getNavigationByModule(), [])
-
-  const allEntities = useMemo(
-    () => pipe(navigationByModule, Record.values, Array.flatten),
-    [navigationByModule],
-  )
-
   const { iconComponents } = useEntityIcons(allEntities)
-
-  const moduleSections = pipe(
-    navigationByModule,
-    Record.toEntries,
-    Array.map(([moduleKey, entities]) => ({
-      entities,
-      key: moduleKey,
-      label: moduleKey.charAt(0).toUpperCase() + moduleKey.slice(1),
-    })),
-  )
 
   return (
     <Sidebar className={cn(className)} collapsible={'icon'} variant='inset' {...domProps}>

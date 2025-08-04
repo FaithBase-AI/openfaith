@@ -1,4 +1,4 @@
-import { Array, flow, pipe, Record, String } from 'effect'
+import { Array, flow, Match, Option, pipe, Record, String } from 'effect'
 
 const irregularPlurals: Record<string, string> = {
   address: 'addresses',
@@ -112,20 +112,27 @@ export function singularize(word: string): string {
 
 // Helper function to preserve the case pattern of the original word
 function preserveCase(original: string, transformed: string): string {
-  if (original.length === 0) return transformed
+  if (pipe(original, String.length) === 0) {
+    return transformed
+  }
 
   // If original is all uppercase
-  if (original === original.toUpperCase()) {
-    return transformed.toUpperCase()
+  if (original === pipe(original, String.toUpperCase)) {
+    return pipe(transformed, String.toUpperCase)
   }
 
   // If original starts with uppercase
-  if (original[0] === original[0]?.toUpperCase()) {
-    return transformed.charAt(0).toUpperCase() + transformed.slice(1).toLowerCase()
+  const firstChar = pipe(
+    original,
+    String.charAt(0),
+    Option.getOrElse(() => ''),
+  )
+  if (firstChar === pipe(firstChar, String.toUpperCase)) {
+    return pipe(transformed, String.capitalize, String.toLowerCase, String.capitalize)
   }
 
   // Otherwise, return lowercase
-  return transformed.toLowerCase()
+  return pipe(transformed, String.toLowerCase)
 }
 
 /**
@@ -152,3 +159,42 @@ export const mkEntityType = flow(String.snakeToPascal, String.toLowerCase, singu
  * Converts entity name to standardized URL parameter name (Person -> personId, PhoneNumber -> phoneNumberId)
  */
 export const mkUrlParamName = flow(String.uncapitalize, String.concat('Id'))
+
+/**
+ * Formats a field name into a human-readable label using Effect-TS String utilities
+ * Handles snake_case, kebab-case, camelCase, PascalCase, and mixed formats
+ * Examples:
+ * - "first_name" -> "First Name"
+ * - "firstName" -> "First Name"
+ * - "FirstName" -> "First Name"
+ * - "first-name" -> "First Name"
+ * - "phoneNumber2" -> "Phone Number 2"
+ */
+export const formatLabel = (fieldName: string): string =>
+  pipe(
+    fieldName,
+    Match.value,
+    Match.when(String.isEmpty, () => ''),
+    Match.when(String.includes(' '), (name) =>
+      pipe(name, String.split(' '), Array.map(String.capitalize), Array.join(' ')),
+    ),
+    Match.when(String.includes('_'), (name) =>
+      pipe(name, String.split('_'), Array.map(String.capitalize), Array.join(' ')),
+    ),
+    Match.when(String.includes('-'), (name) =>
+      pipe(name, String.split('-'), Array.map(String.capitalize), Array.join(' ')),
+    ),
+    Match.orElse((name) =>
+      pipe(
+        name,
+        // Convert camelCase/PascalCase to kebab-case with regex for numbers
+        String.replace(/([a-z])([A-Z])/g, '$1-$2'),
+        String.replace(/([a-z])(\d)/g, '$1-$2'),
+        String.replace(/(\d)([A-Z])/g, '$1-$2'),
+        String.toLowerCase,
+        String.split('-'),
+        Array.map(String.capitalize),
+        Array.join(' '),
+      ),
+    ),
+  )

@@ -1,12 +1,13 @@
 import {
   autoDetectCellConfig,
   extractAST,
+  extractEntityInfo,
   extractSchemaFields,
-  formatLabel,
   getContextConfig,
   getVisibleFields,
 } from '@openfaith/schema'
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
+import { formatLabel } from '@openfaith/shared'
 import { ColumnHeader } from '@openfaith/ui/components/collections/collectionComponents'
 import { getCellRenderer } from '@openfaith/ui/table/cellRenderers'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -24,6 +25,7 @@ export const generateColumns = <T,>(
   schema: Schema.Schema<T>,
   overrides: Partial<Record<keyof T, Partial<ColumnDef<T>>>> = {},
 ): Array<ColumnDef<T>> => {
+  const { entityName: entityType } = extractEntityInfo(schema)
   const fields = extractSchemaFields(schema)
   const visibleFields = getVisibleFields(fields, 'table') // Use shared filtering logic
   const columnsWithOrder: Array<{ column: ColumnDef<T>; order: number }> = []
@@ -34,33 +36,42 @@ export const generateColumns = <T,>(
     // Get table config using shared utility
     const tableConfig = getContextConfig(field, 'table') as FieldConfig['table']
 
-    // Fallback to auto-detection if no config provided
-    const autoConfig = tableConfig || autoDetectCellConfig(extractAST(field.schema), field.key)
+    // Always run auto-detection to get cellType if not explicitly configured
+    const autoConfig = autoDetectCellConfig(extractAST(field.schema), field.key)
+
+    // Merge configs with tableConfig taking precedence, but use autoConfig for missing cellType
+    const mergedConfig = {
+      ...autoConfig,
+      ...tableConfig,
+      cellType: tableConfig?.cellType || autoConfig?.cellType,
+    }
 
     // Build column definition
+    const finalCellType = mergedConfig.cellType
+
     const column: ColumnDef<T> = {
       accessorKey: key as string,
-      cell: getCellRenderer(tableConfig?.cellType || autoConfig?.cellType),
-      enableColumnFilter: tableConfig?.filterable ?? autoConfig?.filterable ?? true,
-      enableSorting: tableConfig?.sortable ?? autoConfig?.sortable ?? true,
+      cell: getCellRenderer(finalCellType, entityType),
+      enableColumnFilter: mergedConfig.filterable ?? true,
+      enableSorting: mergedConfig.sortable ?? true,
       header: ({ column }) => {
-        const title = tableConfig?.header || autoConfig?.header || formatLabel(String(key))
+        const title = mergedConfig.header || formatLabel(String(key))
         return createColumnHeader(column, title)
       },
-      size: tableConfig?.width || autoConfig?.width || getDefaultWidth(autoConfig?.cellType),
+      size: mergedConfig.width || getDefaultWidth(mergedConfig.cellType),
       ...overrides[key],
     }
 
     // Handle pinned columns
-    if (tableConfig?.pinned) {
+    if (mergedConfig.pinned) {
       column.meta = {
         ...column.meta,
-        pinned: tableConfig.pinned,
+        pinned: mergedConfig.pinned,
       }
     }
 
-    // Get order from table config, fallback to a high number to put unordered columns at the end
-    const order = tableConfig?.order ?? 999
+    // Get order from merged config, fallback to a high number to put unordered columns at the end
+    const order = mergedConfig.order ?? 999
 
     columnsWithOrder.push({ column, order })
   }

@@ -1,14 +1,12 @@
 'use client'
 
 import type { QuickActionConfig } from '@openfaith/openfaith/features/quickActions/schemaQuickActions'
-import { generateDefaultValues } from '@openfaith/schema'
+import { generateDefaultValues, useSchemaInsert, useSchemaUpdate } from '@openfaith/schema'
 import {
   QuickActionsHeader,
   QuickActionsTitle,
   QuickActionsWrapper,
   UniversalForm,
-  useSchemaInsert,
-  useSchemaUpdate,
 } from '@openfaith/ui'
 import { HashMap, Match, Option, pipe } from 'effect'
 import type { ComponentType, FC } from 'react'

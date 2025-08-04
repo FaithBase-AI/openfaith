@@ -1,4 +1,4 @@
-import { nullOp } from '@openfaith/shared'
+import { formatLabel, nullOp } from '@openfaith/shared'
 import { UserAvatar } from '@openfaith/ui/components/avatars/userAvatar'
 import { ColumnHeader } from '@openfaith/ui/components/collections/collectionComponents'
 import type { FluentColumnConfigHelper } from '@openfaith/ui/components/data-table-filter/core/filters'
@@ -148,7 +148,7 @@ export const getTypeColumn = <T extends { type: string }>(): ColumnDef<T> => ({
   accessorKey: 'type',
   cell: ({ getValue }) => {
     const value = getValue<string>()
-    return pipe(value, String.capitalize)
+    return formatLabel(value)
   },
   enableHiding: false,
   header: ({ column }) => <ColumnHeader column={column}>Type</ColumnHeader>,
@@ -159,7 +159,7 @@ export const getUseColumn = <T extends { use: string }>(): ColumnDef<T> => ({
   accessorKey: 'use',
   cell: ({ getValue }) => {
     const value = getValue<string>()
-    return pipe(value, String.capitalize)
+    return formatLabel(value)
   },
   enableHiding: false,
   header: ({ column }) => <ColumnHeader column={column}>Use</ColumnHeader>,

@@ -1,5 +1,5 @@
 import { OfUiConfig } from '@openfaith/schema/shared/schema'
-import { UniversalTable } from '@openfaith/ui/table/UniversalTable'
+import { UniversalTable } from '@openfaith/ui/table/universalTable'
 import { Schema } from 'effect'
 
 // Example schema with table annotations

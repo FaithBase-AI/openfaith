@@ -125,6 +125,10 @@ export const autoDetectCellConfig = (
               String.includes('category'),
               () => ({ cellType: 'badge' as const }),
             ),
+            Match.when(
+              (name) => name === 'name',
+              () => ({ cellType: 'entityLink' as const }),
+            ),
             Match.orElse(() => ({ cellType: 'text' as const })),
           ),
         ),

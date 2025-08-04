@@ -1,4 +1,4 @@
-import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfEntity, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { Array, Option, pipe, type Schema, SchemaAST, String } from 'effect'
 
 export interface ExtractedField {
@@ -131,7 +131,7 @@ export const extractLiteralOptions = (
       Array.filterMap((type) => {
         if (type._tag === 'Literal' && typeof type.literal === 'string') {
           return Option.some({
-            label: capitalizeWord(type.literal),
+            label: pipe(type.literal, String.capitalize),
             value: type.literal,
           })
         }
@@ -145,58 +145,13 @@ export const extractLiteralOptions = (
   if (ast._tag === 'Literal' && typeof ast.literal === 'string') {
     return [
       {
-        label: capitalizeWord(ast.literal),
+        label: pipe(ast.literal, String.capitalize),
         value: ast.literal,
       },
     ]
   }
 
   return []
-}
-
-/**
- * Capitalizes the first letter of a word using Effect-TS patterns
- */
-const capitalizeWord = (word: string): string => {
-  if (pipe(word, String.isEmpty)) return word
-  const firstChar = pipe(
-    word,
-    String.charAt(0),
-    Option.getOrElse(() => ''),
-  )
-  const restOfWord = pipe(word, String.toLowerCase, String.slice(1))
-  return pipe(firstChar, String.toUpperCase) + restOfWord
-}
-
-/**
- * Formats a field name into a human-readable label using Effect-TS String utilities
- */
-export const formatLabel = (fieldName: string): string => {
-  if (pipe(fieldName, String.isEmpty)) return ''
-
-  if (pipe(fieldName, String.includes(' '))) {
-    return pipe(fieldName, String.split(' '), Array.map(capitalizeWord), Array.join(' '))
-  }
-
-  if (pipe(fieldName, String.includes('_')) || pipe(fieldName, String.includes('-'))) {
-    return pipe(
-      fieldName,
-      String.replace(/[_-]/g, ' '),
-      String.split(' '),
-      Array.map(capitalizeWord),
-      Array.join(' '),
-    )
-  }
-
-  return pipe(
-    fieldName,
-    String.replace(/([a-z])([A-Z])/g, '$1 $2'),
-    String.replace(/([a-z])(\d)/g, '$1 $2'),
-    String.replace(/(\d)([A-Z])/g, '$1 $2'),
-    String.split(' '),
-    Array.map(capitalizeWord),
-    Array.join(' '),
-  )
 }
 
 /**
@@ -219,4 +174,26 @@ export const extractEntityTag = (ast: SchemaAST.AST): Option.Option<string> => {
   }
 
   return Option.none()
+}
+
+/**
+ * Extracts entity information from a schema including entity name and tag
+ */
+export const extractEntityInfo = <T>(schema: Schema.Schema<T>) => {
+  const ast = schema.ast
+
+  const entityAnnotation = SchemaAST.getAnnotation<string>(OfEntity)(ast)
+
+  const entityName = pipe(
+    entityAnnotation,
+    Option.match({
+      onNone: () => 'item',
+      onSome: (entity) => entity,
+    }),
+  )
+
+  return {
+    entityName,
+    entityTag: Option.getOrUndefined(entityAnnotation),
+  }
 }

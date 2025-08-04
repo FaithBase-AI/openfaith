@@ -3,12 +3,12 @@ import {
   extractAST,
   extractLiteralOptions,
   extractSchemaFields,
-  formatLabel,
   getContextConfig,
   getVisibleFields,
 } from '@openfaith/schema'
 import { getUiConfigFromAST } from '@openfaith/schema/shared/introspection'
 import { type FieldConfig, getUnderlyingType } from '@openfaith/schema/shared/schema'
+import { formatLabel } from '@openfaith/shared'
 import { createColumnConfigHelper } from '@openfaith/ui/components/data-table-filter/core/filters'
 import type {
   ColumnConfig,

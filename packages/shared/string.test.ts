@@ -1,6 +1,7 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
 import {
+  formatLabel,
   mkEntityName,
   mkEntityType,
   mkTableName,
@@ -479,5 +480,55 @@ effect('mkUrlParamName converts entity names to URL parameter names correctly', 
     expect(mkUrlParamName('ID')).toBe('iDId')
     expect(mkUrlParamName('URL')).toBe('uRLId')
     expect(mkUrlParamName('API')).toBe('aPIId')
+  }),
+)
+
+// Test formatLabel function
+effect('formatLabel should format field names correctly', () =>
+  Effect.gen(function* () {
+    // Test camelCase
+    expect(formatLabel('firstName')).toBe('First Name')
+    expect(formatLabel('lastName')).toBe('Last Name')
+
+    // Test snake_case
+    expect(formatLabel('first_name')).toBe('First Name')
+    expect(formatLabel('last_name')).toBe('Last Name')
+
+    // Test kebab-case
+    expect(formatLabel('first-name')).toBe('First Name')
+    expect(formatLabel('last-name')).toBe('Last Name')
+
+    // Test PascalCase
+    expect(formatLabel('FirstName')).toBe('First Name')
+    expect(formatLabel('LastName')).toBe('Last Name')
+
+    // Test already formatted
+    expect(formatLabel('First Name')).toBe('First Name')
+    expect(formatLabel('last name')).toBe('Last Name')
+
+    // Test with numbers
+    expect(formatLabel('address1')).toBe('Address 1')
+    expect(formatLabel('phoneNumber2')).toBe('Phone Number 2')
+
+    // Test empty string
+    expect(formatLabel('')).toBe('')
+
+    // Test single character
+    expect(formatLabel('a')).toBe('A')
+
+    // Test complex camelCase patterns
+    expect(formatLabel('userProfileSettings')).toBe('User Profile Settings')
+    expect(formatLabel('emailAddressType')).toBe('Email Address Type')
+    expect(formatLabel('contactPhoneNumber')).toBe('Contact Phone Number')
+
+    // Test mixed patterns with numbers
+    expect(formatLabel('field1Value')).toBe('Field 1 Value')
+    expect(formatLabel('option2Text')).toBe('Option 2 Text')
+    expect(formatLabel('item3Status')).toBe('Item 3 Status')
+
+    // Test edge cases
+    expect(formatLabel('a1')).toBe('A 1')
+    expect(formatLabel('x2Y')).toBe('X 2 Y')
+    expect(formatLabel('HTML5Parser')).toBe('Html5 Parser')
   }),
 )

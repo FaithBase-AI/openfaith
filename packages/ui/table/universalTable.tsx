@@ -1,4 +1,4 @@
-import { OfEntity } from '@openfaith/schema/shared/schema'
+import { extractEntityInfo, useSchemaCollection } from '@openfaith/schema'
 import { nullOp } from '@openfaith/shared'
 import { Collection } from '@openfaith/ui/components/collections/collection'
 import { Button } from '@openfaith/ui/components/ui/button'
@@ -12,10 +12,9 @@ import { EditIcon } from '@openfaith/ui/icons/editIcon'
 import { MoreVerticalIcon } from '@openfaith/ui/icons/moreVerticalIcon'
 import { generateColumns } from '@openfaith/ui/table/columnGenerator'
 import { generateFilterConfig } from '@openfaith/ui/table/filterGenerator'
-import { useSchemaCollection } from '@openfaith/ui/table/useSchemaCollection'
 import { useUniversalTableEdit } from '@openfaith/ui/table/useUniversalTableEdit'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Array, Option, pipe, type Schema, SchemaAST } from 'effect'
+import { Array, pipe, type Schema } from 'effect'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 
@@ -131,23 +130,4 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
       rowSize={undefined}
     />
   )
-}
-
-const extractEntityInfo = <T,>(schema: Schema.Schema<T>) => {
-  const ast = schema.ast
-
-  const entityAnnotation = SchemaAST.getAnnotation<string>(OfEntity)(ast)
-
-  const entityName = pipe(
-    entityAnnotation,
-    Option.match({
-      onNone: () => 'item',
-      onSome: (entity) => entity,
-    }),
-  )
-
-  return {
-    entityName,
-    entityTag: Option.getOrUndefined(entityAnnotation),
-  }
 }

@@ -1,91 +1,47 @@
-import { nullOp } from '@openfaith/shared'
 import type {
   DetailsPaneEntity,
   DetailsPaneParams,
 } from '@openfaith/ui/components/detailsPane/detailsPaneTypes'
 import { DetailsPaneParams as DetailsPaneParamsSchema } from '@openfaith/ui/components/detailsPane/detailsPaneTypes'
-import { Array, Boolean, Effect, Option, pipe, Schema } from 'effect'
-import { usePathname, useSearchParams } from 'next/navigation'
-import { parseAsJson, useQueryState } from 'nuqs'
-import type { MouseEvent } from 'react'
-import { useCallback } from 'react'
+import { useNavigate, useSearch } from '@tanstack/react-router'
+import { Array, Boolean, Option, pipe, Schema } from 'effect'
+import { useCallback, useMemo } from 'react'
 
 export function useDetailsPaneState() {
-  return useQueryState(
-    'detailsPane',
-    parseAsJson((value: unknown) =>
-      Schema.decodeUnknownSync(DetailsPaneParamsSchema)(value),
-    ).withDefault([]),
-  )
-}
+  const search = useSearch({ strict: false })
+  const navigate = useNavigate()
 
-export const getDetailsPaneParamsOpt = (currentDetailsPaneParams: string | null) =>
-  pipe(
-    currentDetailsPaneParams,
-    Option.fromNullable,
-    Option.flatMap((x) =>
-      Effect.gen(function* () {
-        const parsed = yield* Effect.try(() => JSON.parse(x))
-        const result = yield* Schema.decodeUnknown(DetailsPaneParamsSchema)(parsed)
-        return Option.some(result)
-      }).pipe(
-        Effect.orElse(() => Option.none()),
-        Effect.runSync,
+  const detailsPaneState = useMemo(
+    () =>
+      pipe(
+        (search as { detailsPane?: unknown })?.detailsPane,
+        Option.fromNullable,
+        Option.flatMap(Schema.decodeUnknownOption(DetailsPaneParamsSchema)),
+        Option.getOrElse((): DetailsPaneParams => []),
       ),
-    ),
+    [search],
   )
+
+  const setDetailsPaneState = useCallback(
+    (newState: DetailsPaneParams) => {
+      ;(navigate as any)({
+        search: {
+          detailsPane: newState.length > 0 ? newState : undefined,
+        },
+      })
+    },
+    [navigate],
+  )
+
+  return [detailsPaneState, setDetailsPaneState] as const
+}
 
 export function useOpenDetailsPaneUrl(opts: { replace?: boolean } = {}) {
   const { replace = true } = opts
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const [detailsPaneState] = useDetailsPaneState()
 
   return useCallback(
     (detailsPaneParams: DetailsPaneParams) => {
-      const newParams = new URLSearchParams(searchParams.toString())
-
-      const oldDetailsPaneParams = newParams.get('detailsPane')
-
-      // If the details pane is open, we sometimes want to replace the current details pane. This toggles the breadcrumbs in the
-      // details pane. Here we check to see if this is what we want, and if so, we append the new details pane params to the
-      // previous details pane params.
-      newParams.set(
-        'detailsPane',
-        JSON.stringify(
-          pipe(
-            replace,
-            Boolean.match({
-              onFalse: () =>
-                pipe(
-                  oldDetailsPaneParams,
-                  getDetailsPaneParamsOpt,
-                  Option.getOrElse(() => []),
-                  Array.appendAll(detailsPaneParams),
-                ),
-              onTrue: () => detailsPaneParams,
-            }),
-          ),
-        ),
-      )
-
-      return createUrl(pathname, newParams)
-    },
-    [pathname, replace, searchParams],
-  )
-}
-
-export function useOpenDetailsPaneUrlNew(opts: { replace?: boolean } = {}) {
-  const { replace = true } = opts
-
-  const [detailsPaneState, setDetailsPaneState] = useDetailsPaneState()
-
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-
-  return useCallback(
-    (detailsPaneParams: DetailsPaneParams) => {
-      const newParams = new URLSearchParams(searchParams.toString())
-
       const params = pipe(
         replace,
         Boolean.match({
@@ -94,19 +50,15 @@ export function useOpenDetailsPaneUrlNew(opts: { replace?: boolean } = {}) {
         }),
       )
 
-      // If the details pane is open, we sometimes want to replace the current details pane. This toggles the breadcrumbs in the
-      // details pane. Here we check to see if this is what we want, and if so, we append the new details pane params to the
-      // previous details pane params.
-      newParams.set('detailsPane', JSON.stringify(params))
-
       return {
-        href: createUrl(pathname, newParams),
-        onClick: async () => {
-          await setDetailsPaneState(params)
-        },
+        search: (prev: any) => ({
+          ...prev,
+          detailsPane: params.length > 0 ? params : undefined,
+        }),
+        to: '.',
       }
     },
-    [pathname, replace, searchParams, setDetailsPaneState, detailsPaneState],
+    [replace, detailsPaneState],
   )
 }
 
@@ -116,7 +68,7 @@ export function useOpenEntityDetailsPaneUrl<T extends DetailsPaneEntity>(opts: {
 }) {
   const { replace = true, defaultParams } = opts
 
-  const openDetailsPaneUrl = useOpenDetailsPaneUrlNew({ replace })
+  const openDetailsPaneUrl = useOpenDetailsPaneUrl({ replace })
 
   return useCallback(
     (
@@ -124,61 +76,62 @@ export function useOpenEntityDetailsPaneUrl<T extends DetailsPaneEntity>(opts: {
         tab?: T['tab']
       },
     ) => {
-      const { href, onClick } = openDetailsPaneUrl([
+      return openDetailsPaneUrl([
         {
           ...defaultParams,
           ...params,
         } as T,
       ])
-
-      return {
-        href,
-        onClick: (event: MouseEvent<HTMLElement>) => {
-          pipe(
-            event.nativeEvent.ctrlKey || event.nativeEvent.metaKey,
-            Boolean.match({
-              onFalse: () => {
-                event.preventDefault()
-                onClick()
-              },
-              onTrue: nullOp,
-            }),
-          )
-        },
-      }
     },
     [defaultParams, openDetailsPaneUrl],
   )
 }
 
-export function useOpenPersonDetailsPaneUrl(opts: { replace?: boolean } = {}) {
-  const { replace = true } = opts
-
-  return useOpenEntityDetailsPaneUrl<DetailsPaneEntity>({
-    defaultParams: { _tag: 'entity', entityType: 'person', tab: 'details' },
-    replace,
-  })
-}
-
-export function useOpenGroupDetailsPaneUrl(opts: { replace?: boolean } = {}) {
-  const { replace = true } = opts
-
-  return useOpenEntityDetailsPaneUrl<DetailsPaneEntity>({
-    defaultParams: { _tag: 'entity', entityType: 'group', tab: 'details' },
-    replace,
-  })
-}
-
 export function useCloseDetailsPane() {
   const [, setDetailsPaneState] = useDetailsPaneState()
 
-  return useCallback(async () => {
-    await setDetailsPaneState([])
+  return useCallback(() => {
+    setDetailsPaneState([])
   }, [setDetailsPaneState])
 }
 
-// Helper function to create URLs (similar to Homiliary's createUrl)
-const createUrl = (pathname: string, searchParams: URLSearchParams): string => {
-  const params = searchParams.toString()
-  return params ? `${pathname}?${params}` : pathname
+export function useOpenEntityDetailsPaneTabUrl(opts: { entityId: string; entityType: string }) {
+  const { entityId, entityType } = opts
+  const [detailsPaneState] = useDetailsPaneState()
+
+  return useCallback(
+    (tab: string) => {
+      const lastIndex = detailsPaneState.length - 1
+      let updatedState: DetailsPaneParams
+
+      if (lastIndex >= 0) {
+        updatedState = pipe(
+          detailsPaneState,
+          Array.modify(lastIndex, (entry: any) => ({
+            ...entry,
+            tab,
+          })),
+        ) as DetailsPaneParams
+      } else {
+        // Fallback if no details pane state exists
+        updatedState = [
+          {
+            _tag: 'entity' as const,
+            entityId,
+            entityType,
+            tab,
+          },
+        ] as DetailsPaneParams
+      }
+
+      return {
+        search: (prev: any) => ({
+          ...prev,
+          detailsPane: updatedState,
+        }),
+        to: '.',
+      }
+    },
+    [detailsPaneState, entityId, entityType],
+  )
 }

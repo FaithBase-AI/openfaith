@@ -3,11 +3,11 @@ import {
   autoDetectFieldConfig,
   extractAST,
   extractSchemaFields,
-  formatLabel,
   getContextConfig,
   getVisibleFields,
 } from '@openfaith/schema'
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
+import { formatLabel } from '@openfaith/shared'
 import { Array, Order, pipe, type Schema } from 'effect'
 
 /**

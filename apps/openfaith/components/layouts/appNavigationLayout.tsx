@@ -3,6 +3,7 @@ import { AppNavigation } from '@openfaith/openfaith/components/navigation/appNav
 import { UserNav } from '@openfaith/openfaith/components/navigation/userNav'
 import { QuickActions } from '@openfaith/openfaith/features/quickActions/quickActions'
 import {
+  DetailsPane,
   Separator,
   SidebarInset,
   SidebarProvider,
@@ -55,6 +56,8 @@ export const AppNavigationLayout = (props: AppNavigationLayoutProps) => {
         </header>
         <div className='-mt-2 flex flex-1 flex-col overflow-hidden pt-2'>{children}</div>
       </SidebarInset>
+
+      <DetailsPane />
 
       <QuickActions />
     </SidebarProvider>

@@ -135,3 +135,32 @@ effect('autoDetectCellConfig should detect boolean cells', () =>
     expect(config).toHaveProperty('cellType', 'boolean')
   }),
 )
+
+effect('autoDetectCellConfig should detect entity link fields only for exact "name" field', () =>
+  Effect.gen(function* () {
+    const stringSchema = Schema.String
+
+    // Should detect as entityLink - only exact "name"
+    const nameConfig = autoDetectCellConfig(stringSchema.ast, 'name')
+    expect(nameConfig).toHaveProperty('cellType', 'entityLink')
+
+    // Should NOT detect as entityLink (should be text)
+    const fullNameConfig = autoDetectCellConfig(stringSchema.ast, 'fullName')
+    expect(fullNameConfig).toHaveProperty('cellType', 'text')
+
+    const displayNameConfig = autoDetectCellConfig(stringSchema.ast, 'displayName')
+    expect(displayNameConfig).toHaveProperty('cellType', 'text')
+
+    const titleConfig = autoDetectCellConfig(stringSchema.ast, 'title')
+    expect(titleConfig).toHaveProperty('cellType', 'text')
+
+    const firstNameConfig = autoDetectCellConfig(stringSchema.ast, 'firstName')
+    expect(firstNameConfig).toHaveProperty('cellType', 'text')
+
+    const lastNameConfig = autoDetectCellConfig(stringSchema.ast, 'lastName')
+    expect(lastNameConfig).toHaveProperty('cellType', 'text')
+
+    const userNameConfig = autoDetectCellConfig(stringSchema.ast, 'userName')
+    expect(userNameConfig).toHaveProperty('cellType', 'text')
+  }),
+)

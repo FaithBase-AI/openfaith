@@ -2,15 +2,15 @@ import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
 import {
   extractAST,
+  extractEntityInfo,
   extractEntityTag,
   extractLiteralOptions,
   extractSchemaFields,
-  formatLabel,
   getUiConfig,
   getUiConfigFromAST,
   hasEmailPattern,
 } from '@openfaith/schema/shared/introspection'
-import { OfUiConfig } from '@openfaith/schema/shared/schema'
+import { OfEntity, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { Effect, Schema } from 'effect'
 
 // Test schemas
@@ -157,40 +157,6 @@ effect('extractLiteralOptions should return empty array for non-literal types', 
   }),
 )
 
-effect('formatLabel should format field names correctly', () =>
-  Effect.gen(function* () {
-    // Test camelCase
-    expect(formatLabel('firstName')).toBe('First Name')
-    expect(formatLabel('lastName')).toBe('Last Name')
-
-    // Test snake_case
-    expect(formatLabel('first_name')).toBe('First Name')
-    expect(formatLabel('last_name')).toBe('Last Name')
-
-    // Test kebab-case
-    expect(formatLabel('first-name')).toBe('First Name')
-    expect(formatLabel('last-name')).toBe('Last Name')
-
-    // Test PascalCase
-    expect(formatLabel('FirstName')).toBe('First Name')
-    expect(formatLabel('LastName')).toBe('Last Name')
-
-    // Test already formatted
-    expect(formatLabel('First Name')).toBe('First Name')
-    expect(formatLabel('last name')).toBe('Last Name')
-
-    // Test with numbers
-    expect(formatLabel('address1')).toBe('Address 1')
-    expect(formatLabel('phoneNumber2')).toBe('Phone Number 2')
-
-    // Test empty string
-    expect(formatLabel('')).toBe('')
-
-    // Test single character
-    expect(formatLabel('a')).toBe('A')
-  }),
-)
-
 effect('extractEntityTag should extract _tag literal from schema', () =>
   Effect.gen(function* () {
     const personTag = extractEntityTag(TestPersonSchema.ast)
@@ -224,5 +190,93 @@ effect('extractEntityTag should return None for non-TypeLiteral schemas', () =>
     const stringSchema = Schema.String
     const tag = extractEntityTag(stringSchema.ast)
     expect(tag._tag).toBe('None')
+  }),
+)
+
+// Tests for extractEntityInfo function
+effect(
+  'extractEntityInfo should extract entity name and tag from schema with OfEntity annotation',
+  () =>
+    Effect.gen(function* () {
+      const TestSchemaWithEntity = Schema.Struct({
+        id: Schema.String,
+        name: Schema.String,
+      }).pipe(Schema.annotations({ [OfEntity]: 'TestEntity' }))
+
+      const entityInfo = extractEntityInfo(TestSchemaWithEntity)
+
+      expect(entityInfo.entityName).toBe('TestEntity')
+      expect(entityInfo.entityTag).toBe('TestEntity')
+    }),
+)
+
+effect(
+  'extractEntityInfo should return default entity name for schema without OfEntity annotation',
+  () =>
+    Effect.gen(function* () {
+      const TestSchemaWithoutEntity = Schema.Struct({
+        id: Schema.String,
+        name: Schema.String,
+      })
+
+      const entityInfo = extractEntityInfo(TestSchemaWithoutEntity)
+
+      expect(entityInfo.entityName).toBe('item')
+      expect(entityInfo.entityTag).toBeUndefined()
+    }),
+)
+
+effect('extractEntityInfo should handle empty string OfEntity annotation', () =>
+  Effect.gen(function* () {
+    const TestSchemaWithEmptyEntity = Schema.Struct({
+      id: Schema.String,
+      name: Schema.String,
+    }).pipe(Schema.annotations({ [OfEntity]: '' }))
+
+    const entityInfo = extractEntityInfo(TestSchemaWithEmptyEntity)
+
+    expect(entityInfo.entityName).toBe('')
+    expect(entityInfo.entityTag).toBe('')
+  }),
+)
+
+effect('extractEntityInfo should handle complex schema structures', () =>
+  Effect.gen(function* () {
+    const ComplexSchema = Schema.Struct({
+      id: Schema.String,
+      metadata: Schema.Struct({
+        created: Schema.String, // Simplified to avoid Date encoding issues
+        tags: Schema.Array(Schema.String),
+      }),
+      settings: Schema.optional(
+        Schema.Struct({
+          enabled: Schema.Boolean,
+        }),
+      ),
+    }).pipe(Schema.annotations({ [OfEntity]: 'ComplexEntity' }))
+
+    const entityInfo = extractEntityInfo(ComplexSchema)
+
+    expect(entityInfo.entityName).toBe('ComplexEntity')
+    expect(entityInfo.entityTag).toBe('ComplexEntity')
+  }),
+)
+effect('extractEntityInfo should handle schema with multiple annotations', () =>
+  Effect.gen(function* () {
+    const MultiAnnotatedSchema = Schema.Struct({
+      id: Schema.String,
+      name: Schema.String,
+    }).pipe(
+      Schema.annotations({
+        [OfEntity]: 'MultiEntity',
+        description: 'A schema with multiple annotations',
+        title: 'Multi Annotated Schema',
+      }),
+    )
+
+    const entityInfo = extractEntityInfo(MultiAnnotatedSchema)
+
+    expect(entityInfo.entityName).toBe('MultiEntity')
+    expect(entityInfo.entityTag).toBe('MultiEntity')
   }),
 )

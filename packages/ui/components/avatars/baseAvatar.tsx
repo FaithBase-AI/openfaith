@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, getAvatarInitials } from '@openfaith/ui/compone
 import { Skeleton } from '@openfaith/ui/components/ui/skeleton'
 import { cn } from '@openfaith/ui/shared/utils'
 import { Match, Option, pipe, String } from 'effect'
-import Image from 'next/image'
+
 import type { Avatar as AvatarPrimitive } from 'radix-ui'
 import type { ComponentPropsWithoutRef, FC, Ref } from 'react'
 
@@ -85,12 +85,10 @@ export const BaseAvatar: FC<BaseAvatarProps> = (props) => {
             </AvatarFallback>
           ),
           onSome: (x) => (
-            <Image
+            <img
               alt={`Avatar image.`}
               className={'object-cover'}
               height={size}
-              priority
-              sizes={'small'}
               src={x}
               style={{ height: size, width: size }}
               width={size}

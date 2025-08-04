@@ -1,5 +1,5 @@
 import { OfUiConfig } from '@openfaith/schema/shared/schema'
-import { UniversalForm } from '@openfaith/ui/form/UniversalForm'
+import { UniversalForm } from '@openfaith/ui/form/universalForm'
 import { Schema } from 'effect'
 
 // Example schema with UI annotations

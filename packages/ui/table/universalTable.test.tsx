@@ -1,6 +1,6 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
-import { UniversalTable, type UniversalTableProps } from '@openfaith/ui/table/UniversalTable'
+import { UniversalTable, type UniversalTableProps } from '@openfaith/ui/table/universalTable'
 import { Effect, Schema } from 'effect'
 
 // Test schema and data

@@ -8,7 +8,7 @@ import {
   quickActionsIsOpenAtom,
   useCommandMenuOptions,
 } from '@openfaith/openfaith/features/quickActions/quickActionsState'
-import { SchemaQuickActions } from '@openfaith/openfaith/features/quickActions/SchemaQuickActionsComponent'
+import { SchemaQuickActions } from '@openfaith/openfaith/features/quickActions/schemaQuickActionsComponent'
 import { nullOp } from '@openfaith/shared'
 import {
   Command,

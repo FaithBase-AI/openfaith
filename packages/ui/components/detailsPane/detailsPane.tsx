@@ -1,8 +1,13 @@
 'use client'
 
 import { nullOp } from '@openfaith/shared'
+import {
+  useCloseDetailsPane,
+  useDetailsPaneState,
+} from '@openfaith/ui/components/detailsPane/detailsPaneHelpers'
 import { DetailsPaneHistory } from '@openfaith/ui/components/detailsPane/detailsPaneHistory'
 import type { DetailsPaneParams } from '@openfaith/ui/components/detailsPane/detailsPaneTypes'
+import { EntityDetailsPane } from '@openfaith/ui/components/detailsPane/entityDetailsPane'
 import { ToggleDetailsPaneButton } from '@openfaith/ui/components/detailsPane/toggleDetailsPaneButton'
 import { Button } from '@openfaith/ui/components/ui/button'
 import { Dialog, DialogPortal } from '@openfaith/ui/components/ui/dialog'
@@ -13,18 +18,13 @@ import { useIsMdScreen } from '@openfaith/ui/shared/hooks/useMediaQuery'
 import { cn } from '@openfaith/ui/shared/utils'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
-import { Array, Boolean, Option, pipe, Record } from 'effect'
+import { Array, Boolean, Match, Option, pipe, Record } from 'effect'
 import { useAtom } from 'jotai'
 import type { FC, ReactNode } from 'react'
 import { useMemo } from 'react'
 
 const detailsPaneWidth = {
-  campus: 'w-[28rem]',
   default: 'w-[28rem]',
-  folder: 'w-[28rem]',
-  group: 'w-[34rem]',
-  none: 'w-[28rem]',
-  person: 'w-[28rem]',
 } as const
 
 const getDetailsPaneWidth = (entityType: string): string => {
@@ -36,27 +36,28 @@ const getDetailsPaneWidth = (entityType: string): string => {
 }
 
 interface DetailsPaneProps {
-  children?: ReactNode
   className?: string
-  state?: DetailsPaneParams
-  onClose?: () => void
 }
 
 export const DetailsPane: FC<DetailsPaneProps> = (props) => {
-  const { children, className, state = [], onClose } = props
+  const { className } = props
 
-  const hasDetailsPane = useMemo(() => pipe(state, Array.isNonEmptyReadonlyArray), [state])
+  const [detailsPaneState] = useDetailsPaneState()
+  const closeDetailsPane = useCloseDetailsPane()
 
-  const closeSideBar = onClose || nullOp
+  const hasDetailsPane = useMemo(
+    () => pipe(detailsPaneState, Array.isNonEmptyReadonlyArray),
+    [detailsPaneState],
+  )
 
   return (
     <DetailsPaneWrapper
       className={className}
-      closeSideBar={closeSideBar}
-      detailsPaneParams={state}
+      closeSideBar={closeDetailsPane}
+      detailsPaneParams={detailsPaneState}
       open={hasDetailsPane}
       width={pipe(
-        state,
+        detailsPaneState,
         Array.last,
         Option.match({
           onNone: () => detailsPaneWidth.default,
@@ -64,7 +65,26 @@ export const DetailsPane: FC<DetailsPaneProps> = (props) => {
         }),
       )}
     >
-      {children}
+      {pipe(
+        detailsPaneState,
+        Array.last,
+        Option.match({
+          onNone: nullOp,
+          onSome: (entity) =>
+            pipe(
+              entity,
+              Match.value,
+              Match.tag('entity', (entityData) => (
+                <EntityDetailsPane
+                  entityId={entityData.entityId}
+                  entityType={entityData.entityType}
+                  tab={entityData.tab || 'details'}
+                />
+              )),
+              Match.exhaustive,
+            ),
+        }),
+      )}
     </DetailsPaneWrapper>
   )
 }
@@ -119,22 +139,18 @@ const DetailsPaneWrapper: FC<DetailsPaneWrapperProps> = (props) => {
                   />
                   <DialogPrimitive.Content
                     className={cn(
-                      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-right-24 data-[state=open]:slide-in-from-right-24 fixed top-2 right-2 bottom-2 z-50 grid overflow-hidden rounded-2xl border bg-background shadow-lg duration-128 data-[state=closed]:animate-out data-[state=open]:animate-in',
+                      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-right-24 data-[state=open]:slide-in-from-right-24 fixed top-2 right-2 bottom-2 z-50 grid overflow-hidden rounded-2xl bg-background duration-128 data-[state=closed]:animate-out data-[state=open]:animate-in',
                       width,
-                      className,
                     )}
                   >
                     <VisuallyHidden asChild>
                       <DialogPrimitive.Title>Details Pane</DialogPrimitive.Title>
                     </VisuallyHidden>
-
                     <VisuallyHidden asChild>
                       <DialogPrimitive.Description>Details Pane</DialogPrimitive.Description>
                     </VisuallyHidden>
-
                     <DetailsPaneHistory history={detailsPaneParams} />
                     {children}
-
                     <div
                       className={'absolute top-3.5 right-4 z-50 flex flex-row items-center gap-1'}
                     >
@@ -158,9 +174,8 @@ const DetailsPaneWrapper: FC<DetailsPaneWrapperProps> = (props) => {
                   onNonEmpty: () => (
                     <div
                       className={cn(
-                        'my-2 flex flex-col overflow-hidden rounded-l-2xl border bg-background',
+                        'my-2 flex flex-col overflow-hidden rounded-l-2xl border bg-l3',
                         width,
-                        className,
                       )}
                     >
                       <div

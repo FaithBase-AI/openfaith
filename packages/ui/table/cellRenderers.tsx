@@ -1,7 +1,10 @@
+import { EntityLinkCell } from '@openfaith/ui/table/entityLinkCell'
+import { Array, Option, pipe, String } from 'effect'
+
 /**
  * Gets the appropriate cell renderer for a given cell type
  */
-export const getCellRenderer = (cellType?: string) => {
+export const getCellRenderer = (cellType?: string, entityType?: string) => {
   return ({ getValue, row }: any) => {
     const value = getValue()
 
@@ -40,6 +43,9 @@ export const getCellRenderer = (cellType?: string) => {
       case 'avatar':
         return renderAvatarCell(value, row.original)
 
+      case 'entityLink':
+        return renderEntityLinkCell(value, row.original, entityType)
+
       default:
         // Default text renderer for fields without specific cellType
         return renderTextCell(value)
@@ -51,7 +57,7 @@ export const getCellRenderer = (cellType?: string) => {
  * Renders a simple text cell with proper styling for multi-line content
  */
 const renderTextCell = (value: any) => {
-  const content = String(value || '')
+  const content = pipe(value || '', (v) => `${v}`)
   return <div className='whitespace-pre-wrap text-sm'>{content}</div>
 }
 
@@ -59,7 +65,7 @@ const renderTextCell = (value: any) => {
  * Renders a content/description cell with proper styling for multi-line content
  */
 const renderContentCell = (value: any) => {
-  const content = String(value || '')
+  const content = pipe(value || '', (v) => `${v}`)
   return <div className='whitespace-pre-wrap text-sm'>{content}</div>
 }
 
@@ -67,7 +73,9 @@ const renderContentCell = (value: any) => {
  * Renders an email cell with mailto link
  */
 const renderEmailCell = (value: string) => {
-  if (!value) return ''
+  if (!value) {
+    return ''
+  }
   return (
     <a
       className='text-blue-600 hover:underline'
@@ -83,7 +91,9 @@ const renderEmailCell = (value: string) => {
  * Renders a number cell with locale formatting
  */
 const renderNumberCell = (value: number) => {
-  if (value == null) return ''
+  if (value == null) {
+    return ''
+  }
   return value.toLocaleString()
 }
 
@@ -91,7 +101,9 @@ const renderNumberCell = (value: number) => {
  * Renders a currency cell with USD formatting
  */
 const renderCurrencyCell = (value: number) => {
-  if (value == null) return ''
+  if (value == null) {
+    return ''
+  }
   return new Intl.NumberFormat('en-US', {
     currency: 'USD',
     style: 'currency',
@@ -117,7 +129,9 @@ const renderBooleanCell = (value: boolean) => {
  * Renders a date cell with locale formatting
  */
 const renderDateCell = (value: string | number) => {
-  if (!value) return ''
+  if (!value) {
+    return ''
+  }
 
   // Handle numeric timestamps (convert string numbers to actual numbers)
   const numericValue = typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : value
@@ -130,7 +144,9 @@ const renderDateCell = (value: string | number) => {
  * Renders a datetime cell with locale formatting
  */
 const renderDateTimeCell = (value: string | number) => {
-  if (!value) return ''
+  if (!value) {
+    return ''
+  }
 
   // Handle numeric timestamps (convert string numbers to actual numbers)
   const numericValue = typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : value
@@ -143,7 +159,9 @@ const renderDateTimeCell = (value: string | number) => {
  * Renders a badge cell
  */
 const renderBadgeCell = (value: string | boolean) => {
-  if (value === null || value === undefined || value === '') return ''
+  if (value === null || value === undefined || value === '') {
+    return ''
+  }
 
   // Handle boolean values
   if (typeof value === 'boolean') {
@@ -170,7 +188,9 @@ const renderBadgeCell = (value: string | boolean) => {
  * Renders a link cell
  */
 const renderLinkCell = (value: string) => {
-  if (!value) return ''
+  if (!value) {
+    return ''
+  }
   return (
     <a
       className='text-blue-600 hover:underline'
@@ -191,11 +211,19 @@ const renderAvatarCell = (value: string, row: any) => {
   const name =
     row.firstName && row.lastName ? `${row.firstName} ${row.lastName}` : row.name || 'Unknown'
 
-  const initials = name
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .toUpperCase()
+  const initials = pipe(
+    name,
+    String.split(' '),
+    Array.map((n) =>
+      pipe(
+        n,
+        String.charAt(0),
+        Option.getOrElse(() => ''),
+      ),
+    ),
+    Array.join(''),
+    String.toUpperCase,
+  )
 
   if (value) {
     return (
@@ -221,4 +249,15 @@ const renderAvatarCell = (value: string, row: any) => {
       {initials}
     </div>
   )
+}
+
+/**
+ * Renders an entity link cell that opens the details pane
+ */
+const renderEntityLinkCell = (value: string, row: any, entityType?: string) => {
+  if (!value || !entityType || !row.id) {
+    return renderTextCell(value)
+  }
+
+  return <EntityLinkCell entityId={row.id} entityType={entityType} value={value} />
 }
