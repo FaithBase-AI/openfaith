@@ -2,12 +2,14 @@
 
 import { formatLabel, nullOp, pluralize } from '@openfaith/shared'
 import { Button } from '@openfaith/ui/components/ui/button'
+import { ShortcutKey } from '@openfaith/ui/components/ui/shortcut-key'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@openfaith/ui/components/ui/tooltip'
 import { ChevronDownIcon } from '@openfaith/ui/icons/chevronDownIcon'
 import { ChevronUpIcon } from '@openfaith/ui/icons/chevronUpIcon'
 import { Array, Boolean, Option, pipe } from 'effect'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
+import { useHotkeys } from 'react-hotkeys-hook'
 
 type DetailsTopBarButtonsProps<T extends { id: string }> = {
   id: string
@@ -66,50 +68,61 @@ export const DetailsTopBarButtons = <T extends { id: string }>(
   const isFirstItem = currentIndex === 0
   const isLastItem = currentIndex + 1 === collection.length
 
+  const navigateToPrevious = () => {
+    pipe(
+      getNeighborItem('decrement'),
+      Option.match({
+        onNone: nullOp,
+        onSome: (item) => onNavigate(item.id),
+      }),
+    )
+  }
+
+  const navigateToNext = () => {
+    pipe(
+      getNeighborItem('increment'),
+      Option.match({
+        onNone: nullOp,
+        onSome: (item) => onNavigate(item.id),
+      }),
+    )
+  }
+
+  useHotkeys(['k'], navigateToPrevious, { enabled: !isFirstItem })
+  useHotkeys(['j'], navigateToNext, { enabled: !isLastItem })
+
   return (
     <>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
             disabled={isFirstItem}
-            onClick={() => {
-              pipe(
-                getNeighborItem('decrement'),
-                Option.match({
-                  onNone: nullOp,
-                  onSome: (item) => onNavigate(item.id),
-                }),
-              )
-            }}
+            onClick={navigateToPrevious}
             size={'icon-sm'}
             variant={'secondary'}
           >
             <ChevronUpIcon className={'size-4'} />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Previous record</TooltipContent>
+        <TooltipContent className={'inline-flex gap-2'}>
+          Previous record <ShortcutKey keys={['k']} />
+        </TooltipContent>
       </Tooltip>
 
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
             disabled={isLastItem}
-            onClick={() => {
-              pipe(
-                getNeighborItem('increment'),
-                Option.match({
-                  onNone: nullOp,
-                  onSome: (item) => onNavigate(item.id),
-                }),
-              )
-            }}
+            onClick={navigateToNext}
             size={'icon-sm'}
             variant={'secondary'}
           >
             <ChevronDownIcon className={'size-4'} />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Next record</TooltipContent>
+        <TooltipContent className={'inline-flex gap-2'}>
+          Next record <ShortcutKey keys={['j']} />
+        </TooltipContent>
       </Tooltip>
 
       <p className={'text-muted-foreground text-sm'}>

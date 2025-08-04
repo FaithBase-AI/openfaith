@@ -1,6 +1,7 @@
 export * from '@openfaith/shared/env'
 export * from '@openfaith/shared/getApiUrl'
 export * from '@openfaith/shared/getIds'
+export * from '@openfaith/shared/getShortcutKey'
 export * from '@openfaith/shared/noOps'
 export * from '@openfaith/shared/queryStateHelpers'
 export * from '@openfaith/shared/schema'
