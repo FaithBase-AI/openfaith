@@ -7,6 +7,7 @@ import { TokenKey } from '@openfaith/adapter-core/server'
 import { effect } from '@openfaith/bun-test'
 import type { PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import {
+  getProperEntityName,
   mkEdgesFromIncludesE,
   mkEntityUpsertE,
   mkExternalLinksE,
@@ -16,7 +17,7 @@ import {
 } from '@openfaith/workers/helpers/saveDataE'
 import { createTestTables } from '@openfaith/workers/helpers/test-utils/test-schema'
 import { PgContainer } from '@openfaith/workers/helpers/test-utils/utils-pg'
-import { Effect, Layer, Option, Stream } from 'effect'
+import { Array, Effect, Layer, Option, pipe, Stream } from 'effect'
 
 // Test TokenKey service
 const TestTokenKey = Layer.succeed(TokenKey, 'test_org_123')
@@ -284,8 +285,13 @@ effect('mkEdgesFromIncludesE creates edges for relationships', () =>
       'pco_phone_123',
       'PhoneNumber',
       {
+        carrier: null,
+        country_code: 'US',
         created_at: '2023-01-01T00:00:00Z',
+        e164: '+15551234',
+        international: null,
         location: 'Mobile',
+        national: null,
         number: '555-1234',
         primary: true,
         updated_at: '2023-01-02T00:00:00Z',
@@ -319,7 +325,7 @@ effect('mkEdgesFromIncludesE creates edges for relationships', () =>
       yield* sql`SELECT * FROM "openfaith_edges" WHERE "relationshipType" LIKE '%person%phone%'`
     expect(edges.length).toBe(1)
     expect(edges[0]?.sourceEntityTypeTag).toBe('person')
-    expect(edges[0]?.targetEntityTypeTag).toBe('phonenumber')
+    expect(edges[0]?.targetEntityTypeTag).toBe('phoneNumber')
   }).pipe(
     Effect.provide(TestLayer),
     Effect.catchTag('ContainerError', (error) => {
@@ -706,7 +712,7 @@ effect(
         {
           orgId: 'test_org_123',
           sourceEntityTypeTag: 'person',
-          targetEntityTypeTag: 'phonenumber',
+          targetEntityTypeTag: 'phoneNumber',
         },
       ]
 
@@ -718,7 +724,7 @@ effect(
         {
           orgId: 'test_org_123',
           sourceEntityTypeTag: 'person',
-          targetEntityTypeTag: 'phonenumber',
+          targetEntityTypeTag: 'phoneNumber',
         },
         {
           orgId: 'test_org_123',
@@ -747,7 +753,7 @@ effect(
       const personTargetsRaw = personRelationships[0]?.targetEntityTypes
       const personTargets =
         typeof personTargetsRaw === 'string' ? JSON.parse(personTargetsRaw) : personTargetsRaw
-      expect(personTargets).toEqual(expect.arrayContaining(['phonenumber', 'address']))
+      expect(personTargets).toEqual(expect.arrayContaining(['phoneNumber', 'address']))
       expect(personTargets.length).toBe(2)
 
       // Verify group relationships were created
@@ -772,7 +778,7 @@ effect(
         {
           orgId: 'test_org_123',
           sourceEntityTypeTag: 'person',
-          targetEntityTypeTag: 'phonenumber', // Duplicate - should not create duplicates
+          targetEntityTypeTag: 'phoneNumber', // Duplicate - should not create duplicates
         },
       ]
 
@@ -791,7 +797,7 @@ effect(
           ? JSON.parse(updatedPersonTargetsRaw)
           : updatedPersonTargetsRaw
       expect(updatedPersonTargets).toEqual(
-        expect.arrayContaining(['phonenumber', 'address', 'group']),
+        expect.arrayContaining(['phoneNumber', 'address', 'group']),
       )
       expect(updatedPersonTargets.length).toBe(3) // No duplicates
 
@@ -848,8 +854,13 @@ effect(
         'pco_phone_multi',
         'PhoneNumber',
         {
+          carrier: null,
+          country_code: 'US',
           created_at: '2023-01-01T00:00:00Z',
+          e164: '+15557777',
+          international: null,
           location: 'Mobile',
+          national: null,
           number: '555-7777',
           primary: true,
           updated_at: '2023-01-02T00:00:00Z',
@@ -878,7 +889,7 @@ effect(
       // Find each relationship type
       const addressRel = relationships.find((r: any) => r.sourceEntityType === 'address')
       const personRel = relationships.find((r: any) => r.sourceEntityType === 'person')
-      const phoneRel = relationships.find((r: any) => r.sourceEntityType === 'phonenumber')
+      const phoneRel = relationships.find((r: any) => r.sourceEntityType === 'phoneNumber')
 
       // Check address -> person
       expect(addressRel).toBeDefined()
@@ -895,7 +906,7 @@ effect(
           ? JSON.parse(personRel.targetEntityTypes)
           : personRel?.targetEntityTypes
       expect(personTargets).toContain('address')
-      expect(personTargets).toContain('phonenumber')
+      expect(personTargets).toContain('phoneNumber')
 
       // Check phonenumber -> person
       expect(phoneRel).toBeDefined()
@@ -926,8 +937,13 @@ effect(
         'pco_registry_phone',
         'PhoneNumber',
         {
+          carrier: null,
+          country_code: 'US',
           created_at: '2023-01-01T00:00:00Z',
+          e164: '+15559999',
+          international: null,
           location: 'Mobile',
+          national: null,
           number: '555-9999',
           primary: true,
           updated_at: '2023-01-02T00:00:00Z',
@@ -973,11 +989,11 @@ effect(
         typeof personRelationship?.targetEntityTypes === 'string'
           ? JSON.parse(personRelationship.targetEntityTypes)
           : personRelationship?.targetEntityTypes
-      expect(personTargets).toContain('phonenumber')
+      expect(personTargets).toContain('phoneNumber')
 
-      // Check phonenumber -> person relationship (bidirectional)
+      // Check phoneNumber -> person relationship (bidirectional)
       const phoneRelationship = relationships.find(
-        (rel: any) => rel.sourceEntityType === 'phonenumber',
+        (rel: any) => rel.sourceEntityType === 'phoneNumber',
       )
       expect(phoneRelationship).toBeDefined()
       const phoneTargets =
@@ -985,6 +1001,181 @@ effect(
           ? JSON.parse(phoneRelationship.targetEntityTypes)
           : phoneRelationship?.targetEntityTypes
       expect(phoneTargets).toContain('person')
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
+)
+
+// ===== TESTS FOR getProperEntityName FUNCTION =====
+
+effect('getProperEntityName - returns lowercase entity type when no metadata found', () =>
+  Effect.gen(function* () {
+    // Test with entity types that don't have metadata in the registry
+    expect(getProperEntityName('UnknownType')).toBe('unknowntype')
+    expect(getProperEntityName('NotInRegistry')).toBe('notinregistry')
+    expect(getProperEntityName('CustomEntity')).toBe('customentity')
+  }),
+)
+
+effect('getProperEntityName - handles various entity type formats correctly', () =>
+  Effect.gen(function* () {
+    // Test various input formats when no metadata is found
+    // PascalCase
+    expect(getProperEntityName('PersonAddress')).toBe('personaddress')
+
+    // camelCase
+    expect(getProperEntityName('phoneNumber')).toBe('phonenumber')
+
+    // snake_case
+    expect(getProperEntityName('email_address')).toBe('email_address')
+
+    // Already lowercase
+    expect(getProperEntityName('group')).toBe('group')
+
+    // Mixed case with numbers
+    expect(getProperEntityName('Address2')).toBe('address2')
+
+    // Empty string
+    expect(getProperEntityName('')).toBe('')
+
+    // Special characters
+    expect(getProperEntityName('Person-Address')).toBe('person-address')
+    expect(getProperEntityName('Person_Address')).toBe('person_address')
+    expect(getProperEntityName('Person.Address')).toBe('person.address')
+  }),
+)
+
+effect('getProperEntityName - returns proper entity names for known PCO types', () =>
+  Effect.gen(function* () {
+    // Test with actual PCO entity types that exist in the registry
+    // These should return the proper entity names from the schema annotations
+
+    // Person entity - should return 'person' from the schema
+    expect(getProperEntityName('Person')).toBe('person')
+
+    // Address entity - should return 'address' from the schema
+    expect(getProperEntityName('Address')).toBe('address')
+
+    // PhoneNumber entity - should return 'phoneNumber' from the schema
+    expect(getProperEntityName('PhoneNumber')).toBe('phoneNumber')
+
+    // Group entity - if it exists in registry
+    const groupResult = getProperEntityName('Group')
+    // Should either be 'group' from schema or 'group' from lowercase fallback
+    expect(groupResult).toBe('group')
+  }),
+)
+
+effect('getProperEntityName - maintains consistency across multiple calls', () =>
+  Effect.gen(function* () {
+    // Call multiple times with same input
+    const result1 = getProperEntityName('TestEntity')
+    const result2 = getProperEntityName('TestEntity')
+    const result3 = getProperEntityName('TestEntity')
+
+    // Should return same result
+    expect(result1).toBe('testentity')
+    expect(result2).toBe('testentity')
+    expect(result3).toBe('testentity')
+    expect(result1).toBe(result2)
+    expect(result2).toBe(result3)
+  }),
+)
+
+effect('getProperEntityName - works correctly in functional composition', () =>
+  Effect.gen(function* () {
+    // Test that the function works correctly in a pipe
+    const entityTypes = ['Person', 'Group', 'Address', 'UnknownType']
+    const results = pipe(entityTypes, Array.map(getProperEntityName))
+
+    // Should transform all entity types correctly
+    expect(results[0]).toBe('person')
+    expect(results[1]).toBe('group')
+    expect(results[2]).toBe('address')
+    expect(results[3]).toBe('unknowntype')
+  }),
+)
+
+effect('getProperEntityName - handles PCO entity type variations', () =>
+  Effect.gen(function* () {
+    // Test variations of PCO entity types
+
+    // Should handle exact matches
+    expect(getProperEntityName('Person')).toBe('person')
+
+    // Should handle case variations (these won't match registry, so lowercase)
+    expect(getProperEntityName('person')).toBe('person')
+    expect(getProperEntityName('PERSON')).toBe('person')
+
+    // Should handle PCO-specific types
+    expect(getProperEntityName('PhoneNumber')).toBe('phoneNumber')
+    expect(getProperEntityName('Address')).toBe('address')
+
+    // Types not in registry should just be lowercased
+    expect(getProperEntityName('CustomField')).toBe('customfield')
+    expect(getProperEntityName('Membership')).toBe('membership')
+  }),
+)
+
+effect(
+  'getProperEntityName - integration with mkExternalLinksE',
+  () =>
+    Effect.gen(function* () {
+      // Test that getProperEntityName is used correctly in mkExternalLinksE
+      yield* createTestTables
+
+      // Create a Person entity (known type in registry)
+      const personEntity = createPcoBaseEntity('pco_test_proper', 'Person')
+      const result = yield* mkExternalLinksE([personEntity])
+
+      expect(result.length).toBe(1)
+      // The entityType stored should be the result of getProperEntityName
+      // which for 'Person' should be 'person'
+
+      // Verify by checking the database
+      const sql = yield* SqlClient.SqlClient
+      const links = yield* sql`
+      SELECT "entityType" FROM "openfaith_externalLinks" 
+      WHERE "externalId" = 'pco_test_proper'
+    `
+      expect(links[0]?.entityType).toBe('person')
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
+)
+
+effect(
+  'getProperEntityName - integration with mkEntityUpsertE',
+  () =>
+    Effect.gen(function* () {
+      // Test that getProperEntityName is used correctly in mkEntityUpsertE
+      yield* createTestTables
+
+      const personEntity = createPcoBaseEntity('pco_upsert_proper', 'Person')
+      const data: ReadonlyArray<readonly [string, PcoBaseEntity]> = [
+        ['person_upsert_proper_123', personEntity],
+      ]
+
+      yield* mkEntityUpsertE(data)
+
+      // The function should use getProperEntityName internally for logging
+      // We can't directly test the logs, but we can verify the entity was processed
+      const sql = yield* SqlClient.SqlClient
+      const people = yield* sql`
+      SELECT "id" FROM "openfaith_people" 
+      WHERE "id" = 'person_upsert_proper_123'
+    `
+      expect(people.length).toBe(1)
     }).pipe(
       Effect.provide(TestLayer),
       Effect.catchTag('ContainerError', (error) => {

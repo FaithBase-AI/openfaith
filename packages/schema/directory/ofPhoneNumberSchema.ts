@@ -9,7 +9,7 @@ import { Schema } from 'effect'
 export const BasePhoneNumber = BaseSystemFieldsSchema.pipe(
   Schema.extend(
     Schema.TaggedStruct('phoneNumber', {
-      countryCode: Schema.String.annotations({
+      countryCode: Schema.NullOr(Schema.String).annotations({
         description: 'The country code of the phone number',
         [OfUiConfig]: {
           table: {

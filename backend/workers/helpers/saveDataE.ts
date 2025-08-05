@@ -40,18 +40,8 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
     return []
   }
 
-  const entityMetadata = entityMetadataOpt.value
-
   // Get entity name from the domain schema's title annotation
-  let entityName: string
-  if (Option.isSome(entityMetadata.ofEntity)) {
-    const titleOpt = SchemaAST.getAnnotation<string>(SchemaAST.TitleAnnotationId)(
-      entityMetadata.ofEntity.value.ast,
-    )
-    entityName = Option.isSome(titleOpt) ? titleOpt.value : entityTypeOpt.value.toLowerCase()
-  } else {
-    entityName = entityTypeOpt.value.toLowerCase()
-  }
+  const entityName = getProperEntityName(entityTypeOpt.value)
 
   yield* Effect.annotateLogs(Effect.log('Inserting external links'), {
     count: data.length,
@@ -152,15 +142,7 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
   const entityMetadata = entityMetadataOpt.value
 
   // Get entity name from the domain schema's title annotation
-  let entityName: string
-  if (Option.isSome(entityMetadata.ofEntity)) {
-    const titleOpt = SchemaAST.getAnnotation<string>(SchemaAST.TitleAnnotationId)(
-      entityMetadata.ofEntity.value.ast,
-    )
-    entityName = Option.isSome(titleOpt) ? titleOpt.value : entityTypeOpt.value.toLowerCase()
-  } else {
-    entityName = entityTypeOpt.value.toLowerCase()
-  }
+  const entityName = getProperEntityName(entityTypeOpt.value)
 
   if (Option.isNone(entityMetadata.transformer)) {
     yield* Effect.annotateLogs(Effect.log('No transformer found for entity'), {
@@ -403,6 +385,16 @@ export const saveIncludesE = Effect.fn('saveIncludesE')(function* <
   )
 })
 
+// Helper function to get the proper entity name from adapter entity type
+export const getProperEntityName = (entityType: string): string =>
+  pipe(
+    getPcoEntityMetadata(entityType),
+    Option.flatMap((metadata) => metadata.ofEntity),
+    Option.flatMap((entity) =>
+      SchemaAST.getAnnotation<string>(SchemaAST.TitleAnnotationId)(entity.ast),
+    ),
+    Option.getOrElse(() => entityType.toLowerCase()),
+  )
 export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* <
   I extends ReadonlyArray<PcoBaseEntity>,
 >(
@@ -536,21 +528,25 @@ export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* 
       Array.take(3), // Log first 3 for debugging
     ),
   })
+  // Get proper entity names using the same logic as mkExternalLinksE
+  const rootEntityName = getProperEntityName(rootEntityType)
+
   // Create edge values using the clean foo pipeline data
   const edgeValues = pipe(
     baseEdgeData,
     Array.map((item) => {
+      // Get proper entity name for the target type
+      const targetEntityName = getProperEntityName(item.targetType)
+
       // Determine edge direction using alpha pattern
       const { source, target } = Schema.decodeUnknownSync(EdgeDirectionSchema)({
         idA: item.root,
         idB: item.target,
       }) as { source: string; target: string }
 
-      const sourceEntityTypeTag =
-        source === item.root ? rootEntityType.toLowerCase() : item.targetType.toLowerCase()
+      const sourceEntityTypeTag = source === item.root ? rootEntityName : targetEntityName
 
-      const targetEntityTypeTag =
-        target === item.root ? rootEntityType.toLowerCase() : item.targetType.toLowerCase()
+      const targetEntityTypeTag = target === item.root ? rootEntityName : targetEntityName
 
       // Create relationship type based on the entity types
       const relationshipType = `${sourceEntityTypeTag}_has_${targetEntityTypeTag}`
@@ -578,8 +574,9 @@ export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* 
   const entityRelationshipTracking = pipe(
     baseEdgeData,
     Array.flatMap((item) => {
-      const rootType = rootEntityType.toLowerCase()
-      const includedType = item.targetType.toLowerCase()
+      // Get proper entity names
+      const rootType = rootEntityName
+      const includedType = getProperEntityName(item.targetType)
 
       // Track both directions for the entity relationships
       return [

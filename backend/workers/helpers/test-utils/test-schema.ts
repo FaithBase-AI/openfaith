@@ -148,10 +148,16 @@ export const createTestTables = Effect.gen(function* () {
       "deletedBy" text,
       "createdBy" text,
       "updatedBy" text,
+      "inactivatedAt" timestamp,
+      "inactivatedBy" text,
       "customFields" jsonb DEFAULT '[]',
       "externalIds" jsonb DEFAULT '[]',
+      "countryCode" text,
+      "location" text,
       "number" text,
-      "tags" jsonb DEFAULT '"[]"',
+      "primary" boolean DEFAULT false NOT NULL,
+      "status" text DEFAULT 'active' NOT NULL,
+      "tags" jsonb DEFAULT '[]',
       "type" text DEFAULT 'default'
     )
   `
