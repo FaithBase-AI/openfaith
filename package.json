@@ -15,7 +15,7 @@
     "@testcontainers/postgresql": "11.3.2",
     "@turbo/gen": "2.5.5",
     "@types/bun": "latest",
-    "@typescript/native-preview": "^7.0.0-dev.20250804.1",
+    "@typescript/native-preview": "7.0.0-dev.20250805.1",
     "jest": "^30.0.5",
     "jscodeshift": "^17.3.0",
     "turbo": "2.5.5"

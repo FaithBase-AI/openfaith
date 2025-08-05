@@ -1,6 +1,6 @@
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { TokenKey } from '@openfaith/adapter-core/server'
-import { edgesTable, externalLinksTable } from '@openfaith/db'
+import { edgesTable, entityRelationshipsTable, externalLinksTable } from '@openfaith/db'
 import type { mkPcoCollectionSchema, PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import type { pcoPersonTransformer } from '@openfaith/pco/server'
 import { EdgeDirectionSchema, getEntityId } from '@openfaith/shared'
@@ -240,7 +240,7 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
       set: {
         ...pipe(
           getTableColumns(table),
-          Object.keys,
+          Record.keys,
           Array.filter((x) => x !== 'id' && x !== 'orgId' && x !== 'customFields' && x !== '_tag'),
           Array.map((x) => [x, sql.raw(`EXCLUDED."${x}"`)] as const),
           Record.fromEntries,
@@ -529,5 +529,79 @@ export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* 
     edgeCount: edgeValues.length,
     orgId,
     rootEntityType,
+  })
+
+  yield* updateEntityRelationshipsE(edgeValues)
+})
+
+export const updateEntityRelationshipsE = Effect.fn('updateEntityRelationshipsE')(function* (
+  edgeValues: ReadonlyArray<{
+    sourceEntityTypeTag: string
+    targetEntityTypeTag: string
+    orgId: string
+  }>,
+) {
+  if (edgeValues.length === 0) {
+    return
+  }
+
+  const orgId = yield* TokenKey
+  const db = yield* PgDrizzle.PgDrizzle
+
+  // Group edges by source entity type and transform directly to insert values
+  const relationshipValues = pipe(
+    edgeValues,
+    Array.groupBy((edge) => edge.sourceEntityTypeTag),
+    Record.mapEntries((edges, sourceEntityType) => [
+      sourceEntityType,
+      {
+        _tag: 'entityRelationships' as const,
+        orgId,
+        sourceEntityType,
+        targetEntityTypes: pipe(
+          edges,
+          Array.map((edge) => edge.targetEntityTypeTag),
+          Array.dedupe,
+        ),
+        updatedAt: new Date(),
+      },
+    ]),
+    Record.values,
+  )
+
+  yield* Effect.annotateLogs(Effect.log('Batch updating entity relationships registry'), {
+    orgId,
+    relationships: pipe(
+      relationshipValues,
+      Array.map((r) => ({ [r.sourceEntityType]: r.targetEntityTypes })),
+    ),
+    updateCount: relationshipValues.length,
+  })
+
+  // Batch insert/update all relationships in a single query
+  yield* db
+    .insert(entityRelationshipsTable)
+    .values(relationshipValues)
+    .onConflictDoUpdate({
+      set: {
+        targetEntityTypes: sql`
+          (
+            SELECT COALESCE(jsonb_agg(DISTINCT elem), '[]'::jsonb)
+            FROM (
+              SELECT jsonb_array_elements_text(
+                COALESCE(${entityRelationshipsTable.targetEntityTypes}, '[]'::jsonb) || 
+                COALESCE(EXCLUDED."targetEntityTypes", '[]'::jsonb)
+              ) as elem
+            ) combined
+          )
+        `,
+        updatedAt: sql`EXCLUDED."updatedAt"`,
+      },
+      target: [entityRelationshipsTable.orgId, entityRelationshipsTable.sourceEntityType],
+    })
+
+  yield* Effect.annotateLogs(Effect.log('Entity relationships registry batch updated'), {
+    orgId,
+    updateCount: relationshipValues.length,
   })
 })

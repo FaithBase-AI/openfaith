@@ -8,7 +8,7 @@ export function useOrgsCollection() {
 
   const userId = useUserId()
 
-  const [orgsCollection, info] = useQuery(getBaseOrgsQuery(z), { ttl: '1d' })
+  const [orgsCollection, info] = useQuery(getBaseOrgsQuery(z), { ttl: '10m' })
 
   return {
     adminOrgsCollection: pipe(

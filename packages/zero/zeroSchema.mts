@@ -112,6 +112,11 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
         },
       },
     },
+    entityRelationships: {
+      row: {
+        select: ANYONE_CAN,
+      },
+    },
     folders: {
       row: {
         insert: [allowIfAdmin],

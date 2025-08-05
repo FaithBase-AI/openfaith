@@ -112,6 +112,13 @@
       "tag": "0015_thin_excalibur",
       "version": "7",
       "when": 1753269119186
+    },
+    {
+      "breakpoints": true,
+      "idx": 16,
+      "tag": "0016_nebulous_dagger",
+      "version": "7",
+      "when": 1754414194455
     }
   ],
   "version": "7"

@@ -174,4 +174,15 @@ export const createTestTables = Effect.gen(function* () {
       "type" text DEFAULT 'default'
     )
   `
+
+  yield* sql`
+    CREATE TABLE IF NOT EXISTS "openfaith_entityRelationships" (
+      "_tag" text DEFAULT 'entityRelationships' NOT NULL,
+      "orgId" text NOT NULL,
+      "sourceEntityType" text NOT NULL,
+      "targetEntityTypes" jsonb DEFAULT '[]' NOT NULL,
+      "updatedAt" timestamp DEFAULT now() NOT NULL,
+      UNIQUE("orgId", "sourceEntityType")
+    )
+  `
 })

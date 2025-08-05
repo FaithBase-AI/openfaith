@@ -29,7 +29,7 @@ export function useFilterQuery<
     filterKey,
     pageSize = 50,
     enabled = true,
-    ttl = '1d',
+    ttl = '10m',
     filterTtl = 'none',
     getAll = false,
   } = params

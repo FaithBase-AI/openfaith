@@ -12,6 +12,7 @@ import {
   mkExternalLinksE,
   saveDataE,
   saveIncludesE,
+  updateEntityRelationshipsE,
 } from '@openfaith/workers/helpers/saveDataE'
 import { createTestTables } from '@openfaith/workers/helpers/test-utils/test-schema'
 import { PgContainer } from '@openfaith/workers/helpers/test-utils/utils-pg'
@@ -683,6 +684,174 @@ effect(
       const result = yield* sql`SELECT 3 as third`
 
       expect(result).toEqual([{ third: 3 }])
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
+)
+
+// Test updateEntityRelationshipsE function
+effect(
+  'updateEntityRelationshipsE creates and updates entity relationships registry',
+  () =>
+    Effect.gen(function* () {
+      yield* createTestTables
+
+      // Test data: edges representing person -> phonenumber and person -> address relationships
+      const edgeValues = [
+        {
+          orgId: 'test_org_123',
+          sourceEntityTypeTag: 'person',
+          targetEntityTypeTag: 'phonenumber',
+        },
+        {
+          orgId: 'test_org_123',
+          sourceEntityTypeTag: 'person',
+          targetEntityTypeTag: 'address',
+        },
+        {
+          orgId: 'test_org_123',
+          sourceEntityTypeTag: 'group',
+          targetEntityTypeTag: 'person',
+        },
+      ]
+
+      // Test initial creation
+      yield* updateEntityRelationshipsE(edgeValues)
+
+      const sql = yield* SqlClient.SqlClient
+
+      // Verify person relationships were created
+      const personRelationships = yield* sql`
+        SELECT * FROM "openfaith_entityRelationships" 
+        WHERE "orgId" = 'test_org_123' AND "sourceEntityType" = 'person'
+      `
+      expect(personRelationships.length).toBe(1)
+
+      const personTargets = JSON.parse(personRelationships[0]?.targetEntityTypes as string)
+      expect(personTargets).toEqual(expect.arrayContaining(['phonenumber', 'address']))
+      expect(personTargets.length).toBe(2)
+
+      // Verify group relationships were created
+      const groupRelationships = yield* sql`
+        SELECT * FROM "openfaith_entityRelationships" 
+        WHERE "orgId" = 'test_org_123' AND "sourceEntityType" = 'group'
+      `
+      expect(groupRelationships.length).toBe(1)
+
+      const groupTargets = JSON.parse(groupRelationships[0]?.targetEntityTypes as string)
+      expect(groupTargets).toEqual(['person'])
+
+      // Test updating existing relationships (should merge, not replace)
+      const additionalEdgeValues = [
+        {
+          orgId: 'test_org_123',
+          sourceEntityTypeTag: 'person',
+          targetEntityTypeTag: 'group', // New relationship for person
+        },
+        {
+          orgId: 'test_org_123',
+          sourceEntityTypeTag: 'person',
+          targetEntityTypeTag: 'phonenumber', // Duplicate - should not create duplicates
+        },
+      ]
+
+      yield* updateEntityRelationshipsE(additionalEdgeValues)
+
+      // Verify person relationships were updated (merged)
+      const updatedPersonRelationships = yield* sql`
+        SELECT * FROM "openfaith_entityRelationships" 
+        WHERE "orgId" = 'test_org_123' AND "sourceEntityType" = 'person'
+      `
+      expect(updatedPersonRelationships.length).toBe(1)
+
+      const updatedPersonTargets = JSON.parse(
+        updatedPersonRelationships[0]?.targetEntityTypes as string,
+      )
+      expect(updatedPersonTargets).toEqual(
+        expect.arrayContaining(['phonenumber', 'address', 'group']),
+      )
+      expect(updatedPersonTargets.length).toBe(3) // No duplicates
+
+      // Test empty edge values (should be no-op)
+      yield* updateEntityRelationshipsE([])
+
+      // Verify no changes
+      const finalRelationships = yield* sql`
+        SELECT COUNT(*) as count FROM "openfaith_entityRelationships" 
+        WHERE "orgId" = 'test_org_123'
+      `
+      expect(Number(finalRelationships[0]?.count)).toBe(2) // Still just person and group
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
+)
+
+// Test that mkEdgesFromIncludesE now calls updateEntityRelationshipsE
+effect(
+  'mkEdgesFromIncludesE updates entity relationships registry after creating edges',
+  () =>
+    Effect.gen(function* () {
+      yield* createTestTables
+
+      const mainEntity = createPcoBaseEntity('pco_registry_main', 'Person')
+      const includedPhone = createPcoBaseEntity(
+        'pco_registry_phone',
+        'PhoneNumber',
+        {
+          created_at: '2023-01-01T00:00:00Z',
+          location: 'Mobile',
+          number: '555-9999',
+          primary: true,
+          updated_at: '2023-01-02T00:00:00Z',
+        },
+        {
+          person: {
+            data: { id: 'pco_registry_main', type: 'Person' },
+          },
+        },
+      )
+
+      // Create external links for both entities
+      const mainExternalLinks = yield* mkExternalLinksE([mainEntity])
+      const phoneExternalLinks = yield* mkExternalLinksE([includedPhone])
+
+      // This should create edges AND update the entity relationships registry
+      yield* mkEdgesFromIncludesE([includedPhone], mainExternalLinks, phoneExternalLinks, 'Person')
+
+      const sql = yield* SqlClient.SqlClient
+
+      // Verify edges were created
+      const edges = yield* sql`
+        SELECT * FROM "openfaith_edges" 
+        WHERE "sourceEntityId" = ${mainExternalLinks[0]?.entityId || ''} 
+        OR "targetEntityId" = ${mainExternalLinks[0]?.entityId || ''}
+      `
+      expect(edges.length).toBe(1)
+
+      // Verify entity relationships registry was updated
+      const relationships = yield* sql`
+        SELECT * FROM "openfaith_entityRelationships" 
+        WHERE "orgId" = 'test_org_123'
+      `
+      expect(relationships.length).toBeGreaterThan(0)
+
+      // Should have a relationship entry for the source entity type
+      const hasPersonRelationship = relationships.some(
+        (rel: any) =>
+          rel.sourceEntityType === 'person' &&
+          JSON.parse(rel.targetEntityTypes).includes('phonenumber'),
+      )
+      expect(hasPersonRelationship).toBe(true)
     }).pipe(
       Effect.provide(TestLayer),
       Effect.catchTag('ContainerError', (error) => {
