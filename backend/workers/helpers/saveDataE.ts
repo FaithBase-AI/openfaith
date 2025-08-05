@@ -578,13 +578,11 @@ export const updateEntityRelationshipsE = Effect.fn('updateEntityRelationshipsE'
     updateCount: relationshipValues.length,
   })
 
-  // Build a single batch insert query for all relationships
-  // Create the VALUES clause for all relationships
+  // We are doing this because regular drizzle was having issues with JSONB arrays inside of ON CONFLICT.
   const valuesClause = pipe(
     relationshipValues,
     Array.map((rel) => {
       const targetEntityTypesJson = JSON.stringify(rel.targetEntityTypes)
-      // Escape single quotes in JSON for SQL
       const escapedJson = pipe(targetEntityTypesJson, String.replace(/'/g, "''"))
       return sql`(${rel.orgId}, ${rel.sourceEntityType}, ${sql.raw(`'${escapedJson}'::jsonb`)}, ${rel.updatedAt})`
     }),
@@ -593,18 +591,15 @@ export const updateEntityRelationshipsE = Effect.fn('updateEntityRelationshipsE'
     ),
   )
 
-  // Build the complete batch insert query
   const query = sql`
     INSERT INTO "openfaith_entityRelationships" ("orgId", "sourceEntityType", "targetEntityTypes", "updatedAt")
     VALUES ${valuesClause}
     ON CONFLICT ("orgId", "sourceEntityType") DO UPDATE
     SET "targetEntityTypes" = (
-      SELECT jsonb_agg(DISTINCT value ORDER BY value)
-      FROM (
-        SELECT jsonb_array_elements_text("openfaith_entityRelationships"."targetEntityTypes") AS value
-        UNION
-        SELECT jsonb_array_elements_text(EXCLUDED."targetEntityTypes") AS value
-      ) AS combined
+      SELECT jsonb_agg(DISTINCT elem.value ORDER BY elem.value)
+      FROM jsonb_array_elements_text(
+        "openfaith_entityRelationships"."targetEntityTypes" || EXCLUDED."targetEntityTypes"
+      ) AS elem(value)
     ),
     "updatedAt" = EXCLUDED."updatedAt"
   `
