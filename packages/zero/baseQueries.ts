@@ -63,3 +63,6 @@ export const getBaseMutator = (
     entityName,
   })
 }
+
+export const getBaseEntityRelationshipsQuery = (z: ReturnType<typeof useZero>) =>
+  z.query.entityRelationships

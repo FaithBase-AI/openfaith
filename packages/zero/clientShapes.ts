@@ -1,5 +1,6 @@
 import type { Resolve } from '@openfaith/shared'
 import type {
+  getBaseEntityRelationshipsQuery,
   getBaseOrgsQuery,
   getBaseOrgUsersQuery,
   getBaseUsersQuery,
@@ -16,3 +17,7 @@ export type OrgUserClientShape = Omit<
 > & {
   user: NonNullable<Resolve<Row<ReturnType<typeof getBaseOrgUsersQuery>>>['user']>
 }
+
+export type EntityRelationshipsClientShape = Resolve<
+  Row<ReturnType<typeof getBaseEntityRelationshipsQuery>>
+>
