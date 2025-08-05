@@ -52,7 +52,6 @@ effect('env should have expected server variables structure', () =>
     expect(() => env.ZERO_APP_ID).not.toThrow()
     expect(() => env.ZERO_NUM_SYNC_WORKERS).not.toThrow()
     expect(() => env.ZERO_LOG_LEVEL).not.toThrow()
-    expect(() => env.ZERO_TARGET_CLIENT_ROW_COUNT).not.toThrow()
     expect(() => env.ZERO_ADMIN_PASSWORD).not.toThrow()
     expect(() => env.ZERO_PUSH_URL).not.toThrow()
 
@@ -115,10 +114,6 @@ effect('env should handle different variable types correctly', () =>
 
     if (env.ZERO_NUM_SYNC_WORKERS !== undefined) {
       expect(typeof env.ZERO_NUM_SYNC_WORKERS).toBe('number')
-    }
-
-    if (env.ZERO_TARGET_CLIENT_ROW_COUNT !== undefined) {
-      expect(typeof env.ZERO_TARGET_CLIENT_ROW_COUNT).toBe('number')
     }
 
     // Test that string fields are either undefined or strings
