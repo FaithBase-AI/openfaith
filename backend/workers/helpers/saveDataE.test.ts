@@ -701,7 +701,19 @@ effect(
     Effect.gen(function* () {
       yield* createTestTables
 
-      // Test data: edges representing person -> phonenumber and person -> address relationships
+      // First, let's test with a simpler case - just one relationship
+      const simpleEdgeValues = [
+        {
+          orgId: 'test_org_123',
+          sourceEntityTypeTag: 'person',
+          targetEntityTypeTag: 'phonenumber',
+        },
+      ]
+
+      // Test initial creation with simple case
+      yield* updateEntityRelationshipsE(simpleEdgeValues)
+
+      // Now test with multiple relationships
       const edgeValues = [
         {
           orgId: 'test_org_123',
@@ -732,7 +744,9 @@ effect(
       `
       expect(personRelationships.length).toBe(1)
 
-      const personTargets = JSON.parse(personRelationships[0]?.targetEntityTypes as string)
+      const personTargetsRaw = personRelationships[0]?.targetEntityTypes
+      const personTargets =
+        typeof personTargetsRaw === 'string' ? JSON.parse(personTargetsRaw) : personTargetsRaw
       expect(personTargets).toEqual(expect.arrayContaining(['phonenumber', 'address']))
       expect(personTargets.length).toBe(2)
 
@@ -743,7 +757,9 @@ effect(
       `
       expect(groupRelationships.length).toBe(1)
 
-      const groupTargets = JSON.parse(groupRelationships[0]?.targetEntityTypes as string)
+      const groupTargetsRaw = groupRelationships[0]?.targetEntityTypes
+      const groupTargets =
+        typeof groupTargetsRaw === 'string' ? JSON.parse(groupTargetsRaw) : groupTargetsRaw
       expect(groupTargets).toEqual(['person'])
 
       // Test updating existing relationships (should merge, not replace)
@@ -769,9 +785,11 @@ effect(
       `
       expect(updatedPersonRelationships.length).toBe(1)
 
-      const updatedPersonTargets = JSON.parse(
-        updatedPersonRelationships[0]?.targetEntityTypes as string,
-      )
+      const updatedPersonTargetsRaw = updatedPersonRelationships[0]?.targetEntityTypes
+      const updatedPersonTargets =
+        typeof updatedPersonTargetsRaw === 'string'
+          ? JSON.parse(updatedPersonTargetsRaw)
+          : updatedPersonTargetsRaw
       expect(updatedPersonTargets).toEqual(
         expect.arrayContaining(['phonenumber', 'address', 'group']),
       )
@@ -846,11 +864,13 @@ effect(
       expect(relationships.length).toBeGreaterThan(0)
 
       // Should have a relationship entry for the source entity type
-      const hasPersonRelationship = relationships.some(
-        (rel: any) =>
-          rel.sourceEntityType === 'person' &&
-          JSON.parse(rel.targetEntityTypes).includes('phonenumber'),
-      )
+      const hasPersonRelationship = relationships.some((rel: any) => {
+        const targets =
+          typeof rel.targetEntityTypes === 'string'
+            ? JSON.parse(rel.targetEntityTypes)
+            : rel.targetEntityTypes
+        return rel.sourceEntityType === 'person' && targets.includes('phonenumber')
+      })
       expect(hasPersonRelationship).toBe(true)
     }).pipe(
       Effect.provide(TestLayer),

@@ -1,6 +1,6 @@
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { TokenKey } from '@openfaith/adapter-core/server'
-import { edgesTable, entityRelationshipsTable, externalLinksTable } from '@openfaith/db'
+import { edgesTable, externalLinksTable } from '@openfaith/db'
 import type { mkPcoCollectionSchema, PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import type { pcoPersonTransformer } from '@openfaith/pco/server'
 import { EdgeDirectionSchema, getEntityId } from '@openfaith/shared'
@@ -578,28 +578,38 @@ export const updateEntityRelationshipsE = Effect.fn('updateEntityRelationshipsE'
     updateCount: relationshipValues.length,
   })
 
-  // Batch insert/update all relationships in a single query
-  yield* db
-    .insert(entityRelationshipsTable)
-    .values(relationshipValues)
-    .onConflictDoUpdate({
-      set: {
-        targetEntityTypes: sql`
-          (
-            SELECT COALESCE(jsonb_agg(DISTINCT elem), '[]'::jsonb)
-            FROM (
-              SELECT jsonb_array_elements_text(
-                COALESCE(${entityRelationshipsTable.targetEntityTypes}, '[]'::jsonb) || 
-                COALESCE(EXCLUDED."targetEntityTypes", '[]'::jsonb)
-              ) as elem
-            ) combined
-          )
-        `,
-        updatedAt: sql`EXCLUDED."updatedAt"`,
-      },
-      target: [entityRelationshipsTable.orgId, entityRelationshipsTable.sourceEntityType],
-    })
+  // Build a single batch insert query for all relationships
+  // Create the VALUES clause for all relationships
+  const valuesClause = pipe(
+    relationshipValues,
+    Array.map((rel) => {
+      const targetEntityTypesJson = JSON.stringify(rel.targetEntityTypes)
+      // Escape single quotes in JSON for SQL
+      const escapedJson = pipe(targetEntityTypesJson, String.replace(/'/g, "''"))
+      return sql`(${rel.orgId}, ${rel.sourceEntityType}, ${sql.raw(`'${escapedJson}'::jsonb`)}, ${rel.updatedAt})`
+    }),
+    Array.reduce(sql`` as ReturnType<typeof sql>, (acc, curr, index) =>
+      index === 0 ? curr : sql`${acc}, ${curr}`,
+    ),
+  )
 
+  // Build the complete batch insert query
+  const query = sql`
+    INSERT INTO "openfaith_entityRelationships" ("orgId", "sourceEntityType", "targetEntityTypes", "updatedAt")
+    VALUES ${valuesClause}
+    ON CONFLICT ("orgId", "sourceEntityType") DO UPDATE
+    SET "targetEntityTypes" = (
+      SELECT jsonb_agg(DISTINCT value ORDER BY value)
+      FROM (
+        SELECT jsonb_array_elements_text("openfaith_entityRelationships"."targetEntityTypes") AS value
+        UNION
+        SELECT jsonb_array_elements_text(EXCLUDED."targetEntityTypes") AS value
+      ) AS combined
+    ),
+    "updatedAt" = EXCLUDED."updatedAt"
+  `
+
+  yield* db.execute(query)
   yield* Effect.annotateLogs(Effect.log('Entity relationships registry batch updated'), {
     orgId,
     updateCount: relationshipValues.length,
