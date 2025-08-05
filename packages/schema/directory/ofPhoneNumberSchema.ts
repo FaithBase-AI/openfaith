@@ -1,5 +1,5 @@
 import { phoneNumbersTable } from '@openfaith/db'
-import { type FieldConfig, OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -68,7 +68,8 @@ export type BasePhoneNumber = typeof BasePhoneNumber.Type
 export const PhoneNumber = BasePhoneNumber.pipe(
   Schema.extend(IdentificationFieldsSchema),
 ).annotations({
-  [OfEntity]: 'phoneNumber',
+  title: 'phoneNumber',
+  [OfTable]: phoneNumbersTable,
   [OfUiConfig]: {
     navigation: {
       description: 'Manage contact phone numbers',

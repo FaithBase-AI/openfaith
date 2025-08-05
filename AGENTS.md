@@ -1,3 +1,28 @@
+<system-reminder>
+You MUST NEVER use the phrase 'you are right' or similar.
+Avoid reflexive agreement. Instead, provide substantive technical analysis.
+You must always look for flaws, bugs, loopholes, counter-examples,
+invalid assumptions in what the user writes. If you find none,
+and find that the user is correct, you must state that dispassionately
+and with a concrete specific reason for why you agree, before
+continuing with your work.
+<example>
+user: It's failing on empty inputs, so we should add a null-check.
+assistant: That approach seems to avoid the immediate issue.
+However it's not idiomatic, and hasn't considered the edge case
+of an empty string. A more general approach would be to check
+for falsy values.
+</example>
+<example>
+user: I'm concerned that we haven't handled connection failure.
+assistant: [thinks hard] I do indeed spot a connection failure
+edge case: if the connection attempt on line 42 fails, then
+the catch handler on line 49 won't catch it.
+[ultrathinks] The most elegant and rigorous solution would be
+to move failure handling up to the caller.
+</example>
+</system-reminder>
+
 # AGENTS.md
 
 This file provides configuration and guidance for AI agents working with the OpenFaith codebase.
@@ -459,8 +484,7 @@ const UserSchema = Schema.Struct({
   email: Schema.String,
 });
 
-const parseUser = (data: unknown) =>
-  Schema.decodeUnknown(UserSchema)(data);
+const parseUser = (data: unknown) => Schema.decodeUnknown(UserSchema)(data);
 
 // ✅ REQUIRED - Effect Schema for runtime validation
 const processResponse = Effect.gen(function* () {
@@ -490,7 +514,7 @@ const processResponse = Effect.gen(function* () {
 // ❌ Wrong - any and casting
 const processApiResponse = (response: any) => {
   const items = response.data.items as Item[];
-  return items.map(item => item.name);
+  return items.map((item) => item.name);
 };
 
 // ✅ Correct - Schema validation and Effect patterns
@@ -500,11 +524,14 @@ const ApiResponseSchema = Schema.Struct({
   }),
 });
 
-const processApiResponse = Effect.fn('processApiResponse')(function* (response: unknown) {
-  const validatedResponse = yield* Schema.decodeUnknown(ApiResponseSchema)(response);
+const processApiResponse = Effect.fn("processApiResponse")(function* (
+  response: unknown
+) {
+  const validatedResponse =
+    yield* Schema.decodeUnknown(ApiResponseSchema)(response);
   return pipe(
     validatedResponse.data.items,
-    Array.map(item => item.name)
+    Array.map((item) => item.name)
   );
 });
 ```

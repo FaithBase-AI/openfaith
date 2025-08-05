@@ -17,12 +17,21 @@ export type PcoEntityType = keyof typeof pcoSchemas
 
 // Helper function to get entity metadata from schema annotations
 export const getEntityMetadata = (schema: Schema.Schema<any, any, any>) => {
-  const entityOpt = SchemaAST.getAnnotation<string>(OfEntity)(schema.ast)
+  const entitySchemaOpt = SchemaAST.getAnnotation<Schema.Schema<any, any, any>>(OfEntity)(
+    schema.ast,
+  )
   const transformerOpt = SchemaAST.getAnnotation<any>(OfTransformer)(schema.ast)
-  const tableOpt = SchemaAST.getAnnotation<any>(OfTable)(schema.ast)
+
+  // Try to get table from the PCO schema first (shouldn't exist)
+  let tableOpt = SchemaAST.getAnnotation<any>(OfTable)(schema.ast)
+
+  // If no table on PCO schema, get it from the domain schema in OfEntity
+  if (Option.isNone(tableOpt) && Option.isSome(entitySchemaOpt)) {
+    tableOpt = SchemaAST.getAnnotation<any>(OfTable)(entitySchemaOpt.value.ast)
+  }
 
   return {
-    entity: entityOpt,
+    entity: entitySchemaOpt,
     table: tableOpt,
     transformer: transformerOpt,
   }

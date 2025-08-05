@@ -1,5 +1,5 @@
 import { addressesTable } from '@openfaith/db'
-import { type FieldConfig, OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -115,7 +115,8 @@ export const BaseAddress = BaseSystemFieldsSchema.pipe(
 export type BaseAddress = typeof BaseAddress.Type
 
 export const Address = BaseAddress.pipe(Schema.extend(IdentificationFieldsSchema)).annotations({
-  [OfEntity]: 'address',
+  title: 'address',
+  [OfTable]: addressesTable,
   [OfUiConfig]: {
     navigation: {
       description: 'Manage contact addresses',

@@ -7,6 +7,7 @@ import {
   OfFieldName,
   OfIdentifier,
   OfTransformer,
+  Person,
 } from '@openfaith/schema'
 import { type Option, Schema, SchemaAST } from 'effect'
 
@@ -144,7 +145,7 @@ export const PcoPerson = mkPcoEntity({
   }),
   type: 'Person',
 }).annotations({
-  [OfEntity]: 'person',
+  [OfEntity]: Person,
   [OfIdentifier]: 'pco-person',
   [OfTransformer]: pcoPersonTransformer,
 })

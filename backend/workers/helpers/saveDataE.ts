@@ -6,7 +6,7 @@ import type { pcoPersonTransformer } from '@openfaith/pco/server'
 import { EdgeDirectionSchema, getEntityId } from '@openfaith/shared'
 import { getPcoEntityMetadata } from '@openfaith/workers/helpers/schemaRegistry'
 import { getTableColumns, getTableName, sql } from 'drizzle-orm'
-import { Array, Effect, Option, pipe, Record, Schema, String } from 'effect'
+import { Array, Effect, Option, pipe, Record, Schema, SchemaAST, String } from 'effect'
 
 export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
   D extends ReadonlyArray<PcoBaseEntity>,
@@ -41,13 +41,21 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
   }
 
   const entityMetadata = entityMetadataOpt.value
-  const ofEntity = Option.isSome(entityMetadata.ofEntity)
-    ? entityMetadata.ofEntity.value
-    : entityTypeOpt.value.toLowerCase()
+
+  // Get entity name from the domain schema's title annotation
+  let entityName: string
+  if (Option.isSome(entityMetadata.ofEntity)) {
+    const titleOpt = SchemaAST.getAnnotation<string>(SchemaAST.TitleAnnotationId)(
+      entityMetadata.ofEntity.value.ast,
+    )
+    entityName = Option.isSome(titleOpt) ? titleOpt.value : entityTypeOpt.value.toLowerCase()
+  } else {
+    entityName = entityTypeOpt.value.toLowerCase()
+  }
 
   yield* Effect.annotateLogs(Effect.log('Inserting external links'), {
     count: data.length,
-    entityType: ofEntity,
+    entityType: entityName,
     orgId,
   })
 
@@ -63,8 +71,8 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
               _tag: 'externalLink',
               adapter: 'pco',
               createdAt: new Date(entity.attributes.created_at),
-              entityId: getEntityId(ofEntity),
-              entityType: ofEntity,
+              entityId: getEntityId(entityName),
+              entityType: entityName,
               externalId: entity.id,
               lastProcessedAt,
               orgId,
@@ -101,7 +109,7 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
     })
 
   yield* Effect.annotateLogs(Effect.log('External links inserted/updated'), {
-    entityType: ofEntity,
+    entityType: entityName,
     orgId,
     returnedCount: externalLinks.length,
   })
@@ -142,13 +150,21 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
   }
 
   const entityMetadata = entityMetadataOpt.value
-  const ofEntity = Option.isSome(entityMetadata.ofEntity)
-    ? entityMetadata.ofEntity.value
-    : entityTypeOpt.value.toLowerCase()
+
+  // Get entity name from the domain schema's title annotation
+  let entityName: string
+  if (Option.isSome(entityMetadata.ofEntity)) {
+    const titleOpt = SchemaAST.getAnnotation<string>(SchemaAST.TitleAnnotationId)(
+      entityMetadata.ofEntity.value.ast,
+    )
+    entityName = Option.isSome(titleOpt) ? titleOpt.value : entityTypeOpt.value.toLowerCase()
+  } else {
+    entityName = entityTypeOpt.value.toLowerCase()
+  }
 
   if (Option.isNone(entityMetadata.transformer)) {
     yield* Effect.annotateLogs(Effect.log('No transformer found for entity'), {
-      entityType: ofEntity,
+      entityType: entityName,
       orgId,
     })
     return
@@ -156,7 +172,7 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
 
   if (Option.isNone(entityMetadata.table)) {
     yield* Effect.annotateLogs(Effect.log('No table found for entity'), {
-      entityType: ofEntity,
+      entityType: entityName,
       orgId,
     })
     return
@@ -213,21 +229,21 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
   )
 
   yield* Effect.annotateLogs(Effect.log('Prepared entity values for upsert'), {
-    entityType: ofEntity,
+    entityType: entityName,
     orgId,
     upsertCount: entityValues.length,
   })
 
   if (entityValues.length === 0) {
     yield* Effect.annotateLogs(Effect.log('No new/changed entities to upsert'), {
-      entityType: ofEntity,
+      entityType: entityName,
       orgId,
     })
     return
   }
 
   yield* Effect.annotateLogs(Effect.log('Upserting entities into table'), {
-    entityType: ofEntity,
+    entityType: entityName,
     orgId,
     table: getTableName(table),
     upsertCount: entityValues.length,
@@ -281,7 +297,7 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
     })
 
   yield* Effect.annotateLogs(Effect.log('Entity upsert complete'), {
-    entityType: ofEntity,
+    entityType: entityName,
     orgId,
     table: getTableName(table),
     upsertCount: entityValues.length,

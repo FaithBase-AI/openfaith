@@ -1,5 +1,5 @@
 import { campusesTable } from '@openfaith/db'
-import { type FieldConfig, OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -17,7 +17,7 @@ export const BaseCampus = Schema.asSchema(
             },
           },
         }),
-        avatarUrl: Schema.String.annotations({
+        avatar: Schema.String.annotations({
           description: 'Campus avatar URL',
           [OfUiConfig]: {
             table: {
@@ -27,33 +27,12 @@ export const BaseCampus = Schema.asSchema(
             },
           },
         }).pipe(Schema.NullOr),
-        churchCenterEnabled: Schema.Boolean.annotations({
-          description: 'Is Church Center enabled',
-          [OfUiConfig]: {
-            table: {
-              cellType: 'badge',
-              filterable: true,
-              order: 8,
-              sortable: true,
-            },
-          },
-        }).pipe(Schema.NullOr),
         city: Schema.String.annotations({
           description: 'City',
           [OfUiConfig]: {
             table: {
               filterable: true,
               order: 4,
-              sortable: true,
-            },
-          },
-        }).pipe(Schema.NullOr),
-        contactEmailAddress: Schema.String.annotations({
-          description: 'Contact email address',
-          [OfUiConfig]: {
-            table: {
-              filterable: true,
-              order: 3,
               sortable: true,
             },
           },
@@ -68,28 +47,12 @@ export const BaseCampus = Schema.asSchema(
             },
           },
         }).pipe(Schema.NullOr),
-        dateFormat: Schema.Number.annotations({
-          description: 'Date format',
-          [OfUiConfig]: {
-            table: {
-              hidden: true,
-            },
-          },
-        }).pipe(Schema.NullOr),
         description: Schema.String.annotations({
           description: 'Description of the campus',
           [OfUiConfig]: {
             table: {
               order: 2,
               sortable: true,
-            },
-          },
-        }).pipe(Schema.NullOr),
-        geolocationSetManually: Schema.Boolean.annotations({
-          description: 'Was geolocation set manually',
-          [OfUiConfig]: {
-            table: {
-              hidden: true,
             },
           },
         }).pipe(Schema.NullOr),
@@ -120,16 +83,6 @@ export const BaseCampus = Schema.asSchema(
             },
           },
         }).pipe(Schema.NullOr),
-        phoneNumber: Schema.String.annotations({
-          description: 'Phone number',
-          [OfUiConfig]: {
-            table: {
-              filterable: true,
-              order: 7,
-              sortable: true,
-            },
-          },
-        }).pipe(Schema.NullOr),
         state: Schema.String.annotations({
           description: 'State',
           [OfUiConfig]: {
@@ -149,34 +102,8 @@ export const BaseCampus = Schema.asSchema(
             },
           },
         }).pipe(Schema.NullOr),
-        timeZone: Schema.String.annotations({
-          description: 'Time zone',
-          [OfUiConfig]: {
-            table: {
-              filterable: true,
-              order: 10,
-              sortable: true,
-            },
-          },
-        }).pipe(Schema.NullOr),
-        timeZoneRaw: Schema.String.annotations({
-          description: 'Raw time zone',
-          [OfUiConfig]: {
-            table: {
-              hidden: true,
-            },
-          },
-        }).pipe(Schema.NullOr),
-        twentyFourHourTime: Schema.Boolean.annotations({
-          description: 'Whether 24-hour time is used',
-          [OfUiConfig]: {
-            table: {
-              hidden: true,
-            },
-          },
-        }).pipe(Schema.NullOr),
-        website: Schema.String.annotations({
-          description: 'Website',
+        url: Schema.String.annotations({
+          description: 'Website URL',
           [OfUiConfig]: {
             table: {
               order: 11,
@@ -201,7 +128,7 @@ export const BaseCampus = Schema.asSchema(
 export type BaseCampus = typeof BaseCampus.Type
 
 export const Campus = BaseCampus.pipe(Schema.extend(IdentificationFieldsSchema)).annotations({
-  [OfEntity]: 'campus',
+  title: 'campus',
   [OfTable]: campusesTable,
   [OfUiConfig]: {
     navigation: {

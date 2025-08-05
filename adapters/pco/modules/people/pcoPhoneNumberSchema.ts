@@ -8,6 +8,7 @@ import {
   OfIdentifier,
   OfSkipField,
   OfTransformer,
+  PhoneNumber,
 } from '@openfaith/schema'
 import { Schema } from 'effect'
 
@@ -76,7 +77,7 @@ export const PcoPhoneNumber = mkPcoEntity({
   }),
   type: 'PhoneNumber',
 }).annotations({
-  [OfEntity]: 'phoneNumber',
+  [OfEntity]: PhoneNumber,
   [OfIdentifier]: 'pco-phone-number',
   [OfTransformer]: pcoPhoneNumberTransformer,
 })

@@ -1,5 +1,5 @@
 import { peopleTable } from '@openfaith/db'
-import { OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import {
   BaseSystemFieldsSchema,
   IdentificationFieldsSchema,
@@ -150,7 +150,7 @@ export const BasePerson = BaseSystemFieldsSchema.pipe(
 export type BasePerson = typeof BasePerson.Type
 
 export const Person = BasePerson.pipe(Schema.extend(IdentificationFieldsSchema)).annotations({
-  [OfEntity]: 'person',
+  title: 'person',
   [OfTable]: peopleTable,
   [OfUiConfig]: {
     navigation: {

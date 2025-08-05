@@ -15,31 +15,30 @@ import { Option, pipe, Schema } from 'effect'
  * that follow a consistent structure.
  *
  * @template TFieldsKey - The key of the property on the API resource that contains the filterable/orderable fields
- * @template TApiBase - The base shape that all resources must have
- * @param entityRegistry Optional schema for entities that can be included in responses
  * @returns A function to define endpoints for this API family
  */
-function createApiAdapter<
-  TFieldsKey extends string,
-  TApiBase extends Record<TFieldsKey, Record<string, any>>,
->() {
+function createApiAdapter<TFieldsKey extends string>() {
   // GET Collection overload
   function defineEndpoint<
-    Api extends TApiBase,
+    ApiSchema extends Schema.Schema.Any,
     TModule extends string,
     TEntity extends string,
     TName extends string,
     TPath extends HttpApiEndpoint.PathSegment,
-    OrderableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
-    QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
+    OrderableFields extends ReadonlyArray<
+      Extract<keyof Schema.Schema.Type<ApiSchema>[TFieldsKey], string>
+    >,
+    QueryableFields extends ReadonlyArray<
+      Extract<keyof Schema.Schema.Type<ApiSchema>[TFieldsKey], string>
+    >,
     Includes extends ReadonlyArray<string>,
     OrderableSpecial extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
     IsCollection extends true,
     Query extends ReturnType<
       typeof buildUrlParamsSchema<
-        Api,
-        Api[TFieldsKey],
+        Schema.Schema.Type<ApiSchema>,
+        Schema.Schema.Type<ApiSchema>[TFieldsKey],
         TModule,
         TEntity,
         TName,
@@ -55,8 +54,8 @@ function createApiAdapter<
     params: Omit<
       DefineEndpointInput<
         'GET',
-        Api,
-        Api[TFieldsKey],
+        Schema.Schema.Type<ApiSchema>,
+        Schema.Schema.Type<ApiSchema>[TFieldsKey],
         TModule,
         TEntity,
         TName,
@@ -72,8 +71,9 @@ function createApiAdapter<
         never,
         never
       >,
-      'includes' | 'queryableBy' | 'orderableBy'
+      'includes' | 'queryableBy' | 'orderableBy' | 'apiSchema'
     > & {
+      apiSchema: ApiSchema
       isCollection: true
       defaultQuery?: Schema.Schema.Type<Query>
       includes?: Includes
@@ -91,8 +91,8 @@ function createApiAdapter<
           }
     },
   ): BaseGetEndpointDefinition<
-    Api,
-    Api[TFieldsKey],
+    Schema.Schema.Type<ApiSchema>,
+    Schema.Schema.Type<ApiSchema>[TFieldsKey],
     TModule,
     TEntity,
     TName,
@@ -108,21 +108,25 @@ function createApiAdapter<
 
   // GET Single overload
   function defineEndpoint<
-    Api extends TApiBase,
+    ApiSchema extends Schema.Schema.Any,
     TModule extends string,
     TEntity extends string,
     TName extends string,
     TPath extends HttpApiEndpoint.PathSegment,
-    OrderableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
-    QueryableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
+    OrderableFields extends ReadonlyArray<
+      Extract<keyof Schema.Schema.Type<ApiSchema>[TFieldsKey], string>
+    >,
+    QueryableFields extends ReadonlyArray<
+      Extract<keyof Schema.Schema.Type<ApiSchema>[TFieldsKey], string>
+    >,
     Includes extends ReadonlyArray<string>,
     OrderableSpecial extends ReadonlyArray<string>,
     QueryableSpecial extends ReadonlyArray<string>,
     IsCollection extends false,
     Query extends ReturnType<
       typeof buildUrlParamsSchema<
-        Api,
-        Api[TFieldsKey],
+        Schema.Schema.Type<ApiSchema>,
+        Schema.Schema.Type<ApiSchema>[TFieldsKey],
         TModule,
         TEntity,
         TName,
@@ -138,8 +142,8 @@ function createApiAdapter<
     params: Omit<
       DefineEndpointInput<
         'GET',
-        Api,
-        Api[TFieldsKey],
+        Schema.Schema.Type<ApiSchema>,
+        Schema.Schema.Type<ApiSchema>[TFieldsKey],
         TModule,
         TEntity,
         TName,
@@ -155,8 +159,9 @@ function createApiAdapter<
         never,
         never
       >,
-      'includes' | 'queryableBy' | 'orderableBy'
+      'includes' | 'queryableBy' | 'orderableBy' | 'apiSchema'
     > & {
+      apiSchema: ApiSchema
       isCollection: false
       defaultQuery?: Schema.Schema.Type<Query>
       includes?: Includes
@@ -174,8 +179,8 @@ function createApiAdapter<
           }
     },
   ): BaseGetEndpointDefinition<
-    Api,
-    Api[TFieldsKey],
+    Schema.Schema.Type<ApiSchema>,
+    Schema.Schema.Type<ApiSchema>[TFieldsKey],
     TModule,
     TEntity,
     TName,
@@ -191,19 +196,21 @@ function createApiAdapter<
 
   // POST overload
   function defineEndpoint<
-    Api extends TApiBase,
+    ApiSchema extends Schema.Schema.Any,
     TModule extends string,
     TEntity extends string,
     TName extends string,
     TPath extends HttpApiEndpoint.PathSegment,
-    CreatableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
+    CreatableFields extends ReadonlyArray<
+      Extract<keyof Schema.Schema.Type<ApiSchema>[TFieldsKey], string>
+    >,
     CreatableSpecial extends ReadonlyArray<string>,
   >(
     params: Omit<
       DefineEndpointInput<
         'POST',
-        Api,
-        Api[TFieldsKey],
+        Schema.Schema.Type<ApiSchema>,
+        Schema.Schema.Type<ApiSchema>[TFieldsKey],
         TModule,
         TEntity,
         TName,
@@ -219,8 +226,9 @@ function createApiAdapter<
         never,
         never
       >,
-      'creatableFields'
+      'creatableFields' | 'apiSchema'
     > & {
+      apiSchema: ApiSchema
       creatableFields?:
         | {
             fields?: CreatableFields
@@ -229,8 +237,8 @@ function createApiAdapter<
         | CreatableFields
     },
   ): BasePostEndpointDefinition<
-    Api,
-    Api[TFieldsKey],
+    Schema.Schema.Type<ApiSchema>,
+    Schema.Schema.Type<ApiSchema>[TFieldsKey],
     TModule,
     TEntity,
     TName,
@@ -241,19 +249,21 @@ function createApiAdapter<
 
   // PATCH overload
   function defineEndpoint<
-    Api extends TApiBase,
+    ApiSchema extends Schema.Schema.Any,
     TModule extends string,
     TEntity extends string,
     TName extends string,
     TPath extends HttpApiEndpoint.PathSegment,
-    UpdatableFields extends ReadonlyArray<Extract<keyof Api[TFieldsKey], string>>,
+    UpdatableFields extends ReadonlyArray<
+      Extract<keyof Schema.Schema.Type<ApiSchema>[TFieldsKey], string>
+    >,
     UpdatableSpecial extends ReadonlyArray<string>,
   >(
     params: Omit<
       DefineEndpointInput<
         'PATCH',
-        Api,
-        Api[TFieldsKey],
+        Schema.Schema.Type<ApiSchema>,
+        Schema.Schema.Type<ApiSchema>[TFieldsKey],
         TModule,
         TEntity,
         TName,
@@ -269,8 +279,9 @@ function createApiAdapter<
         UpdatableFields,
         UpdatableSpecial
       >,
-      'updatableFields'
+      'updatableFields' | 'apiSchema'
     > & {
+      apiSchema: ApiSchema
       updatableFields?:
         | {
             fields?: UpdatableFields
@@ -279,8 +290,8 @@ function createApiAdapter<
         | UpdatableFields
     },
   ): BasePatchEndpointDefinition<
-    Api,
-    Api[TFieldsKey],
+    Schema.Schema.Type<ApiSchema>,
+    Schema.Schema.Type<ApiSchema>[TFieldsKey],
     TModule,
     TEntity,
     TName,
@@ -291,32 +302,42 @@ function createApiAdapter<
 
   // DELETE overload
   function defineEndpoint<
-    Api extends TApiBase,
+    ApiSchema extends Schema.Schema.Any,
     TModule extends string,
     TEntity extends string,
     TName extends string,
     TPath extends HttpApiEndpoint.PathSegment,
   >(
-    params: DefineEndpointInput<
-      'DELETE',
-      Api,
-      Api[TFieldsKey],
-      TModule,
-      TEntity,
-      TName,
-      TPath,
-      never,
-      never,
-      never,
-      never,
-      never,
-      false,
-      never,
-      never,
-      never,
-      never
-    >,
-  ): BaseDeleteEndpointDefinition<Api, Api[TFieldsKey], TModule, TEntity, TName, TPath>
+    params: Omit<
+      DefineEndpointInput<
+        'DELETE',
+        Schema.Schema.Type<ApiSchema>,
+        Schema.Schema.Type<ApiSchema>[TFieldsKey],
+        TModule,
+        TEntity,
+        TName,
+        TPath,
+        never,
+        never,
+        never,
+        never,
+        never,
+        false,
+        never,
+        never,
+        never,
+        never
+      >,
+      'apiSchema'
+    > & { apiSchema: ApiSchema; method: 'DELETE' },
+  ): BaseDeleteEndpointDefinition<
+    Schema.Schema.Type<ApiSchema>,
+    Schema.Schema.Type<ApiSchema>[TFieldsKey],
+    TModule,
+    TEntity,
+    TName,
+    TPath
+  >
 
   // Implementation
   function defineEndpoint(params: any) {
@@ -419,16 +440,9 @@ function createApiAdapter<
 }
 
 /**
- * Base shape for all PCO API resources
- */
-type PcoApiBase = {
-  readonly attributes: Record<string, any>
-}
-
-/**
  * PCO API adapter configured for resources with attributes field
  */
-export const pcoApiAdapter = createApiAdapter<'attributes', PcoApiBase>()
+export const pcoApiAdapter = createApiAdapter<'attributes'>()
 
 export function getQueryParamSchema(apiSchema: Schema.Struct<any>, field: string) {
   // @ts-ignore - We assume the schema has `fields.attributes.fields`
