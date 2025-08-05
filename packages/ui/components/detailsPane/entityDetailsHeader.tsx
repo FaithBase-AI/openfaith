@@ -25,14 +25,14 @@ export const EntityDetailsHeader: FC<EntityDetailsHeaderProps> = (props) => {
 
   // Always call the hook, but conditionally enable it
   const fallbackSchema = Schema.Struct({ id: Schema.String })
-  const entityResult = useSchemaEntity(
+  const { entityOpt } = useSchemaEntity(
     Option.getOrElse(schemaOpt, () => fallbackSchema),
     entityId,
     { enabled: Option.isSome(schemaOpt) },
   )
 
   // Get entity name from data or fallback
-  const entityName = Option.match(entityResult.entityOpt, {
+  const entityName = Option.match(entityOpt, {
     onNone: () => `${formatLabel(entityType)} ${entityId}`,
     onSome: (entity: EntityData) =>
       entity.name || entity.title || `${formatLabel(entityType)} ${entityId}`,

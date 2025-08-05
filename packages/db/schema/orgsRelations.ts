@@ -1,5 +1,5 @@
 import { adapterDetailsTable, adapterTokensTable } from '@openfaith/db/schema/adaptersSchema'
-import { edgesTable } from '@openfaith/db/schema/modules/edgesSchema'
+import { edgesTable, entityRelationshipsTable } from '@openfaith/db/schema/modules/edgesSchema'
 import { externalLinksTable } from '@openfaith/db/schema/modules/externalLinksSchema'
 import { peopleTable } from '@openfaith/db/schema/modules/peopleSchema'
 import { phoneNumbersTable } from '@openfaith/db/schema/modules/phoneNumbersSchema'
@@ -16,6 +16,7 @@ export const orgsRelations = relations(orgsTable, ({ many, one }) => ({
   adapterDetails: many(adapterDetailsTable),
   adapterTokens: many(adapterTokensTable),
   edges: many(edgesTable),
+  entityRelationships: many(entityRelationshipsTable),
   externalLinks: many(externalLinksTable),
   invitations: many(invitationsTable),
   orgUsers: many(orgUsersTable),

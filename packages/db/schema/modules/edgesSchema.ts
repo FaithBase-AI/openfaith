@@ -64,3 +64,35 @@ export type Edge = typeof Edge.Type
 
 export const NewEdge = createInsertSchema(edgesTable)
 export type NewEdge = typeof NewEdge.Type
+
+export const entityRelationshipsTable = pgTable(
+  'entityRelationships',
+  (d) => ({
+    _tag: d
+      .char({ enum: ['entityRelationships'], length: 19 })
+      .default('entityRelationships')
+      .$type<'entityRelationships'>()
+      .notNull(),
+
+    orgId: d.text().notNull(),
+
+    sourceEntityType: d.text().notNull(),
+
+    targetEntityTypes: d.jsonb().$type<Array<string>>().notNull().default([]),
+
+    updatedAt: d.timestamp().notNull().defaultNow(),
+  }),
+  (x) => ({
+    orgIdx: index('entityRelationshipsOrgIdx').on(x.orgId),
+    pk: primaryKey({
+      columns: [x.orgId, x.sourceEntityType],
+      name: 'entityRelationshipsPk',
+    }),
+  }),
+)
+
+export const EntityRelationships = createSelectSchema(entityRelationshipsTable)
+export type EntityRelationships = typeof EntityRelationships.Type
+
+export const NewEntityRelationships = createInsertSchema(entityRelationshipsTable)
+export type NewEntityRelationships = typeof NewEntityRelationships.Type

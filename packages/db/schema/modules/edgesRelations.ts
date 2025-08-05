@@ -1,6 +1,6 @@
 import { addressesTable } from '@openfaith/db/schema/modules/addressSchema'
 import { campusesTable } from '@openfaith/db/schema/modules/campusesSchema'
-import { edgesTable } from '@openfaith/db/schema/modules/edgesSchema'
+import { edgesTable, entityRelationshipsTable } from '@openfaith/db/schema/modules/edgesSchema'
 import { foldersTable } from '@openfaith/db/schema/modules/foldersSchema'
 import { peopleTable } from '@openfaith/db/schema/modules/peopleSchema'
 import { phoneNumbersTable } from '@openfaith/db/schema/modules/phoneNumbersSchema'
@@ -86,5 +86,12 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
     fields: [edgesTable.targetEntityId],
     references: [usersTable.id],
     relationName: 'UserTargetEdges',
+  }),
+}))
+
+export const entityRelationshipsRelations = relations(entityRelationshipsTable, ({ one }) => ({
+  org: one(orgsTable, {
+    fields: [entityRelationshipsTable.orgId],
+    references: [orgsTable.id],
   }),
 }))

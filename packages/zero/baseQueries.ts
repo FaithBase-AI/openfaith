@@ -30,7 +30,8 @@ export const getBaseOrgUserQuery = (z: ReturnType<typeof useZero>, userId: strin
 
 export const getBaseEntitiesQuery = (z: ReturnType<typeof useZero>, entityName: string) => {
   if (entityName in z.query) {
-    return z.query[entityName as keyof typeof z.query]
+    // @ts-expect-error - We have these relations defined in the schema
+    return z.query[entityName as keyof typeof z.query].related('sourceEdges').related('targetEdges')
   }
 
   throw new EntityNotFoundError({
@@ -45,7 +46,6 @@ export const getBaseEntityQuery = (
   entityId: string,
 ) => {
   const entitiesQuery = getBaseEntitiesQuery(z, entityName)
-  // @ts-expect-error - id is a valid field for all entities
   return entitiesQuery.where('id', entityId).one()
 }
 

@@ -190,6 +190,9 @@ export const schema = {
         },
       ],
     },
+    entityRelationships: {
+      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+    },
     externalLinks: {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
     },
@@ -280,6 +283,14 @@ export const schema = {
           cardinality: 'many',
           destField: ['orgId'],
           destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+      entityRelationships: [
+        {
+          cardinality: 'many',
+          destField: ['orgId'],
+          destSchema: 'entityRelationships',
           sourceField: ['id'],
         },
       ],
@@ -1163,6 +1174,58 @@ export const schema = {
       name: 'edges',
       primaryKey: ['orgId', 'sourceEntityId', 'targetEntityId', 'relationshipType'],
       serverName: 'openfaith_edges',
+    },
+    entityRelationships: {
+      columns: {
+        _tag: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'entityRelationshipsTable',
+            '_tag'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        orgId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'entityRelationshipsTable',
+            'orgId'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        sourceEntityType: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'entityRelationshipsTable',
+            'sourceEntityType'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        targetEntityTypes: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'entityRelationshipsTable',
+            'targetEntityTypes'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        updatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'entityRelationshipsTable',
+            'updatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+      },
+      name: 'entityRelationships',
+      primaryKey: ['orgId', 'sourceEntityType'],
+      serverName: 'openfaith_entityRelationships',
     },
     externalLinks: {
       columns: {
