@@ -1,4 +1,3 @@
-import { peopleTable } from '@openfaith/db'
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
 import {
@@ -7,7 +6,6 @@ import {
   OfEntity,
   OfFieldName,
   OfIdentifier,
-  OfTable,
   OfTransformer,
 } from '@openfaith/schema'
 import { type Option, Schema, SchemaAST } from 'effect'
@@ -148,7 +146,6 @@ export const PcoPerson = mkPcoEntity({
 }).annotations({
   [OfEntity]: 'person',
   [OfIdentifier]: 'pco-person',
-  [OfTable]: peopleTable,
   [OfTransformer]: pcoPersonTransformer,
 })
 export type PcoPerson = typeof PcoPerson.Type

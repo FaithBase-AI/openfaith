@@ -12,6 +12,7 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
   org: one(orgsTable, {
     fields: [edgesTable.orgId],
     references: [orgsTable.id],
+    relationName: 'OrgEdges',
   }),
 
   // Source entity relations

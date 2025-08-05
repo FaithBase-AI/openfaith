@@ -814,9 +814,109 @@ effect(
   { timeout: 120000 },
 )
 
-// Test that mkEdgesFromIncludesE now calls updateEntityRelationshipsE
+// Test bidirectional relationships with multiple entity types
 effect(
-  'mkEdgesFromIncludesE updates entity relationships registry after creating edges',
+  'saveDataE creates bidirectional entity relationships for person with addresses and phone numbers',
+  () =>
+    Effect.gen(function* () {
+      yield* createTestTables
+
+      const mainPerson = createPcoBaseEntity('pco_person_multi', 'Person')
+      const includedAddress = createPcoBaseEntity(
+        'pco_addr_multi',
+        'Address',
+        {
+          city: 'Multi City',
+          country_code: 'US',
+          country_name: 'United States',
+          created_at: '2023-01-01T00:00:00Z',
+          location: 'Home',
+          primary: true,
+          state: 'CA',
+          street_line_1: '456 Multi St',
+          street_line_2: null,
+          updated_at: '2023-01-02T00:00:00Z',
+          zip: '54321',
+        },
+        {
+          person: {
+            data: { id: 'pco_person_multi', type: 'Person' },
+          },
+        },
+      )
+      const includedPhone = createPcoBaseEntity(
+        'pco_phone_multi',
+        'PhoneNumber',
+        {
+          created_at: '2023-01-01T00:00:00Z',
+          location: 'Mobile',
+          number: '555-7777',
+          primary: true,
+          updated_at: '2023-01-02T00:00:00Z',
+        },
+        {
+          person: {
+            data: { id: 'pco_person_multi', type: 'Person' },
+          },
+        },
+      )
+
+      const data = createPcoCollectionData([mainPerson], [includedAddress, includedPhone])
+
+      // Process the full data which should create bidirectional relationships
+      yield* saveDataE(data)
+
+      const sql = yield* SqlClient.SqlClient
+
+      // Verify entity relationships registry has all expected bidirectional relationships
+      const relationships = yield* sql`
+        SELECT * FROM "openfaith_entityRelationships" 
+        WHERE "orgId" = 'test_org_123'
+        ORDER BY "sourceEntityType"
+      `
+
+      // Find each relationship type
+      const addressRel = relationships.find((r: any) => r.sourceEntityType === 'address')
+      const personRel = relationships.find((r: any) => r.sourceEntityType === 'person')
+      const phoneRel = relationships.find((r: any) => r.sourceEntityType === 'phonenumber')
+
+      // Check address -> person
+      expect(addressRel).toBeDefined()
+      const addressTargets =
+        typeof addressRel?.targetEntityTypes === 'string'
+          ? JSON.parse(addressRel.targetEntityTypes)
+          : addressRel?.targetEntityTypes
+      expect(addressTargets).toContain('person')
+
+      // Check person -> [address, phonenumber]
+      expect(personRel).toBeDefined()
+      const personTargets =
+        typeof personRel?.targetEntityTypes === 'string'
+          ? JSON.parse(personRel.targetEntityTypes)
+          : personRel?.targetEntityTypes
+      expect(personTargets).toContain('address')
+      expect(personTargets).toContain('phonenumber')
+
+      // Check phonenumber -> person
+      expect(phoneRel).toBeDefined()
+      const phoneTargets =
+        typeof phoneRel?.targetEntityTypes === 'string'
+          ? JSON.parse(phoneRel.targetEntityTypes)
+          : phoneRel?.targetEntityTypes
+      expect(phoneTargets).toContain('person')
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
+)
+
+// Test that mkEdgesFromIncludesE now calls updateEntityRelationshipsE with bidirectional tracking
+effect(
+  'mkEdgesFromIncludesE updates entity relationships registry with bidirectional relationships',
   () =>
     Effect.gen(function* () {
       yield* createTestTables
@@ -843,7 +943,7 @@ effect(
       const mainExternalLinks = yield* mkExternalLinksE([mainEntity])
       const phoneExternalLinks = yield* mkExternalLinksE([includedPhone])
 
-      // This should create edges AND update the entity relationships registry
+      // This should create edges AND update the entity relationships registry with bidirectional relationships
       yield* mkEdgesFromIncludesE([includedPhone], mainExternalLinks, phoneExternalLinks, 'Person')
 
       const sql = yield* SqlClient.SqlClient
@@ -856,22 +956,35 @@ effect(
       `
       expect(edges.length).toBe(1)
 
-      // Verify entity relationships registry was updated
+      // Verify entity relationships registry was updated with BOTH directions
       const relationships = yield* sql`
         SELECT * FROM "openfaith_entityRelationships" 
         WHERE "orgId" = 'test_org_123'
+        ORDER BY "sourceEntityType"
       `
-      expect(relationships.length).toBeGreaterThan(0)
 
-      // Should have a relationship entry for the source entity type
-      const hasPersonRelationship = relationships.some((rel: any) => {
-        const targets =
-          typeof rel.targetEntityTypes === 'string'
-            ? JSON.parse(rel.targetEntityTypes)
-            : rel.targetEntityTypes
-        return rel.sourceEntityType === 'person' && targets.includes('phonenumber')
-      })
-      expect(hasPersonRelationship).toBe(true)
+      // Should have entries for both directions
+      expect(relationships.length).toBeGreaterThanOrEqual(2)
+
+      // Check person -> phonenumber relationship
+      const personRelationship = relationships.find((rel: any) => rel.sourceEntityType === 'person')
+      expect(personRelationship).toBeDefined()
+      const personTargets =
+        typeof personRelationship?.targetEntityTypes === 'string'
+          ? JSON.parse(personRelationship.targetEntityTypes)
+          : personRelationship?.targetEntityTypes
+      expect(personTargets).toContain('phonenumber')
+
+      // Check phonenumber -> person relationship (bidirectional)
+      const phoneRelationship = relationships.find(
+        (rel: any) => rel.sourceEntityType === 'phonenumber',
+      )
+      expect(phoneRelationship).toBeDefined()
+      const phoneTargets =
+        typeof phoneRelationship?.targetEntityTypes === 'string'
+          ? JSON.parse(phoneRelationship.targetEntityTypes)
+          : phoneRelationship?.targetEntityTypes
+      expect(phoneTargets).toContain('person')
     }).pipe(
       Effect.provide(TestLayer),
       Effect.catchTag('ContainerError', (error) => {

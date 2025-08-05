@@ -409,6 +409,44 @@ export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* 
   // Process included data to find relationships and create edge mappings
   // This pipeline filters and transforms included entities that have relationships
   // to the root entity type, then maps them to internal entity IDs
+
+  // Debug logging
+  yield* Effect.log('Starting mkEdgesFromIncludesE processing', {
+    includedDataCount: includedData.length,
+    includedTypes: pipe(
+      includedData,
+      Array.map((x) => x.type),
+      Array.dedupe,
+    ),
+    orgId,
+    rootEntityType,
+    rootExternalLinksCount: rootExternalLinks.length,
+  })
+
+  // Log first included item's relationships for debugging
+  const firstIncludedOpt = pipe(includedData, Array.head)
+  if (Option.isSome(firstIncludedOpt)) {
+    const firstIncluded = firstIncludedOpt.value
+    yield* Effect.log('First included item details', {
+      id: firstIncluded.id,
+      relationships: firstIncluded.relationships,
+      type: firstIncluded.type,
+    })
+
+    // Test the pascal to snake conversion
+    const convertedKey = pipe(rootEntityType, String.pascalToSnake)
+    yield* Effect.log('Pascal to snake conversion', {
+      convertedKey,
+      relationshipKeys: pipe(
+        firstIncluded.relationships,
+        Option.fromNullable,
+        Option.map(Record.keys),
+        Option.getOrElse(() => []),
+      ),
+      rootEntityType,
+    })
+  }
+
   const baseEdgeData = pipe(
     includedData,
     Array.filterMap((x) =>
@@ -416,6 +454,25 @@ export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* 
         // Extract relationships from the included entity
         x.relationships,
         Option.fromNullable,
+        // Log what we're looking for vs what we have
+        Option.tap((rels) =>
+          Option.some(
+            Effect.runSync(
+              Effect.gen(function* () {
+                const lookingFor = pipe(rootEntityType, String.pascalToSnake)
+                const hasKey = pipe(rels, Record.has(lookingFor))
+                if (!hasKey) {
+                  yield* Effect.log('Relationship key not found', {
+                    availableKeys: pipe(rels, Record.keys),
+                    includedEntityId: x.id,
+                    includedEntityType: x.type,
+                    lookingFor,
+                  })
+                }
+              }),
+            ),
+          ),
+        ),
         // Look for relationship to the root entity type. rootEntityType is Person, but the key in the relationships object is person.
         Option.flatMap((y) => pipe(y, Record.get(pipe(rootEntityType, String.pascalToSnake)))),
         // Extract the relationship data (the actual related entity)
@@ -456,6 +513,13 @@ export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* 
     ),
   )
 
+  yield* Effect.log('Base edge data created', {
+    baseEdgeDataCount: baseEdgeData.length,
+    edges: pipe(
+      baseEdgeData,
+      Array.take(3), // Log first 3 for debugging
+    ),
+  })
   // Create edge values using the clean foo pipeline data
   const edgeValues = pipe(
     baseEdgeData,
@@ -494,6 +558,30 @@ export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* 
     }),
   )
 
+  // Create a separate list for entity relationship tracking that includes both directions
+  const entityRelationshipTracking = pipe(
+    baseEdgeData,
+    Array.flatMap((item) => {
+      const rootType = rootEntityType.toLowerCase()
+      const includedType = item.targetType.toLowerCase()
+
+      // Track both directions for the entity relationships
+      return [
+        // The included entity points to the root entity (e.g., address -> person)
+        {
+          orgId,
+          sourceEntityTypeTag: includedType,
+          targetEntityTypeTag: rootType,
+        },
+        // The root entity points to the included entity (e.g., person -> address)
+        {
+          orgId,
+          sourceEntityTypeTag: rootType,
+          targetEntityTypeTag: includedType,
+        },
+      ]
+    }),
+  )
   if (edgeValues.length === 0) {
     yield* Effect.annotateLogs(Effect.log('No edges to create from included data'), {
       orgId,
@@ -531,7 +619,7 @@ export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* 
     rootEntityType,
   })
 
-  yield* updateEntityRelationshipsE(edgeValues)
+  yield* updateEntityRelationshipsE(entityRelationshipTracking)
 })
 
 export const updateEntityRelationshipsE = Effect.fn('updateEntityRelationshipsE')(function* (
@@ -547,6 +635,29 @@ export const updateEntityRelationshipsE = Effect.fn('updateEntityRelationshipsE'
 
   const orgId = yield* TokenKey
   const db = yield* PgDrizzle.PgDrizzle
+
+  // Debug log the incoming edge values
+  yield* Effect.log('updateEntityRelationshipsE - incoming edges', {
+    edgeCount: edgeValues.length,
+    edges: pipe(
+      edgeValues,
+      Array.take(5),
+      Array.map((e) => ({
+        source: e.sourceEntityTypeTag,
+        target: e.targetEntityTypeTag,
+      })),
+    ),
+    uniqueSourceTypes: pipe(
+      edgeValues,
+      Array.map((e) => e.sourceEntityTypeTag),
+      Array.dedupe,
+    ),
+    uniqueTargetTypes: pipe(
+      edgeValues,
+      Array.map((e) => e.targetEntityTypeTag),
+      Array.dedupe,
+    ),
+  })
 
   // Group edges by source entity type and transform directly to insert values
   const relationshipValues = pipe(

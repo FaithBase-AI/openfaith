@@ -15,7 +15,9 @@ import { relations } from 'drizzle-orm'
 export const orgsRelations = relations(orgsTable, ({ many, one }) => ({
   adapterDetails: many(adapterDetailsTable),
   adapterTokens: many(adapterTokensTable),
-  edges: many(edgesTable),
+  edges: many(edgesTable, {
+    relationName: 'OrgEdges',
+  }),
   entityRelationships: many(entityRelationshipsTable),
   externalLinks: many(externalLinksTable),
   invitations: many(invitationsTable),
