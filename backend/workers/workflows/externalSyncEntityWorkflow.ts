@@ -2,15 +2,19 @@ import { Activity, Workflow } from '@effect/workflow'
 import { AdapterOperations } from '@openfaith/adapter-core/layers/adapterOperations'
 import { TokenKey } from '@openfaith/adapter-core/server'
 import { PcoAdapterOperationsLayer } from '@openfaith/pco/pcoAdapterLayer'
-import { saveDataE } from '@openfaith/workers/helpers/saveDataE'
+import { detectAndMarkDeletedEntitiesE, saveDataE } from '@openfaith/workers/helpers/saveDataE'
 import { Effect, Schema } from 'effect'
 
 // Define the External sync error
-class ExternalSyncEntityError extends Schema.TaggedError<ExternalSyncEntityError>(
+class ExternalSyncEntityError extends Schema.TaggedError<ExternalSyncEntityError>()(
   'ExternalSyncEntityError',
-)('ExternalSyncEntityError', {
-  message: Schema.String,
-}) {}
+  {
+    cause: Schema.optional(Schema.Unknown),
+    entityType: Schema.optional(Schema.String),
+    message: Schema.String,
+    tokenKey: Schema.optional(Schema.String),
+  },
+) {}
 
 // Define the workflow payload schema
 const ExternalSyncEntityPayload = Schema.Struct({
@@ -33,7 +37,8 @@ export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLaye
     yield* Effect.log(`🔄 Starting External sync workflow for token: ${payload.tokenKey}`)
     yield* Effect.log(`🆔 Execution ID: ${executionId}`)
 
-    console.log('yeet')
+    // Record sync start time BEFORE we begin processing - this is crucial for deletion detection
+    const syncStartTime = new Date()
 
     // Create the External sync activity
     yield* Activity.make({
@@ -56,19 +61,29 @@ export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLaye
         yield* adapterOps
           .processEntityData(payload.entity, (data) =>
             saveDataE(data as any).pipe(
-              Effect.mapError((error) => {
-                console.log(error)
-                return new ExternalSyncEntityError({
-                  message: String(error),
-                })
-              }),
+              Effect.tapError((error) => Effect.logError('Save data failed', { error })),
+              Effect.mapError(
+                (error) =>
+                  new ExternalSyncEntityError({
+                    cause: error,
+                    entityType: payload.entity,
+                    message: `Save data failed: ${error.message || 'Unknown error'}`,
+                    tokenKey: payload.tokenKey,
+                  }),
+              ),
             ),
           )
           .pipe(
-            Effect.mapError((error) => {
-              console.log(error)
-              return new ExternalSyncEntityError({ message: String(error) })
-            }),
+            Effect.tapError((error) => Effect.logError('Process entity data failed', { error })),
+            Effect.mapError(
+              (error) =>
+                new ExternalSyncEntityError({
+                  cause: error,
+                  entityType: payload.entity,
+                  message: `Process entity data failed: ${error.message || 'Unknown error'}`,
+                  tokenKey: payload.tokenKey,
+                }),
+            ),
           )
       }).pipe(
         Effect.withSpan('external-sync-activity'),
@@ -85,6 +100,77 @@ export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLaye
           // Add any cleanup logic here if needed
         }),
       ),
+    )
+
+    // After successful sync, detect and mark deleted entities
+    yield* Activity.make({
+      error: ExternalSyncEntityError,
+      execute: Effect.gen(function* () {
+        const attempt = yield* Activity.CurrentAttempt
+
+        yield* Effect.annotateLogs(Effect.log(`🗑️ Starting deletion detection`), {
+          attempt,
+          entityType: payload.entity,
+          executionId,
+          tokenKey: payload.tokenKey,
+        })
+
+        // Get adapter type dynamically
+        const adapterOps = yield* AdapterOperations.pipe(
+          Effect.provide(PcoAdapterOperationsLayer),
+          Effect.provideService(TokenKey, payload.tokenKey),
+        )
+        const adapterType = adapterOps.getAdapterTag()
+
+        yield* detectAndMarkDeletedEntitiesE({
+          adapter: adapterType,
+          entityType: payload.entity,
+          syncStartTime,
+        }).pipe(
+          Effect.tapError((error) => Effect.logError('Deletion detection failed', { error })),
+          Effect.mapError(
+            (error) =>
+              new ExternalSyncEntityError({
+                cause: error,
+                entityType: payload.entity,
+                message: `Deletion detection failed: ${error.message || 'Unknown error'}`,
+                tokenKey: payload.tokenKey,
+              }),
+          ),
+        )
+        yield* Effect.annotateLogs(Effect.log(`✅ Completed deletion detection`), {
+          attempt,
+          entityType: payload.entity,
+          executionId,
+          tokenKey: payload.tokenKey,
+        })
+      }).pipe(
+        Effect.withSpan('deletion-detection-activity'),
+        Effect.provideService(TokenKey, payload.tokenKey),
+      ),
+      name: 'DetectDeletedEntities',
+    }).pipe(
+      Activity.retry({ times: 2 }), // Fewer retries since this is cleanup
+      ExternalSyncEntityWorkflow.withCompensation(
+        Effect.fn(function* (_value, cause) {
+          yield* Effect.log(
+            `🔄 Compensating deletion detection activity for token: ${payload.tokenKey}`,
+          )
+          yield* Effect.log(`📋 Cause: ${cause}`)
+          // Deletion detection failure is not critical, so no cleanup needed
+        }),
+      ),
+      Effect.catchAll((error) => {
+        // Log deletion detection errors but don't fail the workflow
+        return Effect.annotateLogs(
+          Effect.logError('Deletion detection activity failed, continuing workflow'),
+          {
+            entityType: payload.entity,
+            error,
+            tokenKey: payload.tokenKey,
+          },
+        )
+      }),
     )
 
     yield* Effect.log(`✅ Completed External sync workflow for token: ${payload.tokenKey}`)

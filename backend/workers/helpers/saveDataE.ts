@@ -9,7 +9,7 @@ import {
   getAnnotationFromSchema,
   getPcoEntityMetadata,
 } from '@openfaith/workers/helpers/schemaRegistry'
-import { and, eq, getTableColumns, getTableName, inArray, sql } from 'drizzle-orm'
+import { and, eq, getTableColumns, getTableName, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { Array, Effect, HashSet, Option, pipe, Record, Schema, SchemaAST, String } from 'effect'
 
 export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
@@ -1104,3 +1104,168 @@ const extractIncludedRelationships = (
     Array.flatten,
   )
 }
+
+// Helper function to detect and mark deleted entities
+export const detectAndMarkDeletedEntitiesE = Effect.fn('detectAndMarkDeletedEntitiesE')(
+  function* (params: { adapter: string; entityType: string; syncStartTime: Date }) {
+    const { adapter, entityType, syncStartTime } = params
+    const orgId = yield* TokenKey
+    const db = yield* PgDrizzle.PgDrizzle
+
+    // Get the proper entity name for this entity type
+    const properEntityName = getProperEntityName(entityType)
+
+    yield* Effect.annotateLogs(Effect.log('Starting deletion detection'), {
+      adapter,
+      entityType: properEntityName,
+      orgId,
+      syncStartTime: syncStartTime.toISOString(),
+    })
+
+    // Find stale external links that weren't processed in this sync
+    const staleLinks = yield* db
+      .select({
+        entityId: externalLinksTable.entityId,
+        entityType: externalLinksTable.entityType,
+        externalId: externalLinksTable.externalId,
+        lastProcessedAt: externalLinksTable.lastProcessedAt,
+      })
+      .from(externalLinksTable)
+      .where(
+        and(
+          eq(externalLinksTable.orgId, orgId),
+          eq(externalLinksTable.adapter, adapter),
+          eq(externalLinksTable.entityType, properEntityName),
+          lt(externalLinksTable.lastProcessedAt, syncStartTime),
+          isNull(externalLinksTable.deletedAt),
+        ),
+      )
+
+    if (staleLinks.length === 0) {
+      yield* Effect.annotateLogs(Effect.log('No stale entities detected'), {
+        adapter,
+        entityType: properEntityName,
+        orgId,
+      })
+      return []
+    }
+
+    yield* Effect.annotateLogs(Effect.log('Detected stale entities that may have been deleted'), {
+      adapter,
+      entityType: properEntityName,
+      orgId,
+      staleCount: staleLinks.length,
+      staleEntityIds: pipe(
+        staleLinks,
+        Array.take(10), // Log first 10 for debugging
+        Array.map((link) => link.externalId),
+      ),
+    })
+
+    // Soft delete the external links
+    yield* db
+      .update(externalLinksTable)
+      .set({
+        deletedAt: new Date(),
+        deletedBy: 'sync_deletion_detection',
+      })
+      .where(
+        and(
+          eq(externalLinksTable.orgId, orgId),
+          eq(externalLinksTable.adapter, adapter),
+          eq(externalLinksTable.entityType, properEntityName),
+          inArray(
+            externalLinksTable.externalId,
+            pipe(
+              staleLinks,
+              Array.map((link) => link.externalId),
+            ),
+          ),
+        ),
+      )
+
+    yield* Effect.annotateLogs(Effect.log('Soft deleted external links'), {
+      adapter,
+      deletedCount: staleLinks.length,
+      entityType: properEntityName,
+      orgId,
+    })
+
+    // Get entity metadata to access the table for soft deletion
+    const entityMetadataOpt = getPcoEntityMetadata(entityType)
+
+    if (Option.isNone(entityMetadataOpt)) {
+      yield* Effect.annotateLogs(Effect.log('No entity metadata found, skipping entity deletion'), {
+        entityType: properEntityName,
+        orgId,
+      })
+      return staleLinks
+    }
+
+    const tableOpt = entityMetadataOpt.value.table
+
+    if (Option.isNone(tableOpt)) {
+      yield* Effect.annotateLogs(
+        Effect.log('No table found for entity, skipping entity deletion'),
+        {
+          entityType: properEntityName,
+          orgId,
+        },
+      )
+      return staleLinks
+    }
+
+    const table = tableOpt.value
+    const entityIds = pipe(
+      staleLinks,
+      Array.map((link) => link.entityId),
+    )
+
+    // Soft delete entities in the main table
+    yield* db
+      .update(table)
+      .set({
+        deletedAt: new Date(),
+        deletedBy: 'sync_deletion_detection',
+      })
+      .where(
+        and(
+          eq(table.orgId, orgId),
+          inArray(table.id, entityIds),
+          isNull(table.deletedAt), // Only delete entities that aren't already deleted
+        ),
+      )
+
+    yield* Effect.annotateLogs(Effect.log('Soft deleted entities'), {
+      deletedCount: entityIds.length,
+      entityType: properEntityName,
+      orgId,
+    })
+
+    // Soft delete related edges where these entities are source or target
+    yield* db
+      .update(edgesTable)
+      .set({
+        deletedAt: new Date(),
+        deletedBy: 'sync_deletion_detection',
+      })
+      .where(
+        and(
+          eq(edgesTable.orgId, orgId),
+          or(
+            inArray(edgesTable.sourceEntityId, entityIds),
+            inArray(edgesTable.targetEntityId, entityIds),
+          ),
+          isNull(edgesTable.deletedAt), // Only delete edges that aren't already deleted
+        ),
+      )
+
+    yield* Effect.annotateLogs(Effect.log('Soft deleted related edges'), {
+      entityIds: entityIds.length,
+      entityType: properEntityName,
+      orgId,
+    })
+
+    return staleLinks
+  },
+)

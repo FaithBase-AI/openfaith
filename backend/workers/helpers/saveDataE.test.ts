@@ -7,6 +7,7 @@ import { TokenKey } from '@openfaith/adapter-core/server'
 import { effect } from '@openfaith/bun-test'
 import type { PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import {
+  detectAndMarkDeletedEntitiesE,
   getProperEntityName,
   mkEdgesFromIncludesE,
   mkEntityUpsertE,
@@ -2160,6 +2161,68 @@ effect(
       // Note: Edge creation depends on complex relationship processing
       // For now, just verify the test completes without errors
       expect(edges.length).toBeGreaterThanOrEqual(0)
+    }).pipe(
+      Effect.provide(TestLayer),
+      Effect.catchTag('ContainerError', (error) => {
+        console.log('Container test skipped due to error:', error.cause)
+        return Effect.void
+      }),
+    ),
+  { timeout: 120000 },
+)
+
+// ===== DELETION DETECTION TESTS =====
+
+effect(
+  'detectAndMarkDeletedEntitiesE detects and soft deletes stale entities',
+  () =>
+    Effect.gen(function* () {
+      yield* createTestTables
+      yield* cleanupTestData
+
+      const sql = yield* SqlClient.SqlClient
+
+      // Create some external links with old timestamps
+      const oldTimestamp = new Date('2023-01-01T00:00:00Z')
+      const _syncStartTime = new Date('2023-01-02T00:00:00Z')
+
+      // Insert old external links directly
+      yield* sql`
+        INSERT INTO "openfaith_externalLinks" 
+        ("_tag", "orgId", "entityId", "entityType", "externalId", "adapter", "createdAt", "updatedAt", "lastProcessedAt")
+        VALUES 
+        ('externalLink', 'test_org_123', 'person_old_1', 'person', 'pco_old_1', 'pco', ${oldTimestamp}, ${oldTimestamp}, ${oldTimestamp}),
+        ('externalLink', 'test_org_123', 'person_old_2', 'person', 'pco_old_2', 'pco', ${oldTimestamp}, ${oldTimestamp}, ${oldTimestamp})
+      `
+
+      // Insert corresponding entities in the people table
+      yield* sql`
+        INSERT INTO "openfaith_people" 
+        ("id", "orgId", "name", "createdAt", "updatedAt")
+        VALUES 
+        ('person_old_1', 'test_org_123', 'Old Person 1', ${oldTimestamp}, ${oldTimestamp}),
+        ('person_old_2', 'test_org_123', 'Old Person 2', ${oldTimestamp}, ${oldTimestamp})
+      `
+
+      // Run deletion detection
+      const result = yield* detectAndMarkDeletedEntitiesE({
+        adapter: 'pco',
+        entityType: 'Person',
+        syncStartTime,
+      })
+
+      // Should return the stale links that were found
+      expect(result.length).toBe(2)
+      expect(result.map((r) => r.externalId).sort()).toEqual(['pco_old_1', 'pco_old_2'])
+
+      // Verify external links were soft deleted
+      const deletedLinks = yield* sql`
+        SELECT * FROM "openfaith_externalLinks" 
+        WHERE "externalId" IN ('pco_old_1', 'pco_old_2') 
+        AND "deletedAt" IS NOT NULL
+      `
+      expect(deletedLinks.length).toBe(2)
+      expect(deletedLinks[0]?.deletedBy).toBe('sync_deletion_detection')
     }).pipe(
       Effect.provide(TestLayer),
       Effect.catchTag('ContainerError', (error) => {
