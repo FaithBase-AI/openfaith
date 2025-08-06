@@ -7,7 +7,7 @@ import { OfEntity } from '@openfaith/schema'
 import { EdgeDirectionSchema, getEntityId } from '@openfaith/shared'
 import { getPcoEntityMetadata } from '@openfaith/workers/helpers/schemaRegistry'
 import { and, eq, getTableColumns, getTableName, inArray, sql } from 'drizzle-orm'
-import { Array, Effect, Option, pipe, Record, Schema, SchemaAST, String } from 'effect'
+import { Array, Effect, HashSet, Option, pipe, Record, Schema, SchemaAST, String } from 'effect'
 
 export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
   D extends ReadonlyArray<PcoBaseEntity>,
@@ -15,8 +15,8 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
   const orgId = yield* TokenKey
 
   const entityTypeOpt = pipe(
-    data[0],
-    Option.fromNullable,
+    data,
+    Array.head,
     Option.map((x) => x.type),
   )
 
@@ -230,8 +230,8 @@ export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
   const db = yield* PgDrizzle.PgDrizzle
 
   const entityTypeOpt = pipe(
-    data[0],
-    Option.fromNullable,
+    data,
+    Array.head,
     Option.map(([, x]) => x.type),
   )
 
@@ -485,20 +485,7 @@ export const saveIncludesE = Effect.fn('saveIncludesE')(function* <
 ) {
   const includesMap = pipe(
     data.included,
-    Array.reduce(
-      {} as {
-        [K in string]: ReadonlyArray<PcoBaseEntity>
-      },
-      (b, a) => ({
-        ...b,
-        [a.type]: pipe(
-          b[a.type],
-          Option.fromNullable,
-          Option.getOrElse(() => []),
-          Array.append(a),
-        ),
-      }),
-    ),
+    Array.groupBy((entity) => entity.type),
   )
 
   yield* Effect.all(
@@ -595,7 +582,6 @@ export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* 
     includedData,
     rootExternalLinks,
     entityExternalLinks,
-    rootEntityType,
   )
 
   // Process relationships and create edges
@@ -964,7 +950,7 @@ const processRelationshipsE = Effect.fn('processRelationshipsE')(function* (
                   const { source, target } = Schema.decodeUnknownSync(EdgeDirectionSchema)({
                     idA: rel.sourceEntityId,
                     idB: targetLink.entityId,
-                  }) as { source: string; target: string }
+                  })
 
                   const sourceEntityTypeTag =
                     source === rel.sourceEntityId ? sourceEntityName : targetEntityName
@@ -1031,15 +1017,13 @@ const extractIncludedRelationships = (
     readonly externalId: string
     readonly lastProcessedAt: Date
   }>,
-  _rootEntityType: string, // Unused but kept for API compatibility
 ): ReadonlyArray<RelationshipData & { sourceEntityType: string }> => {
   // For PCO, included entities have a "person" relationship pointing back to the main person
   // We need to look for any relationship that points to one of our root entities
-  const rootExternalIdSet = new Set(
-    pipe(
-      rootExternalLinks,
-      Array.map((link) => link.externalId),
-    ),
+  const rootExternalIdSet = pipe(
+    rootExternalLinks,
+    Array.map((link) => link.externalId),
+    HashSet.fromIterable,
   )
 
   return pipe(
@@ -1072,7 +1056,7 @@ const extractIncludedRelationships = (
           }
 
           // Check if this relationship points to one of our root entities
-          if (rootExternalIdSet.has(relData.id)) {
+          if (pipe(rootExternalIdSet, HashSet.has(relData.id))) {
             const rootLinkOpt = pipe(
               rootExternalLinks,
               Array.findFirst((link) => link.externalId === relData.id),
