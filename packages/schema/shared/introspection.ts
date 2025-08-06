@@ -182,18 +182,29 @@ export const extractEntityTag = (ast: SchemaAST.AST): Option.Option<string> => {
 export const extractEntityInfo = <T>(schema: Schema.Schema<T>) => {
   const ast = schema.ast
 
+  // First try to get entity name from OfEntity annotation
   const entityAnnotation = SchemaAST.getAnnotation<string>(OfEntity)(ast)
+
+  // If no OfEntity annotation, try to extract from _tag field
+  const tagFromField = extractEntityTag(ast)
 
   const entityName = pipe(
     entityAnnotation,
+    Option.orElse(() => tagFromField),
     Option.match({
       onNone: () => 'item',
       onSome: (entity) => entity,
     }),
   )
 
+  const entityTag = pipe(
+    entityAnnotation,
+    Option.orElse(() => tagFromField),
+    Option.getOrUndefined,
+  )
+
   return {
     entityName,
-    entityTag: Option.getOrUndefined(entityAnnotation),
+    entityTag,
   }
 }

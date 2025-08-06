@@ -3,9 +3,10 @@ import { TokenKey } from '@openfaith/adapter-core/server'
 import { edgesTable, externalLinksTable } from '@openfaith/db'
 import type { mkPcoCollectionSchema, PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import type { pcoPersonTransformer } from '@openfaith/pco/server'
+import { OfEntity } from '@openfaith/schema'
 import { EdgeDirectionSchema, getEntityId } from '@openfaith/shared'
 import { getPcoEntityMetadata } from '@openfaith/workers/helpers/schemaRegistry'
-import { getTableColumns, getTableName, sql } from 'drizzle-orm'
+import { and, eq, getTableColumns, getTableName, inArray, sql } from 'drizzle-orm'
 import { Array, Effect, Option, pipe, Record, Schema, SchemaAST, String } from 'effect'
 
 export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
@@ -81,6 +82,7 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
     )
     .onConflictDoUpdate({
       set: {
+        // Only update lastProcessedAt when updatedAt changes
         lastProcessedAt: sql`
           CASE
             WHEN EXCLUDED."updatedAt" IS DISTINCT FROM ${externalLinksTable}."updatedAt"
@@ -95,7 +97,8 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
     .returning({
       entityId: externalLinksTable.entityId,
       externalId: externalLinksTable.externalId,
-      lastProcessedAt: externalLinksTable.lastProcessedAt,
+      // For some reason when you just return `externalLinksTable.lastProcessedAt`, the milliseconds are truncated
+      lastProcessedAt: sql<Date>`${externalLinksTable.lastProcessedAt}`,
     })
 
   yield* Effect.annotateLogs(Effect.log('External links inserted/updated'), {
@@ -104,8 +107,120 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
     returnedCount: externalLinks.length,
   })
 
-  // Filter out the external links that have already been processed for their updatedAt
-  return externalLinks.filter((x) => x.lastProcessedAt !== lastProcessedAt)
+  // Return external links that were newly inserted or had their updatedAt changed
+  // The SQL CASE statement only updates lastProcessedAt when updatedAt changes
+  return pipe(
+    externalLinks,
+    Array.filter((x) => {
+      // Check if lastProcessedAt equals the current batch time
+      // If it does, it means the SQL updated it (because updatedAt changed)
+      // If it doesn't, it means the SQL kept the old value (because updatedAt was the same)
+      const diffMs = Math.abs(x.lastProcessedAt.getTime() - lastProcessedAt.getTime())
+
+      // Allow very small timing difference (up to 1ms) for database round-trip
+      // This ensures we only include rows that were JUST updated in this batch
+      return diffMs <= 1
+    }),
+  )
+})
+
+// Helper to extract relationships from direct data using schema annotations
+const extractDirectRelationships = Effect.fn('extractDirectRelationships')(function* (
+  mainData: ReadonlyArray<PcoBaseEntity>,
+  rootExternalLinks: ReadonlyArray<{
+    readonly entityId: string
+    readonly externalId: string
+    readonly lastProcessedAt: Date
+  }>,
+  rootEntityType: string,
+) {
+  // Get entity metadata to access the schema
+  const entityMetadataOpt = getPcoEntityMetadata(rootEntityType)
+
+  if (Option.isNone(entityMetadataOpt)) {
+    return []
+  }
+
+  const entityMetadata = entityMetadataOpt.value
+
+  // Extract relationship annotations from the schema
+  const relationshipAnnotations: Record<string, string> = {}
+  const apiSchema = entityMetadata.schema
+  const ast = apiSchema.ast
+
+  if (ast._tag === 'TypeLiteral') {
+    const relationshipsField = pipe(
+      ast.propertySignatures,
+      Array.findFirst((prop) => prop.name === 'relationships'),
+    )
+
+    if (Option.isSome(relationshipsField)) {
+      const relType = relationshipsField.value.type
+      if (relType._tag === 'TypeLiteral') {
+        pipe(
+          relType.propertySignatures,
+          Array.forEach((relProp) => {
+            const relKey = relProp.name
+            if (typeof relKey === 'string') {
+              const ofEntityOpt = SchemaAST.getAnnotation<string>(OfEntity)(relProp.type)
+              if (Option.isSome(ofEntityOpt)) {
+                relationshipAnnotations[relKey] = ofEntityOpt.value
+              }
+            }
+          }),
+        )
+      }
+    }
+  }
+
+  if (Record.isEmptyRecord(relationshipAnnotations)) {
+    return []
+  }
+
+  // Extract direct relationships from main data
+  const directRelationships: Array<RelationshipData> = []
+
+  pipe(
+    mainData,
+    Array.forEach((entity) => {
+      const entityLinkOpt = pipe(
+        rootExternalLinks,
+        Array.findFirst((link) => link.externalId === entity.id),
+      )
+
+      if (Option.isNone(entityLinkOpt)) {
+        return
+      }
+
+      const entityLink = entityLinkOpt.value
+
+      if (entity.relationships) {
+        pipe(
+          relationshipAnnotations,
+          Record.toEntries,
+          Array.forEach(([relKey, targetType]) => {
+            const relData = entity.relationships?.[relKey]?.data
+            if (relData && relData.id) {
+              directRelationships.push({
+                createdAt: pipe(
+                  entity.attributes.created_at,
+                  Option.fromNullable,
+                  Option.map((date) => new Date(date)),
+                  Option.getOrElse(() => entityLink.lastProcessedAt),
+                ),
+                relationshipKey: relKey,
+                sourceEntityId: entityLink.entityId,
+                targetExternalId: relData.id,
+                targetType,
+              })
+            }
+          }),
+        )
+      }
+    }),
+  )
+
+  return directRelationships
 })
 
 export const mkEntityUpsertE = Effect.fn('mkEntityUpsertE')(function* (
@@ -312,11 +427,35 @@ export const saveDataE = Effect.fn('saveDataE')(function* (
     return
   }
 
-  const externalLinks = yield* mkExternalLinksE(data.data)
+  // Create/update external links and get ALL external links (not just filtered ones)
+  yield* mkExternalLinksE(data.data)
+
+  // Query the database to get ALL external links for the entities we're processing
+  // This includes both newly created and existing external links
+  const db = yield* PgDrizzle.PgDrizzle
+  const allExternalLinks = yield* db
+    .select({
+      entityId: externalLinksTable.entityId,
+      externalId: externalLinksTable.externalId,
+      lastProcessedAt: externalLinksTable.lastProcessedAt,
+    })
+    .from(externalLinksTable)
+    .where(
+      and(
+        inArray(
+          externalLinksTable.externalId,
+          pipe(
+            data.data,
+            Array.map((x) => x.id),
+          ),
+        ),
+        eq(externalLinksTable.orgId, orgId),
+      ),
+    )
 
   yield* mkEntityUpsertE(
     pipe(
-      externalLinks,
+      allExternalLinks,
       Array.filterMap((x) =>
         pipe(
           data.data,
@@ -327,7 +466,10 @@ export const saveDataE = Effect.fn('saveDataE')(function* (
     ),
   )
 
-  yield* saveIncludesE(data, externalLinks, entityTypeOpt.value)
+  yield* saveIncludesE(data, allExternalLinks, entityTypeOpt.value)
+
+  // Process direct relationships from main entity data
+  yield* mkEdgesFromDirectRelationshipsE(data.data, allExternalLinks, entityTypeOpt.value)
 })
 
 export const saveIncludesE = Effect.fn('saveIncludesE')(function* <
@@ -365,10 +507,37 @@ export const saveIncludesE = Effect.fn('saveIncludesE')(function* <
       Record.values,
       Array.map((x) =>
         Effect.gen(function* () {
-          const externalLinks = yield* mkExternalLinksE(x)
+          // Create/update external links for included entities
+          yield* mkExternalLinksE(x)
+
+          // Query the database to get ALL external links for these included entities
+          // (not just the ones that were newly created or updated)
+          const db = yield* PgDrizzle.PgDrizzle
+          const orgId = yield* TokenKey
+          const allIncludedExternalLinks = yield* db
+            .select({
+              entityId: externalLinksTable.entityId,
+              externalId: externalLinksTable.externalId,
+              lastProcessedAt: externalLinksTable.lastProcessedAt,
+            })
+            .from(externalLinksTable)
+            .where(
+              and(
+                inArray(
+                  externalLinksTable.externalId,
+                  pipe(
+                    x,
+                    Array.map((entity) => entity.id),
+                  ),
+                ),
+                eq(externalLinksTable.orgId, orgId),
+              ),
+            )
+
+          // Now upsert the included entities using ALL their external links
           yield* mkEntityUpsertE(
             pipe(
-              externalLinks,
+              allIncludedExternalLinks,
               Array.filterMap((y) =>
                 pipe(
                   x,
@@ -378,7 +547,14 @@ export const saveIncludesE = Effect.fn('saveIncludesE')(function* <
               ),
             ),
           )
-          yield* mkEdgesFromIncludesE(x, rootExternalLinks, externalLinks, rootEntityType)
+
+          // Create edges using the external links
+          yield* mkEdgesFromIncludesE(
+            x,
+            rootExternalLinks,
+            allIncludedExternalLinks,
+            rootEntityType,
+          )
         }),
       ),
     ),
@@ -412,222 +588,26 @@ export const mkEdgesFromIncludesE = Effect.fn('mkEdgesFromIncludesE')(function* 
   rootEntityType: string,
 ) {
   const orgId = yield* TokenKey
-  const db = yield* PgDrizzle.PgDrizzle
-
-  // Process included data to find relationships and create edge mappings
-  // This pipeline filters and transforms included entities that have relationships
-  // to the root entity type, then maps them to internal entity IDs
-
-  // Debug logging
-  yield* Effect.log('Starting mkEdgesFromIncludesE processing', {
-    includedDataCount: includedData.length,
-    includedTypes: pipe(
-      includedData,
-      Array.map((x) => x.type),
-      Array.dedupe,
-    ),
-    orgId,
-    rootEntityType,
-    rootExternalLinksCount: rootExternalLinks.length,
-  })
-
-  // Log first included item's relationships for debugging
-  const firstIncludedOpt = pipe(includedData, Array.head)
-  if (Option.isSome(firstIncludedOpt)) {
-    const firstIncluded = firstIncludedOpt.value
-    yield* Effect.log('First included item details', {
-      id: firstIncluded.id,
-      relationships: firstIncluded.relationships,
-      type: firstIncluded.type,
-    })
-
-    // Test the pascal to snake conversion
-    const convertedKey = pipe(rootEntityType, String.pascalToSnake)
-    yield* Effect.log('Pascal to snake conversion', {
-      convertedKey,
-      relationshipKeys: pipe(
-        firstIncluded.relationships,
-        Option.fromNullable,
-        Option.map(Record.keys),
-        Option.getOrElse(() => []),
-      ),
-      rootEntityType,
-    })
-  }
-
-  const baseEdgeData = pipe(
-    includedData,
-    Array.filterMap((x) =>
-      pipe(
-        // Extract relationships from the included entity
-        x.relationships,
-        Option.fromNullable,
-        // Log what we're looking for vs what we have
-        Option.tap((rels) =>
-          Option.some(
-            Effect.runSync(
-              Effect.gen(function* () {
-                const lookingFor = pipe(rootEntityType, String.pascalToSnake)
-                const hasKey = pipe(rels, Record.has(lookingFor))
-                if (!hasKey) {
-                  yield* Effect.log('Relationship key not found', {
-                    availableKeys: pipe(rels, Record.keys),
-                    includedEntityId: x.id,
-                    includedEntityType: x.type,
-                    lookingFor,
-                  })
-                }
-              }),
-            ),
-          ),
-        ),
-        // Look for relationship to the root entity type. rootEntityType is Person, but the key in the relationships object is person.
-        Option.flatMap((y) => pipe(y, Record.get(pipe(rootEntityType, String.pascalToSnake)))),
-        // Extract the relationship data (the actual related entity)
-        Option.flatMapNullable((y) => y.data),
-        // Find the corresponding root external link by matching external ID
-        Option.flatMap((y) =>
-          pipe(
-            rootExternalLinks,
-            Array.findFirst((z) => z.externalId === y.id),
-          ),
-        ),
-        // Create initial mapping with root entity ID and target entity info
-        Option.map((y) => ({
-          createdAt: pipe(
-            x.attributes.created_at,
-            Option.fromNullable,
-            Option.map((date) => new Date(date)),
-            Option.getOrElse(() => y.lastProcessedAt),
-          ),
-          root: y.entityId,
-          target: x.id,
-          targetType: x.type,
-        })),
-        // Find the internal entity ID for the target entity
-        Option.flatMap((y) =>
-          pipe(
-            entityExternalLinks,
-            Array.findFirst((z) => z.externalId === y.target),
-            Option.map((z) => ({
-              createdAt: y.createdAt,
-              root: y.root,
-              target: z.entityId,
-              targetType: y.targetType,
-            })),
-          ),
-        ),
-      ),
-    ),
-  )
-
-  yield* Effect.log('Base edge data created', {
-    baseEdgeDataCount: baseEdgeData.length,
-    edges: pipe(
-      baseEdgeData,
-      Array.take(3), // Log first 3 for debugging
-    ),
-  })
-  // Get proper entity names using the same logic as mkExternalLinksE
   const rootEntityName = getProperEntityName(rootEntityType)
 
-  // Create edge values using the clean foo pipeline data
-  const edgeValues = pipe(
-    baseEdgeData,
-    Array.map((item) => {
-      // Get proper entity name for the target type
-      const targetEntityName = getProperEntityName(item.targetType)
-
-      // Determine edge direction using alpha pattern
-      const { source, target } = Schema.decodeUnknownSync(EdgeDirectionSchema)({
-        idA: item.root,
-        idB: item.target,
-      }) as { source: string; target: string }
-
-      const sourceEntityTypeTag = source === item.root ? rootEntityName : targetEntityName
-
-      const targetEntityTypeTag = target === item.root ? rootEntityName : targetEntityName
-
-      // Create relationship type based on the entity types
-      const relationshipType = `${sourceEntityTypeTag}_has_${targetEntityTypeTag}`
-
-      return {
-        _tag: 'edge' as const,
-        createdAt: item.createdAt,
-        createdBy: null,
-        deletedAt: null,
-        deletedBy: null,
-        metadata: {},
-        orgId,
-        relationshipType,
-        sourceEntityId: source,
-        sourceEntityTypeTag,
-        targetEntityId: target,
-        targetEntityTypeTag,
-        updatedAt: null,
-        updatedBy: null,
-      }
-    }),
-  )
-
-  // Create a separate list for entity relationship tracking that includes both directions
-  const entityRelationshipTracking = pipe(
-    baseEdgeData,
-    Array.flatMap((item) => {
-      // Get proper entity names
-      const rootType = rootEntityName
-      const includedType = getProperEntityName(item.targetType)
-
-      // Track both directions for the entity relationships
-      return [
-        // The included entity points to the root entity (e.g., address -> person)
-        {
-          orgId,
-          sourceEntityTypeTag: includedType,
-          targetEntityTypeTag: rootType,
-        },
-        // The root entity points to the included entity (e.g., person -> address)
-        {
-          orgId,
-          sourceEntityTypeTag: rootType,
-          targetEntityTypeTag: includedType,
-        },
-      ]
-    }),
-  )
-  if (edgeValues.length === 0) {
-    yield* Effect.annotateLogs(Effect.log('No edges to create from included data'), {
-      orgId,
-      rootEntityType,
-    })
-    return
-  }
-
-  yield* Effect.annotateLogs(Effect.log('Creating edges from included data'), {
-    edgeCount: edgeValues.length,
-    orgId,
+  // Extract relationships from included data
+  const relationships = extractIncludedRelationships(
+    includedData,
+    rootExternalLinks,
+    entityExternalLinks,
     rootEntityType,
-  })
+  )
 
-  // Insert edges with conflict handling
-  yield* db
-    .insert(edgesTable)
-    .values(edgeValues)
-    .onConflictDoUpdate({
-      set: {
-        metadata: sql`EXCLUDED."metadata"`,
-        updatedAt: sql`EXCLUDED."updatedAt"`,
-      },
-      target: [
-        edgesTable.orgId,
-        edgesTable.sourceEntityId,
-        edgesTable.targetEntityId,
-        edgesTable.relationshipType,
-      ],
-    })
+  // Process relationships and create edges
+  const { edgeValues, entityRelationshipTracking } = yield* processRelationshipsE(
+    relationships,
+    rootEntityName,
+    orgId,
+  )
 
-  yield* Effect.annotateLogs(Effect.log('Edges created successfully'), {
-    edgeCount: edgeValues.length,
+  // Insert edges and update relationships registry
+  yield* insertEdgesE(edgeValues, {
+    operationType: 'included data',
     orgId,
     rootEntityType,
   })
@@ -648,29 +628,6 @@ export const updateEntityRelationshipsE = Effect.fn('updateEntityRelationshipsE'
 
   const orgId = yield* TokenKey
   const db = yield* PgDrizzle.PgDrizzle
-
-  // Debug log the incoming edge values
-  yield* Effect.log('updateEntityRelationshipsE - incoming edges', {
-    edgeCount: edgeValues.length,
-    edges: pipe(
-      edgeValues,
-      Array.take(5),
-      Array.map((e) => ({
-        source: e.sourceEntityTypeTag,
-        target: e.targetEntityTypeTag,
-      })),
-    ),
-    uniqueSourceTypes: pipe(
-      edgeValues,
-      Array.map((e) => e.sourceEntityTypeTag),
-      Array.dedupe,
-    ),
-    uniqueTargetTypes: pipe(
-      edgeValues,
-      Array.map((e) => e.targetEntityTypeTag),
-      Array.dedupe,
-    ),
-  })
 
   // Group edges by source entity type and transform directly to insert values
   const relationshipValues = pipe(
@@ -734,3 +691,416 @@ export const updateEntityRelationshipsE = Effect.fn('updateEntityRelationshipsE'
     updateCount: relationshipValues.length,
   })
 })
+
+// Function to process direct relationships from main entity data (like primary_campus)
+export const mkEdgesFromDirectRelationshipsE = Effect.fn('mkEdgesFromDirectRelationshipsE')(
+  function* (
+    mainData: ReadonlyArray<PcoBaseEntity>,
+    rootExternalLinks: ReadonlyArray<{
+      readonly entityId: string
+      readonly externalId: string
+      readonly lastProcessedAt: Date
+    }>,
+    rootEntityType: string,
+  ) {
+    const orgId = yield* TokenKey
+    const rootEntityName = getProperEntityName(rootEntityType)
+
+    // Extract direct relationships from main data
+    const relationships = yield* extractDirectRelationships(
+      mainData,
+      rootExternalLinks,
+      rootEntityType,
+    )
+
+    // Process relationships and create edges
+    const { edgeValues, entityRelationshipTracking } = yield* processRelationshipsE(
+      relationships,
+      rootEntityName,
+      orgId,
+    )
+
+    // Insert edges and update relationships registry
+    yield* insertEdgesE(edgeValues, {
+      operationType: 'direct relationships',
+      orgId,
+      rootEntityType,
+    })
+
+    yield* updateEntityRelationshipsE(entityRelationshipTracking)
+  },
+)
+
+// ===== SHARED HELPER FUNCTIONS =====
+
+// Type definitions for shared functions
+type EdgeValue = {
+  _tag: 'edge'
+  createdAt: Date
+  createdBy: null
+  deletedAt: null
+  deletedBy: null
+  metadata: {}
+  orgId: string
+  relationshipType: string
+  sourceEntityId: string
+  sourceEntityTypeTag: string
+  targetEntityId: string
+  targetEntityTypeTag: string
+  updatedAt: null
+  updatedBy: null
+}
+
+type RelationshipData = {
+  relationshipKey: string
+  sourceEntityId: string
+  sourceEntityType?: string // Optional, used for included entities
+  targetExternalId: string
+  targetType: string
+  createdAt: Date
+}
+
+// Helper function to create edge objects with consistent structure
+const createEdge = (params: {
+  createdAt: Date
+  orgId: string
+  relationshipType: string
+  sourceEntityId: string
+  sourceEntityTypeTag: string
+  targetEntityId: string
+  targetEntityTypeTag: string
+}): EdgeValue => ({
+  _tag: 'edge' as const,
+  createdAt: params.createdAt,
+  createdBy: null,
+  deletedAt: null,
+  deletedBy: null,
+  metadata: {},
+  orgId: params.orgId,
+  relationshipType: params.relationshipType,
+  sourceEntityId: params.sourceEntityId,
+  sourceEntityTypeTag: params.sourceEntityTypeTag,
+  targetEntityId: params.targetEntityId,
+  targetEntityTypeTag: params.targetEntityTypeTag,
+  updatedAt: null,
+  updatedBy: null,
+})
+
+// Shared function to insert edges with conflict handling
+const insertEdgesE = Effect.fn('insertEdgesE')(function* (
+  edgeValues: ReadonlyArray<EdgeValue>,
+  logContext: {
+    orgId: string
+    operationType: string
+    rootEntityType?: string
+  },
+) {
+  if (edgeValues.length === 0) {
+    yield* Effect.annotateLogs(Effect.log(`No edges to create from ${logContext.operationType}`), {
+      orgId: logContext.orgId,
+      rootEntityType: logContext.rootEntityType,
+    })
+    return
+  }
+
+  const db = yield* PgDrizzle.PgDrizzle
+
+  yield* Effect.annotateLogs(Effect.log(`Creating edges from ${logContext.operationType}`), {
+    edgeCount: edgeValues.length,
+    orgId: logContext.orgId,
+    rootEntityType: logContext.rootEntityType,
+  })
+
+  // Insert edges with conflict handling
+  yield* db
+    .insert(edgesTable)
+    .values(pipe(edgeValues, Array.fromIterable))
+    .onConflictDoUpdate({
+      set: {
+        metadata: sql`EXCLUDED."metadata"`,
+        updatedAt: sql`EXCLUDED."updatedAt"`,
+      },
+      target: [
+        edgesTable.orgId,
+        edgesTable.sourceEntityId,
+        edgesTable.targetEntityId,
+        edgesTable.relationshipType,
+      ],
+    })
+
+  yield* Effect.annotateLogs(Effect.log('Edges created successfully'), {
+    edgeCount: edgeValues.length,
+    orgId: logContext.orgId,
+    rootEntityType: logContext.rootEntityType,
+  })
+})
+
+// Shared function to create external links for target entities
+const createTargetExternalLinksE = Effect.fn('createTargetExternalLinksE')(function* (
+  targetExternalIds: ReadonlyArray<string>,
+  targetType: string,
+  orgId: string,
+) {
+  if (targetExternalIds.length === 0) {
+    return []
+  }
+
+  const db = yield* PgDrizzle.PgDrizzle
+  const targetEntityName = getProperEntityName(targetType)
+
+  // Query existing external links for target entities
+  const existingLinks = yield* db
+    .select({
+      entityId: externalLinksTable.entityId,
+      externalId: externalLinksTable.externalId,
+    })
+    .from(externalLinksTable)
+    .where(
+      and(
+        inArray(externalLinksTable.externalId, pipe(targetExternalIds, Array.fromIterable)),
+        eq(externalLinksTable.orgId, orgId),
+      ),
+    )
+
+  // Create missing external links
+  const missingExternalIds = pipe(
+    targetExternalIds,
+    Array.filter((id) =>
+      pipe(
+        existingLinks,
+        Array.findFirst((link) => link.externalId === id),
+        Option.isNone,
+      ),
+    ),
+  )
+
+  if (missingExternalIds.length > 0) {
+    const now = new Date()
+    const newLinks = pipe(
+      missingExternalIds,
+      Array.map((externalId) => ({
+        _tag: 'externalLink' as const,
+        adapter: 'pco',
+        createdAt: now,
+        entityId: getEntityId(targetEntityName),
+        entityType: targetEntityName,
+        externalId,
+        lastProcessedAt: now,
+        orgId,
+        updatedAt: now,
+      })),
+    )
+
+    yield* db.insert(externalLinksTable).values(newLinks).onConflictDoNothing()
+  }
+
+  // Return all target links (existing + new)
+  return yield* db
+    .select({
+      entityId: externalLinksTable.entityId,
+      externalId: externalLinksTable.externalId,
+    })
+    .from(externalLinksTable)
+    .where(
+      and(
+        inArray(externalLinksTable.externalId, pipe(targetExternalIds, Array.fromIterable)),
+        eq(externalLinksTable.orgId, orgId),
+      ),
+    )
+})
+
+// Shared function to process relationships and create edges
+const processRelationshipsE = Effect.fn('processRelationshipsE')(function* (
+  relationships: ReadonlyArray<RelationshipData>,
+  rootEntityName: string,
+  orgId: string,
+) {
+  if (relationships.length === 0) {
+    return { edgeValues: [], entityRelationshipTracking: [] }
+  }
+
+  // Group by target type for efficient external link creation
+  const relationshipsByType = pipe(
+    relationships,
+    Array.groupBy((r) => r.targetType),
+  )
+
+  const allEdgeValues: Array<EdgeValue> = []
+
+  yield* Effect.all(
+    pipe(
+      relationshipsByType,
+      Record.toEntries,
+      Array.map(([targetType, rels]) =>
+        Effect.gen(function* () {
+          // Get unique target external IDs for this type
+          const targetExternalIds = pipe(
+            rels,
+            Array.map((r) => r.targetExternalId),
+            Array.dedupe,
+          )
+
+          // Create external links for target entities
+          const targetLinks = yield* createTargetExternalLinksE(
+            targetExternalIds,
+            targetType,
+            orgId,
+          )
+
+          // Create edges for all relationships of this type
+          const edgeValues = pipe(
+            rels,
+            Array.filterMap((rel) =>
+              pipe(
+                targetLinks,
+                Array.findFirst((link) => link.externalId === rel.targetExternalId),
+                Option.map((targetLink) => {
+                  const targetEntityName = getProperEntityName(targetType)
+                  // Use the source entity type if provided (for included entities), otherwise use rootEntityName
+                  const sourceEntityName = rel.sourceEntityType
+                    ? getProperEntityName(rel.sourceEntityType)
+                    : rootEntityName
+
+                  const { source, target } = Schema.decodeUnknownSync(EdgeDirectionSchema)({
+                    idA: rel.sourceEntityId,
+                    idB: targetLink.entityId,
+                  }) as { source: string; target: string }
+
+                  const sourceEntityTypeTag =
+                    source === rel.sourceEntityId ? sourceEntityName : targetEntityName
+                  const targetEntityTypeTag =
+                    target === targetLink.entityId ? targetEntityName : sourceEntityName
+
+                  // Determine relationship type based on relationship key
+                  const relationshipType = rel.relationshipKey.includes('_')
+                    ? `${sourceEntityName}_${rel.relationshipKey}_${targetEntityName}`
+                    : `${sourceEntityTypeTag}_has_${targetEntityTypeTag}`
+
+                  return createEdge({
+                    createdAt: rel.createdAt,
+                    orgId,
+                    relationshipType,
+                    sourceEntityId: source,
+                    sourceEntityTypeTag,
+                    targetEntityId: target,
+                    targetEntityTypeTag,
+                  })
+                }),
+              ),
+            ),
+          )
+
+          allEdgeValues.push(...edgeValues)
+        }),
+      ),
+    ),
+    { concurrency: 10 },
+  )
+
+  // Create entity relationship tracking
+  const entityRelationshipTracking = pipe(
+    allEdgeValues,
+    Array.flatMap((edge) => [
+      {
+        orgId,
+        sourceEntityTypeTag: edge.sourceEntityTypeTag,
+        targetEntityTypeTag: edge.targetEntityTypeTag,
+      },
+      {
+        orgId,
+        sourceEntityTypeTag: edge.targetEntityTypeTag,
+        targetEntityTypeTag: edge.sourceEntityTypeTag,
+      },
+    ]),
+    Array.dedupe,
+  )
+
+  return { edgeValues: allEdgeValues, entityRelationshipTracking }
+})
+
+// Helper to extract relationships from included data
+const extractIncludedRelationships = (
+  includedData: ReadonlyArray<PcoBaseEntity>,
+  rootExternalLinks: ReadonlyArray<{
+    readonly entityId: string
+    readonly externalId: string
+    readonly lastProcessedAt: Date
+  }>,
+  entityExternalLinks: ReadonlyArray<{
+    readonly entityId: string
+    readonly externalId: string
+    readonly lastProcessedAt: Date
+  }>,
+  _rootEntityType: string, // Unused but kept for API compatibility
+): ReadonlyArray<RelationshipData & { sourceEntityType: string }> => {
+  // For PCO, included entities have a "person" relationship pointing back to the main person
+  // We need to look for any relationship that points to one of our root entities
+  const rootExternalIdSet = new Set(
+    pipe(
+      rootExternalLinks,
+      Array.map((link) => link.externalId),
+    ),
+  )
+
+  return pipe(
+    includedData,
+    Array.filterMap((entity) => {
+      const entityLinkOpt = pipe(
+        entityExternalLinks,
+        Array.findFirst((link) => link.externalId === entity.id),
+      )
+
+      if (Option.isNone(entityLinkOpt)) {
+        return Option.none()
+      }
+
+      const entityLink = entityLinkOpt.value
+
+      // Look through all relationships to find ones pointing to root entities
+      if (!entity.relationships) {
+        return Option.none()
+      }
+
+      // Find any relationship that points to a root entity
+      const relationshipsToRoot = pipe(
+        entity.relationships,
+        Record.toEntries,
+        Array.filterMap(([relKey, relValue]) => {
+          const relData = relValue?.data
+          if (!relData || !relData.id) {
+            return Option.none()
+          }
+
+          // Check if this relationship points to one of our root entities
+          if (rootExternalIdSet.has(relData.id)) {
+            const rootLinkOpt = pipe(
+              rootExternalLinks,
+              Array.findFirst((link) => link.externalId === relData.id),
+            )
+
+            if (Option.isSome(rootLinkOpt)) {
+              return Option.some({
+                createdAt: pipe(
+                  entity.attributes.created_at,
+                  Option.fromNullable,
+                  Option.map((date) => new Date(date)),
+                  Option.getOrElse(() => entityLink.lastProcessedAt),
+                ),
+                relationshipKey: relKey, // Use the actual relationship key (e.g., "person")
+                sourceEntityId: entityLink.entityId, // The included entity (address/phone)
+                sourceEntityType: entity.type, // The type of the included entity (Address, PhoneNumber, etc.)
+                targetExternalId: relData.id, // The root entity (person)
+                targetType: relData.type, // Should be the root type (Person)
+              })
+            }
+          }
+
+          return Option.none()
+        }),
+      )
+
+      return relationshipsToRoot.length > 0 ? Option.some(relationshipsToRoot) : Option.none()
+    }),
+    Array.flatten,
+  )
+}

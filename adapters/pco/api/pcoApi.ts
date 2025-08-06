@@ -91,8 +91,6 @@ const calculateRateLimitDelay = (
 const handlePcoError = (
   response: HttpClientResponse.HttpClientResponse,
 ): Effect.Effect<HttpClientResponse.HttpClientResponse, HttpClientError.HttpClientError> => {
-  console.log('response', response)
-
   switch (response.status) {
     case 401:
     case 403:
