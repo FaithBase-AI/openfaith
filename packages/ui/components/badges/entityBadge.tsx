@@ -4,8 +4,10 @@ import { EntityAvatar } from '@openfaith/ui/components/avatars/entityAvatar'
 import { BadgeSkeleton } from '@openfaith/ui/components/badges/badgeSkeleton'
 import { Badge, entityBadgeClassName } from '@openfaith/ui/components/ui/badge'
 import { cn } from '@openfaith/ui/shared/utils'
+import { getBaseEntityQuery } from '@openfaith/zero/baseQueries'
 import { useZero } from '@openfaith/zero/useZero'
-import { Boolean, Option, pipe } from 'effect'
+import { useQuery } from '@rocicorp/zero/react'
+import { Boolean, pipe } from 'effect'
 import type { FC } from 'react'
 import { useMemo } from 'react'
 
@@ -44,6 +46,42 @@ const getEntityDisplayName = (entity: EntityRecord): string => {
     return `${firstName} ${lastName}`.trim() || `Person ${entity.id}`
   }
 
+  // For address entities, construct from street and city
+  if (entity._tag === 'address') {
+    const streetLine1 = (entity as any).streetLine1 || ''
+    const city = (entity as any).city || ''
+    const location = (entity as any).location || ''
+
+    if (streetLine1 && city) {
+      return `${streetLine1}, ${city}`
+    }
+    if (streetLine1) {
+      return streetLine1
+    }
+    if (city) {
+      return city
+    }
+    if (location) {
+      return `${location} Address`
+    }
+    return `Address ${entity.id}`
+  }
+
+  // For campus entities, use name field
+  if (entity._tag === 'campus' && entity.name) {
+    return entity.name
+  }
+
+  // For phone number entities
+  if (entity._tag === 'phoneNumber') {
+    const number = (entity as any).number || ''
+    const location = (entity as any).location || ''
+    if (number) {
+      return location ? `${location}: ${number}` : number
+    }
+    return `Phone ${entity.id}`
+  }
+
   // For group entities
   if (entity._tag === 'group' && 'name' in entity) {
     return entity.name || `Group ${entity.id}`
@@ -53,57 +91,61 @@ const getEntityDisplayName = (entity: EntityRecord): string => {
   return `${entity._tag} ${entity.id}`
 }
 
-// Component that requires Zero context
-const EntityIdBadgeWithZero: FC<EntityIdBadgeProps> = (props) => {
+// Component that fetches entity directly from Zero
+const _EntityIdBadgeWithZero: FC<EntityIdBadgeProps> = (props) => {
   const { entityId, entityType, showAvatar = false, highlight = false, className } = props
   const z = useZero()
+  // Create Zero query directly using the entity type as table name
+  const tableName = useMemo(() => {
+    // Convert entity type to Zero table name (e.g., "campus" -> "campuses", "phoneNumber" -> "phoneNumbers")
+    if (entityType === 'campus') return 'campuses'
+    if (entityType === 'phoneNumber') return 'phoneNumbers'
+    if (entityType === 'address') return 'addresses'
+    if (entityType === 'person') return 'people'
+    if (entityType === 'group') return 'groups'
+    // Add more mappings as needed
+    return `${entityType}s` // Default pluralization
+  }, [entityType])
 
-  // Fetch the entity data
-  const entityOpt = useMemo(() => {
-    try {
-      // Access the query for this entity type
-      const query = z.query[entityType as keyof typeof z.query]
-      if (!query) {
-        return Option.none()
-      }
+  const query = useMemo(() => {
+    if (!entityId) return null
+    return getBaseEntityQuery(z, tableName, entityId)
+  }, [z, tableName, entityId])
 
-      // Get the entity by ID
-      const entity = (query as any).where('id', entityId).one()
-      return Option.fromNullable(entity)
-    } catch {
-      return Option.none()
-    }
-  }, [z, entityType, entityId])
+  const [data, info] = useQuery(query as Parameters<typeof useQuery>[0])
 
-  const loading = Option.isNone(entityOpt) && !!entityType && !!entityId
+  if (info.type !== 'complete') {
+    return <BadgeSkeleton className={className} highlight={highlight} showAvatar={showAvatar} />
+  }
 
-  return pipe(
-    entityOpt,
-    Option.match({
-      onNone: () =>
-        loading ? (
-          <BadgeSkeleton className={className} highlight={highlight} showAvatar={showAvatar} />
-        ) : null,
-      onSome: (entity) => (
-        <EntityBadge
-          className={className}
-          entity={entity as EntityRecord}
-          highlight={highlight}
-          showAvatar={showAvatar}
-        />
-      ),
-    }),
+  if (!data) {
+    // Fallback display when entity not found
+    return (
+      <Badge className={cn(entityBadgeClassName, className)} variant='secondary'>
+        <span className='truncate'>{`${entityType} ${entityId}`}</span>
+      </Badge>
+    )
+  }
+
+  // Convert to EntityRecord format and render
+  const entity = {
+    ...data,
+    _tag: entityType,
+  } as EntityRecord
+
+  return (
+    <EntityBadge
+      className={className}
+      entity={entity}
+      highlight={highlight}
+      showAvatar={showAvatar}
+    />
   )
 }
 
-// Export component that gracefully handles missing Zero context
-// In production, this should always have Zero context
-// In tests, we show a loading skeleton
+// Export component that uses Zero-based entity fetching
 export const EntityIdBadge: FC<EntityIdBadgeProps> = (props) => {
-  // For now, just use the Zero version directly
-  // In tests, this will throw and be caught by error boundaries
-  // In production, Zero context should always be available
-  return <EntityIdBadgeWithZero {...props} />
+  return <_EntityIdBadgeWithZero {...props} />
 }
 
 type EntityBadgeProps = EntityBadgeBaseProps & {

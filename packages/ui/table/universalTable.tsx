@@ -12,9 +12,13 @@ import { MoreVerticalIcon } from '@openfaith/ui/icons/moreVerticalIcon'
 import { useSchemaCollection } from '@openfaith/ui/shared/hooks/schemaHooks'
 import { generateColumns } from '@openfaith/ui/table/columnGenerator'
 import { generateFilterConfig } from '@openfaith/ui/table/filterGenerator'
+import { generateRelationColumns } from '@openfaith/ui/table/relationColumnGenerator'
 import { useUniversalTableEdit } from '@openfaith/ui/table/useUniversalTableEdit'
+import { getBaseEntityRelationshipsQuery } from '@openfaith/zero/baseQueries'
+import { useZero } from '@openfaith/zero/useZero'
+import { useQuery } from '@rocicorp/zero/react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Array, pipe, type Schema } from 'effect'
+import { Array, pipe, type Schema, String } from 'effect'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 
@@ -27,6 +31,7 @@ export interface UniversalTableProps<T> {
   className?: string
   Actions?: ReactNode
   CollectionCard?: any // CollectionCardComponent type
+  showRelations?: boolean // Show relation columns (default: true)
 
   filtering?: {
     filterColumnId?: string
@@ -46,6 +51,7 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
     Actions,
     CollectionCard,
     filtering = {},
+    showRelations = true,
   } = props
 
   const { onEditRow: autoOnEditRow } = useUniversalTableEdit(schema)
@@ -57,8 +63,49 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
 
   const { collection, nextPage, pageSize, limit } = useSchemaCollection({ schema })
 
+  // Fetch entity relationships for this entity type
+  const z = useZero()
+  const entityRelationshipsQuery = useMemo(() => {
+    if (!showRelations || !entityInfo.entityName) {
+      return null
+    }
+
+    return getBaseEntityRelationshipsQuery(z)
+  }, [z, entityInfo.entityName, showRelations])
+
+  const [allRelationships] = useQuery(entityRelationshipsQuery as Parameters<typeof useQuery>[0])
+
+  // Transform relationships into a format for generateRelationColumns
+  const transformedRelationships = useMemo(() => {
+    if (!allRelationships || !Array.isArray(allRelationships) || !entityInfo.entityName) {
+      return []
+    }
+
+    const transformed = pipe(
+      allRelationships as Array<any>,
+      Array.map((r) => ({
+        sourceEntityType: r.sourceEntityType as string,
+        targetEntityTypes: (r.targetEntityTypes || []) as ReadonlyArray<string>,
+      })),
+    )
+
+    return transformed
+  }, [allRelationships, entityInfo.entityName])
+
   const columns = useMemo(() => {
     const baseColumns = generateColumns(schema, columnOverrides)
+
+    // Generate relation columns if enabled and we have relationships
+    const shouldGenerateRelations =
+      showRelations && transformedRelationships.length > 0 && entityInfo.entityName
+
+    const relationColumns = shouldGenerateRelations
+      ? generateRelationColumns(
+          pipe(entityInfo.entityName, String.toLowerCase),
+          transformedRelationships,
+          3, // maxVisibleBadges
+        )
+      : []
 
     const actionsColumn: ColumnDef<T> = {
       cell: ({ row }) => (
@@ -89,8 +136,20 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
       size: 56,
     }
 
-    return pipe(baseColumns, Array.append(actionsColumn))
-  }, [schema, columnOverrides, onEditRow])
+    // Merge base columns with relation columns, then add actions
+    return pipe(
+      baseColumns,
+      Array.appendAll(relationColumns as Array<ColumnDef<T>>),
+      Array.append(actionsColumn),
+    )
+  }, [
+    schema,
+    columnOverrides,
+    onEditRow,
+    showRelations,
+    transformedRelationships,
+    entityInfo.entityName,
+  ])
 
   const filtersDef = useMemo(() => {
     return generateFilterConfig(schema)

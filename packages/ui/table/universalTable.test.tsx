@@ -115,6 +115,28 @@ effect('UniversalTable accepts loading state override', () =>
   }),
 )
 
+effect('UniversalTable accepts showRelations prop', () =>
+  Effect.gen(function* () {
+    const props: UniversalTableProps<TestData> = {
+      schema: TestSchema,
+      showRelations: false,
+    }
+
+    expect(props.showRelations).toBe(false)
+  }),
+)
+
+effect('UniversalTable defaults showRelations to true', () =>
+  Effect.gen(function* () {
+    const props: UniversalTableProps<TestData> = {
+      schema: TestSchema,
+    }
+
+    // showRelations should be undefined in props but default to true in component
+    expect(props.showRelations).toBeUndefined()
+  }),
+)
+
 effect('UniversalTable accepts column overrides', () =>
   Effect.gen(function* () {
     const props: UniversalTableProps<TestData> = {
