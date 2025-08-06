@@ -9,15 +9,8 @@ import {
   OfIdentifier,
   OfTransformer,
 } from '@openfaith/schema'
-import { ParseResult, Schema } from 'effect'
-
-// Helper to convert string to number for lat/lng fields
-// PCO API returns these as strings, so we only need to handle string input
-const StringToNumber = Schema.transformOrFail(Schema.String, Schema.Number, {
-  decode: (value) => ParseResult.succeed(Number.parseFloat(value)),
-  encode: (value) => ParseResult.succeed(String(value)),
-  strict: true,
-})
+import { StringOrNumberToNumber } from '@openfaith/shared'
+import { Schema } from 'effect'
 
 export const PcoCampusAttributes = Schema.Struct({
   avatar_url: Schema.NullOr(Schema.String).annotations({
@@ -51,10 +44,10 @@ export const PcoCampusAttributes = Schema.Struct({
     [OfFieldName]: 'geolocationSetManually',
     [OfCustomField]: true,
   }),
-  latitude: Schema.NullOr(StringToNumber).annotations({
+  latitude: Schema.NullOr(StringOrNumberToNumber).annotations({
     [OfFieldName]: 'latitude',
   }),
-  longitude: Schema.NullOr(StringToNumber).annotations({
+  longitude: Schema.NullOr(StringOrNumberToNumber).annotations({
     [OfFieldName]: 'longitude',
   }),
   name: Schema.NullOr(Schema.String).annotations({

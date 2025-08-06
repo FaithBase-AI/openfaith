@@ -2,6 +2,7 @@ import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
 import {
   BasePerson,
+  Campus,
   OfCustomField,
   OfEntity,
   OfFieldName,
@@ -141,6 +142,8 @@ export const PcoPerson = mkPcoEntity({
           type: Schema.Literal('PrimaryCampus'),
         }),
       ),
+    }).annotations({
+      [OfEntity]: Campus,
     }),
   }),
   type: 'Person',

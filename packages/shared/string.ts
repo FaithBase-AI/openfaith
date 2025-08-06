@@ -73,6 +73,19 @@ export function singularize(word: string): string {
     return preserveCase(word, irregularSingulars[lower])
   }
 
+  // Check if word is already a singular form from our irregular plurals
+  // This prevents singularizing words that are already singular
+  const singularValues = pipe(irregularPlurals, Record.values)
+  if (pipe(singularValues, Array.contains(lower))) {
+    return word
+  }
+
+  // Words ending in 'us' are typically already singular (Latin origin)
+  // Common examples: campus, status, virus, focus, bonus, genus, etc.
+  if (word.endsWith('us')) {
+    return word
+  }
+
   // Words ending in 'ies'
   if (word.endsWith('ies')) {
     return word.slice(0, -3) + 'y'

@@ -157,6 +157,32 @@ effect('singularize handles irregular words correctly', () =>
   }),
 )
 
+// Test singularize function with words that are already singular
+effect('singularize handles words that are already singular', () =>
+  Effect.gen(function* () {
+    // Words ending in 'us' that are already singular
+    expect(singularize('campus')).toBe('campus')
+    expect(singularize('status')).toBe('status')
+    expect(singularize('virus')).toBe('virus')
+    expect(singularize('focus')).toBe('focus')
+    expect(singularize('bonus')).toBe('bonus')
+    expect(singularize('genus')).toBe('genus')
+
+    // Test case preservation for already singular words
+    expect(singularize('Campus')).toBe('Campus')
+    expect(singularize('STATUS')).toBe('STATUS')
+    expect(singularize('Virus')).toBe('Virus')
+
+    // Other words that are already singular
+    expect(singularize('person')).toBe('person')
+    expect(singularize('child')).toBe('child')
+    expect(singularize('address')).toBe('address')
+    expect(singularize('mouse')).toBe('mouse')
+    expect(singularize('sheep')).toBe('sheep')
+    expect(singularize('deer')).toBe('deer')
+  }),
+)
+
 // Test case preservation
 effect('preserves case correctly', () =>
   Effect.gen(function* () {
@@ -406,6 +432,24 @@ effect('mkEntityType converts table names to entity types for IDs correctly', ()
     expect(mkEntityType('user_profile_settings')).toBe('userprofilesetting')
     expect(mkEntityType('email_addresses')).toBe('emailaddress')
     expect(mkEntityType('contact_phone_numbers')).toBe('contactphonenumber')
+  }),
+)
+
+// Test mkEntityType function with entity names (the problematic case)
+effect('mkEntityType handles entity names passed directly (edge case)', () =>
+  Effect.gen(function* () {
+    // This tests the case where entity names are passed instead of table names
+    // This is the bug case: Campus -> campus (should stay campus, not become campu)
+    expect(mkEntityType('Campus')).toBe('campus')
+    expect(mkEntityType('Person')).toBe('person')
+    expect(mkEntityType('Address')).toBe('address')
+    expect(mkEntityType('Group')).toBe('group')
+    expect(mkEntityType('Child')).toBe('child')
+
+    // Other words ending in 'us' that should remain unchanged when singularized
+    expect(mkEntityType('Status')).toBe('status')
+    expect(mkEntityType('Virus')).toBe('virus')
+    expect(mkEntityType('Focus')).toBe('focus')
   }),
 )
 
