@@ -5,7 +5,10 @@ import type { mkPcoCollectionSchema, PcoBaseEntity } from '@openfaith/pco/api/pc
 import type { pcoPersonTransformer } from '@openfaith/pco/server'
 import { OfEntity } from '@openfaith/schema'
 import { EdgeDirectionSchema, getEntityId } from '@openfaith/shared'
-import { getPcoEntityMetadata } from '@openfaith/workers/helpers/schemaRegistry'
+import {
+  getAnnotationFromSchema,
+  getPcoEntityMetadata,
+} from '@openfaith/workers/helpers/schemaRegistry'
 import { and, eq, getTableColumns, getTableName, inArray, sql } from 'drizzle-orm'
 import { Array, Effect, HashSet, Option, pipe, Record, Schema, SchemaAST, String } from 'effect'
 
@@ -162,9 +165,22 @@ const extractDirectRelationships = Effect.fn('extractDirectRelationships')(funct
           Array.forEach((relProp) => {
             const relKey = relProp.name
             if (typeof relKey === 'string') {
-              const ofEntityOpt = SchemaAST.getAnnotation<string>(OfEntity)(relProp.type)
+              const ofEntityOpt = getAnnotationFromSchema<any>(OfEntity, relProp.type)
               if (Option.isSome(ofEntityOpt)) {
-                relationshipAnnotations[relKey] = ofEntityOpt.value
+                // Get the title from the domain schema to get the proper entity type
+                const titleOpt = getAnnotationFromSchema<string>(
+                  SchemaAST.TitleAnnotationId,
+                  ofEntityOpt.value.ast,
+                )
+                if (Option.isSome(titleOpt)) {
+                  relationshipAnnotations[relKey] = titleOpt.value
+                } else {
+                  // Fallback: try to get the constructor name and convert to lowercase
+                  const constructorName = ofEntityOpt.value.constructor?.name
+                  relationshipAnnotations[relKey] = constructorName
+                    ? constructorName.toLowerCase()
+                    : 'unknown'
+                }
               }
             }
           }),
@@ -554,7 +570,7 @@ export const getProperEntityName = (entityType: string): string =>
     getPcoEntityMetadata(entityType),
     Option.flatMap((metadata) => metadata.ofEntity),
     Option.flatMap((entity) =>
-      SchemaAST.getAnnotation<string>(SchemaAST.TitleAnnotationId)(entity.ast),
+      getAnnotationFromSchema<string>(SchemaAST.TitleAnnotationId, entity.ast),
     ),
     Option.getOrElse(() => entityType.toLowerCase()),
   )
@@ -960,7 +976,7 @@ const processRelationshipsE = Effect.fn('processRelationshipsE')(function* (
                   // Determine relationship type based on relationship key
                   const relationshipType = rel.relationshipKey.includes('_')
                     ? `${sourceEntityName}_${rel.relationshipKey}_${targetEntityName}`
-                    : `${sourceEntityTypeTag}_has_${targetEntityTypeTag}`
+                    : `${sourceEntityName}_has_${targetEntityName}`
 
                   return createEdge({
                     createdAt: rel.createdAt,

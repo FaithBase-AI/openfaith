@@ -297,7 +297,7 @@ export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> })
     entityTag,
     Option.match({
       onNone: () => 'default',
-      onSome: (tag) => `${String.toLowerCase(tag)}Filters`,
+      onSome: (tag) => `${pipe(tag, String.toLowerCase)}Filters`,
     }),
   )
 
@@ -307,7 +307,7 @@ export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> })
       Option.match({
         onNone: () => null,
         onSome: (tag) => {
-          const tableName = mkZeroTableName(String.capitalize(tag))
+          const tableName = mkZeroTableName(pipe(tag, String.capitalize))
 
           return getBaseEntitiesQuery(z, tableName)
         },
@@ -322,8 +322,32 @@ export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> })
     ) => Query<ZSchema, keyof ZSchema['tables'] & string, T>,
   })
 
+  // Decode the collection data through the schema to get class instances with getters
+  const decodedCollection = useMemo(() => {
+    if (!result || info.type !== 'complete') {
+      return []
+    }
+
+    const resultArray = Array.isArray(result) ? result : []
+
+    return pipe(
+      resultArray,
+      Array.map((item) =>
+        pipe(
+          Effect.try(() => Schema.decodeUnknownSync(schema)(item)),
+          Effect.match({
+            onFailure: () => null, // Skip items that fail to decode
+            onSuccess: (entity) => entity,
+          }),
+          Effect.runSync,
+        ),
+      ),
+      Array.filter((item): item is T => item !== null),
+    )
+  }, [result, info, schema])
+
   return {
-    collection: (result || []) as Array<T>,
+    collection: decodedCollection,
     limit,
     loading: info.type !== 'complete',
     nextPage,
@@ -371,12 +395,39 @@ export const useSchemaEntity = <T>(
 
   const [data, info] = useQuery(query as Parameters<typeof useQuery>[0])
 
-  return useMemo(
-    () => ({
-      entityOpt: pipe(data, Option.fromNullable) as OptionType<T>,
-      error: null,
-      loading: info.type !== 'complete',
-    }),
-    [data, info],
-  )
+  return useMemo(() => {
+    if (info.type !== 'complete') {
+      return {
+        entityOpt: Option.none(),
+        error: null,
+        loading: true,
+      }
+    }
+
+    if (!data) {
+      return {
+        entityOpt: Option.none(),
+        error: null,
+        loading: false,
+      }
+    }
+
+    // Decode the raw data through the schema to get a class instance with getters
+    return pipe(
+      Effect.try(() => Schema.decodeUnknownSync(schema)(data)),
+      Effect.match({
+        onFailure: (error) => ({
+          entityOpt: Option.none(),
+          error: `Schema decode error: ${error}`,
+          loading: false,
+        }),
+        onSuccess: (entity) => ({
+          entityOpt: Option.some(entity),
+          error: null,
+          loading: false,
+        }),
+      }),
+      Effect.runSync,
+    )
+  }, [data, info, schema])
 }

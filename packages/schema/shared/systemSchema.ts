@@ -2,7 +2,8 @@ import { CustomFieldSchema } from '@openfaith/schema/shared/customFieldsSchema'
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { Schema } from 'effect'
 
-export const BaseSystemFieldsSchema = Schema.Struct({
+// Base system fields as a class
+export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystemFields')({
   createdAt: Schema.String.annotations({
     description: 'The datetime the record was created',
     [OfUiConfig]: {
@@ -128,9 +129,12 @@ export const BaseSystemFieldsSchema = Schema.Struct({
       },
     } satisfies FieldConfig,
   }),
-})
+}) {}
 
-export const IdentificationFieldsSchema = Schema.Struct({
+// Pure identification fields class (no system fields)
+export class BaseIdentifiedEntity extends Schema.Class<BaseIdentifiedEntity>(
+  'BaseIdentifiedEntity',
+)({
   externalIds: Schema.Array(
     Schema.Struct({
       id: Schema.String,
@@ -169,4 +173,4 @@ export const IdentificationFieldsSchema = Schema.Struct({
       },
     } satisfies FieldConfig,
   }),
-})
+}) {}

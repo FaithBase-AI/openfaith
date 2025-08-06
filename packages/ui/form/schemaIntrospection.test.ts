@@ -9,7 +9,7 @@ import {
   hasEmailPattern,
 } from '@openfaith/schema'
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
-import { BaseSystemFieldsSchema } from '@openfaith/schema/shared/systemSchema'
+import { BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
 import { formatLabel } from '@openfaith/shared'
 import { Effect, Schema } from 'effect'
 
@@ -334,7 +334,7 @@ effect(
       // Use the imported BaseSystemFieldsSchema
 
       // Extract fields like the column generator does
-      const fields = extractSchemaFields(BaseSystemFieldsSchema)
+      const fields = extractSchemaFields(BaseSystemFields)
       const updatedAtField = fields.find((f) => f.key === 'updatedAt')
       const createdAtField = fields.find((f) => f.key === 'createdAt')
 
@@ -446,7 +446,7 @@ effect(
       // Use the imported BaseSystemFieldsSchema
 
       // Extract fields like the column generator does
-      const fields = extractSchemaFields(BaseSystemFieldsSchema)
+      const fields = extractSchemaFields(BaseSystemFields)
       const updatedAtField = fields.find((f) => f.key === 'updatedAt')
       const createdAtField = fields.find((f) => f.key === 'createdAt')
 

@@ -15,19 +15,44 @@ const pcoSchemas = {
 
 export type PcoEntityType = keyof typeof pcoSchemas
 
+// Helper function to get annotations from schema, handling Surrogate wrapping
+export const getAnnotationFromSchema = <A>(
+  annotationId: symbol,
+  ast: SchemaAST.AST,
+): Option.Option<A> => {
+  // First try direct annotation
+  const directOpt = SchemaAST.getAnnotation<A>(annotationId)(ast)
+  if (Option.isSome(directOpt)) {
+    return directOpt
+  }
+
+  // If not found and this is a Transformation, check the Surrogate
+  if (ast._tag === 'Transformation') {
+    const surrogateOpt = SchemaAST.getAnnotation<SchemaAST.AST>(SchemaAST.SurrogateAnnotationId)(
+      ast,
+    )
+    if (Option.isSome(surrogateOpt)) {
+      return SchemaAST.getAnnotation<A>(annotationId)(surrogateOpt.value)
+    }
+  }
+
+  return Option.none()
+}
+
 // Helper function to get entity metadata from schema annotations
 export const getEntityMetadata = (schema: Schema.Schema<any, any, any>) => {
-  const entitySchemaOpt = SchemaAST.getAnnotation<Schema.Schema<any, any, any>>(OfEntity)(
+  const entitySchemaOpt = getAnnotationFromSchema<Schema.Schema<any, any, any>>(
+    OfEntity,
     schema.ast,
   )
-  const transformerOpt = SchemaAST.getAnnotation<any>(OfTransformer)(schema.ast)
+  const transformerOpt = getAnnotationFromSchema<any>(OfTransformer, schema.ast)
 
   // Try to get table from the PCO schema first (shouldn't exist)
-  let tableOpt = SchemaAST.getAnnotation<any>(OfTable)(schema.ast)
+  let tableOpt = getAnnotationFromSchema<any>(OfTable, schema.ast)
 
   // If no table on PCO schema, get it from the domain schema in OfEntity
   if (Option.isNone(tableOpt) && Option.isSome(entitySchemaOpt)) {
-    tableOpt = SchemaAST.getAnnotation<any>(OfTable)(entitySchemaOpt.value.ast)
+    tableOpt = getAnnotationFromSchema<any>(OfTable, entitySchemaOpt.value.ast)
   }
 
   return {

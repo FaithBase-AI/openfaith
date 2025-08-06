@@ -11,10 +11,11 @@ import { Boolean, pipe } from 'effect'
 import type { FC } from 'react'
 import { useMemo } from 'react'
 
-// Type for any entity with _tag, id, and name
+// Type for any entity with _tag, id, and optional displayName getter
 type EntityRecord = {
   _tag: string
   id: string
+  displayName?: string
   name?: string | null
   firstName?: string | null
   lastName?: string | null
@@ -32,8 +33,14 @@ type EntityIdBadgeProps = EntityBadgeBaseProps & {
   entityType: string
 }
 
-// Helper to get display name for an entity
+// Helper to get display name for an entity - now checks for displayName getter first
 const getEntityDisplayName = (entity: EntityRecord): string => {
+  // First, try the displayName getter from schema classes
+  if ('displayName' in entity && typeof entity.displayName === 'string') {
+    return entity.displayName
+  }
+
+  // Fallback to legacy logic for entities that haven't been converted to classes yet
   // Try common name field first
   if (entity.name) {
     return entity.name

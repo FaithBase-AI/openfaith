@@ -9,15 +9,169 @@ import {
   PcoPhoneNumber,
   pcoPhoneNumberTransformer,
 } from '@openfaith/pco/modules/people/pcoPhoneNumberSchema'
-import { Address, Campus, Person, PhoneNumber } from '@openfaith/schema'
 import {
+  Address,
+  Campus,
+  OfEntity,
+  OfTable,
+  OfTransformer,
+  Person,
+  PhoneNumber,
+} from '@openfaith/schema'
+// Import getProperEntityName to test the full integration
+import { getProperEntityName } from '@openfaith/workers/helpers/saveDataE'
+import {
+  getAnnotationFromSchema,
   getEntityMetadata,
   getPcoEntityMetadata,
   getPcoEntityTypes,
   isPcoEntityTypeSupported,
   type PcoEntityType,
 } from '@openfaith/workers/helpers/schemaRegistry'
-import { Array, Effect, Option, pipe } from 'effect'
+import { Array, Effect, Option, pipe, Schema, SchemaAST } from 'effect'
+
+// Test getAnnotationFromSchema helper function
+effect('getAnnotationFromSchema should find direct annotations', () =>
+  Effect.gen(function* () {
+    // Create a simple schema with direct annotations
+    const TestSchema = Schema.Struct({
+      name: Schema.String,
+    }).annotations({
+      [OfEntity]: Person,
+      title: 'testEntity',
+    })
+
+    // Should find the OfEntity annotation directly
+    const ofEntityOpt = getAnnotationFromSchema<any>(OfEntity, TestSchema.ast)
+    expect(Option.isSome(ofEntityOpt)).toBe(true)
+    if (Option.isSome(ofEntityOpt)) {
+      expect(ofEntityOpt.value).toBe(Person)
+    }
+
+    // Should find the title annotation directly
+    const titleOpt = getAnnotationFromSchema<string>(SchemaAST.TitleAnnotationId, TestSchema.ast)
+    expect(Option.isSome(titleOpt)).toBe(true)
+    if (Option.isSome(titleOpt)) {
+      expect(titleOpt.value).toBe('testEntity')
+    }
+  }),
+)
+
+effect('getAnnotationFromSchema should find annotations in Surrogate for extended schemas', () =>
+  Effect.gen(function* () {
+    // Test with actual PCO schemas that use .extend() and have Surrogate wrapping
+    const personOfEntityOpt = getAnnotationFromSchema<any>(OfEntity, PcoPerson.ast)
+    expect(Option.isSome(personOfEntityOpt)).toBe(true)
+    if (Option.isSome(personOfEntityOpt)) {
+      expect(personOfEntityOpt.value).toBe(Person)
+    }
+
+    const personTransformerOpt = getAnnotationFromSchema<any>(OfTransformer, PcoPerson.ast)
+    expect(Option.isSome(personTransformerOpt)).toBe(true)
+    if (Option.isSome(personTransformerOpt)) {
+      expect(personTransformerOpt.value).toBe(pcoPersonTransformer)
+    }
+
+    // Test with domain schemas that also use .extend()
+    const personTitleOpt = getAnnotationFromSchema<string>(SchemaAST.TitleAnnotationId, Person.ast)
+    expect(Option.isSome(personTitleOpt)).toBe(true)
+    if (Option.isSome(personTitleOpt)) {
+      expect(personTitleOpt.value).toBe('person')
+    }
+
+    const personTableOpt = getAnnotationFromSchema<any>(OfTable, Person.ast)
+    expect(Option.isSome(personTableOpt)).toBe(true)
+    if (Option.isSome(personTableOpt)) {
+      expect(personTableOpt.value).toBe(peopleTable)
+    }
+  }),
+)
+
+effect('getAnnotationFromSchema should return Option.none() for missing annotations', () =>
+  Effect.gen(function* () {
+    // Create a schema without any annotations
+    const PlainSchema = Schema.Struct({
+      name: Schema.String,
+    })
+
+    // Should return None for missing annotations
+    const missingOpt = getAnnotationFromSchema<any>(OfEntity, PlainSchema.ast)
+    expect(Option.isNone(missingOpt)).toBe(true)
+
+    const missingTitleOpt = getAnnotationFromSchema<string>(
+      SchemaAST.TitleAnnotationId,
+      PlainSchema.ast,
+    )
+    expect(Option.isNone(missingTitleOpt)).toBe(true)
+  }),
+)
+
+effect('getAnnotationFromSchema should handle non-Transformation AST types gracefully', () =>
+  Effect.gen(function* () {
+    // Test with a simple literal schema (not a Transformation)
+    const LiteralSchema = Schema.Literal('test')
+
+    // Should return None gracefully for non-Transformation types without annotations
+    const missingOpt = getAnnotationFromSchema<any>(OfEntity, LiteralSchema.ast)
+    expect(Option.isNone(missingOpt)).toBe(true)
+  }),
+)
+
+effect('getAnnotationFromSchema should work with all supported entity types', () =>
+  Effect.gen(function* () {
+    const testCases = [
+      { expectedEntity: Person, name: 'Person', schema: PcoPerson },
+      { expectedEntity: Campus, name: 'Campus', schema: PcoCampus },
+      { expectedEntity: Address, name: 'Address', schema: PcoAddress },
+      { expectedEntity: PhoneNumber, name: 'PhoneNumber', schema: PcoPhoneNumber },
+    ]
+
+    pipe(
+      testCases,
+      Array.forEach(({ schema, expectedEntity, name }) => {
+        // Test OfEntity annotation
+        const ofEntityOpt = getAnnotationFromSchema<any>(OfEntity, schema.ast)
+        expect(Option.isSome(ofEntityOpt)).toBe(true)
+        if (Option.isSome(ofEntityOpt)) {
+          expect(ofEntityOpt.value).toBe(expectedEntity)
+        }
+
+        // Test OfTransformer annotation
+        const transformerOpt = getAnnotationFromSchema<any>(OfTransformer, schema.ast)
+        expect(Option.isSome(transformerOpt)).toBe(true)
+
+        console.log(`✓ ${name} schema annotations found correctly`)
+      }),
+    )
+  }),
+)
+
+effect(
+  'getAnnotationFromSchema should be consistent with SchemaAST.getAnnotation for direct annotations',
+  () =>
+    Effect.gen(function* () {
+      // Create a schema with direct annotations
+      const TestSchema = Schema.Struct({
+        name: Schema.String,
+      }).annotations({
+        title: 'directTest',
+      })
+
+      // Both methods should return the same result for direct annotations
+      const directResult = SchemaAST.getAnnotation<string>(SchemaAST.TitleAnnotationId)(
+        TestSchema.ast,
+      )
+      const helperResult = getAnnotationFromSchema<string>(
+        SchemaAST.TitleAnnotationId,
+        TestSchema.ast,
+      )
+
+      expect(Option.isSome(directResult)).toBe(Option.isSome(helperResult))
+      if (Option.isSome(directResult) && Option.isSome(helperResult)) {
+        expect(directResult.value).toBe(helperResult.value)
+      }
+    }),
+)
 
 // Test getEntityMetadata function
 effect('getEntityMetadata should extract domain schema from OfEntity annotation', () =>
@@ -469,6 +623,108 @@ effect('Edge case: getPcoEntityMetadata handles case-sensitive entity names', ()
     assertNone(lowerCaseOpt)
     assertNone(upperCaseOpt)
     expect(Option.isSome(correctCaseOpt)).toBe(true)
+  }),
+)
+
+// Regression test for schema architecture fix
+effect('Regression: getAnnotationFromSchema fixes Surrogate annotation lookup issue', () =>
+  Effect.gen(function* () {
+    // This test validates the specific fix we made for the schema architecture issue
+    // where annotations were wrapped in Surrogate and not found by direct lookup
+
+    // Before the fix, this would fail because annotations are in Surrogate
+    const personEntityOpt = getAnnotationFromSchema<any>(OfEntity, PcoPerson.ast)
+    const personTableOpt = getAnnotationFromSchema<any>(OfTable, Person.ast)
+    const personTitleOpt = getAnnotationFromSchema<string>(SchemaAST.TitleAnnotationId, Person.ast)
+
+    // All should be found now
+    expect(Option.isSome(personEntityOpt)).toBe(true)
+    expect(Option.isSome(personTableOpt)).toBe(true)
+    expect(Option.isSome(personTitleOpt)).toBe(true)
+
+    // Validate the actual values
+    if (Option.isSome(personEntityOpt)) {
+      expect(personEntityOpt.value).toBe(Person)
+    }
+    if (Option.isSome(personTableOpt)) {
+      expect(personTableOpt.value).toBe(peopleTable)
+    }
+    if (Option.isSome(personTitleOpt)) {
+      expect(personTitleOpt.value).toBe('person')
+    }
+
+    // Test the specific case that was failing: PhoneNumber entity name resolution
+    const phoneNumberEntityOpt = getAnnotationFromSchema<any>(OfEntity, PcoPhoneNumber.ast)
+    expect(Option.isSome(phoneNumberEntityOpt)).toBe(true)
+    if (Option.isSome(phoneNumberEntityOpt)) {
+      const phoneNumberTitleOpt = getAnnotationFromSchema<string>(
+        SchemaAST.TitleAnnotationId,
+        phoneNumberEntityOpt.value.ast,
+      )
+      expect(Option.isSome(phoneNumberTitleOpt)).toBe(true)
+      if (Option.isSome(phoneNumberTitleOpt)) {
+        // This should be 'phoneNumber', not 'phonenumber'
+        expect(phoneNumberTitleOpt.value).toBe('phoneNumber')
+      }
+    }
+  }),
+)
+
+effect('Regression: getEntityMetadata now works correctly with extended schemas', () =>
+  Effect.gen(function* () {
+    // This test validates that getEntityMetadata works correctly after our fix
+    // Previously, it would return Option.none() for table annotations
+
+    const personMetadata = getEntityMetadata(PcoPerson)
+    const phoneMetadata = getEntityMetadata(PcoPhoneNumber)
+    const campusMetadata = getEntityMetadata(PcoCampus)
+
+    // All should have entity references
+    expect(Option.isSome(personMetadata.entity)).toBe(true)
+    expect(Option.isSome(phoneMetadata.entity)).toBe(true)
+    expect(Option.isSome(campusMetadata.entity)).toBe(true)
+
+    // Person and Campus should have tables
+    expect(Option.isSome(personMetadata.table)).toBe(true)
+    expect(Option.isSome(campusMetadata.table)).toBe(true)
+
+    // All should have transformers
+    expect(Option.isSome(personMetadata.transformer)).toBe(true)
+    expect(Option.isSome(phoneMetadata.transformer)).toBe(true)
+    expect(Option.isSome(campusMetadata.transformer)).toBe(true)
+
+    // Validate specific values that were failing before
+    if (Option.isSome(personMetadata.entity)) {
+      expect(personMetadata.entity.value).toBe(Person)
+    }
+    if (Option.isSome(personMetadata.table)) {
+      expect(personMetadata.table.value).toBe(peopleTable)
+    }
+    if (Option.isSome(campusMetadata.table)) {
+      expect(campusMetadata.table.value).toBe(campusesTable)
+    }
+  }),
+)
+
+effect('Integration: getProperEntityName works correctly with fixed annotation lookup', () =>
+  Effect.gen(function* () {
+    // This test validates the full integration from PCO entity type to proper entity name
+    // This was the specific issue that was causing "phonenumber" instead of "phoneNumber"
+
+    const personName = getProperEntityName('Person')
+    const phoneNumberName = getProperEntityName('PhoneNumber')
+    const addressName = getProperEntityName('Address')
+    const campusName = getProperEntityName('Campus')
+
+    // These should return the correct camelCase entity names from the title annotations
+    expect(personName).toBe('person')
+    expect(phoneNumberName).toBe('phoneNumber') // This was failing before (returned "phonenumber")
+    expect(addressName).toBe('address')
+    expect(campusName).toBe('campus')
+
+    // Test fallback for unsupported types
+    const unknownName = getProperEntityName('UnknownType')
+    expect(unknownName).toBe('unknowntype') // Should fallback to lowercase
   }),
 )
 
