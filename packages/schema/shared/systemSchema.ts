@@ -1,10 +1,12 @@
 import { CustomFieldSchema } from '@openfaith/schema/shared/customFieldsSchema'
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { TimestampToIsoString } from '@openfaith/shared/date'
+import { JsonStringToStringArray } from '@openfaith/shared/schema'
 import { Schema } from 'effect'
 
 // Base system fields as a class
 export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystemFields')({
-  createdAt: Schema.String.annotations({
+  createdAt: TimestampToIsoString.annotations({
     description: 'The datetime the record was created',
     [OfUiConfig]: {
       field: {
@@ -39,7 +41,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       },
     } satisfies FieldConfig,
   }),
-  deletedAt: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
+  deletedAt: TimestampToIsoString.pipe(Schema.NullOr, Schema.optional).annotations({
     description: 'The datetime the record was deleted',
     [OfUiConfig]: {
       field: {
@@ -61,7 +63,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       },
     } satisfies FieldConfig,
   }),
-  inactivatedAt: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
+  inactivatedAt: TimestampToIsoString.pipe(Schema.NullOr, Schema.optional).annotations({
     description: 'The datetime the record was inactivated',
     [OfUiConfig]: {
       field: {
@@ -94,7 +96,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       },
     } satisfies FieldConfig,
   }),
-  tags: Schema.Array(Schema.String).annotations({
+  tags: JsonStringToStringArray.annotations({
     description: 'The tags for the record',
     [OfUiConfig]: {
       field: {
@@ -105,7 +107,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       },
     } satisfies FieldConfig,
   }),
-  updatedAt: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
+  updatedAt: TimestampToIsoString.pipe(Schema.NullOr, Schema.optional).annotations({
     description: 'The datetime the record was updated',
     [OfUiConfig]: {
       field: {

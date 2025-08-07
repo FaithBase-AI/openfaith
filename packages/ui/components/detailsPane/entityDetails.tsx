@@ -58,7 +58,7 @@ export const EntityDetails: FC<EntityDetailsProps> = (props) => {
     Option.match({
       onNone: () => (
         <ScrollArea viewportClassName={'pt-3 pb-4'}>
-          <div className={'p-4'}>Schema not found for entity type: {entityType}</div>
+          <div className={'p-4'}>Schema not found for entity type: {formatLabel(entityType)}</div>
         </ScrollArea>
       ),
       onSome: (schema) => {

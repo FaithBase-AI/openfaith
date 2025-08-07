@@ -1,8 +1,108 @@
-import { type FieldConfig, OfEntity, OfUiConfig } from '@openfaith/schema/shared/schema'
-import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
+import { edgesTable } from '@openfaith/db/schema/modules/edgesSchema'
+import { type FieldConfig, OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { Schema } from 'effect'
 
-export class BaseEdge extends BaseSystemFields.extend<BaseEdge>('BaseEdge')({
+// Custom base class for edges that excludes customFields (which doesn't exist in edges table)
+export class BaseEdgeSystemFields extends Schema.Class<BaseEdgeSystemFields>(
+  'BaseEdgeSystemFields',
+)({
+  createdAt: Schema.transform(Schema.Number, Schema.String, {
+    decode: (timestamp) => new Date(timestamp).toISOString(),
+    encode: (isoString) => new Date(isoString).getTime(),
+  }).annotations({
+    description: 'The datetime the record was created',
+    [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
+      table: {
+        cellType: 'datetime',
+        order: 10,
+        sortable: true,
+      },
+    } satisfies FieldConfig,
+  }),
+  createdBy: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
+    description: 'The typeid of the user who created the record',
+    [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
+      table: {
+        hidden: true,
+      },
+    } satisfies FieldConfig,
+  }),
+  deletedAt: Schema.transform(Schema.Number, Schema.String, {
+    decode: (timestamp) => new Date(timestamp).toISOString(),
+    encode: (isoString) => new Date(isoString).getTime(),
+  })
+    .pipe(Schema.NullOr, Schema.optional)
+    .annotations({
+      description: 'The datetime the record was deleted',
+      [OfUiConfig]: {
+        field: {
+          hidden: true,
+        },
+        table: {
+          hidden: true,
+        },
+      } satisfies FieldConfig,
+    }),
+  deletedBy: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
+    description: 'The typeid of the user who deleted the record',
+    [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
+      table: {
+        hidden: true,
+      },
+    } satisfies FieldConfig,
+  }),
+  orgId: Schema.String.annotations({
+    description: 'The organization this record belongs to',
+    [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
+      table: {
+        hidden: true,
+      },
+    } satisfies FieldConfig,
+  }),
+  updatedAt: Schema.transform(Schema.Number, Schema.String, {
+    decode: (timestamp) => new Date(timestamp).toISOString(),
+    encode: (isoString) => new Date(isoString).getTime(),
+  })
+    .pipe(Schema.NullOr, Schema.optional)
+    .annotations({
+      description: 'The datetime the record was last updated',
+      [OfUiConfig]: {
+        field: {
+          hidden: true,
+        },
+        table: {
+          cellType: 'datetime',
+          order: 11,
+          sortable: true,
+        },
+      } satisfies FieldConfig,
+    }),
+  updatedBy: Schema.String.pipe(Schema.NullOr, Schema.optional).annotations({
+    description: 'The typeid of the user who last updated the record',
+    [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
+      table: {
+        hidden: true,
+      },
+    } satisfies FieldConfig,
+  }),
+}) {}
+
+export class BaseEdge extends BaseEdgeSystemFields.extend<BaseEdge>('BaseEdge')({
   _tag: Schema.Literal('edge').annotations({
     [OfUiConfig]: {
       table: {
@@ -10,10 +110,24 @@ export class BaseEdge extends BaseSystemFields.extend<BaseEdge>('BaseEdge')({
       },
     },
   }),
-  metadata: Schema.Record({
-    key: Schema.String,
-    value: Schema.Unknown,
-  }).annotations({
+  metadata: Schema.transform(
+    Schema.String,
+    Schema.Record({
+      key: Schema.String,
+      value: Schema.Unknown,
+    }),
+    {
+      decode: (jsonString) => {
+        try {
+          const parsed = JSON.parse(jsonString)
+          return typeof parsed === 'object' && parsed !== null ? parsed : {}
+        } catch {
+          return {}
+        }
+      },
+      encode: (record) => JSON.stringify(record),
+    },
+  ).annotations({
     description:
       'JSONB field to store arbitrary key-value pairs describing the relationship itself',
     [OfUiConfig]: {
@@ -80,9 +194,10 @@ export class BaseEdge extends BaseSystemFields.extend<BaseEdge>('BaseEdge')({
   }),
 }) {}
 
-export class Edge extends BaseEdge.extend<Edge>('Edge')(BaseIdentifiedEntity.fields, [
+export class Edge extends BaseEdge.extend<Edge>('Edge')({}, [
   {
     [OfEntity]: 'edge',
+    [OfTable]: edgesTable,
     [OfUiConfig]: {
       navigation: {
         description: 'Manage entity relationships and connections',

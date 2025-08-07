@@ -1,6 +1,33 @@
 import { type FieldConfig, OfEntity, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { Array, Option, pipe, type Schema, SchemaAST, String } from 'effect'
 
+/**
+ * Helper function to get annotation from schema, handling both old and new formats
+ */
+export const getAnnotationFromSchema = <A>(annotation: any, schema: any): Option.Option<A> => {
+  if (!schema) {
+    return Option.none()
+  }
+
+  // Try direct annotation access first
+  const directAnnotation = SchemaAST.getAnnotation<A>(annotation)(schema)
+  if (Option.isSome(directAnnotation)) {
+    return directAnnotation
+  }
+
+  // For PropertySignature, try the type
+  if (schema.type) {
+    return SchemaAST.getAnnotation<A>(annotation)(schema.type)
+  }
+
+  // For class-based schemas, try to get from the constructor or prototype
+  if (schema.constructor && schema.constructor.ast) {
+    return SchemaAST.getAnnotation<A>(annotation)(schema.constructor.ast)
+  }
+
+  return Option.none()
+}
+
 export interface ExtractedField {
   key: string
   schema: SchemaAST.PropertySignature
@@ -9,25 +36,42 @@ export interface ExtractedField {
 }
 
 /**
- * Extracts field information from a Schema.Struct
+ * Extracts field information from a Schema.Struct or class-based schema
  */
 export const extractSchemaFields = <T>(
   schema: Schema.Schema<T> | { ast: SchemaAST.AST },
 ): Array<ExtractedField> => {
   const ast = schema.ast
 
-  if (ast._tag !== 'TypeLiteral') {
-    throw new Error('Can only extract fields from Struct schemas')
+  // Helper function to extract fields from a TypeLiteral AST
+  const extractFromTypeLiteral = (typeLiteralAst: SchemaAST.AST): Array<ExtractedField> => {
+    if (typeLiteralAst._tag !== 'TypeLiteral') {
+      throw new Error('Expected TypeLiteral AST')
+    }
+
+    return pipe(
+      typeLiteralAst.propertySignatures,
+      Array.map((prop) => ({
+        isNullable: isNullableSchema(prop.type),
+        isOptional: prop.isOptional,
+        key: prop.name as string,
+        schema: prop,
+      })),
+    )
   }
 
-  return pipe(
-    ast.propertySignatures,
-    Array.map((prop) => ({
-      isNullable: isNullableSchema(prop.type),
-      isOptional: prop.isOptional,
-      key: prop.name as string,
-      schema: prop,
-    })),
+  // Handle direct TypeLiteral (old Schema.Struct format)
+  if (ast._tag === 'TypeLiteral') {
+    return extractFromTypeLiteral(ast)
+  }
+
+  // Handle Transformation (class-based schema format)
+  if (ast._tag === 'Transformation') {
+    return extractFromTypeLiteral(ast.from)
+  }
+
+  throw new Error(
+    `Can only extract fields from Struct schemas or class-based schemas, got: ${ast._tag}`,
   )
 }
 
@@ -56,8 +100,7 @@ const isNullOrUndefined = (ast: SchemaAST.AST): boolean =>
 
 const getUiConfigFromASTOption = (ast: SchemaAST.AST): Option.Option<FieldConfig> => {
   return pipe(
-    ast,
-    SchemaAST.getAnnotation<FieldConfig>(OfUiConfig),
+    getAnnotationFromSchema<FieldConfig>(OfUiConfig, ast),
     Option.orElse(() =>
       SchemaAST.isUnion(ast)
         ? pipe(
@@ -85,7 +128,7 @@ export const extractAST = (schema: SchemaAST.AST | SchemaAST.PropertySignature):
  */
 export const getUiConfigFromAST = (ast: any): FieldConfig | undefined => {
   if (ast && typeof ast === 'object' && 'annotations' in ast && 'type' in ast) {
-    const directAnnotation = SchemaAST.getAnnotation<FieldConfig>(OfUiConfig)(ast)
+    const directAnnotation = getAnnotationFromSchema<FieldConfig>(OfUiConfig, ast)
     if (Option.isSome(directAnnotation)) {
       return directAnnotation.value
     }
@@ -94,8 +137,7 @@ export const getUiConfigFromAST = (ast: any): FieldConfig | undefined => {
   }
 
   return pipe(
-    ast,
-    SchemaAST.getAnnotation<FieldConfig>(OfUiConfig),
+    getAnnotationFromSchema<FieldConfig>(OfUiConfig, ast),
     Option.orElse(() =>
       SchemaAST.isUnion(ast)
         ? pipe(
@@ -156,10 +198,15 @@ export const extractLiteralOptions = (
 
 /**
  * Extracts the entity tag from a schema AST
+ * Handles both TypeLiteral (old Schema.Struct) and Transformation (class-based) ASTs
  */
 export const extractEntityTag = (ast: SchemaAST.AST): Option.Option<string> => {
-  if (SchemaAST.isTypeLiteral(ast)) {
-    const propertySignatures = ast.propertySignatures
+  const extractFromTypeLiteral = (typeLiteralAst: SchemaAST.AST): Option.Option<string> => {
+    if (!SchemaAST.isTypeLiteral(typeLiteralAst)) {
+      return Option.none()
+    }
+
+    const propertySignatures = typeLiteralAst.propertySignatures
     const tagProperty = pipe(
       propertySignatures,
       Array.findFirst((prop) => prop.name === '_tag'),
@@ -171,6 +218,18 @@ export const extractEntityTag = (ast: SchemaAST.AST): Option.Option<string> => {
         return Option.some(tagAST.literal)
       }
     }
+
+    return Option.none()
+  }
+
+  // Handle direct TypeLiteral (old Schema.Struct format)
+  if (SchemaAST.isTypeLiteral(ast)) {
+    return extractFromTypeLiteral(ast)
+  }
+
+  // Handle Transformation (class-based schema format)
+  if (ast._tag === 'Transformation') {
+    return extractFromTypeLiteral(ast.from)
   }
 
   return Option.none()

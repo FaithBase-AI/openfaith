@@ -1,5 +1,6 @@
 'use client'
 
+import { formatLabel } from '@openfaith/shared'
 import { EntityAvatar } from '@openfaith/ui/components/avatars/entityAvatar'
 import { BadgeSkeleton } from '@openfaith/ui/components/badges/badgeSkeleton'
 import { Badge, entityBadgeClassName } from '@openfaith/ui/components/ui/badge'
@@ -95,7 +96,7 @@ const getEntityDisplayName = (entity: EntityRecord): string => {
   }
 
   // Fallback to entity type + ID
-  return `${entity._tag} ${entity.id}`
+  return `${formatLabel(entity._tag)} ${entity.id}`
 }
 
 // Component that fetches entity directly from Zero
@@ -129,7 +130,7 @@ const _EntityIdBadgeWithZero: FC<EntityIdBadgeProps> = (props) => {
     // Fallback display when entity not found
     return (
       <Badge className={cn(entityBadgeClassName, className)} variant='secondary'>
-        <span className='truncate'>{`${entityType} ${entityId}`}</span>
+        <span className='truncate'>{`${formatLabel(entityType)} ${entityId}`}</span>
       </Badge>
     )
   }

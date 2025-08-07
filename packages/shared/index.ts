@@ -1,3 +1,4 @@
+export * from '@openfaith/shared/date'
 export * from '@openfaith/shared/env'
 export * from '@openfaith/shared/getApiUrl'
 export * from '@openfaith/shared/getIds'

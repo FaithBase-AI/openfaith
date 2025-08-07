@@ -1,3 +1,4 @@
+import { formatLabel } from '@openfaith/shared'
 import { DetailsPaneTabs } from '@openfaith/ui/components/detailsPane/detailsPaneTabs'
 import type { DetailsPaneEntity } from '@openfaith/ui/components/detailsPane/detailsPaneTypes'
 
@@ -156,7 +157,7 @@ const DefaultEntityRenderer: FC<{ entity: DetailsPaneEntity }> = (props) => {
         <div className='flex-1 overflow-auto p-4'>
           <div className='space-y-4'>
             <p>
-              {entity.entityType} details for ID: {entity.entityId}
+              {formatLabel(entity.entityType)} details for ID: {entity.entityId}
             </p>
             <p className='text-muted-foreground text-sm'>
               Schema-driven form will be rendered here
@@ -169,7 +170,7 @@ const DefaultEntityRenderer: FC<{ entity: DetailsPaneEntity }> = (props) => {
           <div className='size-6 rounded bg-muted' />
           <div>
             <h2 className='font-semibold text-lg'>
-              {entity.entityType} {entity.entityId}
+              {formatLabel(entity.entityType)} {entity.entityId}
             </h2>
             <p className='text-muted-foreground text-sm'>Entity Details</p>
           </div>

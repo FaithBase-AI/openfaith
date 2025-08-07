@@ -1,4 +1,5 @@
 /** biome-ignore-all lint/correctness/noUnusedFunctionParameters: this is the way */
+import { pluralize } from '@openfaith/shared'
 import { numberFilterOperators } from '@openfaith/ui/components/data-table-filter/core/operators'
 import type {
   Column,
@@ -185,8 +186,7 @@ export function FilterValueOptionDisplay<TData>({
     )
   }
   const name = column.displayName.toLowerCase()
-  // TODO: Better pluralization for different languages
-  const pluralName = name.endsWith('s') ? `${name}es` : `${name}s`
+  const pluralName = pluralize(name)
 
   const hasOptionIcons = !options?.some((o) => !o.icon)
 

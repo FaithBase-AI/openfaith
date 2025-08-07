@@ -1,7 +1,11 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
 import { getEntityId } from '@openfaith/shared/getIds'
-import { arrayToCommaSeparatedString, EdgeDirectionSchema } from '@openfaith/shared/schema'
+import {
+  arrayToCommaSeparatedString,
+  EdgeDirectionSchema,
+  JsonStringToStringArray,
+} from '@openfaith/shared/schema'
 import { Effect, Schema } from 'effect'
 
 // Helper function to decode using the schema
@@ -410,5 +414,100 @@ effect('arrayToCommaSeparatedString should work with literal schemas', () =>
 
     // Test invalid literal should fail
     expect(() => Schema.decodeUnknownSync(statusSchema)('active,invalid,pending')).toThrow()
+  }),
+)
+
+// JsonStringToStringArray tests
+effect('JsonStringToStringArray - decode: converts valid JSON string array', () =>
+  Effect.gen(function* () {
+    const jsonString = '["tag1", "tag2", "tag3"]'
+    const result = yield* Schema.decode(JsonStringToStringArray)(jsonString)
+
+    expect(result).toEqual(['tag1', 'tag2', 'tag3'])
+  }),
+)
+
+effect('JsonStringToStringArray - encode: converts array to JSON string', () =>
+  Effect.gen(function* () {
+    const array = ['tag1', 'tag2', 'tag3']
+    const result = yield* Schema.encode(JsonStringToStringArray)(array)
+
+    expect(result).toBe('["tag1","tag2","tag3"]')
+  }),
+)
+
+effect('JsonStringToStringArray - decode: handles empty array', () =>
+  Effect.gen(function* () {
+    const jsonString = '[]'
+    const result = yield* Schema.decode(JsonStringToStringArray)(jsonString)
+
+    expect(result).toEqual([])
+  }),
+)
+
+effect('JsonStringToStringArray - decode: handles invalid JSON gracefully', () =>
+  Effect.gen(function* () {
+    const jsonString = 'invalid json'
+    const result = yield* Schema.decode(JsonStringToStringArray)(jsonString)
+
+    expect(result).toEqual([])
+  }),
+)
+
+effect('JsonStringToStringArray - decode: handles null JSON gracefully', () =>
+  Effect.gen(function* () {
+    const jsonString = 'null'
+    const result = yield* Schema.decode(JsonStringToStringArray)(jsonString)
+
+    expect(result).toEqual([])
+  }),
+)
+
+effect('JsonStringToStringArray - decode: handles mixed type arrays gracefully', () =>
+  Effect.gen(function* () {
+    const jsonString = '["valid", 123, "mixed"]'
+    const result = yield* Schema.decode(JsonStringToStringArray)(jsonString)
+
+    expect(result).toEqual([])
+  }),
+)
+
+effect('JsonStringToStringArray - decode: handles non-array JSON gracefully', () =>
+  Effect.gen(function* () {
+    const jsonString = '{"key": "value"}'
+    const result = yield* Schema.decode(JsonStringToStringArray)(jsonString)
+
+    expect(result).toEqual([])
+  }),
+)
+
+effect('JsonStringToStringArray - decode: handles number JSON gracefully', () =>
+  Effect.gen(function* () {
+    const jsonString = '42'
+    const result = yield* Schema.decode(JsonStringToStringArray)(jsonString)
+
+    expect(result).toEqual([])
+  }),
+)
+
+effect('JsonStringToStringArray - roundtrip: array -> JSON -> array', () =>
+  Effect.gen(function* () {
+    const originalArray = ['tag1', 'tag2', 'tag3']
+
+    const jsonString = yield* Schema.encode(JsonStringToStringArray)(originalArray)
+    const backToArray = yield* Schema.decode(JsonStringToStringArray)(jsonString)
+
+    expect(backToArray).toEqual(originalArray)
+  }),
+)
+
+effect('JsonStringToStringArray - roundtrip: empty array -> JSON -> array', () =>
+  Effect.gen(function* () {
+    const originalArray: Array<string> = []
+
+    const jsonString = yield* Schema.encode(JsonStringToStringArray)(originalArray)
+    const backToArray = yield* Schema.decode(JsonStringToStringArray)(jsonString)
+
+    expect(backToArray).toEqual(originalArray)
   }),
 )

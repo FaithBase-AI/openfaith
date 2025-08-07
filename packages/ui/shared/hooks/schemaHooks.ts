@@ -334,7 +334,9 @@ export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> })
       resultArray,
       Array.map((item) =>
         pipe(
-          Effect.try(() => Schema.decodeUnknownSync(schema)(item)),
+          Effect.try(() =>
+            Schema.decodeUnknownSync(schema)(item, { onExcessProperty: 'preserve' }),
+          ),
           Effect.match({
             onFailure: () => null, // Skip items that fail to decode
             onSuccess: (entity) => entity,
@@ -414,7 +416,7 @@ export const useSchemaEntity = <T>(
 
     // Decode the raw data through the schema to get a class instance with getters
     return pipe(
-      Effect.try(() => Schema.decodeUnknownSync(schema)(data)),
+      Effect.try(() => Schema.decodeUnknownSync(schema)(data, { onExcessProperty: 'preserve' })),
       Effect.match({
         onFailure: (error) => ({
           entityOpt: Option.none(),

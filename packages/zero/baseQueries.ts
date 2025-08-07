@@ -1,6 +1,7 @@
 import type { useZero } from '@openfaith/zero/useZero'
+import { schema } from '@openfaith/zero/zero-schema.gen'
 import type { TableMutator, TableSchema } from '@rocicorp/zero'
-import { Schema } from 'effect'
+import { Effect, Schema } from 'effect'
 
 export class EntityNotFoundError extends Schema.TaggedError<EntityNotFoundError>()(
   'EntityNotFoundError',
@@ -29,17 +30,43 @@ export const getBaseOrgUserQuery = (z: ReturnType<typeof useZero>, userId: strin
   z.query.orgUsers.related('user').where('id', userId).one()
 
 export const getBaseEntitiesQuery = (z: ReturnType<typeof useZero>, entityName: string) => {
-  if (entityName in z.query) {
-    // @ts-expect-error - We have these relations defined in the schema
-    return z.query[entityName as keyof typeof z.query].related('sourceEdges').related('targetEdges')
-  }
+  return Effect.gen(function* () {
+    if (!(entityName in z.query)) {
+      throw new EntityNotFoundError({
+        availableEntities: Object.keys(z.query),
+        entityName,
+      })
+    }
 
-  throw new EntityNotFoundError({
-    availableEntities: Object.keys(z.query),
-    entityName,
-  })
+    const baseQuery = z.query[entityName as keyof typeof z.query]
+
+    // Try to access the schema from the query object to check for relationships
+    const queryWithSchema = baseQuery as any
+
+    // Check if this entity has sourceEdges/targetEdges relationships in the schema
+    const entityRelationships = (schema?.relationships as any)?.[entityName]
+    const hasSourceEdges = entityRelationships?.sourceEdges
+    const hasTargetEdges = entityRelationships?.targetEdges
+
+    if (hasSourceEdges && hasTargetEdges) {
+      // Add both edge relationships
+      return queryWithSchema.related('sourceEdges').related('targetEdges')
+    }
+
+    if (hasSourceEdges) {
+      // Add only sourceEdges relationship
+      return queryWithSchema.related('sourceEdges')
+    }
+
+    if (hasTargetEdges) {
+      // Add only targetEdges relationship
+      return queryWithSchema.related('targetEdges')
+    }
+
+    // Return base query for entities without edge relationships
+    return baseQuery
+  }).pipe(Effect.runSync)
 }
-
 export const getBaseEntityQuery = (
   z: ReturnType<typeof useZero>,
   entityName: string,

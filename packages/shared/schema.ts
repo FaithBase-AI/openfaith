@@ -1,4 +1,4 @@
-import { ParseResult, Schema } from 'effect'
+import { Effect, ParseResult, Schema } from 'effect'
 
 export const arrayToCommaSeparatedString = <A extends string | number | boolean>(
   literalSchema: Schema.Schema<A, A, never>,
@@ -56,3 +56,38 @@ export const EdgeDirectionSchema = Schema.transformOrFail(EdgeDirectionInput, Ed
   encode: ({ source, target }) => ParseResult.succeed({ idA: source, idB: target }),
   strict: true,
 })
+
+/**
+ * Schema transformer that converts JSON string to Array<string> and vice versa.
+ * Uses proper schema validation to ensure the parsed JSON is actually an array of strings.
+ * Falls back to empty array if parsing fails or result is not a valid string array.
+ *
+ * Examples:
+ * - '["tag1", "tag2"]' -> ["tag1", "tag2"]
+ * - '[]' -> []
+ * - 'invalid json' -> []
+ * - '["valid", 123, "mixed"]' -> [] (invalid due to mixed types)
+ * - 'null' -> []
+ */
+export const JsonStringToStringArray = Schema.transformOrFail(
+  Schema.String,
+  Schema.Array(Schema.String),
+  {
+    decode: (jsonString) =>
+      Effect.gen(function* () {
+        // Try to parse the JSON
+        const parsed = yield* Effect.try(() => JSON.parse(jsonString)).pipe(
+          Effect.orElse(() => Effect.succeed(null)),
+        )
+
+        // Validate that the parsed result is an array of strings
+        const validated = yield* Schema.decodeUnknown(Schema.Array(Schema.String))(parsed).pipe(
+          Effect.orElse(() => Effect.succeed([])),
+        )
+
+        return validated
+      }),
+    encode: (array) => Effect.succeed(JSON.stringify(array)),
+    strict: true,
+  },
+)

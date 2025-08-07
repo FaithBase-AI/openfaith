@@ -4,8 +4,6 @@ import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared
 import { Schema } from 'effect'
 
 // Clean BasePerson class for transformers (no system fields, no extensions)
-
-// export class Person extends BaseIdentifiedEntity.extend<Person>('Person')(BasePerson.fields, [
 export class BasePerson extends BaseSystemFields.extend<BasePerson>('BasePerson')({
   _tag: Schema.Literal('person').annotations({
     [OfUiConfig]: {
