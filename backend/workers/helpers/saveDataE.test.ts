@@ -2184,7 +2184,7 @@ effect(
 
       // Create some external links with old timestamps
       const oldTimestamp = new Date('2023-01-01T00:00:00Z')
-      const _syncStartTime = new Date('2023-01-02T00:00:00Z')
+      const syncStartTime = new Date('2023-01-02T00:00:00Z')
 
       // Insert old external links directly
       yield* sql`
