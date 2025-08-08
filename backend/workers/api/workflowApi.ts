@@ -1,5 +1,6 @@
 import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
 import { WorkflowProxy } from '@effect/workflow'
+import { CreateOrgWorkflow } from '@openfaith/workers/workflows/createOrgWorkflow'
 import { ExternalPushEntityWorkflow } from '@openfaith/workers/workflows/externalPushEntityWorkflow'
 import { ExternalPushWorkflow } from '@openfaith/workers/workflows/externalPushWorkflow'
 import { ExternalSyncEntityWorkflow } from '@openfaith/workers/workflows/externalSyncEntityWorkflow'
@@ -13,6 +14,7 @@ export const workflows = [
   ExternalSyncEntityWorkflow,
   ExternalPushWorkflow,
   ExternalPushEntityWorkflow,
+  CreateOrgWorkflow,
   TestWorkflow,
 ] as const
 

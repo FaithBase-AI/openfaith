@@ -1,8 +1,10 @@
+import { FetchHttpClient } from '@effect/platform'
 import { redis, resend } from '@openfaith/be-shared'
 import { getTableName, schema, usersTable } from '@openfaith/db'
 import { reactInvitationEmail, reactOTPEmail } from '@openfaith/email'
 import { db } from '@openfaith/server'
 import { asyncNoOp, env } from '@openfaith/shared'
+import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
 import { betterAuth, type Models } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import {
@@ -17,7 +19,7 @@ import {
 import { reactStartCookies } from 'better-auth/react-start'
 import cookie from 'cookie'
 import { eq } from 'drizzle-orm'
-import { Boolean, Option, pipe, Record, String } from 'effect'
+import { Boolean, Effect, Layer, Option, pipe, Record, String } from 'effect'
 import { typeid } from 'typeid-js'
 
 const from = `${env.VITE_APP_NAME} <auth@${env.VITE_PROD_EMAIL_DOMAIN}>`
@@ -275,6 +277,27 @@ export const auth = betterAuth({
       },
     }),
     organization({
+      organizationCreation: {
+        afterCreate: async ({ organization, user }) => {
+          await Effect.runPromise(
+            Effect.gen(function* () {
+              const workflowClient = yield* WorkflowClient
+
+              yield* workflowClient.workflows.CreateOrgWorkflow({
+                payload: {
+                  name: organization.name,
+                  organizationId: organization.id,
+                  slug: organization.slug,
+                  userId: user.id,
+                },
+              })
+            }).pipe(
+              Effect.provide(Layer.mergeAll(WorkflowClient.Default, FetchHttpClient.layer)),
+            ),
+          )
+        },
+        disabled: false,
+      },
       schema: {
         invitation: {
           fields: {

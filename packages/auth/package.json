@@ -1,7 +1,9 @@
 {
   "dependencies": {
+    "@effect/platform": "catalog:",
     "@openfaith/db": "workspace:*",
     "@openfaith/email": "workspace:*",
+    "@openfaith/workers": "workspace:*",
     "better-auth": "catalog:",
     "cookie": "1.0.2",
     "effect": "catalog:",

@@ -6,6 +6,7 @@ import { NodeClusterRunnerSocket, NodeHttpServer, NodeRuntime } from '@effect/pl
 import { WorkflowProxyServer } from '@effect/workflow'
 import { DBLive, TokenManagerLive } from '@openfaith/server'
 import { HealthLive, WorkflowApi, workflows } from '@openfaith/workers/api/workflowApi'
+import { CreateOrgWorkflowLayer } from '@openfaith/workers/workflows/createOrgWorkflow'
 import { ExternalPushEntityWorkflowLayer } from '@openfaith/workers/workflows/externalPushEntityWorkflow'
 import { ExternalPushWorkflowLayer } from '@openfaith/workers/workflows/externalPushWorkflow'
 import { ExternalSyncEntityWorkflowLayer } from '@openfaith/workers/workflows/externalSyncEntityWorkflow'
@@ -43,6 +44,7 @@ const EnvLayer = Layer.mergeAll(
   ExternalSyncEntityWorkflowLayer,
   ExternalPushWorkflowLayer,
   ExternalPushEntityWorkflowLayer,
+  CreateOrgWorkflowLayer,
   TestWorkflowLayer,
 ).pipe(
   Layer.provide(WorkflowEngineLayer),

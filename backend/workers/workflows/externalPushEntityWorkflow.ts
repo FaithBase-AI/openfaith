@@ -87,18 +87,17 @@ export const ExternalPushEntityWorkflowLayer = ExternalPushEntityWorkflow.toLaye
         Effect.withSpan('external-sync-entity-activity'),
         Effect.provide(Layer.mergeAll(ExternalLinkManagerLive, PcoApiLayer)),
         Effect.provideService(TokenKey, tokenKey),
+        Effect.tapError((error) =>
+          Effect.logError('External sync failed', {
+            entityName,
+            error,
+            mutationCount: mutations.length,
+            tokenKey,
+          }),
+        ),
       ),
       name: 'SyncExternalEntityData',
-    }).pipe(
-      Activity.retry({ times: 3 }),
-      ExternalPushEntityWorkflow.withCompensation(
-        Effect.fn(function* (_value, cause) {
-          yield* Effect.log(`🔄 Compensating external sync entity activity for: ${entityName}`)
-          yield* Effect.log(`📋 Cause: ${cause}`)
-          // Add any cleanup logic here if needed
-        }),
-      ),
-    )
+    }).pipe(Activity.retry({ times: 3 }))
 
     yield* Effect.log(`✅ Completed external sync entity workflow for: ${entityName}`)
   }),
