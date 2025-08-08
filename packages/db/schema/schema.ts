@@ -10,6 +10,8 @@ import { peopleRelations } from '@openfaith/db/schema/modules/peopleRelations'
 import { peopleTable } from '@openfaith/db/schema/modules/peopleSchema'
 import { phoneNumbersRelations } from '@openfaith/db/schema/modules/phoneNumbersRelations'
 import { phoneNumbersTable } from '@openfaith/db/schema/modules/phoneNumbersSchema'
+import { sacramentsRelations } from '@openfaith/db/schema/modules/sacramentsRelations'
+import { sacramentsTable } from '@openfaith/db/schema/modules/sacramentsSchema'
 import {
   invitationsRelations,
   orgSettingsRelations,
@@ -47,6 +49,8 @@ export const schema = {
   peopleTable,
   phoneNumbersRelations,
   phoneNumbersTable,
+  sacramentsRelations,
+  sacramentsTable,
   usersRelations,
   usersTable,
   verificationsTable,

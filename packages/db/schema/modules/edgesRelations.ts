@@ -4,6 +4,7 @@ import { edgesTable, entityRelationshipsTable } from '@openfaith/db/schema/modul
 import { foldersTable } from '@openfaith/db/schema/modules/foldersSchema'
 import { peopleTable } from '@openfaith/db/schema/modules/peopleSchema'
 import { phoneNumbersTable } from '@openfaith/db/schema/modules/phoneNumbersSchema'
+import { sacramentsTable } from '@openfaith/db/schema/modules/sacramentsSchema'
 import { orgsTable } from '@openfaith/db/schema/orgsSchema'
 import { usersTable } from '@openfaith/db/schema/usersSchema'
 import { relations } from 'drizzle-orm'
@@ -46,6 +47,11 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
     references: [phoneNumbersTable.id],
     relationName: 'PhoneNumberSourceEdges',
   }),
+  sourceSacrament: one(sacramentsTable, {
+    fields: [edgesTable.sourceEntityId],
+    references: [sacramentsTable.id],
+    relationName: 'SacramentSourceEdges',
+  }),
   sourceUser: one(usersTable, {
     fields: [edgesTable.sourceEntityId],
     references: [usersTable.id],
@@ -82,6 +88,11 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
     fields: [edgesTable.targetEntityId],
     references: [phoneNumbersTable.id],
     relationName: 'PhoneNumberTargetEdges',
+  }),
+  targetSacrament: one(sacramentsTable, {
+    fields: [edgesTable.targetEntityId],
+    references: [sacramentsTable.id],
+    relationName: 'SacramentTargetEdges',
   }),
   targetUser: one(usersTable, {
     fields: [edgesTable.targetEntityId],
