@@ -1,5 +1,5 @@
 import { peopleTable } from '@openfaith/db'
-import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfRelations, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
 import { Schema } from 'effect'
 
@@ -158,6 +158,16 @@ export class Person extends BasePerson.extend<Person>('Person')(BaseIdentifiedEn
         title: 'People',
       },
     } satisfies FieldConfig,
+    [OfRelations]: [
+      {
+        direction: 'both',
+        form: { input: 'combobox', label: 'Sacraments', order: 20, show: true },
+        key: 'sacraments',
+        label: 'Sacraments',
+        table: { header: 'Sacraments', maxVisibleBadges: 3, order: 6, show: true },
+        targetEntityTag: 'sacrament',
+      },
+    ],
   },
 ]) {
   get displayName(): string {

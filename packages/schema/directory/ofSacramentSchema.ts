@@ -1,5 +1,5 @@
 import { sacramentsTable } from '@openfaith/db'
-import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfRelations, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
 import { Schema } from 'effect'
 
@@ -93,6 +93,24 @@ export class Sacrament extends BaseSacrament.extend<Sacrament>('Sacrament')(
           title: 'Sacraments',
         },
       } satisfies FieldConfig,
+      [OfRelations]: [
+        {
+          direction: 'both',
+          form: { input: 'singleCombobox', label: 'Received By', order: 4, show: true },
+          key: 'recipient',
+          label: 'Received By',
+          table: { header: 'Received By', order: 2, show: true },
+          targetEntityTag: 'person',
+        },
+        {
+          direction: 'both',
+          form: { input: 'singleCombobox', label: 'Administered By', order: 5, show: true },
+          key: 'minister',
+          label: 'Administered By',
+          table: { header: 'Administered By', order: 3, show: true },
+          targetEntityTag: 'person',
+        },
+      ],
     },
   ],
 ) {

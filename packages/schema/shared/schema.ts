@@ -12,6 +12,7 @@ export const OfFolderType = Symbol.for('@openfaith/schema/folderType')
 export const OfIdentifier = Symbol.for('@openfaith/schema/identifier')
 export const OfTable = Symbol.for('@openfaith/schema/table')
 export const OfUiConfig = Symbol.for('@openfaith/schema/uiConfig')
+export const OfRelations = Symbol.for('@openfaith/schema/relations')
 
 export type OfEdgeAnnotation = {
   relationshipType: string
@@ -94,6 +95,34 @@ export interface FieldConfig {
   }
 }
 
+// Minimal relation configuration for schema-driven UI
+export type RelationDirection = 'outbound' | 'inbound' | 'both'
+
+export type RelationUiTable = {
+  show?: boolean
+  order?: number
+  header?: string
+  pinned?: 'left' | 'right'
+  maxVisibleBadges?: number
+}
+
+export type RelationUiForm = {
+  show?: boolean
+  order?: number
+  input: 'singleCombobox' | 'combobox'
+  label?: string
+  required?: boolean
+}
+
+export type RelationConfig = {
+  key: string
+  targetEntityTag: string
+  direction?: RelationDirection
+  label?: string
+  table?: RelationUiTable
+  form?: RelationUiForm
+}
+
 declare module 'effect/Schema' {
   namespace Annotations {
     interface GenericSchema<A> extends Schema<A> {
@@ -109,6 +138,7 @@ declare module 'effect/Schema' {
       [OfIdentifier]?: string
       [OfTable]?: unknown
       [OfUiConfig]?: FieldConfig
+      [OfRelations]?: ReadonlyArray<RelationConfig>
     }
   }
 }

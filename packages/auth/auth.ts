@@ -291,9 +291,7 @@ export const auth = betterAuth({
                   userId: user.id,
                 },
               })
-            }).pipe(
-              Effect.provide(Layer.mergeAll(WorkflowClient.Default, FetchHttpClient.layer)),
-            ),
+            }).pipe(Effect.provide(Layer.mergeAll(WorkflowClient.Default, FetchHttpClient.layer))),
           )
         },
         disabled: false,
