@@ -27,6 +27,9 @@ export const Providers: FC<ProvidersProps> = (props) => {
               <GlobalMediaQueries />
               <TanStackRouterDevtools position='bottom-right' />
               <Toaster />
+
+              {/* This is for Glide Data Grid */}
+              <div className='fixed top-0 left-0 z-50' id='portal' />
             </ZeroInit>
           </SessionInit>
         </CookiesProvider>

@@ -1,0 +1,303 @@
+'use client'
+
+import '@glideapps/glide-data-grid/dist/index.css'
+
+import type { GridCell, Item } from '@glideapps/glide-data-grid'
+import { GridCellKind } from '@glideapps/glide-data-grid'
+import { extractEntityInfo } from '@openfaith/schema'
+import { CollectionDataGrid } from '@openfaith/ui/components/collections/collectionDataGrid'
+import { Button } from '@openfaith/ui/components/ui/button'
+import {
+  buildEntityRelationshipsForTable,
+  useSchemaCellUpdate,
+  useSchemaCollection,
+} from '@openfaith/ui/shared/hooks/schemaHooks'
+import {
+  getActionsCell,
+  getGridCellContent,
+  getRelationCell,
+} from '@openfaith/ui/table/dataGridCellContent'
+import { generateDataGridColumns } from '@openfaith/ui/table/dataGridColumnGenerator'
+import {
+  createDataGridActionsColumn,
+  generateDataGridRelationColumns,
+} from '@openfaith/ui/table/dataGridRelationColumnGenerator'
+import { getBaseEntityRelationshipsQuery } from '@openfaith/zero/baseQueries'
+import { useZero } from '@openfaith/zero/useZero'
+import { useQuery } from '@rocicorp/zero/react'
+import { Array, pipe, type Schema, String } from 'effect'
+import type { ReactNode } from 'react'
+import { useCallback, useMemo } from 'react'
+
+export interface UniversalDataGridProps<T> {
+  schema: Schema.Schema<T>
+  onRowClick?: (row: T) => void
+  onEditRow?: (row: T) => void
+  onRowsSelected?: (rows: Array<T>) => void
+  onCellEdit?: (row: T, field: string, newValue: any) => void
+  className?: string
+  showRowNumbers?: boolean
+  Actions?: ReactNode
+  showRelations?: boolean // Show relation columns (default: true)
+  editable?: boolean // Enable cell editing (default: true)
+  filtering?: {
+    filterPlaceHolder?: string
+  }
+}
+
+export const UniversalDataGrid = <T extends Record<string, any>>(
+  props: UniversalDataGridProps<T>,
+): ReactNode => {
+  const {
+    schema,
+    onRowClick,
+    // onEditRow: providedOnEditRow,
+    onRowsSelected,
+    onCellEdit,
+    className = '',
+    showRowNumbers = true,
+    Actions,
+    showRelations = true,
+    editable = true,
+    filtering = {},
+  } = props
+
+  // Use auto edit handler if none provided
+  // For now, we don't use edit functionality in the Glide table
+  // const { onEditRow: autoOnEditRow } = useUniversalTableEdit(schema)
+  // const onEditRow = providedOnEditRow || autoOnEditRow
+
+  const entityInfo = useMemo(() => {
+    return extractEntityInfo(schema)
+  }, [schema])
+
+  const { collection } = useSchemaCollection({ schema })
+
+  // Use the schema cell update hook for mutations
+  const cellUpdate = useSchemaCellUpdate(schema, {
+    showToast: false, // Don't show toast for every cell edit
+  })
+
+  // Fetch entity relationships for this entity type
+  const z = useZero()
+  const entityRelationshipsQuery = useMemo(() => {
+    if (!showRelations || !entityInfo.entityName) {
+      return null
+    }
+
+    return getBaseEntityRelationshipsQuery(z)
+  }, [z, entityInfo.entityName, showRelations])
+
+  const [allRelationships] = useQuery(entityRelationshipsQuery as Parameters<typeof useQuery>[0])
+
+  // Transform relationships into a format for relation columns
+  const transformedRelationships = useMemo(() => {
+    if (!allRelationships || !Array.isArray(allRelationships) || !entityInfo.entityName) {
+      return []
+    }
+
+    const db = pipe(
+      allRelationships as Array<any>,
+      Array.map((r) => ({
+        sourceEntityType: r.sourceEntityType as string,
+        targetEntityTypes: (r.targetEntityTypes || []) as ReadonlyArray<string>,
+      })),
+    )
+
+    return buildEntityRelationshipsForTable(schema, db)
+  }, [allRelationships, entityInfo.entityName, schema])
+
+  // Generate columns from schema using the helper
+  const { columns: baseColumns, columnIdToField } = useMemo(() => {
+    return generateDataGridColumns(schema)
+  }, [schema])
+
+  // Add relation columns if enabled
+  const relationColumns = useMemo(() => {
+    if (!showRelations || transformedRelationships.length === 0 || !entityInfo.entityName) {
+      return []
+    }
+
+    return generateDataGridRelationColumns(transformedRelationships as Array<any>)
+  }, [showRelations, transformedRelationships, entityInfo.entityName])
+
+  // Add actions column
+  const actionsColumn = createDataGridActionsColumn()
+
+  // Combine all columns
+  const columns = useMemo(() => {
+    return pipe(baseColumns, Array.appendAll(relationColumns), Array.append(actionsColumn))
+  }, [baseColumns, relationColumns, actionsColumn])
+
+  // Get cell content callback
+  const getCellContent = useCallback(
+    (cell: Item): GridCell => {
+      const [col, row] = cell
+      const dataRow = collection[row]
+
+      if (!dataRow) {
+        return {
+          allowOverlay: false,
+          data: '',
+          displayData: '',
+          kind: GridCellKind.Text,
+        }
+      }
+
+      const column = columns[col]
+      if (!column || !column.id) {
+        return {
+          allowOverlay: false,
+          data: '',
+          displayData: '',
+          kind: GridCellKind.Text,
+        }
+      }
+
+      // Handle actions column
+      if (column.id === 'actions') {
+        return getActionsCell()
+      }
+
+      // Handle relation columns
+      if (pipe(column.id, String.startsWith('relation_'))) {
+        // For now, show placeholder for relation columns
+        return getRelationCell()
+      }
+
+      // Get the field using the column id
+      const field = columnIdToField.get(column.id)
+      if (!field) {
+        return {
+          allowOverlay: false,
+          data: '',
+          displayData: '',
+          kind: GridCellKind.Text,
+        }
+      }
+
+      const value = dataRow[field.key as keyof T]
+      return getGridCellContent(field, value, editable)
+    },
+    [collection, columns, columnIdToField, editable],
+  )
+
+  // Handle cell edit
+  const handleCellEdited = useCallback(
+    (cell: Item, newValue: GridCell) => {
+      const [col, row] = cell
+      const dataRow = collection[row]
+
+      if (!dataRow) {
+        return
+      }
+
+      const column = columns[col]
+      if (!column || !column.id) {
+        return
+      }
+
+      // Skip non-data columns
+      if (column.id === 'actions' || pipe(column.id, String.startsWith('relation_'))) {
+        return
+      }
+
+      // Get the field using the column id
+      const field = columnIdToField.get(column.id)
+      if (!field) {
+        return
+      }
+
+      // Extract the new value based on cell type
+      let extractedValue: any
+      switch (newValue.kind) {
+        case GridCellKind.Text:
+          extractedValue = (newValue as any).data
+          break
+        case GridCellKind.Uri:
+          extractedValue = (newValue as any).data
+          break
+        case GridCellKind.Number:
+          extractedValue = (newValue as any).data
+          break
+        case GridCellKind.Boolean:
+          extractedValue = (newValue as any).data
+          break
+        case GridCellKind.Loading:
+          // Loading cells don't have data
+          return
+        default:
+          extractedValue = (newValue as any).data || ''
+      }
+
+      // Get the ID from the row - assuming it has an id field
+      const rowId = (dataRow as any).id
+      if (!rowId) {
+        console.error('Row does not have an id field for update')
+        return
+      }
+
+      // Use the Zero mutation to update the cell
+      cellUpdate.mutate({
+        field: field.key,
+        id: rowId,
+        value: extractedValue,
+      })
+
+      // Also call the custom callback if provided
+      if (onCellEdit) {
+        onCellEdit(dataRow, field.key, extractedValue)
+      }
+    },
+    [collection, columns, columnIdToField, cellUpdate, onCellEdit],
+  )
+
+  // Handle row click with actions column special handling
+  const handleRowClick = useCallback(
+    (row: T) => {
+      // For now, just call the provided onRowClick
+      // In the future, we could show a dropdown menu for the actions column
+      if (onRowClick) {
+        onRowClick(row)
+      }
+    },
+    [onRowClick],
+  )
+
+  const entityName = entityInfo.entityName || 'items'
+  const filterPlaceHolder = filtering.filterPlaceHolder || `Search ${entityName}...`
+
+  // Render actions for the toolbar
+  const ToolbarActions = Actions || (
+    <Button
+      onClick={() => {
+        // Handle add new item
+      }}
+      size='sm'
+    >
+      Add {entityName}
+    </Button>
+  )
+
+  // Merge className with flex layout classes
+  const containerClassName = className
+    ? `${className} flex flex-col h-full`
+    : 'flex flex-col h-full'
+
+  return (
+    <div className={containerClassName}>
+      <CollectionDataGrid
+        _tag={entityInfo.entityTag || 'default'}
+        Actions={ToolbarActions}
+        columns={columns}
+        data={collection}
+        filterPlaceHolder={filterPlaceHolder}
+        getCellContent={getCellContent}
+        onCellEdited={editable ? handleCellEdited : undefined}
+        onRowClick={handleRowClick}
+        onRowsSelected={onRowsSelected}
+        showRowNumbers={showRowNumbers}
+      />
+    </div>
+  )
+}

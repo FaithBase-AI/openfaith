@@ -401,6 +401,334 @@ export const useSchemaUpdate = <T>(
   return mutation
 }
 
+// Schema Delete Hook
+export class SchemaDeleteError extends Schema.TaggedError<SchemaDeleteError>()(
+  'SchemaDeleteError',
+  {
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+    operation: Schema.optional(Schema.String),
+    tableName: Schema.optional(Schema.String),
+    type: Schema.Literal('validation', 'operation'),
+  },
+) {}
+
+const createSchemaDeleteEffect = Effect.fn('createSchemaDeleteEffect')(function* <T>(params: {
+  id: string
+  schema: SchemaType.Schema<T>
+  z: ReturnType<typeof useZero>
+  onSuccess?: (id: string) => void
+  onError?: (error: SchemaDeleteError) => void
+}) {
+  const { id, schema, z, onSuccess, onError } = params
+
+  const entityTag = extractEntityTag(schema.ast)
+  const tableName = pipe(
+    entityTag,
+    Option.match({
+      onNone: () => null,
+      onSome: (tag) => mkZeroTableName(tag),
+    }),
+  )
+
+  if (!tableName) {
+    return yield* Effect.fail(
+      new SchemaDeleteError({
+        message: 'Table name not found - entity tag missing from schema',
+        tableName: undefined,
+        type: 'validation',
+      }),
+    )
+  }
+
+  const deleteMutator = getBaseMutator(z, tableName, 'delete')
+
+  yield* pipe(
+    Effect.tryPromise({
+      catch: (cause) =>
+        new SchemaDeleteError({
+          cause,
+          message: `Failed to delete from table ${tableName}`,
+          operation: 'delete',
+          tableName,
+          type: 'operation',
+        }),
+      try: () => deleteMutator({ id } as any),
+    }),
+    Effect.tapError((error) =>
+      Effect.gen(function* () {
+        const errorMessage = pipe(error.type, (type) => {
+          if (type === 'validation') {
+            return `Validation error: ${error.message}`
+          }
+          if (type === 'operation') {
+            return `Delete failed: ${error.message}`
+          }
+          return 'Unknown error occurred'
+        })
+
+        yield* Effect.sync(() => toast.error(errorMessage))
+
+        if (onError) {
+          yield* Effect.sync(() => onError(error))
+        }
+      }),
+    ),
+    Effect.tap(() =>
+      Effect.gen(function* () {
+        yield* Effect.sync(() => toast.success('Successfully deleted!'))
+
+        if (onSuccess) {
+          yield* Effect.sync(() => onSuccess(id))
+        }
+
+        yield* Effect.log('Schema delete successful', {
+          id,
+          tableName,
+        })
+      }),
+    ),
+  )
+})
+
+/**
+ * Hook that provides delete functionality for a given schema using Zero mutations with Effect-RX
+ */
+export const useSchemaDelete = <T>(
+  schema: SchemaType.Schema<T>,
+  options: {
+    onSuccess?: (id: string) => void
+    onError?: (error: SchemaDeleteError) => void
+  } = {},
+) => {
+  const { onSuccess, onError } = options
+  const z = useZero()
+
+  const deleteRx = Rx.fn((id: string) => {
+    return createSchemaDeleteEffect({
+      id,
+      onError,
+      onSuccess,
+      schema,
+      z,
+    })
+  })
+
+  const mutation = useRxMutation(deleteRx)
+
+  return mutation
+}
+
+// Schema Upsert Hook
+export class SchemaUpsertError extends Schema.TaggedError<SchemaUpsertError>()(
+  'SchemaUpsertError',
+  {
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+    operation: Schema.optional(Schema.String),
+    tableName: Schema.optional(Schema.String),
+    type: Schema.Literal('validation', 'operation'),
+  },
+) {}
+
+const createSchemaUpsertEffect = Effect.fn('createSchemaUpsertEffect')(function* <T>(params: {
+  data: T & { id?: string }
+  schema: SchemaType.Schema<T>
+  z: ReturnType<typeof useZero>
+  onSuccess?: (data: T & { id: string }) => void
+  onError?: (error: SchemaUpsertError) => void
+}) {
+  const { data, schema, z, onSuccess, onError } = params
+
+  const entityTag = extractEntityTag(schema.ast)
+  const tableName = pipe(
+    entityTag,
+    Option.match({
+      onNone: () => null,
+      onSome: (tag) => mkZeroTableName(tag),
+    }),
+  )
+
+  if (!tableName) {
+    return yield* Effect.fail(
+      new SchemaUpsertError({
+        message: 'Table name not found - entity tag missing from schema',
+        tableName: undefined,
+        type: 'validation',
+      }),
+    )
+  }
+
+  // Ensure we have an ID for upsert
+  const dataWithId = {
+    id: data.id || getEntityId(tableName),
+    ...data,
+  } as T & { id: string }
+
+  const upsertMutator = getBaseMutator(z, tableName, 'upsert')
+
+  yield* pipe(
+    Effect.tryPromise({
+      catch: (cause) =>
+        new SchemaUpsertError({
+          cause,
+          message: `Failed to upsert into table ${tableName}`,
+          operation: 'upsert',
+          tableName,
+          type: 'operation',
+        }),
+      try: () => upsertMutator(dataWithId as any),
+    }),
+    Effect.tapError((error) =>
+      Effect.gen(function* () {
+        const errorMessage = pipe(error.type, (type) => {
+          if (type === 'validation') {
+            return `Validation error: ${error.message}`
+          }
+          if (type === 'operation') {
+            return `Upsert failed: ${error.message}`
+          }
+          return 'Unknown error occurred'
+        })
+
+        yield* Effect.sync(() => toast.error(errorMessage))
+
+        if (onError) {
+          yield* Effect.sync(() => onError(error))
+        }
+      }),
+    ),
+    Effect.tap(() =>
+      Effect.gen(function* () {
+        yield* Effect.sync(() => toast.success('Successfully saved!'))
+
+        if (onSuccess) {
+          yield* Effect.sync(() => onSuccess(dataWithId))
+        }
+
+        yield* Effect.log('Schema upsert successful', {
+          id: dataWithId.id,
+          tableName,
+        })
+      }),
+    ),
+  )
+})
+
+/**
+ * Hook that provides upsert functionality for a given schema using Zero mutations with Effect-RX
+ */
+export const useSchemaUpsert = <T>(
+  schema: SchemaType.Schema<T>,
+  options: {
+    onSuccess?: (data: T & { id: string }) => void
+    onError?: (error: SchemaUpsertError) => void
+  } = {},
+) => {
+  const { onSuccess, onError } = options
+  const z = useZero()
+
+  const upsertRx = Rx.fn((data: T & { id?: string }) => {
+    return createSchemaUpsertEffect({
+      data,
+      onError,
+      onSuccess,
+      schema,
+      z,
+    })
+  })
+
+  const mutation = useRxMutation(upsertRx)
+
+  return mutation
+}
+
+/**
+ * Combined mutation hook that provides all CRUD operations for a given schema
+ * This is useful when you need multiple operations in the same component
+ */
+export const useSchemaMutation = <T>(
+  schema: SchemaType.Schema<T>,
+  options: {
+    onInsertSuccess?: (data: T) => void
+    onInsertError?: (error: SchemaInsertError) => void
+    onUpdateSuccess?: (data: T & { id: string }) => void
+    onUpdateError?: (error: SchemaUpdateError) => void
+    onDeleteSuccess?: (id: string) => void
+    onDeleteError?: (error: SchemaDeleteError) => void
+    onUpsertSuccess?: (data: T & { id: string }) => void
+    onUpsertError?: (error: SchemaUpsertError) => void
+  } = {},
+) => {
+  const insert = useSchemaInsert(schema, {
+    onError: options.onInsertError,
+    onSuccess: options.onInsertSuccess,
+  })
+
+  const update = useSchemaUpdate(schema, {
+    onError: options.onUpdateError,
+    onSuccess: options.onUpdateSuccess,
+  })
+
+  const deleteEntity = useSchemaDelete(schema, {
+    onError: options.onDeleteError,
+    onSuccess: options.onDeleteSuccess,
+  })
+
+  const upsert = useSchemaUpsert(schema, {
+    onError: options.onUpsertError,
+    onSuccess: options.onUpsertSuccess,
+  })
+
+  return {
+    delete: deleteEntity,
+    insert,
+    update,
+    upsert,
+  }
+}
+
+/**
+ * Hook for cell-level updates (useful for table edit-in-place)
+ * This provides a simpler API for updating a single field
+ */
+export const useSchemaCellUpdate = <T>(
+  schema: SchemaType.Schema<T>,
+  options: {
+    onSuccess?: (data: Partial<T> & { id: string }) => void
+    onError?: (error: SchemaUpdateError) => void
+    showToast?: boolean
+  } = {},
+) => {
+  const { onSuccess, onError, showToast = false } = options
+  const z = useZero()
+
+  const updateCellRx = Rx.fn((params: { id: string; field: string; value: any }) => {
+    const { id, field, value } = params
+    const data = { id, [field]: value } as T & { id: string }
+
+    return createSchemaUpdateEffect({
+      data,
+      onError,
+      onSuccess: (updatedData) => {
+        if (!showToast) {
+          // Override the default toast for cell updates
+          toast.dismiss()
+        }
+        if (onSuccess) {
+          onSuccess(updatedData)
+        }
+      },
+      schema,
+      z,
+    })
+  })
+
+  const mutation = useRxMutation(updateCellRx)
+
+  return mutation
+}
+
 /*
  * Hook that provides collection data for a given schema using Zero queries with filtering support
  */

@@ -6,13 +6,19 @@ import {
   buildEntityRelationshipsForTable,
   getSchemaByEntityType,
   getSchemaDeclaredRelations,
+  SchemaDeleteError,
   SchemaInsertError,
   SchemaUpdateError,
+  SchemaUpsertError,
   useEntitySchema,
+  useSchemaCellUpdate,
   useSchemaCollection,
+  useSchemaDelete,
   useSchemaEntity,
   useSchemaInsert,
+  useSchemaMutation,
   useSchemaUpdate,
+  useSchemaUpsert,
 } from '@openfaith/ui/shared/hooks/schemaHooks'
 import { Effect, Option, Schema } from 'effect'
 
@@ -154,6 +160,76 @@ effect('SchemaUpdateError should handle optional fields', () =>
 
     expect(error._tag).toBe('SchemaUpdateError')
     expect(error.message).toBe('Test message')
+    expect(error.type).toBe('validation')
+    expect(error.operation).toBeUndefined()
+    expect(error.tableName).toBeUndefined()
+    expect(error.cause).toBeUndefined()
+  }),
+)
+
+effect('SchemaDeleteError should be properly constructed', () =>
+  Effect.gen(function* () {
+    const error = new SchemaDeleteError({
+      cause: new Error('Test cause'),
+      message: 'Test delete message',
+      operation: 'delete',
+      tableName: 'people',
+      type: 'operation',
+    })
+
+    expect(error._tag).toBe('SchemaDeleteError')
+    expect(error.message).toBe('Test delete message')
+    expect(error.operation).toBe('delete')
+    expect(error.tableName).toBe('people')
+    expect(error.type).toBe('operation')
+    expect(error.cause).toBeInstanceOf(Error)
+  }),
+)
+
+effect('SchemaDeleteError should handle optional fields', () =>
+  Effect.gen(function* () {
+    const error = new SchemaDeleteError({
+      message: 'Test delete message',
+      type: 'validation',
+    })
+
+    expect(error._tag).toBe('SchemaDeleteError')
+    expect(error.message).toBe('Test delete message')
+    expect(error.type).toBe('validation')
+    expect(error.operation).toBeUndefined()
+    expect(error.tableName).toBeUndefined()
+    expect(error.cause).toBeUndefined()
+  }),
+)
+
+effect('SchemaUpsertError should be properly constructed', () =>
+  Effect.gen(function* () {
+    const error = new SchemaUpsertError({
+      cause: new Error('Test cause'),
+      message: 'Test upsert message',
+      operation: 'upsert',
+      tableName: 'groups',
+      type: 'operation',
+    })
+
+    expect(error._tag).toBe('SchemaUpsertError')
+    expect(error.message).toBe('Test upsert message')
+    expect(error.operation).toBe('upsert')
+    expect(error.tableName).toBe('groups')
+    expect(error.type).toBe('operation')
+    expect(error.cause).toBeInstanceOf(Error)
+  }),
+)
+
+effect('SchemaUpsertError should handle optional fields', () =>
+  Effect.gen(function* () {
+    const error = new SchemaUpsertError({
+      message: 'Test upsert message',
+      type: 'validation',
+    })
+
+    expect(error._tag).toBe('SchemaUpsertError')
+    expect(error.message).toBe('Test upsert message')
     expect(error.type).toBe('validation')
     expect(error.operation).toBeUndefined()
     expect(error.tableName).toBeUndefined()
@@ -397,6 +473,10 @@ effect('Hook functions should be properly exported', () =>
     expect(typeof useEntitySchema).toBe('function')
     expect(typeof useSchemaInsert).toBe('function')
     expect(typeof useSchemaUpdate).toBe('function')
+    expect(typeof useSchemaDelete).toBe('function')
+    expect(typeof useSchemaUpsert).toBe('function')
+    expect(typeof useSchemaCellUpdate).toBe('function')
+    expect(typeof useSchemaMutation).toBe('function')
     expect(typeof useSchemaCollection).toBe('function')
     expect(typeof useSchemaEntity).toBe('function')
   }),
@@ -406,6 +486,8 @@ effect('Error classes should be properly exported and constructible', () =>
   Effect.gen(function* () {
     expect(typeof SchemaInsertError).toBe('function')
     expect(typeof SchemaUpdateError).toBe('function')
+    expect(typeof SchemaDeleteError).toBe('function')
+    expect(typeof SchemaUpsertError).toBe('function')
 
     // Test that they can be instantiated
     const insertError = new SchemaInsertError({
@@ -416,9 +498,19 @@ effect('Error classes should be properly exported and constructible', () =>
       message: 'Test',
       type: 'validation',
     })
+    const deleteError = new SchemaDeleteError({
+      message: 'Test',
+      type: 'validation',
+    })
+    const upsertError = new SchemaUpsertError({
+      message: 'Test',
+      type: 'validation',
+    })
 
     expect(insertError).toBeInstanceOf(SchemaInsertError)
     expect(updateError).toBeInstanceOf(SchemaUpdateError)
+    expect(deleteError).toBeInstanceOf(SchemaDeleteError)
+    expect(upsertError).toBeInstanceOf(SchemaUpsertError)
   }),
 )
 
@@ -542,23 +634,45 @@ effect('Stress test: Error class construction should handle many instances', () 
     const startTime = Date.now()
 
     // Create many error instances to test memory and performance
-    const errors: Array<SchemaInsertError | SchemaUpdateError> = []
+    const errors: Array<
+      SchemaInsertError | SchemaUpdateError | SchemaDeleteError | SchemaUpsertError
+    > = []
 
     for (let i = 0; i < 1000; i++) {
-      if (i % 2 === 0) {
-        errors.push(
-          new SchemaInsertError({
-            message: `Error ${i}`,
-            type: 'validation',
-          }),
-        )
-      } else {
-        errors.push(
-          new SchemaUpdateError({
-            message: `Error ${i}`,
-            type: 'operation',
-          }),
-        )
+      const errorType = i % 4
+      switch (errorType) {
+        case 0:
+          errors.push(
+            new SchemaInsertError({
+              message: `Error ${i}`,
+              type: 'validation',
+            }),
+          )
+          break
+        case 1:
+          errors.push(
+            new SchemaUpdateError({
+              message: `Error ${i}`,
+              type: 'operation',
+            }),
+          )
+          break
+        case 2:
+          errors.push(
+            new SchemaDeleteError({
+              message: `Error ${i}`,
+              type: 'validation',
+            }),
+          )
+          break
+        case 3:
+          errors.push(
+            new SchemaUpsertError({
+              message: `Error ${i}`,
+              type: 'operation',
+            }),
+          )
+          break
       }
     }
 
@@ -569,6 +683,25 @@ effect('Stress test: Error class construction should handle many instances', () 
 
     // Verify first and last errors
     expect(errors[0]?._tag).toBe('SchemaInsertError')
-    expect(errors[999]?._tag).toBe('SchemaUpdateError')
+    expect(errors[999]?._tag).toBe('SchemaUpsertError')
+  }),
+)
+
+// Test for the combined mutation hook
+effect('useSchemaMutation should be properly exported', () =>
+  Effect.gen(function* () {
+    expect(typeof useSchemaMutation).toBe('function')
+    // The hook returns an object with all mutation functions
+    // We can't test the actual functionality without React context,
+    // but we can verify the function exists and is callable
+  }),
+)
+
+// Test for cell update hook
+effect('useSchemaCellUpdate should be properly exported', () =>
+  Effect.gen(function* () {
+    expect(typeof useSchemaCellUpdate).toBe('function')
+    // This hook is optimized for single field updates
+    // Used primarily in table edit-in-place functionality
   }),
 )

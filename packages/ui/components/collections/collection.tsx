@@ -98,13 +98,11 @@ export const Collection = <
       />
 
       {pipe(
-        pipe(
-          table.getState().grouping,
-          Array.match({
-            onEmpty: () => collectionView,
-            onNonEmpty: () => 'table' as const,
-          }),
-        ),
+        table.getState().grouping,
+        Array.match({
+          onEmpty: () => collectionView,
+          onNonEmpty: () => 'table' as const,
+        }),
         collectionViewMatch({
           cards: () => (
             <>

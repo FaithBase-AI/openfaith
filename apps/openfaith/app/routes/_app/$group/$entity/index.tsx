@@ -1,7 +1,7 @@
 import { useSchemaQuickActions } from '@openfaith/openfaith/features/quickActions/schemaQuickActions'
 import { discoverUiEntities } from '@openfaith/schema'
 import { noOp, pluralize, singularize } from '@openfaith/shared'
-import { Button, PlusIcon, UniversalGlideTable } from '@openfaith/ui'
+import { Button, PlusIcon, UniversalDataGrid } from '@openfaith/ui'
 import { useStableMemo } from '@openfaith/ui/shared/hooks/memo'
 import { createFileRoute } from '@tanstack/react-router'
 import { Array, Equivalence, Option, pipe, String } from 'effect'
@@ -86,16 +86,18 @@ function RouteComponent() {
               </div>
             ),
             onSome: (schema) => (
-              <div className='flex flex-col gap-4'>
-                <div className='flex items-center'>
-                  <h2 className='font-bold text-2xl'>{config.navItem.title}</h2>
+              <UniversalDataGrid
+                Actions={
                   <Button className='ml-auto' onClick={handleCreateClick} size='sm'>
                     <PlusIcon />
                     Create {pipe(config.navItem.title, singularize)}
                   </Button>
-                </div>
-                <UniversalGlideTable height={window.innerHeight - 200} schema={schema} />
-              </div>
+                }
+                filtering={{
+                  filterPlaceHolder: `Search ${pipe(config.navItem.title, String.toLowerCase)}...`,
+                }}
+                schema={schema}
+              />
             ),
           }),
         ),
