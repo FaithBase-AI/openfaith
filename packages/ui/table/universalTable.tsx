@@ -9,7 +9,10 @@ import {
 } from '@openfaith/ui/components/ui/dropdown-menu'
 import { EditIcon } from '@openfaith/ui/icons/editIcon'
 import { MoreVerticalIcon } from '@openfaith/ui/icons/moreVerticalIcon'
-import { useSchemaCollection } from '@openfaith/ui/shared/hooks/schemaHooks'
+import {
+  buildEntityRelationshipsForTable,
+  useSchemaCollection,
+} from '@openfaith/ui/shared/hooks/schemaHooks'
 import { generateColumns } from '@openfaith/ui/table/columnGenerator'
 import { generateFilterConfig } from '@openfaith/ui/table/filterGenerator'
 import { generateRelationColumns } from '@openfaith/ui/table/relationColumnGenerator'
@@ -81,7 +84,7 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
       return []
     }
 
-    const transformed = pipe(
+    const db = pipe(
       allRelationships as Array<any>,
       Array.map((r) => ({
         sourceEntityType: r.sourceEntityType as string,
@@ -89,8 +92,8 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
       })),
     )
 
-    return transformed
-  }, [allRelationships, entityInfo.entityName])
+    return buildEntityRelationshipsForTable(schema, db)
+  }, [allRelationships, entityInfo.entityName, schema])
 
   const columns = useMemo(() => {
     const baseColumns = generateColumns(schema, columnOverrides)

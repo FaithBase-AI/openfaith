@@ -1,5 +1,11 @@
 import { sacramentsTable } from '@openfaith/db'
-import { type FieldConfig, OfRelations, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import {
+  type FieldConfig,
+  OfForeignKey,
+  OfRelations,
+  OfTable,
+  OfUiConfig,
+} from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
 import { Schema } from 'effect'
 
@@ -28,6 +34,7 @@ export class BaseSacrament extends BaseSystemFields.extend<BaseSacrament>('BaseS
         sortable: true,
       },
     },
+    [OfForeignKey]: { targetEntityTag: 'person' },
   }).pipe(Schema.NullOr),
   occurredAt: Schema.String.annotations({
     description: 'When the sacrament occurred (ISO date or descriptive text)',
@@ -55,6 +62,7 @@ export class BaseSacrament extends BaseSystemFields.extend<BaseSacrament>('BaseS
         sortable: true,
       },
     },
+    [OfForeignKey]: { targetEntityTag: 'person' },
   }).pipe(Schema.NullOr),
   type: SacramentType.annotations({
     [OfUiConfig]: {
@@ -87,7 +95,7 @@ export class Sacrament extends BaseSacrament.extend<Sacrament>('Sacrament')(
         navigation: {
           description: 'Record and manage sacraments (system and custom)',
           enabled: true,
-          icon: 'sunIcon',
+          icon: 'crossIcon',
           module: 'directory',
           order: 6,
           title: 'Sacraments',

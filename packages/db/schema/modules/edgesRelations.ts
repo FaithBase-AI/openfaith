@@ -1,9 +1,12 @@
 import { addressesTable } from '@openfaith/db/schema/modules/addressSchema'
 import { campusesTable } from '@openfaith/db/schema/modules/campusesSchema'
 import { edgesTable, entityRelationshipsTable } from '@openfaith/db/schema/modules/edgesSchema'
+import { fieldOptionsTable } from '@openfaith/db/schema/modules/fieldsSchema'
 import { foldersTable } from '@openfaith/db/schema/modules/foldersSchema'
+import { journeysTable, pathwaysTable } from '@openfaith/db/schema/modules/pathwaysSchema'
 import { peopleTable } from '@openfaith/db/schema/modules/peopleSchema'
 import { phoneNumbersTable } from '@openfaith/db/schema/modules/phoneNumbersSchema'
+import { qualificationsTable } from '@openfaith/db/schema/modules/qualificationsSchema'
 import { sacramentsTable } from '@openfaith/db/schema/modules/sacramentsSchema'
 import { orgsTable } from '@openfaith/db/schema/orgsSchema'
 import { usersTable } from '@openfaith/db/schema/usersSchema'
@@ -27,15 +30,30 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
     references: [campusesTable.id],
     relationName: 'CampusSourceEdges',
   }),
+  sourceFieldOption: one(fieldOptionsTable, {
+    fields: [edgesTable.sourceEntityId],
+    references: [fieldOptionsTable.id],
+    relationName: 'FieldOptionSourceEdges',
+  }),
   sourceFolder: one(foldersTable, {
     fields: [edgesTable.sourceEntityId],
     references: [foldersTable.id],
     relationName: 'FolderSourceEdges',
   }),
+  sourceJourney: one(journeysTable, {
+    fields: [edgesTable.sourceEntityId],
+    references: [journeysTable.id],
+    relationName: 'JourneySourceEdges',
+  }),
   sourceOrg: one(orgsTable, {
     fields: [edgesTable.sourceEntityId],
     references: [orgsTable.id],
     relationName: 'OrgSourceEdges',
+  }),
+  sourcePathway: one(pathwaysTable, {
+    fields: [edgesTable.sourceEntityId],
+    references: [pathwaysTable.id],
+    relationName: 'PathwaySourceEdges',
   }),
   sourcePerson: one(peopleTable, {
     fields: [edgesTable.sourceEntityId],
@@ -47,11 +65,18 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
     references: [phoneNumbersTable.id],
     relationName: 'PhoneNumberSourceEdges',
   }),
+  sourceQualification: one(qualificationsTable, {
+    fields: [edgesTable.sourceEntityId],
+    references: [qualificationsTable.id],
+    relationName: 'QualificationSourceEdges',
+  }),
   sourceSacrament: one(sacramentsTable, {
     fields: [edgesTable.sourceEntityId],
     references: [sacramentsTable.id],
     relationName: 'SacramentSourceEdges',
   }),
+  // sourcePathwayStep removed
+  // sourceStepProgress removed
   sourceUser: one(usersTable, {
     fields: [edgesTable.sourceEntityId],
     references: [usersTable.id],
@@ -69,15 +94,30 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
     references: [campusesTable.id],
     relationName: 'CampusTargetEdges',
   }),
+  targetFieldOption: one(fieldOptionsTable, {
+    fields: [edgesTable.targetEntityId],
+    references: [fieldOptionsTable.id],
+    relationName: 'FieldOptionTargetEdges',
+  }),
   targetFolder: one(foldersTable, {
     fields: [edgesTable.targetEntityId],
     references: [foldersTable.id],
     relationName: 'FolderTargetEdges',
   }),
+  targetJourney: one(journeysTable, {
+    fields: [edgesTable.targetEntityId],
+    references: [journeysTable.id],
+    relationName: 'JourneyTargetEdges',
+  }),
   targetOrg: one(orgsTable, {
     fields: [edgesTable.targetEntityId],
     references: [orgsTable.id],
     relationName: 'OrgTargetEdges',
+  }),
+  targetPathway: one(pathwaysTable, {
+    fields: [edgesTable.targetEntityId],
+    references: [pathwaysTable.id],
+    relationName: 'PathwayTargetEdges',
   }),
   targetPerson: one(peopleTable, {
     fields: [edgesTable.targetEntityId],
@@ -89,11 +129,18 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
     references: [phoneNumbersTable.id],
     relationName: 'PhoneNumberTargetEdges',
   }),
+  targetQualification: one(qualificationsTable, {
+    fields: [edgesTable.targetEntityId],
+    references: [qualificationsTable.id],
+    relationName: 'QualificationTargetEdges',
+  }),
   targetSacrament: one(sacramentsTable, {
     fields: [edgesTable.targetEntityId],
     references: [sacramentsTable.id],
     relationName: 'SacramentTargetEdges',
   }),
+  // targetPathwayStep removed
+  // targetStepProgress removed
   targetUser: one(usersTable, {
     fields: [edgesTable.targetEntityId],
     references: [usersTable.id],

@@ -13,6 +13,7 @@ export const OfIdentifier = Symbol.for('@openfaith/schema/identifier')
 export const OfTable = Symbol.for('@openfaith/schema/table')
 export const OfUiConfig = Symbol.for('@openfaith/schema/uiConfig')
 export const OfRelations = Symbol.for('@openfaith/schema/relations')
+export const OfForeignKey = Symbol.for('@openfaith/schema/foreignKey')
 
 export type OfEdgeAnnotation = {
   relationshipType: string
@@ -95,7 +96,6 @@ export interface FieldConfig {
   }
 }
 
-// Minimal relation configuration for schema-driven UI
 export type RelationDirection = 'outbound' | 'inbound' | 'both'
 
 export type RelationUiTable = {
@@ -139,6 +139,9 @@ declare module 'effect/Schema' {
       [OfTable]?: unknown
       [OfUiConfig]?: FieldConfig
       [OfRelations]?: ReadonlyArray<RelationConfig>
+      [OfForeignKey]?: {
+        targetEntityTag: string
+      }
     }
   }
 }

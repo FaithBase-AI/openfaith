@@ -1,8 +1,11 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
+import { OfRelations } from '@openfaith/schema/shared/schema'
 import { noOp } from '@openfaith/shared'
 import {
+  buildEntityRelationshipsForTable,
   getSchemaByEntityType,
+  getSchemaDeclaredRelations,
   SchemaInsertError,
   SchemaUpdateError,
   useEntitySchema,
@@ -266,6 +269,110 @@ effect('Edge case: should handle Unicode characters in entity type', () =>
     const unicodeEntityType = '🚀📊💼'
     const schemaOpt = getSchemaByEntityType(unicodeEntityType)
     expect(schemaOpt._tag).toBe('None')
+  }),
+)
+
+// -------------------------
+// New helpers: OfRelations
+// -------------------------
+
+effect('getSchemaDeclaredRelations returns empty when no annotation', () =>
+  Effect.gen(function* () {
+    const NoRelSchema = Schema.Struct({
+      _tag: Schema.Literal('person'),
+      id: Schema.String,
+    })
+
+    const rels = getSchemaDeclaredRelations(NoRelSchema)
+    expect(Array.isArray(rels)).toBe(true)
+    expect(rels.length).toBe(0)
+  }),
+)
+
+effect('getSchemaDeclaredRelations returns annotated relations', () =>
+  Effect.gen(function* () {
+    const WithRelSchema = Schema.Struct({
+      _tag: Schema.Literal('person'),
+      id: Schema.String,
+    }).pipe(
+      Schema.annotations({
+        [OfRelations]: [
+          {
+            direction: 'both',
+            form: { input: 'combobox', order: 1, show: true },
+            key: 'sacraments',
+            table: { order: 2, show: true },
+            targetEntityTag: 'sacrament',
+          },
+        ],
+      }),
+    )
+
+    const rels = getSchemaDeclaredRelations(WithRelSchema)
+    expect(rels.length).toBe(1)
+    expect(rels[0]?.key).toBe('sacraments')
+    expect(rels[0]?.targetEntityTag).toBe('sacrament')
+  }),
+)
+
+effect(
+  'buildEntityRelationshipsForTable merges schema-declared targets first, then DB, with dedupe',
+  () =>
+    Effect.gen(function* () {
+      const PersonSchemaWithRel = Schema.Struct({
+        _tag: Schema.Literal('person'),
+        id: Schema.String,
+      }).pipe(
+        Schema.annotations({
+          [OfRelations]: [
+            {
+              form: { input: 'combobox', order: 1, show: true },
+              key: 'sacraments',
+              table: { order: 1, show: true },
+              targetEntityTag: 'sacrament',
+            },
+            {
+              form: { input: 'combobox', order: 2, show: true },
+              key: 'phoneNumbers',
+              table: { order: 5, show: true },
+              targetEntityTag: 'phoneNumber',
+            },
+          ],
+        }),
+      )
+
+      const dbRels = [{ sourceEntityType: 'person', targetEntityTypes: ['sacrament', 'group'] }]
+
+      const merged = buildEntityRelationshipsForTable(PersonSchemaWithRel as any, dbRels)
+      expect(merged.length).toBe(1)
+      expect(merged[0]?.sourceEntityType).toBe('person')
+      expect(merged[0]?.targetEntityTypes[0]).toBe('sacrament') // declared first (order 1)
+      expect(merged[0]?.targetEntityTypes[1]).toBe('phoneNumber') // declared second (order 5)
+      expect(merged[0]?.targetEntityTypes[2]).toBe('group') // DB-discovered appended
+    }),
+)
+
+effect('buildEntityRelationshipsForTable returns declared only when DB has none', () =>
+  Effect.gen(function* () {
+    const PersonSchemaWithRel = Schema.Struct({
+      _tag: Schema.Literal('person'),
+      id: Schema.String,
+    }).pipe(
+      Schema.annotations({
+        [OfRelations]: [
+          {
+            form: { input: 'combobox', order: 1, show: true },
+            key: 'sacraments',
+            table: { order: 1, show: true },
+            targetEntityTag: 'sacrament',
+          },
+        ],
+      }),
+    )
+
+    const merged = buildEntityRelationshipsForTable(PersonSchemaWithRel as any, [])
+    expect(merged.length).toBe(1)
+    expect(merged[0]?.targetEntityTypes).toEqual(['sacrament'])
   }),
 )
 

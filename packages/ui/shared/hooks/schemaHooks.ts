@@ -1,7 +1,8 @@
 import { Rx } from '@effect-rx/rx-react'
 import { useRxMutation } from '@openfaith/openfaith/shared/hooks/rxHooks'
 import { discoverUiEntities } from '@openfaith/schema/shared/entityDiscovery'
-import { extractEntityTag } from '@openfaith/schema/shared/introspection'
+import { extractEntityInfo, extractEntityTag } from '@openfaith/schema/shared/introspection'
+import { OfForeignKey, OfRelations, type RelationConfig } from '@openfaith/schema/shared/schema'
 import { getEntityId, mkZeroTableName } from '@openfaith/shared'
 import { toast } from '@openfaith/ui/components/ui/sonner'
 import { useFilterQuery } from '@openfaith/ui/shared/hooks/useFilterQuery'
@@ -14,7 +15,17 @@ import {
 import { useZero } from '@openfaith/zero/useZero'
 import type { Query } from '@rocicorp/zero'
 import { useQuery } from '@rocicorp/zero/react'
-import { Array, Effect, Option, pipe, Schema, type Schema as SchemaType, String } from 'effect'
+import {
+  Array,
+  Effect,
+  Option,
+  Order,
+  pipe,
+  Schema,
+  SchemaAST,
+  type Schema as SchemaType,
+  String,
+} from 'effect'
 import type { Option as OptionType } from 'effect/Option'
 import { useMemo } from 'react'
 
@@ -40,6 +51,111 @@ export const useEntitySchema = (entityType: string) => {
   return useMemo(() => {
     return getSchemaByEntityType(entityType)
   }, [entityType])
+}
+
+// -------------------------
+// Relation helpers (OfRelations)
+// -------------------------
+
+/**
+ * Reads schema-declared relations (OfRelations) for UI usage
+ */
+export const getSchemaDeclaredRelations = <T>(schema: SchemaType.Schema<T>) => {
+  const ast = schema.ast
+  const relOpt = SchemaAST.getAnnotation<ReadonlyArray<RelationConfig>>(OfRelations)(ast)
+  return pipe(
+    relOpt,
+    Option.getOrElse(() => [] as ReadonlyArray<RelationConfig>),
+  )
+}
+
+export type UiEntityRelationships = {
+  sourceEntityType: string
+  targetEntityTypes: ReadonlyArray<string>
+}
+
+/**
+ * Builds ordered relation targets for the current entity type by merging
+ * schema-declared relations (pinned and ordered) with DB-discovered ones.
+ */
+export const buildEntityRelationshipsForTable = <T>(
+  schema: SchemaType.Schema<T>,
+  dbRelationships: ReadonlyArray<UiEntityRelationships>,
+): ReadonlyArray<UiEntityRelationships> => {
+  const { entityName } = extractEntityInfo(schema)
+  const sourceType = pipe(entityName, String.toLowerCase)
+
+  const declared = getSchemaDeclaredRelations(schema)
+
+  // Filter declared table-visible relations and sort by order
+  const declaredTargetsOrdered: ReadonlyArray<string> = pipe(
+    declared,
+    Array.filter((r) => r.table?.show === true),
+    Array.map((r) => ({ order: r.table?.order ?? 999, tag: r.targetEntityTag })),
+    Array.sort(Order.struct({ order: Order.number })),
+    Array.map((r) => r.tag),
+  )
+
+  // Include FK-based relation targets discovered from field annotations
+  const fkTargets: ReadonlyArray<string> = pipe(
+    SchemaAST.isTransformation(schema.ast) ? schema.ast.from : schema.ast,
+    (ast) => (SchemaAST.isTypeLiteral(ast) ? ast.propertySignatures : []),
+    Array.filterMap((prop) =>
+      pipe(
+        SchemaAST.getAnnotation<{ targetEntityTag: string }>(OfForeignKey)(prop),
+        Option.map((a) => a.targetEntityTag),
+      ),
+    ),
+    Array.dedupe,
+  )
+
+  // Get DB targets for this source type
+  const dbTargets = pipe(
+    dbRelationships,
+    Array.findFirst((rel) => rel.sourceEntityType === sourceType),
+    Option.map((rel) => rel.targetEntityTypes),
+    Option.getOrElse(() => [] as ReadonlyArray<string>),
+  )
+
+  // Merge declared first, then DB targets, dedupe
+  const merged = pipe([...declaredTargetsOrdered, ...fkTargets, ...dbTargets], Array.dedupe)
+
+  return [
+    {
+      sourceEntityType: sourceType,
+      targetEntityTypes: merged,
+    },
+  ]
+}
+
+// -------------------------
+// Foreign key extraction for forms
+// -------------------------
+
+export type ForeignKeyField = {
+  fieldKey: string
+  targetEntityTag: string
+}
+
+export const getForeignKeyFields = <T>(
+  schema: SchemaType.Schema<T>,
+): ReadonlyArray<ForeignKeyField> => {
+  const ast = SchemaAST.isTransformation(schema.ast) ? schema.ast.from : schema.ast
+  if (!SchemaAST.isTypeLiteral(ast)) {
+    return []
+  }
+  return pipe(
+    ast.propertySignatures,
+    Array.filterMap((prop) =>
+      pipe(
+        SchemaAST.getAnnotation<{ targetEntityTag: string }>(OfForeignKey)(prop),
+        Option.map((a) => ({
+          fieldKey: globalThis.String(prop.name),
+          targetEntityTag: a.targetEntityTag,
+        })),
+      ),
+    ),
+  )
 }
 
 // Schema Insert Hook
