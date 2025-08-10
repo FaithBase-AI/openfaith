@@ -6,10 +6,9 @@ import { index } from 'drizzle-orm/pg-core'
 export const addressesTable = pgTable(
   'addresses',
   (d) => ({
-    // Use the standard base entity fields (id, orgId, externalIds, system fields)
     ...dbBaseEntityFields(d, 'address'),
 
-    // Address-specific fields    city: d.text(),
+    city: d.text(),
     countryCode: d.text(),
     countryName: d.text(),
     location: d.text(),

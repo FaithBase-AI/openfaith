@@ -6,10 +6,9 @@ import { index } from 'drizzle-orm/pg-core'
 export const foldersTable = pgTable(
   'folders',
   (d) => ({
-    // Use the minimal entity fields (no inactivation tracking)
     ...dbBaseEntityFields(d, 'folder'),
 
-    // Folder-specific fields    color: d.text(),
+    color: d.text(),
     description: d.text(),
     folderType: d.text(),
     icon: d.text(),

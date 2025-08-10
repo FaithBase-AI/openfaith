@@ -6,10 +6,9 @@ import { index } from 'drizzle-orm/pg-core'
 export const peopleTable = pgTable(
   'people',
   (d) => ({
-    // Use the standard base entity fields (id, orgId, externalIds, system fields)
     ...dbBaseEntityFields(d, 'person'),
 
-    // Person-specific fields    anniversary: d.text(),
+    anniversary: d.text(),
     avatar: d.text(),
     birthdate: d.text(),
     firstName: d.text(),

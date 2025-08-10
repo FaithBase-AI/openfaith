@@ -1,43 +1,19 @@
 import { pgTable } from '@openfaith/db/_table'
 import { createInsertSchema, createSelectSchema } from '@openfaith/db/drizzleEffect'
-import type { CustomFieldSchema } from '@openfaith/schema/shared/customFieldsSchema'
+import { dbBaseEntityFields } from '@openfaith/db/schema/shared/dbSystemFields'
 import { index } from 'drizzle-orm/pg-core'
 
 export const fieldsTable = pgTable(
   'fields',
   (d) => ({
-    _tag: d
-      .char({ enum: ['field'], length: 5 })
-      .default('field')
-      .$type<'field'>()
-      .notNull(),
-    createdAt: d.timestamp().notNull(),
-    createdBy: d.text(),
-    customFields: d.jsonb().$type<ReadonlyArray<CustomFieldSchema>>().notNull().default([]),
-    deletedAt: d.timestamp(),
-    deletedBy: d.text(),
+    ...dbBaseEntityFields(d, 'field'),
+
     description: d.text(),
     entityTag: d.text().notNull(),
-    externalIds: d
-      .jsonb()
-      .$type<ReadonlyArray<{ id: string; type: string }>>()
-      .notNull()
-      .default([]),
-    id: d.text().primaryKey(),
-    inactivatedAt: d.timestamp(),
-    inactivatedBy: d.text(),
     key: d.text().notNull(),
     label: d.text().notNull(),
-    orgId: d.text().notNull(),
     source: d.text(),
-    status: d
-      .text({ enum: ['active', 'inactive'] })
-      .notNull()
-      .default('active'),
-    tags: d.jsonb().$type<ReadonlyArray<string>>().notNull().default([]),
     type: d.text().notNull().default('singleSelect'),
-    updatedAt: d.timestamp(),
-    updatedBy: d.text(),
   }),
   (x) => ({
     entityIdx: index('fieldEntityIdx').on(x.entityTag),
@@ -55,37 +31,14 @@ export type NewField = typeof NewField.Type
 export const fieldOptionsTable = pgTable(
   'fieldOptions',
   (d) => ({
-    _tag: d
-      .char({ enum: ['fieldOption'], length: 11 })
-      .default('fieldOption')
-      .$type<'fieldOption'>()
-      .notNull(),
+    ...dbBaseEntityFields(d, 'fieldOption'),
+
     active: d.boolean().notNull().default(true),
-    createdAt: d.timestamp().notNull(),
-    createdBy: d.text(),
-    customFields: d.jsonb().$type<ReadonlyArray<CustomFieldSchema>>().notNull().default([]),
-    deletedAt: d.timestamp(),
-    deletedBy: d.text(),
-    externalIds: d
-      .jsonb()
-      .$type<ReadonlyArray<{ id: string; type: string }>>()
-      .notNull()
-      .default([]),
     fieldId: d.text().notNull(),
-    id: d.text().primaryKey(),
-    inactivatedAt: d.timestamp(),
-    inactivatedBy: d.text(),
     label: d.text().notNull(),
     order: d.integer().notNull().default(0),
-    orgId: d.text().notNull(),
     // Optional per-option config for field-driven pathways (e.g., rules, quals)
     pathwayConfig: d.jsonb().$type<Record<string, unknown>>().notNull().default({}),
-    status: d
-      .text({ enum: ['active', 'inactive'] })
-      .notNull()
-      .default('active'),
-    updatedAt: d.timestamp(),
-    updatedBy: d.text(),
     value: d.text().notNull(),
   }),
   (x) => ({
