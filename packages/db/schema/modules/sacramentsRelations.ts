@@ -5,7 +5,7 @@ import { orgsTable } from '@openfaith/db/schema/orgsSchema'
 import { relations } from 'drizzle-orm'
 
 export const sacramentsRelations = relations(sacramentsTable, ({ one, many }) => ({
-  administeredBy: one(peopleTable, {
+  administrator: one(peopleTable, {
     fields: [sacramentsTable.administeredBy],
     references: [peopleTable.id],
     relationName: 'SacramentAdministeredBy',
@@ -14,7 +14,7 @@ export const sacramentsRelations = relations(sacramentsTable, ({ one, many }) =>
     fields: [sacramentsTable.orgId],
     references: [orgsTable.id],
   }),
-  receivedBy: one(peopleTable, {
+  recipient: one(peopleTable, {
     fields: [sacramentsTable.receivedBy],
     references: [peopleTable.id],
     relationName: 'SacramentReceivedBy',

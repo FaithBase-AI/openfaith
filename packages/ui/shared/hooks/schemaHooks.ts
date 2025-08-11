@@ -3,7 +3,7 @@ import { useRxMutation } from '@openfaith/openfaith/shared/hooks/rxHooks'
 import { discoverUiEntities } from '@openfaith/schema/shared/entityDiscovery'
 import { extractEntityInfo, extractEntityTag } from '@openfaith/schema/shared/introspection'
 import { OfForeignKey, OfRelations, type RelationConfig } from '@openfaith/schema/shared/schema'
-import { getEntityId, mkZeroTableName } from '@openfaith/shared'
+import { getEntityId, mkZeroTableName, nullOp } from '@openfaith/shared'
 import { toast } from '@openfaith/ui/components/ui/sonner'
 import { useFilterQuery } from '@openfaith/ui/shared/hooks/useFilterQuery'
 import type { ZSchema } from '@openfaith/zero'
@@ -183,7 +183,7 @@ const createSchemaInsertEffect = Effect.fn('createSchemaInsertEffect')(function*
   const tableName = pipe(
     entityTag,
     Option.match({
-      onNone: () => null,
+      onNone: nullOp,
       onSome: (tag) => mkZeroTableName(tag),
     }),
   )
@@ -307,7 +307,7 @@ const createSchemaUpdateEffect = Effect.fn('createSchemaUpdateEffect')(function*
   const tableName = pipe(
     entityTag,
     Option.match({
-      onNone: () => null,
+      onNone: nullOp,
       onSome: (tag) => mkZeroTableName(tag),
     }),
   )
@@ -426,7 +426,7 @@ const createSchemaDeleteEffect = Effect.fn('createSchemaDeleteEffect')(function*
   const tableName = pipe(
     entityTag,
     Option.match({
-      onNone: () => null,
+      onNone: nullOp,
       onSome: (tag) => mkZeroTableName(tag),
     }),
   )
@@ -544,7 +544,7 @@ const createSchemaUpsertEffect = Effect.fn('createSchemaUpsertEffect')(function*
   const tableName = pipe(
     entityTag,
     Option.match({
-      onNone: () => null,
+      onNone: nullOp,
       onSome: (tag) => mkZeroTableName(tag),
     }),
   )
@@ -749,10 +749,9 @@ export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> })
     return pipe(
       entityTag,
       Option.match({
-        onNone: () => null,
+        onNone: nullOp,
         onSome: (tag) => {
           const tableName = mkZeroTableName(pipe(tag, String.capitalize))
-
           return getBaseEntitiesQuery(z, tableName)
         },
       }),
@@ -778,11 +777,16 @@ export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> })
       resultArray,
       Array.map((item) =>
         pipe(
-          Effect.try(() =>
-            Schema.decodeUnknownSync(schema)(item, { onExcessProperty: 'preserve' }),
-          ),
+          Schema.decodeUnknown(schema)(item, { onExcessProperty: 'preserve' }),
           Effect.match({
-            onFailure: () => null, // Skip items that fail to decode
+            onFailure: (error) => {
+              Effect.logError('Failed to decode entity in useSchemaCollection', {
+                error,
+                item,
+                schema: schema.ast._tag,
+              }).pipe(Effect.runSync)
+              return null // Skip items that fail to decode
+            },
             onSuccess: (entity) => entity,
           }),
           Effect.runSync,
@@ -830,7 +834,7 @@ export const useSchemaEntity = <T>(
     return pipe(
       entityTag,
       Option.match({
-        onNone: () => null,
+        onNone: nullOp,
         onSome: (tag) => {
           const tableName = mkZeroTableName(String.capitalize(tag))
           return getBaseEntityQuery(z, tableName, entityId)
@@ -860,7 +864,7 @@ export const useSchemaEntity = <T>(
 
     // Decode the raw data through the schema to get a class instance with getters
     return pipe(
-      Effect.try(() => Schema.decodeUnknownSync(schema)(data, { onExcessProperty: 'preserve' })),
+      Schema.decodeUnknown(schema)(data, { onExcessProperty: 'preserve' }),
       Effect.match({
         onFailure: (error) => ({
           entityOpt: Option.none(),

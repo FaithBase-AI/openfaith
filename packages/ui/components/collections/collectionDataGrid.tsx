@@ -13,6 +13,11 @@ import {
 } from '@glideapps/glide-data-grid'
 
 import { CollectionToolbarDataGrid } from '@openfaith/ui/components/collections/collectionToolbarDataGrid'
+import type {
+  ColumnConfig,
+  ColumnOption,
+  OptionColumnIds,
+} from '@openfaith/ui/components/data-table-filter/core/types'
 import { collectionViewsAtom, getCollectionView } from '@openfaith/ui/shared/globalState'
 import { Array, pipe } from 'effect'
 import { useAtom } from 'jotai'
@@ -20,8 +25,14 @@ import type { ReactNode } from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import useMeasure from 'react-use-measure'
 
-type CollectionDataGridProps<TData extends Record<string, any>> = {
+type CollectionDataGridProps<
+  TData extends Record<string, any>,
+  TColumns extends ReadonlyArray<ColumnConfig<TData, any, any, any>> = ReadonlyArray<
+    ColumnConfig<TData, any, any, any>
+  >,
+> = {
   filterPlaceHolder: string
+  filterColumnId: string
   Actions?: ReactNode
   _tag: string
   columns: Array<GridColumn>
@@ -31,13 +42,22 @@ type CollectionDataGridProps<TData extends Record<string, any>> = {
   onRowsSelected?: (rows: Array<TData>) => void
   onCellEdited?: (cell: Item, newValue: GridCell) => void
   showRowNumbers?: boolean
+  filtersDef: TColumns
+  filterKey: string
+  filtersOptions?: Partial<Record<OptionColumnIds<TColumns>, Array<ColumnOption> | undefined>>
 }
 
-export const CollectionDataGrid = <TData extends Record<string, any>>(
-  props: CollectionDataGridProps<TData>,
+export const CollectionDataGrid = <
+  TData extends Record<string, any>,
+  TColumns extends ReadonlyArray<ColumnConfig<TData, any, any, any>> = ReadonlyArray<
+    ColumnConfig<TData, any, any, any>
+  >,
+>(
+  props: CollectionDataGridProps<TData, TColumns>,
 ): ReactNode => {
   const {
     filterPlaceHolder,
+    filterColumnId,
     Actions,
     _tag,
     columns: baseColumns,
@@ -47,6 +67,9 @@ export const CollectionDataGrid = <TData extends Record<string, any>>(
     onRowsSelected,
     onCellEdited,
     showRowNumbers = true,
+    filtersDef,
+    filterKey,
+    filtersOptions,
   } = props
 
   const [collectionViews] = useAtom(collectionViewsAtom)
@@ -61,36 +84,6 @@ export const CollectionDataGrid = <TData extends Record<string, any>>(
     current: undefined,
     rows: CompactSelection.empty(),
   })
-
-  // State for search/filter
-  const [searchValue, setSearchValue] = useState('')
-
-  // Filter data based on search
-  const filteredData = useMemo(() => {
-    let filtered = data
-
-    // Apply search filter
-    if (searchValue) {
-      const searchLower = searchValue.toLowerCase()
-      filtered = pipe(
-        filtered,
-        Array.filter((row) => {
-          // Search across all string fields
-          return pipe(
-            Object.values(row),
-            Array.some((value) => {
-              if (typeof value === 'string') {
-                return value.toLowerCase().includes(searchLower)
-              }
-              return false
-            }),
-          )
-        }),
-      )
-    }
-
-    return filtered
-  }, [data, searchValue])
 
   // Apply column size overrides
   const columns = useMemo(() => {
@@ -113,11 +106,11 @@ export const CollectionDataGrid = <TData extends Record<string, any>>(
     }
   }, [])
 
-  // Wrap the provided getCellContent to use filtered data
+  // Wrap the provided getCellContent to use data
   const getCellContent = useCallback(
     (cell: Item): GridCell => {
       const [, row] = cell
-      const dataRow = filteredData[row]
+      const dataRow = data[row]
 
       if (!dataRow) {
         return {
@@ -128,22 +121,22 @@ export const CollectionDataGrid = <TData extends Record<string, any>>(
         }
       }
 
-      // Use the provided getCellContent with the filtered data
+      // Use the provided getCellContent with the data
       return providedGetCellContent(cell)
     },
-    [filteredData, providedGetCellContent],
+    [data, providedGetCellContent],
   )
 
   // Handle row click
   const onRowClicked = useCallback(
     (cell: Item) => {
       const [, row] = cell
-      const dataRow = filteredData[row]
+      const dataRow = data[row]
       if (dataRow && onRowClick) {
         onRowClick(dataRow)
       }
     },
-    [filteredData, onRowClick],
+    [data, onRowClick],
   )
 
   // Handle selection change
@@ -155,13 +148,13 @@ export const CollectionDataGrid = <TData extends Record<string, any>>(
       if (onRowsSelected && newSelection.rows) {
         const selectedRows = pipe(
           Array.fromIterable(newSelection.rows),
-          Array.map((rowIndex) => filteredData[rowIndex]),
+          Array.map((rowIndex) => data[rowIndex]),
           Array.filter((row): row is TData => row !== undefined),
         )
         onRowsSelected(selectedRows)
       }
     },
-    [filteredData, onRowsSelected],
+    [data, onRowsSelected],
   )
 
   // For now, we'll only show the table view
@@ -184,13 +177,16 @@ export const CollectionDataGrid = <TData extends Record<string, any>>(
 
   return (
     <div className='flex h-full flex-col'>
-      <CollectionToolbarDataGrid
+      <CollectionToolbarDataGrid<TData, TColumns>
         _tag={_tag}
         Actions={Actions}
         className='mb-2 flex-shrink-0 md:mr-4 md:mb-4'
+        data={data}
+        filterColumnId={filterColumnId}
+        filterKey={filterKey}
         filterPlaceHolder={filterPlaceHolder}
-        onSearchChange={setSearchValue}
-        searchValue={searchValue}
+        filtersDef={filtersDef}
+        filtersOptions={filtersOptions}
       />
 
       {showTable && (
@@ -206,7 +202,7 @@ export const CollectionDataGrid = <TData extends Record<string, any>>(
               onColumnResize={onColumnResize}
               onGridSelectionChange={onSelectionChange}
               rowMarkers={showRowNumbers ? 'both' : 'none'}
-              rows={filteredData.length}
+              rows={data.length}
               smoothScrollX={true}
               smoothScrollY={true}
               width={gridWidth}

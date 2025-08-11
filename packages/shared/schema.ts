@@ -102,3 +102,54 @@ export const JsonStringToStringArray = Schema.transformOrFail(
     strict: true,
   },
 )
+
+/**
+ * Generic JSON string to array transformer that handles both JSON strings and arrays.
+ * Falls back to empty array if parsing fails or validation fails.
+ *
+ * @param itemSchema - The schema for individual array items
+ * @returns A transformer schema that converts between JSON strings/arrays and validated arrays
+ */
+export const JsonStringToArray = <A>(itemSchema: Schema.Schema<A, any, never>) =>
+  Schema.transformOrFail(
+    Schema.Union(Schema.String, Schema.Array(Schema.Unknown)),
+    Schema.Array(itemSchema),
+    {
+      decode: (input) =>
+        Effect.gen(function* () {
+          // If input is already an array, validate it directly
+          if (Array.isArray(input)) {
+            const validated = yield* Schema.decodeUnknown(Schema.Array(itemSchema))(input).pipe(
+              Effect.tapError((error) =>
+                Effect.logError('Failed to validate array in JsonStringToArray', { error, input }),
+              ),
+              Effect.orElse(() => Effect.succeed([] as ReadonlyArray<A>)),
+            )
+            return validated
+          }
+
+          // If input is a string, try to parse the JSON
+          const parsed = yield* Effect.try(() => JSON.parse(input as string)).pipe(
+            Effect.tapError((error) =>
+              Effect.logError('Failed to parse JSON string in JsonStringToArray', { error, input }),
+            ),
+            Effect.orElse(() => Effect.succeed(null)),
+          )
+
+          // Validate that the parsed result is an array of the correct type
+          const validated = yield* Schema.decodeUnknown(Schema.Array(itemSchema))(parsed).pipe(
+            Effect.tapError((error) =>
+              Effect.logError('Failed to validate parsed JSON in JsonStringToArray', {
+                error,
+                parsed,
+              }),
+            ),
+            Effect.orElse(() => Effect.succeed([] as ReadonlyArray<A>)),
+          )
+
+          return validated
+        }),
+      encode: (array) => Effect.succeed(JSON.stringify(array)),
+      strict: true,
+    },
+  )

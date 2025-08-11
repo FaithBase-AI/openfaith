@@ -1,7 +1,7 @@
 import { CustomFieldSchema } from '@openfaith/schema/shared/customFieldsSchema'
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { TimestampToIsoString } from '@openfaith/shared/date'
-import { JsonStringToStringArray } from '@openfaith/shared/schema'
+import { JsonStringToArray, JsonStringToStringArray } from '@openfaith/shared/schema'
 import { Schema } from 'effect'
 
 // Base system fields as a class
@@ -30,7 +30,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       },
     } satisfies FieldConfig,
   }),
-  customFields: Schema.Array(CustomFieldSchema).annotations({
+  customFields: JsonStringToArray(CustomFieldSchema).annotations({
     description: 'The custom fields for the record',
     [OfUiConfig]: {
       field: {

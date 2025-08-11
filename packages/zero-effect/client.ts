@@ -192,7 +192,7 @@ export function convertEffectMutatorsToPromise<TSchema extends ZeroSchema, R>(
             ...args: ReadonlyArray<any>
           ) => {
             const effectTx = createEffectTransaction(tx)
-            const effect = mutatorFn(effectTx, ...args)
+            const effect = mutatorFn(effectTx, ...args).pipe(Effect.tapError(Effect.log))
             return await Runtime.runPromise(runtime)(effect)
           }
         }

@@ -9,8 +9,8 @@ import { CollectionDataGrid } from '@openfaith/ui/components/collections/collect
 import { Button } from '@openfaith/ui/components/ui/button'
 import {
   buildEntityRelationshipsForTable,
-  useSchemaCellUpdate,
   useSchemaCollection,
+  useSchemaUpdate,
 } from '@openfaith/ui/shared/hooks/schemaHooks'
 import {
   getActionsCell,
@@ -22,6 +22,7 @@ import {
   createDataGridActionsColumn,
   generateDataGridRelationColumns,
 } from '@openfaith/ui/table/dataGridRelationColumnGenerator'
+import { generateFilterConfig } from '@openfaith/ui/table/filterGenerator'
 import { getBaseEntityRelationshipsQuery } from '@openfaith/zero/baseQueries'
 import { useZero } from '@openfaith/zero/useZero'
 import { useQuery } from '@rocicorp/zero/react'
@@ -42,6 +43,8 @@ export interface UniversalDataGridProps<T> {
   editable?: boolean // Enable cell editing (default: true)
   filtering?: {
     filterPlaceHolder?: string
+    filterColumnId?: string
+    filterKey?: string
   }
 }
 
@@ -73,9 +76,11 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
 
   const { collection } = useSchemaCollection({ schema })
 
-  // Use the schema cell update hook for mutations
-  const cellUpdate = useSchemaCellUpdate(schema, {
-    showToast: false, // Don't show toast for every cell edit
+  // Use the schema update hook for mutations
+  const { mutate: updateEntity } = useSchemaUpdate(schema, {
+    onError: (error) => {
+      console.error('Failed to update cell:', error)
+    },
   })
 
   // Fetch entity relationships for this entity type
@@ -237,19 +242,19 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
         return
       }
 
-      // Use the Zero mutation to update the cell
-      cellUpdate.mutate({
-        field: field.key,
+      // Use the Zero mutation to update the entity with the new field value
+      const updatedData = {
+        [field.key]: extractedValue,
         id: rowId,
-        value: extractedValue,
-      })
+      }
+      updateEntity(updatedData as any)
 
       // Also call the custom callback if provided
       if (onCellEdit) {
         onCellEdit(dataRow, field.key, extractedValue)
       }
     },
-    [collection, columns, columnIdToField, cellUpdate, onCellEdit],
+    [collection, columns, columnIdToField, updateEntity, onCellEdit],
   )
 
   // Handle row click with actions column special handling
@@ -266,6 +271,11 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
 
   const entityName = entityInfo.entityName || 'items'
   const filterPlaceHolder = filtering.filterPlaceHolder || `Search ${entityName}...`
+
+  // Generate filter configuration from schema
+  const filtersDef = useMemo(() => {
+    return generateFilterConfig(schema)
+  }, [schema])
 
   // Render actions for the toolbar
   const ToolbarActions = Actions || (
@@ -291,7 +301,10 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
         Actions={ToolbarActions}
         columns={columns}
         data={collection}
+        filterColumnId={filtering.filterColumnId || 'name'}
+        filterKey={filtering.filterKey || `${entityName}-filter`}
         filterPlaceHolder={filterPlaceHolder}
+        filtersDef={filtersDef}
         getCellContent={getCellContent}
         onCellEdited={editable ? handleCellEdited : undefined}
         onRowClick={handleRowClick}

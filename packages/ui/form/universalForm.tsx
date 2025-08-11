@@ -5,13 +5,17 @@ import { Button } from '@openfaith/ui/components/ui/button'
 import { getComponentProps, getFieldComponentName } from '@openfaith/ui/form/fieldComponentMapping'
 import { generateFieldConfigs } from '@openfaith/ui/form/fieldConfigGenerator'
 import { createValidator, validateFormData } from '@openfaith/ui/form/validation'
+import { useSchemaInsert, useSchemaUpdate } from '@openfaith/ui/shared/hooks/schemaHooks'
 import { Array, Order, pipe, Record, type Schema } from 'effect'
 import { type ReactNode, useMemo } from 'react'
 
 export interface UniversalFormProps<T> {
   schema: Schema.Schema<T>
   defaultValues?: Partial<T>
-  onSubmit: (data: T) => void | Promise<void>
+  onSubmit?: (data: T) => void | Promise<void>
+  mode?: 'create' | 'edit' | 'custom'
+  onSuccess?: (data: T) => void
+  onError?: (error: any) => void
   fieldOverrides?: Partial<Record<keyof T, Partial<FieldConfig['field']>>>
   className?: string
   children?: (form: any, fields: Record<keyof T, Required<FieldConfig['field']>>) => ReactNode
@@ -20,11 +24,15 @@ export interface UniversalFormProps<T> {
 
 /**
  * Universal Form Component that automatically generates forms from Effect Schema
+ * Supports both custom submit handlers and built-in Zero mutations
  */
 export function UniversalForm<T>({
   schema,
   defaultValues,
   onSubmit,
+  mode = 'custom',
+  onSuccess,
+  onError,
   fieldOverrides = {},
   className,
   children,
@@ -32,17 +40,52 @@ export function UniversalForm<T>({
 }: UniversalFormProps<T>) {
   const fieldConfigs = generateFieldConfigs(schema, fieldOverrides)
 
+  // Use mutation hooks when in create/edit mode
+  const { mutate: schemaInsert, isPending: isInsertPending } = useSchemaInsert(schema, {
+    onError,
+    onSuccess,
+  })
+
+  const { mutate: schemaUpdate, isPending: isUpdatePending } = useSchemaUpdate(schema, {
+    onError,
+    onSuccess: onSuccess as any,
+  })
+
   const form = useAppForm({
     defaultValues: (defaultValues ?? {}) as T,
     onSubmit: async ({ value }: { value: T }) => {
       const validation = validateFormData(schema, value)
       if (!validation.isValid) {
         console.error('Schema validation failed:', validation.errors)
+        if (onError) {
+          onError(new Error('Validation failed'))
+        }
         return
       }
-      await onSubmit(validation.data!)
+
+      const validData = validation.data!
+
+      // Use appropriate handler based on mode
+      switch (mode) {
+        case 'create':
+          schemaInsert(validData as any)
+          break
+        case 'edit':
+          schemaUpdate(validData as any)
+          break
+        case 'custom':
+        default:
+          if (onSubmit) {
+            await onSubmit(validData)
+          }
+          break
+      }
     },
   })
+
+  // Check if any mutation is in progress
+  const isMutating = isInsertPending || isUpdatePending
+  const isSubmitting = form.state.isSubmitting || loading || isMutating
 
   if (children) {
     return <div className={className}>{children(form, fieldConfigs)}</div>
@@ -80,14 +123,34 @@ export function UniversalForm<T>({
     }),
   )
 
+  const submitButtonText = useMemo(() => {
+    if (isSubmitting) {
+      return 'Submitting...'
+    }
+    switch (mode) {
+      case 'create':
+        return 'Create'
+      case 'edit':
+        return 'Update'
+      case 'custom':
+      default:
+        return 'Submit'
+    }
+  }, [mode, isSubmitting])
+
   return (
     <QuickActionForm
       Actions={
         <>
-          <Button className='mr-auto' disabled={form.state.isSubmitting || loading} type='submit'>
-            {form.state.isSubmitting || loading ? 'Submitting...' : 'Submit'}
+          <Button className='mr-auto' disabled={isSubmitting} type='submit'>
+            {submitButtonText}
           </Button>
-          <Button disabled={loading} onClick={() => form.reset()} type='button' variant='outline'>
+          <Button
+            disabled={isSubmitting}
+            onClick={() => form.reset()}
+            type='button'
+            variant='outline'
+          >
             Reset
           </Button>
         </>

@@ -14,8 +14,8 @@
  * ------------------------------------------------------------
  */
 
-import type { default as zeroSchema } from '@openfaith/zero/drizzle-zero.config'
 import type { ZeroCustomType } from 'drizzle-zero'
+import type { default as zeroSchema } from './drizzle-zero.config'
 
 /**
  * The Zero schema object.
@@ -93,6 +93,14 @@ export const schema = {
           sourceField: ['sourceEntityId'],
         },
       ],
+      sourceFieldOption: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'fieldOptions',
+          sourceField: ['sourceEntityId'],
+        },
+      ],
       sourceFolder: [
         {
           cardinality: 'one',
@@ -101,11 +109,27 @@ export const schema = {
           sourceField: ['sourceEntityId'],
         },
       ],
+      sourceJourney: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'journeys',
+          sourceField: ['sourceEntityId'],
+        },
+      ],
       sourceOrg: [
         {
           cardinality: 'one',
           destField: ['id'],
           destSchema: 'orgs',
+          sourceField: ['sourceEntityId'],
+        },
+      ],
+      sourcePathway: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'pathways',
           sourceField: ['sourceEntityId'],
         },
       ],
@@ -122,6 +146,22 @@ export const schema = {
           cardinality: 'one',
           destField: ['id'],
           destSchema: 'phoneNumbers',
+          sourceField: ['sourceEntityId'],
+        },
+      ],
+      sourceQualification: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'qualifications',
+          sourceField: ['sourceEntityId'],
+        },
+      ],
+      sourceSacrament: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'sacraments',
           sourceField: ['sourceEntityId'],
         },
       ],
@@ -149,6 +189,14 @@ export const schema = {
           sourceField: ['targetEntityId'],
         },
       ],
+      targetFieldOption: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'fieldOptions',
+          sourceField: ['targetEntityId'],
+        },
+      ],
       targetFolder: [
         {
           cardinality: 'one',
@@ -157,11 +205,27 @@ export const schema = {
           sourceField: ['targetEntityId'],
         },
       ],
+      targetJourney: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'journeys',
+          sourceField: ['targetEntityId'],
+        },
+      ],
       targetOrg: [
         {
           cardinality: 'one',
           destField: ['id'],
           destSchema: 'orgs',
+          sourceField: ['targetEntityId'],
+        },
+      ],
+      targetPathway: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'pathways',
           sourceField: ['targetEntityId'],
         },
       ],
@@ -181,6 +245,22 @@ export const schema = {
           sourceField: ['targetEntityId'],
         },
       ],
+      targetQualification: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'qualifications',
+          sourceField: ['targetEntityId'],
+        },
+      ],
+      targetSacrament: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'sacraments',
+          sourceField: ['targetEntityId'],
+        },
+      ],
       targetUser: [
         {
           cardinality: 'one',
@@ -194,6 +274,28 @@ export const schema = {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
     },
     externalLinks: {
+      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+    },
+    fieldOptions: {
+      field: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'fields',
+          sourceField: ['fieldId'],
+        },
+      ],
+      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+    },
+    fields: {
+      options: [
+        {
+          cardinality: 'many',
+          destField: ['fieldId'],
+          destSchema: 'fieldOptions',
+          sourceField: ['id'],
+        },
+      ],
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
     },
     folders: {
@@ -249,6 +351,33 @@ export const schema = {
         },
       ],
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+    },
+    journeys: {
+      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      pathway: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'pathways',
+          sourceField: ['pathwayId'],
+        },
+      ],
+      sourceEdges: [
+        {
+          cardinality: 'many',
+          destField: ['sourceEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+      targetEdges: [
+        {
+          cardinality: 'many',
+          destField: ['targetEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
     },
     orgSettings: {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
@@ -386,6 +515,41 @@ export const schema = {
         },
       ],
     },
+    pathways: {
+      journeys: [
+        {
+          cardinality: 'many',
+          destField: ['pathwayId'],
+          destSchema: 'journeys',
+          sourceField: ['id'],
+        },
+      ],
+      linkedField: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'fields',
+          sourceField: ['linkedFieldId'],
+        },
+      ],
+      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      sourceEdges: [
+        {
+          cardinality: 'many',
+          destField: ['sourceEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+      targetEdges: [
+        {
+          cardinality: 'many',
+          destField: ['targetEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+    },
     people: {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
       sourceEdges: [
@@ -407,6 +571,60 @@ export const schema = {
     },
     phoneNumbers: {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      sourceEdges: [
+        {
+          cardinality: 'many',
+          destField: ['sourceEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+      targetEdges: [
+        {
+          cardinality: 'many',
+          destField: ['targetEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+    },
+    qualifications: {
+      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      sourceEdges: [
+        {
+          cardinality: 'many',
+          destField: ['sourceEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+      targetEdges: [
+        {
+          cardinality: 'many',
+          destField: ['targetEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+    },
+    sacraments: {
+      administrator: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'people',
+          sourceField: ['administeredBy'],
+        },
+      ],
+      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      recipient: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'people',
+          sourceField: ['receivedBy'],
+        },
+      ],
       sourceEdges: [
         {
           cardinality: 'many',
@@ -1342,6 +1560,362 @@ export const schema = {
       primaryKey: ['orgId', 'adapter', 'externalId'],
       serverName: 'openfaith_externalLinks',
     },
+    fieldOptions: {
+      columns: {
+        _tag: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            '_tag'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        active: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'active'
+          >,
+          optional: true,
+          type: 'boolean',
+        },
+        createdAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'createdAt'
+          >,
+          optional: false,
+          type: 'number',
+        },
+        createdBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'createdBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        customFields: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'customFields'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        deletedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'deletedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        deletedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'deletedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        externalIds: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'externalIds'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        fieldId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'fieldId'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        id: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'id'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        inactivatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'inactivatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        inactivatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'inactivatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        label: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'label'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        order: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'order'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        orgId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'orgId'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        pathwayConfig: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'pathwayConfig'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        status: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'status'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        tags: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'tags'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        updatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'updatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        updatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'updatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        value: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldOptionsTable',
+            'value'
+          >,
+          optional: false,
+          type: 'string',
+        },
+      },
+      name: 'fieldOptions',
+      primaryKey: ['id'],
+      serverName: 'openfaith_fieldOptions',
+    },
+    fields: {
+      columns: {
+        _tag: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'fieldsTable', '_tag'>,
+          optional: false,
+          type: 'string',
+        },
+        createdAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldsTable',
+            'createdAt'
+          >,
+          optional: false,
+          type: 'number',
+        },
+        createdBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldsTable',
+            'createdBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        customFields: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldsTable',
+            'customFields'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        deletedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldsTable',
+            'deletedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        deletedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldsTable',
+            'deletedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        description: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldsTable',
+            'description'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        entityTag: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldsTable',
+            'entityTag'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        externalIds: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldsTable',
+            'externalIds'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        id: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'fieldsTable', 'id'>,
+          optional: false,
+          type: 'string',
+        },
+        inactivatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldsTable',
+            'inactivatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        inactivatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldsTable',
+            'inactivatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        key: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'fieldsTable', 'key'>,
+          optional: false,
+          type: 'string',
+        },
+        label: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'fieldsTable', 'label'>,
+          optional: false,
+          type: 'string',
+        },
+        orgId: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'fieldsTable', 'orgId'>,
+          optional: false,
+          type: 'string',
+        },
+        source: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'fieldsTable', 'source'>,
+          optional: true,
+          type: 'string',
+        },
+        status: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'fieldsTable', 'status'>,
+          optional: true,
+          type: 'string',
+        },
+        tags: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'fieldsTable', 'tags'>,
+          optional: true,
+          type: 'json',
+        },
+        type: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'fieldsTable', 'type'>,
+          optional: true,
+          type: 'string',
+        },
+        updatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldsTable',
+            'updatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        updatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'fieldsTable',
+            'updatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+      },
+      name: 'fields',
+      primaryKey: ['id'],
+      serverName: 'openfaith_fields',
+    },
     folders: {
       columns: {
         _tag: {
@@ -1436,6 +2010,24 @@ export const schema = {
           optional: false,
           type: 'string',
         },
+        inactivatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'foldersTable',
+            'inactivatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        inactivatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'foldersTable',
+            'inactivatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
         name: {
           customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'foldersTable', 'name'>,
           optional: false,
@@ -1460,6 +2052,15 @@ export const schema = {
             typeof zeroSchema,
             'foldersTable',
             'parentFolderId'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        status: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'foldersTable',
+            'status'
           >,
           optional: true,
           type: 'string',
@@ -1570,6 +2171,213 @@ export const schema = {
       name: 'invitations',
       primaryKey: ['id'],
       serverName: 'openfaith_invitations',
+    },
+    journeys: {
+      columns: {
+        _tag: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'journeysTable', '_tag'>,
+          optional: false,
+          type: 'string',
+        },
+        assimilationComplete: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'assimilationComplete'
+          >,
+          optional: true,
+          type: 'boolean',
+        },
+        completedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'completedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        createdAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'createdAt'
+          >,
+          optional: false,
+          type: 'number',
+        },
+        createdBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'createdBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        currentStage: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'currentStage'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        customFields: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'customFields'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        deletedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'deletedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        deletedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'deletedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        externalIds: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'externalIds'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        id: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'journeysTable', 'id'>,
+          optional: false,
+          type: 'string',
+        },
+        inactivatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'inactivatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        inactivatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'inactivatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        lastActivityAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'lastActivityAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        orgId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'orgId'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        pathwayId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'pathwayId'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        state: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'state'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        status: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'status'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        subjectId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'subjectId'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        subjectTag: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'subjectTag'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        tags: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'journeysTable', 'tags'>,
+          optional: true,
+          type: 'json',
+        },
+        type: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'journeysTable', 'type'>,
+          optional: true,
+          type: 'string',
+        },
+        updatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'updatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        updatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'journeysTable',
+            'updatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+      },
+      name: 'journeys',
+      primaryKey: ['id'],
+      serverName: 'openfaith_journeys',
     },
     jwks: {
       columns: {
@@ -1729,6 +2537,200 @@ export const schema = {
       name: 'orgUsers',
       primaryKey: ['id'],
       serverName: 'openfaith_orgUsers',
+    },
+    pathways: {
+      columns: {
+        _tag: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'pathwaysTable', '_tag'>,
+          optional: false,
+          type: 'string',
+        },
+        active: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'active'
+          >,
+          optional: true,
+          type: 'boolean',
+        },
+        completionRule: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'completionRule'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        createdAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'createdAt'
+          >,
+          optional: false,
+          type: 'number',
+        },
+        createdBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'createdBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        customFields: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'customFields'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        deletedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'deletedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        deletedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'deletedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        description: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'description'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        enrollmentConfig: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'enrollmentConfig'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        externalIds: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'externalIds'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        id: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'pathwaysTable', 'id'>,
+          optional: false,
+          type: 'string',
+        },
+        inactivatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'inactivatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        inactivatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'inactivatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        linkedFieldId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'linkedFieldId'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        name: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'pathwaysTable', 'name'>,
+          optional: false,
+          type: 'string',
+        },
+        orgId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'orgId'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        status: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'status'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        stepsConfig: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'stepsConfig'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        tags: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'pathwaysTable', 'tags'>,
+          optional: true,
+          type: 'json',
+        },
+        type: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'pathwaysTable', 'type'>,
+          optional: true,
+          type: 'string',
+        },
+        updatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'updatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        updatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'pathwaysTable',
+            'updatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+      },
+      name: 'pathways',
+      primaryKey: ['id'],
+      serverName: 'openfaith_pathways',
     },
     people: {
       columns: {
@@ -2112,6 +3114,358 @@ export const schema = {
       name: 'phoneNumbers',
       primaryKey: ['id'],
       serverName: 'openfaith_phoneNumbers',
+    },
+    qualifications: {
+      columns: {
+        _tag: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            '_tag'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        createdAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'createdAt'
+          >,
+          optional: false,
+          type: 'number',
+        },
+        createdBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'createdBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        customFields: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'customFields'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        deletedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'deletedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        deletedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'deletedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        description: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'description'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        externalIds: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'externalIds'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        id: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'id'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        inactivatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'inactivatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        inactivatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'inactivatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        key: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'key'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        name: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'name'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        orgId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'orgId'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        status: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'status'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        tags: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'tags'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        type: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'type'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        updatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'updatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        updatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'qualificationsTable',
+            'updatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+      },
+      name: 'qualifications',
+      primaryKey: ['id'],
+      serverName: 'openfaith_qualifications',
+    },
+    sacraments: {
+      columns: {
+        _tag: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            '_tag'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        administeredBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'administeredBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        createdAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'createdAt'
+          >,
+          optional: false,
+          type: 'number',
+        },
+        createdBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'createdBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        customFields: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'customFields'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        deletedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'deletedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        deletedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'deletedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        externalIds: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'externalIds'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        id: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'sacramentsTable', 'id'>,
+          optional: false,
+          type: 'string',
+        },
+        inactivatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'inactivatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        inactivatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'inactivatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        occurredAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'occurredAt'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        orgId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'orgId'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        receivedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'receivedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        status: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'status'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        tags: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'tags'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        type: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'type'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        updatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'updatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        updatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'sacramentsTable',
+            'updatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+      },
+      name: 'sacraments',
+      primaryKey: ['id'],
+      serverName: 'openfaith_sacraments',
     },
     users: {
       columns: {

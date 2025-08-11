@@ -8,7 +8,6 @@ import {
   QuickActionsWrapper,
   UniversalForm,
 } from '@openfaith/ui'
-import { useSchemaInsert, useSchemaUpdate } from '@openfaith/ui/shared/hooks/schemaHooks'
 import { HashMap, Match, Option, pipe } from 'effect'
 import type { ComponentType, FC } from 'react'
 
@@ -39,32 +38,12 @@ export const UniversalQuickAction: FC<UniversalQuickActionProps> = (props) => {
     Match.exhaustive,
   )(props)
 
-  const { mutate: schemaInsert, isPending: isInsertPending } = useSchemaInsert(quickAction.schema, {
-    onSuccess: () => {
-      onOpenChange(false)
-    },
-  })
-
-  const { mutate: schemaUpdate, isPending: isUpdatePending } = useSchemaUpdate(quickAction.schema, {
-    onSuccess: () => {
-      onOpenChange(false)
-    },
-  })
-
-  const handleSubmit = (data: any) => {
-    pipe(
-      Match.type<typeof props>(),
-      Match.tag('create', () => {
-        schemaInsert(data)
-      }),
-      Match.tag('edit', () => {
-        schemaUpdate(data)
-      }),
-      Match.exhaustive,
-    )(props)
-  }
-
-  const isPending = isInsertPending || isUpdatePending
+  const mode = pipe(
+    Match.type<typeof props>(),
+    Match.tag('create', () => 'create' as const),
+    Match.tag('edit', () => 'edit' as const),
+    Match.exhaustive,
+  )(props)
 
   const IconComponent = pipe(iconComponents, HashMap.get(quickAction.tag), Option.getOrNull)
 
@@ -92,8 +71,8 @@ export const UniversalQuickAction: FC<UniversalQuickActionProps> = (props) => {
 
       <UniversalForm
         defaultValues={defaultValues}
-        loading={isPending}
-        onSubmit={handleSubmit}
+        mode={mode}
+        onSuccess={() => onOpenChange(false)}
         schema={quickAction.schema}
       />
     </QuickActionsWrapper>
