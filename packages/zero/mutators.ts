@@ -1,4 +1,3 @@
-import { TokenKey } from '@openfaith/adapter-core/layers/tokenManager'
 import type { AuthData, ZSchema } from '@openfaith/zero/zeroSchema.mts'
 import {
   convertEffectMutatorsToPromise,
@@ -24,9 +23,6 @@ export function createMutators(
     people: {
       update: (tx: EffectTransaction<ZSchema>, input: UpdatePersonInput) =>
         Effect.gen(function* () {
-          const tokenKey = yield* TokenKey
-          console.log(tokenKey)
-
           if (!authData) {
             return yield* Effect.fail(
               new ZeroMutatorAuthError({
@@ -53,7 +49,7 @@ export function createMutators(
           yield* Effect.log('Person updated successfully', {
             id: validatedInput.id,
           })
-        }) as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError, TokenKey>,
+        }) as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError>,
     },
   }
 }
@@ -63,9 +59,7 @@ export function createClientMutators(
 ): CustomMutatorDefs<ZSchema> {
   const effectMutators = createMutators(authData)
 
-  const clientRuntime = Runtime.defaultRuntime.pipe(
-    Runtime.provideService(TokenKey, 'client-token-key'),
-  )
+  const clientRuntime = Runtime.defaultRuntime
 
   return convertEffectMutatorsToPromise(effectMutators, clientRuntime)
 }

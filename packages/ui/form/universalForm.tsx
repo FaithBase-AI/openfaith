@@ -73,7 +73,6 @@ export function UniversalForm<T>({
         case 'edit':
           schemaUpdate(validData as any)
           break
-        case 'custom':
         default:
           if (onSubmit) {
             await onSubmit(validData)
@@ -132,7 +131,6 @@ export function UniversalForm<T>({
         return 'Create'
       case 'edit':
         return 'Update'
-      case 'custom':
       default:
         return 'Submit'
     }

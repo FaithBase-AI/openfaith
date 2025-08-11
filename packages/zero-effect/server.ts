@@ -1,6 +1,7 @@
 /**
  * @since 1.0.0
  */
+import type { Connection } from '@effect/sql/SqlConnection'
 import type { Primitive } from '@effect/sql/Statement'
 import { PgClient } from '@effect/sql-pg'
 import {
@@ -29,13 +30,33 @@ export class EffectPgConnection<R = never> implements DBConnection<PgClient.PgCl
   }
 
   transaction<TRet>(fn: (tx: DBTransaction<PgClient.PgClient>) => Promise<TRet>): Promise<TRet> {
-    const transactionAdapter = new EffectPgTransaction<R>(this.#pgClient, this.#runtime)
+    // Get a reserved connection and manually manage the transaction
+    // This ensures we get a real transaction, not a savepoint
+    const pgClient = this.#pgClient
+    const runtime = this.#runtime
 
-    const effectToRun = Effect.promise(() => fn(transactionAdapter))
+    return Runtime.runPromise(runtime)(
+      Effect.scoped(
+        Effect.gen(function* () {
+          // Reserve a connection from the pool
+          const conn = yield* pgClient.reserve
 
-    const transactionalEffect = this.#pgClient.withTransaction(effectToRun)
+          // Manually execute BEGIN using the connection
+          yield* conn.executeRaw('BEGIN', [])
 
-    return Runtime.runPromise(this.#runtime)(transactionalEffect)
+          // Create transaction adapter with the connection directly
+          const transactionAdapter = new EffectPgTransaction<R>(conn, runtime)
+
+          // Execute Zero's transaction function with error handling
+          const result = yield* Effect.promise(() => fn(transactionAdapter)).pipe(
+            Effect.tap(() => conn.executeRaw('COMMIT', [])),
+            Effect.tapError(() => conn.executeRaw('ROLLBACK', [])),
+          )
+
+          return result
+        }),
+      ),
+    )
   }
 }
 
@@ -45,15 +66,22 @@ export class EffectPgConnection<R = never> implements DBConnection<PgClient.PgCl
  */
 class EffectPgTransaction<R = never> implements DBTransaction<PgClient.PgClient> {
   readonly wrappedTransaction: PgClient.PgClient
+  readonly #connection: Connection
   readonly #runtime: Runtime.Runtime<R>
 
-  constructor(pgClient: PgClient.PgClient, runtime: Runtime.Runtime<R>) {
-    this.wrappedTransaction = pgClient
+  constructor(connection: Connection, runtime: Runtime.Runtime<R>) {
+    this.#connection = connection
     this.#runtime = runtime
+
+    // Create a PgClient-like wrapper around the connection for compatibility
+    this.wrappedTransaction = {
+      unsafe: (sql: string, params: Array<Primitive> = []) => connection.executeRaw(sql, params),
+    } as unknown as PgClient.PgClient
   }
 
   query(sql: string, params: Array<unknown>): Promise<Iterable<Row>> {
-    const queryEffect = this.wrappedTransaction.unsafe(sql, params as Array<Primitive>)
+    // Use the connection directly for queries
+    const queryEffect = this.#connection.executeRaw(sql, params as Array<Primitive>)
     return Runtime.runPromise(this.#runtime)(queryEffect) as Promise<Iterable<Row>>
   }
 }

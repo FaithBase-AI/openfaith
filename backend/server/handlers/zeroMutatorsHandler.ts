@@ -3,7 +3,6 @@ import { TokenKey } from '@openfaith/adapter-core/server'
 import { MutatorError, SessionContext, ZeroMutatorsApi as ZeroApi } from '@openfaith/domain'
 import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
 import { AppZeroStore, ZeroLive } from '@openfaith/server/live/zeroLive'
-import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
 import { createMutators } from '@openfaith/zero'
 import type { ReadonlyJSONObject } from '@rocicorp/zero'
 import { Effect, Layer, Option, pipe } from 'effect'
@@ -43,25 +42,25 @@ export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) 
 
       console.log(JSON.stringify(input.payload.mutations))
 
-      if (authData.activeOrganizationId) {
-        const workflowClient = yield* WorkflowClient
+      // if (authData.activeOrganizationId) {
+      //   const workflowClient = yield* WorkflowClient
 
-        yield* workflowClient.workflows
-          .ExternalPushWorkflow({
-            payload: {
-              mutations: input.payload.mutations,
-              tokenKey: authData.activeOrganizationId,
-            },
-          })
-          .pipe(
-            Effect.mapError(
-              (error) =>
-                new MutatorError({
-                  message: `Error processing external sync workflow: ${error}`,
-                }),
-            ),
-          )
-      }
+      //   yield* workflowClient.workflows
+      //     .ExternalPushWorkflow({
+      //       payload: {
+      //         mutations: input.payload.mutations,
+      //         tokenKey: authData.activeOrganizationId,
+      //       },
+      //     })
+      //     .pipe(
+      //       Effect.mapError(
+      //         (error) =>
+      //           new MutatorError({
+      //             message: `Error processing external sync workflow: ${error}`,
+      //           }),
+      //       ),
+      //     )
+      // }
 
       return result
     }),
