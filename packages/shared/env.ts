@@ -12,11 +12,6 @@ export const env = createEnv({
     DB_PORT: z.string().transform((x) => Number.parseInt(x)),
     DB_USERNAME: z.string(),
 
-    // Redis
-    REDIS_URL: z.string(),
-    UPSTASH_REDIS_REST_TOKEN: z.string(),
-    UPSTASH_REDIS_REST_URL: z.string(),
-
     // Zero
     ZERO_UPSTREAM_DB: z.string(),
     ZERO_CVR_DB: z.string(),

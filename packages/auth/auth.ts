@@ -24,6 +24,8 @@ import { typeid } from 'typeid-js'
 
 const from = `${env.VITE_APP_NAME} <auth@${env.VITE_PROD_EMAIL_DOMAIN}>`
 
+await redis.connect()
+
 export const auth = betterAuth({
   account: {
     modelName: getTableName('accounts'),

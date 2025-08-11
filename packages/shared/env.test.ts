@@ -38,11 +38,6 @@ effect('env should have expected server variables structure', () =>
     expect(() => env.DB_PORT).not.toThrow()
     expect(() => env.DB_USERNAME).not.toThrow()
 
-    // Redis variables
-    expect(() => env.REDIS_URL).not.toThrow()
-    expect(() => env.UPSTASH_REDIS_REST_TOKEN).not.toThrow()
-    expect(() => env.UPSTASH_REDIS_REST_URL).not.toThrow()
-
     // Zero variables
     expect(() => env.ZERO_UPSTREAM_DB).not.toThrow()
     expect(() => env.ZERO_CVR_DB).not.toThrow()

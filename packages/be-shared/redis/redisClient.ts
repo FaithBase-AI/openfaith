@@ -1,3 +1,5 @@
-import { Redis } from '@upstash/redis'
+import { createClient } from 'redis'
 
-export const redis = Redis.fromEnv()
+export const redis = createClient({
+  url: 'redis://localhost:6379',
+})
