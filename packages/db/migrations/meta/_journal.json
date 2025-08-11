@@ -126,6 +126,13 @@
       "tag": "0017_wet_genesis",
       "version": "7",
       "when": 1754859867361
+    },
+    {
+      "breakpoints": true,
+      "idx": 18,
+      "tag": "0018_odd_wild_pack",
+      "version": "7",
+      "when": 1754937895017
     }
   ],
   "version": "7"

@@ -1,5 +1,12 @@
 import { adapterTokenRelations } from '@openfaith/db/schema/adaptersRelations'
 import { adapterTokensTable } from '@openfaith/db/schema/adaptersSchema'
+import { clusterLocksTable } from '@openfaith/db/schema/cluster/clusterLocksSchema'
+import { clusterMessagesRelations } from '@openfaith/db/schema/cluster/clusterMessagesRelations'
+import { clusterMessagesTable } from '@openfaith/db/schema/cluster/clusterMessagesSchema'
+import { clusterRepliesRelations } from '@openfaith/db/schema/cluster/clusterRepliesRelations'
+import { clusterRepliesTable } from '@openfaith/db/schema/cluster/clusterRepliesSchema'
+import { clusterRunnersTable } from '@openfaith/db/schema/cluster/clusterRunnersSchema'
+import { clusterShardsTable } from '@openfaith/db/schema/cluster/clusterShardsSchema'
 import { edgeRelations } from '@openfaith/db/schema/modules/edgesRelations'
 import { edgesTable } from '@openfaith/db/schema/modules/edgesSchema'
 import { externalLinksRelations } from '@openfaith/db/schema/modules/externalLinksRelations'
@@ -29,13 +36,20 @@ import { jwksTable, usersTable, verificationsTable } from '@openfaith/db/schema/
 
 export const schema = {
   adapterTokenRelations,
-  adapterTokenTable: adapterTokensTable,
+  adapterTokensTable,
+  clusterLocksTable,
+  clusterMessagesRelations,
+  clusterMessagesTable,
+  clusterRepliesRelations,
+  clusterRepliesTable,
+  clusterRunnersTable,
+  clusterShardsTable,
   edgeRelations,
-  edgeTable: edgesTable,
+  edgesTable,
   externalLinksRelations,
   externalLinksTable,
   folderRelations,
-  folderTable: foldersTable,
+  foldersTable,
   invitationsRelations,
   invitationsTable,
   jwksTable,
