@@ -345,11 +345,11 @@ export const auth = betterAuth({
       await redis.del(key)
     },
     get: async (key) => {
-      const value = await redis.get<string>(key)
-      return value ? JSON.stringify(value) : null
+      const value = await redis.get(key)
+      return value ? value : null
     },
     set: async (key, value, ttl) => {
-      if (ttl) await redis.set(key, value, { ex: ttl })
+      if (ttl) await redis.set(key, value, { EX: ttl })
       // or for ioredis:
       // if (ttl) await redis.set(key, value, 'EX', ttl)
       else await redis.set(key, value)
