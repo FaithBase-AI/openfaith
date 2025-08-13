@@ -21,6 +21,7 @@ import type {
 import { collectionViewsAtom, getCollectionView } from '@openfaith/ui/shared/globalState'
 import { Array, pipe } from 'effect'
 import { useAtom } from 'jotai'
+import { useTheme } from 'next-themes'
 import type { ReactNode } from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import useMeasure from 'react-use-measure'
@@ -175,6 +176,8 @@ export const CollectionDataGrid = <
   // Don't render grid until we have dimensions
   const shouldRenderGrid = bounds.width > 0 && bounds.height > 0
 
+  const { theme } = useTheme()
+
   return (
     <div className='flex h-full flex-col'>
       <CollectionToolbarDataGrid<TData, TColumns>
@@ -205,6 +208,7 @@ export const CollectionDataGrid = <
               rows={data.length}
               smoothScrollX={true}
               smoothScrollY={true}
+              theme={theme === 'dark' ? _darkTheme : undefined}
               width={gridWidth}
             />
           )}
@@ -212,4 +216,41 @@ export const CollectionDataGrid = <
       )}
     </div>
   )
+}
+
+const _darkTheme = {
+  accentColor: '#8c96ff',
+  accentLight: 'rgba(202, 206, 255, 0.253)',
+  baseFontStyle: '13px',
+
+  bgBubble: '#212121',
+  bgBubbleSelected: '#000000',
+
+  bgCell: '#16161b',
+  bgCellMedium: '#202027',
+  bgHeader: '#212121',
+  bgHeaderHasFocus: '#474747',
+  bgHeaderHovered: '#404040',
+
+  bgIconHeader: '#b8b8b8',
+
+  bgSearchResult: '#423c24',
+
+  borderColor: 'rgba(225,225,225,0.2)',
+  checkboxMaxSize: 18,
+  drilldownBorder: 'rgba(225,225,225,0.4)',
+  fgIconHeader: '#000000',
+  fontFamily:
+    'Inter, Roboto, -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Ubuntu, noto, arial, sans-serif',
+
+  headerFontStyle: 'bold 14px',
+
+  linkColor: '#4F5DFF',
+  textBubble: '#ffffff',
+
+  textDark: '#ffffff',
+  textHeader: '#a1a1a1',
+  textHeaderSelected: '#000000',
+  textLight: '#a0a0a0',
+  textMedium: '#b8b8b8',
 }
