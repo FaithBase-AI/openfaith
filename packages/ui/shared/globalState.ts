@@ -1,8 +1,38 @@
 import { HashMap, Match, Option, pipe } from 'effect'
 import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
+import type { ComponentType } from 'react'
 
 export type CollectionView = 'table' | 'cards'
+
+export type CachedEntityConfig = {
+  tag: string
+  module: string
+  title: string
+  url: string
+  iconName: string
+  enabled: boolean
+}
+
+export type EntityUiCache = {
+  entities: Array<CachedEntityConfig>
+  timestamp: number
+}
+
+export const ENTITY_UI_CACHE_TTL = 24 * 60 * 60 * 1000
+
+export const isEntityUiCacheValid = (cache: EntityUiCache | null): boolean => {
+  if (!cache) {
+    return false
+  }
+  return Date.now() - cache.timestamp < ENTITY_UI_CACHE_TTL
+}
+
+export const entityUiCacheAtom = atomWithStorage<EntityUiCache | null>('entityUiCache', null)
+
+export const entityIconComponentsAtom = atom<HashMap.HashMap<string, ComponentType>>(
+  HashMap.empty<string, ComponentType>(),
+)
 
 const getDefaultCollectionView = (): CollectionView => 'table'
 

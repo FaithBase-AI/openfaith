@@ -1,8 +1,10 @@
-import { expect } from 'bun:test'
+import { describe, expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
 import {
+  type CachedEntityConfig,
   type CollectionView,
   collectionViewMatch,
+  type EntityUiCache,
   getCollectionView,
   setCollectionView,
 } from '@openfaith/ui/shared/globalState'
@@ -364,3 +366,115 @@ effect('Performance test: should handle large HashMap efficiently', () =>
     expect(getCollectionView(views, 'key-999')).toBe('cards')
   }),
 )
+
+// Additional tests for entity cache functionality
+describe('isEntityNavCacheValid', () => {
+  effect('returns false for null cache', () =>
+    Effect.gen(function* () {
+      const { isEntityUiCacheValid: isEntityNavCacheValid } = yield* Effect.promise(
+        () => import('@openfaith/ui/shared/globalState'),
+      )
+      const result = isEntityNavCacheValid(null)
+      expect(result).toBe(false)
+    }),
+  )
+
+  effect('returns false for expired cache', () =>
+    Effect.gen(function* () {
+      const {
+        isEntityUiCacheValid: isEntityNavCacheValid,
+        ENTITY_UI_CACHE_TTL: ENTITY_NAV_CACHE_TTL,
+      } = yield* Effect.promise(() => import('@openfaith/ui/shared/globalState'))
+      const expiredCache: EntityUiCache = {
+        entities: [],
+        timestamp: Date.now() - (ENTITY_NAV_CACHE_TTL + 1000), // 1 second past TTL
+      }
+
+      const result = isEntityNavCacheValid(expiredCache)
+      expect(result).toBe(false)
+    }),
+  )
+
+  effect('returns true for valid cache', () =>
+    Effect.gen(function* () {
+      const { isEntityUiCacheValid: isEntityNavCacheValid } = yield* Effect.promise(
+        () => import('@openfaith/ui/shared/globalState'),
+      )
+      const validCache: EntityUiCache = {
+        entities: [],
+        timestamp: Date.now() - 1000, // 1 second old
+      }
+
+      const result = isEntityNavCacheValid(validCache)
+      expect(result).toBe(true)
+    }),
+  )
+
+  effect('handles edge case at exactly TTL', () =>
+    Effect.gen(function* () {
+      const {
+        isEntityUiCacheValid: isEntityNavCacheValid,
+        ENTITY_UI_CACHE_TTL: ENTITY_NAV_CACHE_TTL,
+      } = yield* Effect.promise(() => import('@openfaith/ui/shared/globalState'))
+      const edgeCache: EntityUiCache = {
+        entities: [],
+        timestamp: Date.now() - ENTITY_NAV_CACHE_TTL,
+      }
+
+      const result = isEntityNavCacheValid(edgeCache)
+      expect(result).toBe(false) // Should be invalid at exactly TTL
+    }),
+  )
+
+  effect('handles cache with entities', () =>
+    Effect.gen(function* () {
+      const { isEntityUiCacheValid: isEntityNavCacheValid } = yield* Effect.promise(
+        () => import('@openfaith/ui/shared/globalState'),
+      )
+      const cachedEntities: Array<CachedEntityConfig> = [
+        {
+          enabled: true,
+          iconName: 'personIcon',
+          module: 'directory',
+          tag: 'Person',
+          title: 'People',
+          url: '/app/directory/people',
+        },
+        {
+          enabled: true,
+          iconName: 'groupIcon',
+          module: 'directory',
+          tag: 'Group',
+          title: 'Groups',
+          url: '/app/directory/groups',
+        },
+      ]
+
+      const cacheWithEntities: EntityUiCache = {
+        entities: cachedEntities,
+        timestamp: Date.now() - 1000,
+      }
+
+      const result = isEntityNavCacheValid(cacheWithEntities)
+      expect(result).toBe(true)
+      expect(cacheWithEntities.entities).toHaveLength(2)
+    }),
+  )
+})
+
+describe('Entity cache TTL', () => {
+  effect('TTL is correct duration', () =>
+    Effect.gen(function* () {
+      const { ENTITY_UI_CACHE_TTL: ENTITY_NAV_CACHE_TTL } = yield* Effect.promise(
+        () => import('@openfaith/ui/shared/globalState'),
+      )
+      // TTL should be 24 hours in milliseconds
+      const expectedTTL = 24 * 60 * 60 * 1000
+      expect(ENTITY_NAV_CACHE_TTL).toBe(expectedTTL)
+
+      // Verify it's 24 hours
+      const hours = ENTITY_NAV_CACHE_TTL / (60 * 60 * 1000)
+      expect(hours).toBe(24)
+    }),
+  )
+})
