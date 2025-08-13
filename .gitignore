@@ -40,3 +40,5 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 packages/zero/zero.db*
 
 .tanstack
+.nitro
+.output
