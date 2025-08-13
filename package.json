@@ -100,5 +100,8 @@
       "packages/*",
       "tooling/*"
     ]
+  },
+  "patchedDependencies": {
+    "@rocicorp/zero@0.22.2025080200": "patches/@rocicorp%2Fzero@0.22.2025080200.patch"
   }
 }

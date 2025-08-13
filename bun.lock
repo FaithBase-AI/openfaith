@@ -415,6 +415,9 @@
   "trustedDependencies": [
     "@rocicorp/zero-sqlite3",
   ],
+  "patchedDependencies": {
+    "@rocicorp/zero@0.22.2025080200": "patches/@rocicorp%2Fzero@0.22.2025080200.patch",
+  },
   "overrides": {
     "@effect/cluster": "0.46.0",
     "@effect/experimental": "0.54.0",
