@@ -1,5 +1,5 @@
-import { pgTable } from '@openfaith/db/_table'
 import { createInsertSchema, createSelectSchema } from '@openfaith/db/drizzleEffect'
+import { pgTable } from 'drizzle-orm/pg-core'
 
 export const clusterShardsTable = pgTable('cluster_shards', (d) => ({
   address: d.varchar({ length: 255 }),

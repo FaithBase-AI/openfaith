@@ -11,7 +11,7 @@ import { Schema } from 'effect'
 export { schema, type ZSchema }
 
 export const AuthData = Schema.Struct({
-  activeOrganizationId: Schema.Union(Schema.String, Schema.Null),
+  activeOrganizationId: Schema.optional(Schema.Union(Schema.String, Schema.Null)),
   aud: Schema.String,
   banExpires: Schema.Union(Schema.Number, Schema.Null),
   banned: Schema.Union(Schema.Boolean, Schema.Null),

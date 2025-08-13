@@ -1,23 +1,22 @@
-import { pgTable } from '@openfaith/db/_table'
 import { createInsertSchema, createSelectSchema } from '@openfaith/db/drizzleEffect'
-import { foreignKey, index, unique } from 'drizzle-orm/pg-core'
+import { foreignKey, index, pgTable, unique } from 'drizzle-orm/pg-core'
 
 export const clusterMessagesTable = pgTable(
   'cluster_messages',
   (d) => ({
-    deliverAt: d.varchar('deliver_at', { length: 255 }),
+    deliverAt: d.bigint('deliver_at', { mode: 'bigint' }),
     entityId: d.varchar('entity_id', { length: 255 }).notNull(),
     entityType: d.varchar('entity_type', { length: 50 }).notNull(),
     headers: d.text(),
-    id: d.text().primaryKey(),
+    id: d.bigint({ mode: 'bigint' }).primaryKey(),
     kind: d.integer().notNull(),
     lastRead: d.timestamp('last_read'),
-    lastReplyId: d.varchar('last_reply_id', { length: 255 }),
+    lastReplyId: d.bigint('last_reply_id', { mode: 'bigint' }),
     messageId: d.varchar('message_id', { length: 255 }),
     payload: d.text(),
     processed: d.boolean().notNull().default(false),
-    replyId: d.varchar('reply_id', { length: 255 }),
-    requestId: d.varchar('request_id', { length: 255 }).notNull(),
+    replyId: d.bigint('reply_id', { mode: 'bigint' }),
+    requestId: d.bigint('request_id', { mode: 'bigint' }).notNull(),
     rowid: d.integer().generatedAlwaysAsIdentity(),
     sampled: d.boolean(),
     shardId: d.varchar('shard_id', { length: 50 }).notNull(),

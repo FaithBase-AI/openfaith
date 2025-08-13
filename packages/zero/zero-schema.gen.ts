@@ -75,6 +75,50 @@ export const schema = {
         },
       ],
     },
+    clusterMessages: {
+      childMessages: [
+        {
+          cardinality: 'many',
+          destField: ['requestId'],
+          destSchema: 'clusterMessages',
+          sourceField: ['id'],
+        },
+      ],
+      lastReply: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'clusterReplies',
+          sourceField: ['lastReplyId'],
+        },
+      ],
+      replies: [
+        {
+          cardinality: 'many',
+          destField: ['requestId'],
+          destSchema: 'clusterReplies',
+          sourceField: ['id'],
+        },
+      ],
+      request: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'clusterMessages',
+          sourceField: ['requestId'],
+        },
+      ],
+    },
+    clusterReplies: {
+      request: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'clusterMessages',
+          sourceField: ['requestId'],
+        },
+      ],
+    },
     edges: {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
       sourceAddress: [
@@ -1267,6 +1311,353 @@ export const schema = {
       name: 'campuses',
       primaryKey: ['id'],
       serverName: 'openfaith_campuses',
+    },
+    clusterLocks: {
+      columns: {
+        acquiredAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterLocksTable',
+            'acquiredAt'
+          >,
+          optional: false,
+          serverName: 'acquired_at',
+          type: 'number',
+        },
+        address: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterLocksTable',
+            'address'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        shardId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterLocksTable',
+            'shardId'
+          >,
+          optional: false,
+          serverName: 'shard_id',
+          type: 'string',
+        },
+      },
+      name: 'clusterLocks',
+      primaryKey: ['shardId'],
+      serverName: 'cluster_locks',
+    },
+    clusterMessages: {
+      columns: {
+        deliverAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'deliverAt'
+          >,
+          optional: true,
+          serverName: 'deliver_at',
+          type: 'number',
+        },
+        entityId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'entityId'
+          >,
+          optional: false,
+          serverName: 'entity_id',
+          type: 'string',
+        },
+        entityType: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'entityType'
+          >,
+          optional: false,
+          serverName: 'entity_type',
+          type: 'string',
+        },
+        headers: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'headers'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        id: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'id'
+          >,
+          optional: false,
+          type: 'number',
+        },
+        kind: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'kind'
+          >,
+          optional: false,
+          type: 'number',
+        },
+        lastRead: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'lastRead'
+          >,
+          optional: true,
+          serverName: 'last_read',
+          type: 'number',
+        },
+        lastReplyId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'lastReplyId'
+          >,
+          optional: true,
+          serverName: 'last_reply_id',
+          type: 'number',
+        },
+        messageId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'messageId'
+          >,
+          optional: true,
+          serverName: 'message_id',
+          type: 'string',
+        },
+        payload: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'payload'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        processed: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'processed'
+          >,
+          optional: true,
+          type: 'boolean',
+        },
+        replyId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'replyId'
+          >,
+          optional: true,
+          serverName: 'reply_id',
+          type: 'number',
+        },
+        requestId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'requestId'
+          >,
+          optional: false,
+          serverName: 'request_id',
+          type: 'number',
+        },
+        rowid: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'rowid'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        sampled: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'sampled'
+          >,
+          optional: true,
+          type: 'boolean',
+        },
+        shardId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'shardId'
+          >,
+          optional: false,
+          serverName: 'shard_id',
+          type: 'string',
+        },
+        spanId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'spanId'
+          >,
+          optional: true,
+          serverName: 'span_id',
+          type: 'string',
+        },
+        tag: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'tag'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        traceId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterMessagesTable',
+            'traceId'
+          >,
+          optional: true,
+          serverName: 'trace_id',
+          type: 'string',
+        },
+      },
+      name: 'clusterMessages',
+      primaryKey: ['id'],
+      serverName: 'cluster_messages',
+    },
+    clusterReplies: {
+      columns: {
+        acked: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterRepliesTable',
+            'acked'
+          >,
+          optional: true,
+          type: 'boolean',
+        },
+        id: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterRepliesTable',
+            'id'
+          >,
+          optional: false,
+          type: 'number',
+        },
+        kind: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterRepliesTable',
+            'kind'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        payload: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterRepliesTable',
+            'payload'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        requestId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterRepliesTable',
+            'requestId'
+          >,
+          optional: false,
+          serverName: 'request_id',
+          type: 'number',
+        },
+        rowid: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterRepliesTable',
+            'rowid'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        sequence: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterRepliesTable',
+            'sequence'
+          >,
+          optional: true,
+          type: 'number',
+        },
+      },
+      name: 'clusterReplies',
+      primaryKey: ['id'],
+      serverName: 'cluster_replies',
+    },
+    clusterRunners: {
+      columns: {
+        address: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterRunnersTable',
+            'address'
+          >,
+          optional: false,
+          type: 'string',
+        },
+        runner: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterRunnersTable',
+            'runner'
+          >,
+          optional: false,
+          type: 'string',
+        },
+      },
+      name: 'clusterRunners',
+      primaryKey: ['address'],
+      serverName: 'cluster_runners',
+    },
+    clusterShards: {
+      columns: {
+        address: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterShardsTable',
+            'address'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        shardId: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'clusterShardsTable',
+            'shardId'
+          >,
+          optional: false,
+          serverName: 'shard_id',
+          type: 'string',
+        },
+      },
+      name: 'clusterShards',
+      primaryKey: ['shardId'],
+      serverName: 'cluster_shards',
     },
     edges: {
       columns: {

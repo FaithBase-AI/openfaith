@@ -1,7 +1,6 @@
-import { pgTable } from '@openfaith/db/_table'
 import { createInsertSchema, createSelectSchema } from '@openfaith/db/drizzleEffect'
 import { clusterMessagesTable } from '@openfaith/db/schema/cluster/clusterMessagesSchema'
-import { foreignKey, index, unique } from 'drizzle-orm/pg-core'
+import { foreignKey, index, pgTable, unique } from 'drizzle-orm/pg-core'
 
 export const clusterRepliesTable = pgTable(
   'cluster_replies',

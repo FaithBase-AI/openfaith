@@ -90,7 +90,8 @@ export function IntegrationsComponent() {
 
   const z = useZero()
 
-  const [person] = useQuery(z.query.people.where('id', 'person_01k0y864sffzxa92xaqb5qhebg').one())
+  const [person] = useQuery(z.query.people.where('id', 'person_01k2dcnqhte038a2yfnbvk0ccx').one())
+
 
   return (
     <div className={'mx-auto flex max-w-3xl flex-col gap-4 p-4'}>
@@ -101,7 +102,7 @@ export function IntegrationsComponent() {
         onClick={() =>
           z.mutate.people.update({
             firstName: `Yeeeeeet ${new Date().toISOString()}`,
-            id: 'person_01k0y864sffzxa92xaqb5qhebg',
+            id: 'person_01k2dcnqhte038a2yfnbvk0ccx',
           })
         }
         variant={'secondary'}
