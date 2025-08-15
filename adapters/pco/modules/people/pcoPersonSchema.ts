@@ -163,24 +163,14 @@ export const getTransformer = <A, I, R>(
 // Convenience function specifically for PcoPerson
 export const getPcoPersonTransformer = () => getTransformer(PcoPerson)
 
-/**
- * Person Created Webhook Event
- */
 export class PcoPersonCreatedWebhook extends Schema.Class<PcoPersonCreatedWebhook>(
   'PcoPersonCreatedWebhook',
 )(mkPcoWebhookDelivery('people.v2.events.person.created', PcoPerson)) {}
 
-/**
- * Person Updated Webhook Event
- */
 export class PcoPersonUpdatedWebhook extends Schema.Class<PcoPersonUpdatedWebhook>(
   'PcoPersonUpdatedWebhook',
 )(mkPcoWebhookDelivery('people.v2.events.person.updated', PcoPerson)) {}
 
-/**
- * Person Destroyed Webhook Event
- * Destroyed events only contain minimal data (id and type)
- */
 export class PcoPersonDestroyedWebhook extends Schema.Class<PcoPersonDestroyedWebhook>(
   'PcoPersonDestroyedWebhook',
 )(
@@ -197,10 +187,6 @@ export class PcoPersonDestroyedWebhook extends Schema.Class<PcoPersonDestroyedWe
   ),
 ) {}
 
-/**
- * Person Merger Webhook Event
- * Special event that contains relationship data for merging two person records
- */
 export class PcoPersonMergerWebhook extends Schema.Class<PcoPersonMergerWebhook>(
   'PcoPersonMergerWebhook',
 )(
