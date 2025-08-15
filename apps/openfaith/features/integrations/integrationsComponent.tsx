@@ -92,7 +92,6 @@ export function IntegrationsComponent() {
 
   const [person] = useQuery(z.query.people.where('id', 'person_01k2dcnqhte038a2yfnbvk0ccx').one())
 
-
   return (
     <div className={'mx-auto flex max-w-3xl flex-col gap-4 p-4'}>
       <Button loading={isPending} onClick={() => testFunction()}>
