@@ -58,7 +58,6 @@ const ScrollShadow: FC<ScrollShadowProps> = (props) => {
 
   const { scrollXProgress, scrollYProgress, scrollY, scrollX } = useScroll({
     container: scrollAreaViewportRef,
-    layoutEffect: false,
   })
 
   // Create a flag to track if content can be scrolled
@@ -66,7 +65,7 @@ const ScrollShadow: FC<ScrollShadowProps> = (props) => {
   const [canScrollY, setCanScrollY] = useState(false)
 
   // Use motion value event to update the scrollable state
-  useMotionValueEvent(scrollX, 'renderRequest', () => {
+  useMotionValueEvent(scrollX, 'change', () => {
     const isScrollable = !(scrollXProgress.get() === 1 && scrollX.get() === 0)
 
     // const isScrollable = !(scrollXProgress.get() === 1 && scrollX.get() === 0)
@@ -75,7 +74,7 @@ const ScrollShadow: FC<ScrollShadowProps> = (props) => {
     }
   })
 
-  useMotionValueEvent(scrollY, 'renderRequest', () => {
+  useMotionValueEvent(scrollY, 'change', () => {
     const isScrollable = !(scrollYProgress.get() === 1 && scrollY.get() === 0)
 
     if (canScrollY !== isScrollable) {
