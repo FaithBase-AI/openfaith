@@ -1,5 +1,12 @@
 import { pcoApiAdapter } from '@openfaith/pco/api/pcoApiAdapter'
-import { PcoPerson } from '@openfaith/pco/modules/people/pcoPersonSchema'
+import { pcoWebhookAdapter } from '@openfaith/pco/api/pcoWebhookAdapter'
+import {
+  PcoPerson,
+  PcoPersonCreatedWebhook,
+  PcoPersonUpdatedWebhook,
+  PcoPersonDestroyedWebhook,
+  PcoPersonMergerWebhook,
+} from '@openfaith/pco/modules/people/pcoPersonSchema'
 
 /**
  * Endpoint definition for retrieving all people from PCO
@@ -153,3 +160,53 @@ export const deletePersonDefinition = pcoApiAdapter({
   name: 'delete',
   path: '/people/v2/people/:personId',
 } as const)
+
+// ============================================================================
+// Webhook Definitions
+// ============================================================================
+
+/**
+ * Person Created Webhook
+ */
+export const personCreatedWebhook = pcoWebhookAdapter({
+  webhookSchema: PcoPersonCreatedWebhook,
+  eventType: 'people.v2.events.person.created',
+  operation: 'upsert',
+  extractEntityId: (event) => event.attributes.payload.data.id,
+})
+
+/**
+ * Person Updated Webhook
+ */
+export const personUpdatedWebhook = pcoWebhookAdapter({
+  webhookSchema: PcoPersonUpdatedWebhook,
+  eventType: 'people.v2.events.person.updated',
+  operation: 'upsert',
+  extractEntityId: (event) => event.attributes.payload.data.id,
+})
+
+/**
+ * Person Destroyed Webhook
+ */
+export const personDestroyedWebhook = pcoWebhookAdapter({
+  webhookSchema: PcoPersonDestroyedWebhook,
+  eventType: 'people.v2.events.person.destroyed',
+  operation: 'delete',
+  extractEntityId: (event) => event.attributes.payload.data.id,
+})
+
+/**
+ * Person Merger Webhook
+ */
+export const personMergerWebhook = pcoWebhookAdapter({
+  webhookSchema: PcoPersonMergerWebhook,
+  eventType: 'people.v2.events.person_merger.created',
+  operation: 'merge',
+  extractEntityId: (event) => {
+    const data = event.attributes.payload.data
+    return {
+      keepId: data.relationships.person_to_keep.data.id,
+      removeId: data.relationships.person_to_remove.data.id,
+    }
+  },
+})
