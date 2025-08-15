@@ -4,11 +4,13 @@ import '@glideapps/glide-data-grid/dist/index.css'
 
 import type { GridCell, Item } from '@glideapps/glide-data-grid'
 import { GridCellKind } from '@glideapps/glide-data-grid'
+import type { Edge } from '@openfaith/db'
 import { extractEntityInfo } from '@openfaith/schema'
 import { CollectionDataGrid } from '@openfaith/ui/components/collections/collectionDataGrid'
 import { Button } from '@openfaith/ui/components/ui/button'
 import {
   buildEntityRelationshipsForTable,
+  createEntityNamesFetcher,
   useSchemaCollection,
   useSchemaUpdate,
 } from '@openfaith/ui/shared/hooks/schemaHooks'
@@ -23,12 +25,13 @@ import {
   generateDataGridRelationColumns,
 } from '@openfaith/ui/table/dataGridRelationColumnGenerator'
 import { generateFilterConfig } from '@openfaith/ui/table/filterGenerator'
+import { getRelatedEntityIds } from '@openfaith/ui/table/relationColumnGenerator'
 import { getBaseEntityRelationshipsQuery } from '@openfaith/zero/baseQueries'
 import { useZero } from '@openfaith/zero/useZero'
 import { useQuery } from '@rocicorp/zero/react'
-import { Array, pipe, type Schema, String } from 'effect'
+import { Array, HashMap, Option, pipe, type Schema, String } from 'effect'
 import type { ReactNode } from 'react'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 export interface UniversalDataGridProps<T> {
   schema: Schema.Schema<T>
@@ -39,8 +42,8 @@ export interface UniversalDataGridProps<T> {
   className?: string
   showRowNumbers?: boolean
   Actions?: ReactNode
-  showRelations?: boolean // Show relation columns (default: true)
-  editable?: boolean // Enable cell editing (default: true)
+  showRelations?: boolean
+  editable?: boolean
   filtering?: {
     filterPlaceHolder?: string
     filterColumnId?: string
@@ -85,6 +88,34 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
 
   // Fetch entity relationships for this entity type
   const z = useZero()
+
+  // State to store entity names cache using HashMap for better performance
+  const [entityNamesCache, setEntityNamesCache] = useState<
+    HashMap.HashMap<string, HashMap.HashMap<string, string>>
+  >(HashMap.empty())
+
+  // Helper to update the cache
+  const updateCache = useCallback((entityType: string, entityId: string, displayName: string) => {
+    setEntityNamesCache((prev) => {
+      const existingType = pipe(prev, HashMap.get(entityType))
+
+      return pipe(
+        existingType,
+        Option.match({
+          onNone: () => pipe(prev, HashMap.set(entityType, HashMap.make([entityId, displayName]))),
+          onSome: (existing) =>
+            pipe(prev, HashMap.set(entityType, pipe(existing, HashMap.set(entityId, displayName)))),
+        }),
+      )
+    })
+  }, [])
+
+  // Create the entity names fetcher
+  const fetchEntityNames = useMemo(
+    () => createEntityNamesFetcher(z, entityNamesCache, updateCache),
+    [z, entityNamesCache, updateCache],
+  )
+
   const entityRelationshipsQuery = useMemo(() => {
     if (!showRelations || !entityInfo.entityName) {
       return null
@@ -166,8 +197,42 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
 
       // Handle relation columns
       if (pipe(column.id, String.startsWith('relation_'))) {
-        // For now, show placeholder for relation columns
-        return getRelationCell()
+        // Extract the target entity type from the column id
+        const targetEntityType = pipe(column.id, String.replace('relation_', ''))
+
+        // Get edges from the data row
+        const entityId = (dataRow as any).id as string
+        const sourceEdges = ((dataRow as any).sourceEdges || []) as Array<Edge>
+        const targetEdges = ((dataRow as any).targetEdges || []) as Array<Edge>
+
+        // Get related entity IDs using the helper function
+        const relatedIds = getRelatedEntityIds(entityId, targetEntityType, sourceEdges, targetEdges)
+
+        // Fetch entity names if we don't have them yet
+        if (relatedIds.length > 0) {
+          fetchEntityNames(targetEntityType, relatedIds)
+        }
+
+        // Get cached names for this entity type
+        const entityNames = pipe(
+          entityNamesCache,
+          HashMap.get(targetEntityType),
+          Option.map((typeCache) => {
+            // Convert HashMap to plain object for getRelationCell
+            const names: Record<string, string> = {}
+            pipe(
+              typeCache,
+              HashMap.forEach((value, key) => {
+                names[key] = value
+              }),
+            )
+            return names
+          }),
+          Option.getOrElse(() => ({}) as Record<string, string>),
+        )
+
+        // Return cell with badges for related entities
+        return getRelationCell(relatedIds, entityNames) // Show all badges with names
       }
 
       // Get the field using the column id
@@ -184,7 +249,7 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
       const value = dataRow[field.key as keyof T]
       return getGridCellContent(field, value, editable)
     },
-    [collection, columns, columnIdToField, editable],
+    [collection, columns, columnIdToField, editable, fetchEntityNames, entityNamesCache],
   )
 
   // Handle cell edit

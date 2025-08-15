@@ -1,4 +1,3 @@
-import { useEntityIcons } from '@openfaith/openfaith/components/navigation/schemaNavigation'
 import {
   getSchemaEditState,
   getSchemaQuickActionState,
@@ -8,62 +7,26 @@ import {
   setSchemaQuickActionState,
 } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import type { CommandMenuType } from '@openfaith/openfaith/features/quickActions/quickActionsTypes'
-import { discoverUiEntities, type EntityUiConfig } from '@openfaith/schema'
-import { singularize } from '@openfaith/shared'
-import { Array, HashMap, Option, pipe, String } from 'effect'
+import type { EntityUiConfig } from '@openfaith/schema'
+import { useEntityRegistry } from '@openfaith/ui'
+import { Array, pipe } from 'effect'
 import { useAtom } from 'jotai'
 import { createElement, useMemo } from 'react'
 
-export interface QuickActionConfig extends EntityUiConfig {
-  quickActionKey: string
+export type QuickActionConfig = EntityUiConfig & {
   createTitle: string
-}
-
-export const discoverQuickActions = (): Array<QuickActionConfig> => {
-  const entities = discoverUiEntities()
-
-  return pipe(
-    entities,
-    Array.filterMap((entity) => {
-      if (!entity.navConfig.enabled) {
-        return Option.none()
-      }
-
-      const quickActionKey = `create${pipe(entity.tag, String.capitalize)}`
-      const title = typeof entity.navItem.title === 'string' ? entity.navItem.title : 'Item'
-      const createTitle = `Create ${singularize(title)}`
-
-      return Option.some({
-        ...entity,
-        createTitle,
-        quickActionKey,
-      })
-    }),
-  )
-}
-
-// Shared hook for common quick action logic
-const useQuickActionsBase = () => {
-  const quickActions = useMemo(() => discoverQuickActions(), [])
-  const { iconComponents } = useEntityIcons(quickActions)
-
-  return { iconComponents, quickActions }
+  quickActionKey: string
 }
 
 export const useSchemaQuickActions = () => {
   const [quickActionStates, setQuickActionStates] = useAtom(schemaQuickActionStatesAtom)
-  const { quickActions, iconComponents } = useQuickActionsBase()
+  const { quickActions, getEntityIcon, iconComponents } = useEntityRegistry()
 
   const commandMenuItems = useMemo((): ReadonlyArray<CommandMenuType> => {
     return pipe(
       quickActions,
       Array.map((quickAction) => ({
-        icon: pipe(
-          iconComponents,
-          HashMap.get(quickAction.tag),
-          Option.map(createElement),
-          Option.getOrNull,
-        ),
+        icon: createElement(getEntityIcon(quickAction.tag)),
         name: quickAction.createTitle,
         onSelect: () => {
           setQuickActionStates((current) =>
@@ -72,7 +35,7 @@ export const useSchemaQuickActions = () => {
         },
       })),
     )
-  }, [quickActions, iconComponents, setQuickActionStates])
+  }, [quickActions, getEntityIcon, setQuickActionStates])
 
   const getIsOpen = (quickActionKey: string): boolean =>
     getSchemaQuickActionState(quickActionStates, quickActionKey)
@@ -92,7 +55,7 @@ export const useSchemaQuickActions = () => {
 
 export const useSchemaEditActions = () => {
   const [editStates, setEditStates] = useAtom(schemaEditStatesAtom)
-  const { quickActions, iconComponents } = useQuickActionsBase()
+  const { quickActions, getEntityIcon, iconComponents } = useEntityRegistry()
 
   const getEditState = (entityTag: string): { isOpen: boolean; editData: any } =>
     getSchemaEditState(editStates, `edit${entityTag}`)
@@ -112,6 +75,7 @@ export const useSchemaEditActions = () => {
   return {
     closeEdit,
     getEditState,
+    getEntityIcon,
     iconComponents,
     openEdit,
     quickActions,

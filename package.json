@@ -22,6 +22,9 @@
   },
   "name": "openfaith",
   "packageManager": "bun@1.2.19",
+  "patchedDependencies": {
+    "@rocicorp/zero@0.22.2025080200": "patches/@rocicorp%2Fzero@0.22.2025080200.patch"
+  },
   "private": true,
   "resolutions": {
     "@effect/cluster": "0.46.0",
@@ -100,8 +103,5 @@
       "packages/*",
       "tooling/*"
     ]
-  },
-  "patchedDependencies": {
-    "@rocicorp/zero@0.22.2025080200": "patches/@rocicorp%2Fzero@0.22.2025080200.patch"
   }
 }

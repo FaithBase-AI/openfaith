@@ -1,11 +1,14 @@
 import { useSchemaQuickActions } from '@openfaith/openfaith/features/quickActions/schemaQuickActions'
-import { discoverUiEntities } from '@openfaith/schema'
-import { noOp, pluralize, singularize } from '@openfaith/shared'
-import { Button, PlusIcon, UniversalDataGrid } from '@openfaith/ui'
-import { useStableMemo } from '@openfaith/ui/shared/hooks/memo'
+import { noOp, singularize } from '@openfaith/shared'
+import {
+  Button,
+  PlusIcon,
+  UniversalDataGrid,
+  useCachedEntityByUrl,
+  useStableMemo,
+} from '@openfaith/ui'
 import { createFileRoute } from '@tanstack/react-router'
-import { Array, Equivalence, Option, pipe, String } from 'effect'
-import { useMemo } from 'react'
+import { Equivalence, Option, pipe, String } from 'effect'
 
 export const Route = createFileRoute('/_app/$group/$entity/')({
   component: RouteComponent,
@@ -15,44 +18,48 @@ function RouteComponent() {
   const { group, entity } = Route.useParams()
   const { setIsOpen } = useSchemaQuickActions()
 
-  // Discover entity configuration from schemas
-  const entityConfigOpt = useMemo(
-    () =>
-      pipe(
-        discoverUiEntities(),
-        Array.findFirst((e) => {
-          const entityPlural = pipe(e.tag, String.toLowerCase, pluralize)
-          return e.navConfig.module === group && entityPlural === entity
-        }),
-      ),
-    [group, entity],
-  )
+  const entityOpt = useCachedEntityByUrl(group, entity)
 
-  // Extract schema from entity config (it's already included)
   const entitySchemaOpt = useStableMemo(
     () =>
       pipe(
-        entityConfigOpt,
+        entityOpt,
         Option.map((config) => config.schema),
       ),
-    [entityConfigOpt],
-    Equivalence.array(Option.getEquivalence(Equivalence.strict())),
+    [entityOpt],
+    Equivalence.tuple(
+      Option.getEquivalence(
+        Equivalence.struct({
+          navItem: Equivalence.struct({
+            title: Equivalence.string,
+            url: Equivalence.string,
+          }),
+        }),
+      ),
+    ),
   )
 
-  // Generate the quick action key for this entity
   const quickActionKeyOpt = useStableMemo(
     () =>
       pipe(
-        entityConfigOpt,
+        entityOpt,
         Option.map((config) => {
           return `create${pipe(config.tag, String.capitalize)}`
         }),
       ),
-    [entityConfigOpt],
-    Equivalence.array(Option.getEquivalence(Equivalence.strict())),
+    [entityOpt],
+    Equivalence.tuple(
+      Option.getEquivalence(
+        Equivalence.struct({
+          navItem: Equivalence.struct({
+            title: Equivalence.string,
+            url: Equivalence.string,
+          }),
+        }),
+      ),
+    ),
   )
 
-  // Handle create button click
   const handleCreateClick = () => {
     pipe(
       quickActionKeyOpt,
@@ -66,7 +73,7 @@ function RouteComponent() {
   }
 
   return pipe(
-    entityConfigOpt,
+    entityOpt,
     Option.match({
       onNone: () => (
         <div>

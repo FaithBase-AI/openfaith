@@ -1,5 +1,5 @@
 import type { GridColumn } from '@glideapps/glide-data-grid'
-import { pluralize } from '@openfaith/shared'
+import { formatLabel } from '@openfaith/shared'
 import type { UiEntityRelationships } from '@openfaith/ui/shared/hooks/schemaHooks'
 import { Array, pipe } from 'effect'
 
@@ -24,7 +24,7 @@ export const generateDataGridRelationColumns = (
           const column: GridColumn = {
             icon: 'headerArray',
             id: `relation_${targetEntityType}`,
-            title: pluralize(targetEntityType),
+            title: formatLabel(targetEntityType),
             width: 200,
           }
           return column

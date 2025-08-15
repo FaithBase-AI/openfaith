@@ -1,11 +1,13 @@
 import { Rx } from '@effect-rx/rx-react'
-import { useRxMutation } from '@openfaith/openfaith/shared/hooks/rxHooks'
-import { discoverUiEntities } from '@openfaith/schema/shared/entityDiscovery'
+import { useRxMutation, useRxQuery } from '@openfaith/openfaith/shared/hooks/rxHooks'
+import { discoverUiEntities, type EntityUiConfig } from '@openfaith/schema/shared/entityDiscovery'
 import { extractEntityInfo, extractEntityTag } from '@openfaith/schema/shared/introspection'
 import { OfForeignKey, OfRelations, type RelationConfig } from '@openfaith/schema/shared/schema'
-import { getEntityId, mkZeroTableName, nullOp } from '@openfaith/shared'
+import { getEntityId, mkZeroTableName, nullOp, pluralize, singularize } from '@openfaith/shared'
 import { toast } from '@openfaith/ui/components/ui/sonner'
+import { CircleIcon } from '@openfaith/ui/icons/circleIcon'
 import { useFilterQuery } from '@openfaith/ui/shared/hooks/useFilterQuery'
+import { getIconComponent } from '@openfaith/ui/shared/iconLoader'
 import type { ZSchema } from '@openfaith/zero'
 import {
   getBaseEntitiesQuery,
@@ -17,7 +19,9 @@ import type { Query } from '@rocicorp/zero'
 import { useQuery } from '@rocicorp/zero/react'
 import {
   Array,
+  Clock,
   Effect,
+  HashMap,
   Option,
   Order,
   pipe,
@@ -27,10 +31,330 @@ import {
   String,
 } from 'effect'
 import type { Option as OptionType } from 'effect/Option'
-import { useMemo } from 'react'
+import { atom, useAtom } from 'jotai'
+import { atomWithStorage } from 'jotai/utils'
+import type { ComponentType } from 'react'
+import { useEffect, useMemo } from 'react'
+
+export type CachedEntityConfig = {
+  tag: string
+  module: string
+  title: string
+  url: string
+  iconName: string
+  enabled: boolean
+}
+
+export type EntityUiCache = {
+  entities: Array<CachedEntityConfig>
+  timestamp: number
+}
+
+export const ENTITY_UI_CACHE_TTL = 24 * 60 * 60 * 1000
+
+export const isEntityUiCacheValid = (cache: EntityUiCache | null): boolean => {
+  if (!cache) {
+    return false
+  }
+  return Date.now() - cache.timestamp < ENTITY_UI_CACHE_TTL
+}
+
+export const entityUiCacheAtom = atomWithStorage<EntityUiCache | null>('entityUiCache', null)
+
+export const entityIconComponentsAtom = atom<HashMap.HashMap<string, ComponentType>>(
+  HashMap.empty<string, ComponentType>(),
+)
+
+export const loadAllEntityIcons = Effect.fn('loadAllEntityIcons')(function* (
+  entities: Array<EntityUiConfig>,
+) {
+  yield* Effect.annotateCurrentSpan('entityCount', entities.length)
+
+  const iconPairs = yield* pipe(
+    entities,
+    Array.map((entity) =>
+      pipe(
+        getIconComponent(entity.navItem.iconName),
+        Effect.map((IconComponent) => {
+          return [entity.tag, IconComponent] as const
+        }),
+      ),
+    ),
+    Effect.all,
+  )
+
+  return HashMap.fromIterable(iconPairs)
+})
+
+export const useEntityIcons = (entities: Array<EntityUiConfig>) => {
+  const entityIconsRx = useMemo(() => Rx.make(() => loadAllEntityIcons(entities)), [entities])
+
+  const query = useRxQuery(entityIconsRx)
+
+  return {
+    iconComponents: pipe(
+      query.dataOpt,
+      Option.getOrElse(() => HashMap.empty<string, ComponentType>()),
+    ),
+    isError: query.isError,
+    isSuccess: query.isSuccess,
+    loading: query.isPending || query.isIdle,
+  }
+}
+
+export const useEntityIcon = (entityType: string) => {
+  const entities = discoverUiEntities()
+
+  const entityConfigOpt = useMemo(
+    () =>
+      pipe(
+        entities,
+        Array.findFirst((entity) => entity.tag === entityType),
+      ),
+    [entities, entityType],
+  )
+
+  const iconName = pipe(
+    entityConfigOpt,
+    Option.map((entity) => entity.navItem.iconName),
+    Option.getOrElse(() => 'circleIcon'),
+  )
+
+  const iconRx = useMemo(() => Rx.make(() => getIconComponent(iconName)), [iconName])
+  const query = useRxQuery(iconRx)
+
+  return {
+    IconComponent: pipe(
+      query.dataOpt,
+      Option.getOrElse(() => CircleIcon),
+    ),
+    isError: query.isError,
+    isSuccess: query.isSuccess,
+    loading: query.isPending || query.isIdle,
+  }
+}
+
+export const useIconFromMap = (
+  iconComponents: HashMap.HashMap<string, ComponentType>,
+  entityType: string,
+) => {
+  return useMemo(
+    () =>
+      pipe(
+        iconComponents,
+        HashMap.get(entityType),
+        Option.getOrElse(() => CircleIcon),
+      ),
+    [iconComponents, entityType],
+  )
+}
+
+export const useEntityRegistry = () => {
+  const [cache] = useAtom(entityUiCacheAtom)
+  const [iconComponents] = useAtom(entityIconComponentsAtom)
+
+  const discoveredEntities = useMemo(() => discoverUiEntities(), [])
+
+  const entities = useMemo(() => {
+    if (cache && isEntityUiCacheValid(cache) && cache.entities.length > 0) {
+      return pipe(
+        cache.entities,
+        Array.filterMap((cached) =>
+          pipe(
+            discoveredEntities,
+            Array.findFirst((e) => e.tag === cached.tag),
+          ),
+        ),
+      )
+    }
+    return discoveredEntities
+  }, [cache, discoveredEntities])
+
+  const entitiesByModule = useMemo(
+    () =>
+      pipe(
+        entities,
+        Array.filter((entity) => entity.navConfig.enabled),
+        Array.groupBy((entity) => entity.navConfig.module),
+      ),
+    [entities],
+  )
+
+  const quickActions = useMemo(
+    () =>
+      pipe(
+        entities,
+        Array.filterMap((entity) => {
+          if (!entity.navConfig.enabled) {
+            return Option.none()
+          }
+
+          const quickActionKey = `create${pipe(entity.tag, String.capitalize)}`
+          const title = typeof entity.navItem.title === 'string' ? entity.navItem.title : 'Item'
+          const createTitle = `Create ${singularize(title)}`
+
+          return Option.some({
+            ...entity,
+            createTitle,
+            quickActionKey,
+          })
+        }),
+      ),
+    [entities],
+  )
+
+  const entityByTag = useMemo(
+    () =>
+      pipe(
+        entities,
+        Array.map((e) => [e.tag, e] as const),
+        HashMap.fromIterable,
+      ),
+    [entities],
+  )
+
+  const entityByUrlParam = useMemo(
+    () =>
+      pipe(
+        entities,
+        Array.map((e) => {
+          const urlParam = pipe(e.tag, String.toLowerCase, pluralize)
+          return [urlParam, e] as const
+        }),
+        HashMap.fromIterable,
+      ),
+    [entities],
+  )
+
+  const getEntityByTag = (tag: string): Option.Option<EntityUiConfig> =>
+    pipe(entityByTag, HashMap.get(tag))
+
+  const getEntityByUrlParam = (
+    module: string,
+    entityParam: string,
+  ): Option.Option<EntityUiConfig> =>
+    pipe(
+      entityByUrlParam,
+      HashMap.get(entityParam),
+      Option.filter((e) => e.navConfig.module === module),
+    )
+
+  const getEntitySchema = (tag: string) =>
+    pipe(
+      entityByTag,
+      HashMap.get(tag),
+      Option.map((e) => e.schema),
+    )
+
+  const getEntityIcon = (tag: string): ComponentType =>
+    pipe(
+      iconComponents,
+      HashMap.get(tag),
+      Option.getOrElse(() => CircleIcon),
+    )
+
+  const getQuickAction = (quickActionKey: string) =>
+    pipe(
+      quickActions,
+      Array.findFirst((qa) => qa.quickActionKey === quickActionKey),
+    )
+
+  return {
+    entities,
+    entitiesByModule,
+    entityByTag,
+    entityByUrlParam,
+    getEntityByTag,
+    getEntityByUrlParam,
+    getEntityIcon,
+    getEntitySchema,
+    getQuickAction,
+    iconComponents,
+    quickActions,
+  }
+}
 
 /**
- * Get schema for an entity type using the entity discovery system
+ * Hook to get a specific entity by URL parameters (module + entity plural)
+ */
+export const useCachedEntityByUrl = (module: string, entityParam: string) => {
+  const { getEntityByUrlParam } = useEntityRegistry()
+
+  return useMemo(
+    () => getEntityByUrlParam(module, entityParam),
+    [module, entityParam, getEntityByUrlParam],
+  )
+}
+
+// ===== Cache Initialization =====
+
+/**
+ * Helper to create cache entity config from EntityUiConfig
+ */
+const createCacheEntityConfig = (entity: EntityUiConfig): CachedEntityConfig => ({
+  enabled: entity.navConfig.enabled,
+  iconName: entity.navItem.iconName || 'circleIcon',
+  module: entity.navConfig.module,
+  tag: entity.tag,
+  title: entity.navItem.title,
+  url: entity.navItem.url,
+})
+
+/**
+ * Hook that initializes the entity UI cache and loads all entity icons
+ */
+export const useEntityCacheInitializer = () => {
+  const [, setCache] = useAtom(entityUiCacheAtom)
+  const [, setIconComponents] = useAtom(entityIconComponentsAtom)
+
+  // Discover entities (live values)
+  const entities = useMemo(() => discoverUiEntities(), [])
+
+  useEffect(() => {
+    // Create Effect program for loading icons and updating cache
+    const program = pipe(
+      loadAllEntityIcons(entities),
+      Effect.tap((iconMap) =>
+        Effect.sync(() => {
+          // Only update if we have icons loaded
+          if (HashMap.size(iconMap) > 0) {
+            setIconComponents(iconMap)
+          }
+        }),
+      ),
+      Effect.flatMap(() => Clock.currentTimeMillis),
+      Effect.flatMap((timestamp) =>
+        Effect.sync(() => {
+          const cacheData: EntityUiCache = {
+            entities: pipe(entities, Array.map(createCacheEntityConfig)),
+            timestamp,
+          }
+          setCache(cacheData)
+        }),
+      ),
+      Effect.catchAll((error) =>
+        Effect.gen(function* () {
+          yield* Effect.logError('Failed to load entity icons', { error })
+          // Still update cache with entity data even if icons fail
+          const timestamp = yield* Clock.currentTimeMillis
+          const cacheData: EntityUiCache = {
+            entities: pipe(entities, Array.map(createCacheEntityConfig)),
+            timestamp,
+          }
+          setCache(cacheData)
+        }),
+      ),
+    )
+
+    // Run the Effect program
+    Effect.runPromise(program)
+  }, [entities, setCache, setIconComponents])
+}
+
+// ===== Schema Lookups (Updated to use Registry) =====
+
+/**
+ * Get schema for an entity type using the entity registry
  */
 export const getSchemaByEntityType = (entityType: string) => {
   const entities = discoverUiEntities()
@@ -48,9 +372,11 @@ export const getSchemaByEntityType = (entityType: string) => {
  * Hook to get schema for an entity type
  */
 export const useEntitySchema = (entityType: string) => {
+  const { getEntitySchema } = useEntityRegistry()
+
   return useMemo(() => {
-    return getSchemaByEntityType(entityType)
-  }, [entityType])
+    return getEntitySchema(entityType)
+  }, [entityType, getEntitySchema])
 }
 
 // -------------------------
@@ -158,7 +484,21 @@ export const getForeignKeyFields = <T>(
   )
 }
 
-// Schema Insert Hook
+// ===== Schema CRUD Operations =====
+
+// Generic mutation error class for all CRUD operations
+export class SchemaMutationError extends Schema.TaggedError<SchemaMutationError>()(
+  'SchemaMutationError',
+  {
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+    operation: Schema.Literal('insert', 'update', 'delete', 'upsert'),
+    tableName: Schema.optional(Schema.String),
+    type: Schema.Literal('validation', 'operation'),
+  },
+) {}
+
+// Legacy error classes for backward compatibility - kept as separate tagged errors
 export class SchemaInsertError extends Schema.TaggedError<SchemaInsertError>()(
   'SchemaInsertError',
   {
@@ -170,66 +510,131 @@ export class SchemaInsertError extends Schema.TaggedError<SchemaInsertError>()(
   },
 ) {}
 
-const createSchemaInsertEffect = Effect.fn('createSchemaInsertEffect')(function* <T>(params: {
-  data: T
+export class SchemaUpdateError extends Schema.TaggedError<SchemaUpdateError>()(
+  'SchemaUpdateError',
+  {
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+    operation: Schema.optional(Schema.String),
+    tableName: Schema.optional(Schema.String),
+    type: Schema.Literal('validation', 'operation'),
+  },
+) {}
+
+export class SchemaDeleteError extends Schema.TaggedError<SchemaDeleteError>()(
+  'SchemaDeleteError',
+  {
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+    operation: Schema.optional(Schema.String),
+    tableName: Schema.optional(Schema.String),
+    type: Schema.Literal('validation', 'operation'),
+  },
+) {}
+
+export class SchemaUpsertError extends Schema.TaggedError<SchemaUpsertError>()(
+  'SchemaUpsertError',
+  {
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+    operation: Schema.optional(Schema.String),
+    tableName: Schema.optional(Schema.String),
+    type: Schema.Literal('validation', 'operation'),
+  },
+) {}
+
+/**
+ * Utility to extract table name from schema
+ */
+const getTableNameFromSchema = <T>(schema: SchemaType.Schema<T>): Option.Option<string> => {
+  const entityTag = extractEntityTag(schema.ast)
+  return pipe(
+    entityTag,
+    Option.map((tag) => mkZeroTableName(tag)),
+  )
+}
+
+/**
+ * Format error message based on error type and operation
+ */
+const formatMutationErrorMessage = (error: SchemaMutationError): string => {
+  if (error.type === 'validation') {
+    return `Validation error: ${error.message}`
+  }
+  if (error.type === 'operation') {
+    const operationText =
+      error.operation === 'insert'
+        ? 'Insert'
+        : error.operation === 'update'
+          ? 'Update'
+          : error.operation === 'delete'
+            ? 'Delete'
+            : 'Upsert'
+    return `${operationText} failed: ${error.message}`
+  }
+  return 'Unknown error occurred'
+}
+
+/**
+ * Generic schema mutation effect
+ */
+const createSchemaMutationEffect = Effect.fn('createSchemaMutationEffect')(function* <T>(params: {
+  data?: T | (T & { id?: string })
+  id?: string
+  operation: 'insert' | 'update' | 'delete' | 'upsert'
   schema: SchemaType.Schema<T>
   z: ReturnType<typeof useZero>
-  onSuccess?: (data: T) => void
-  onError?: (error: SchemaInsertError) => void
+  onSuccess?: (result: any) => void
+  onError?: (error: SchemaMutationError) => void
+  showToast?: boolean
 }) {
-  const { data, schema, z, onSuccess, onError } = params
+  const { data, id, operation, schema, z, onSuccess, onError, showToast = true } = params
 
-  const entityTag = extractEntityTag(schema.ast)
-  const tableName = pipe(
-    entityTag,
-    Option.match({
-      onNone: nullOp,
-      onSome: (tag) => mkZeroTableName(tag),
-    }),
-  )
+  const tableNameOpt = getTableNameFromSchema(schema)
 
-  if (!tableName) {
+  if (Option.isNone(tableNameOpt)) {
     return yield* Effect.fail(
-      new SchemaInsertError({
+      new SchemaMutationError({
         message: 'Table name not found - entity tag missing from schema',
+        operation,
         tableName: undefined,
         type: 'validation',
       }),
     )
   }
 
-  const dataWithId = {
-    id: getEntityId(tableName),
-    ...data,
+  const tableName = tableNameOpt.value
+
+  // Prepare data based on operation
+  let mutationData: any
+  if (operation === 'delete') {
+    mutationData = { id }
+  } else if (operation === 'insert' || operation === 'upsert') {
+    mutationData = {
+      id: (data as any)?.id || getEntityId(tableName),
+      ...data,
+    }
+  } else {
+    mutationData = data
   }
 
-  const insertMutator = getBaseMutator(z, tableName, 'insert')
+  const mutator = getBaseMutator(z, tableName, operation)
 
   yield* pipe(
     Effect.tryPromise({
       catch: (cause) =>
-        new SchemaInsertError({
+        new SchemaMutationError({
           cause,
-          message: `Failed to insert into table ${tableName}`,
-          operation: 'insert',
+          message: `Failed to ${operation} in table ${tableName}`,
+          operation,
           tableName,
           type: 'operation',
         }),
-      // Zero mutator expects any type due to dynamic schema nature
-      try: () => insertMutator(dataWithId as any),
+      try: () => mutator(mutationData),
     }),
     Effect.tapError((error) =>
       Effect.gen(function* () {
-        const errorMessage = pipe(error.type, (type) => {
-          if (type === 'validation') {
-            return `Validation error: ${error.message}`
-          }
-          if (type === 'operation') {
-            return `Insert failed: ${error.message}`
-          }
-          return 'Unknown error occurred'
-        })
-
+        const errorMessage = formatMutationErrorMessage(error)
         yield* Effect.sync(() => toast.error(errorMessage))
 
         if (onError) {
@@ -239,14 +644,25 @@ const createSchemaInsertEffect = Effect.fn('createSchemaInsertEffect')(function*
     ),
     Effect.tap(() =>
       Effect.gen(function* () {
-        yield* Effect.sync(() => toast.success('Successfully created!'))
-
-        if (onSuccess) {
-          yield* Effect.sync(() => onSuccess(data))
+        if (showToast) {
+          const successMessage =
+            operation === 'insert'
+              ? 'Successfully created!'
+              : operation === 'update'
+                ? 'Successfully updated!'
+                : operation === 'delete'
+                  ? 'Successfully deleted!'
+                  : 'Successfully saved!'
+          yield* Effect.sync(() => toast.success(successMessage))
         }
 
-        yield* Effect.log('Schema insert successful', {
-          id: dataWithId.id,
+        if (onSuccess) {
+          const result = operation === 'delete' ? id : mutationData
+          yield* Effect.sync(() => onSuccess(result))
+        }
+
+        yield* Effect.log(`Schema ${operation} successful`, {
+          id: operation === 'delete' ? id : mutationData.id,
           tableName,
         })
       }),
@@ -261,17 +677,18 @@ export const useSchemaInsert = <T>(
   schema: SchemaType.Schema<T>,
   options: {
     onSuccess?: (data: T) => void
-    onError?: (error: SchemaInsertError) => void
+    onError?: (error: SchemaMutationError) => void
   } = {},
 ) => {
   const { onSuccess, onError } = options
   const z = useZero()
 
   const insertRx = Rx.fn((data: T) => {
-    return createSchemaInsertEffect({
+    return createSchemaMutationEffect({
       data,
       onError,
       onSuccess,
+      operation: 'insert',
       schema,
       z,
     })
@@ -282,97 +699,6 @@ export const useSchemaInsert = <T>(
   return mutation
 }
 
-// Schema Update Hook
-export class SchemaUpdateError extends Schema.TaggedError<SchemaUpdateError>()(
-  'SchemaUpdateError',
-  {
-    cause: Schema.optional(Schema.Unknown),
-    message: Schema.String,
-    operation: Schema.optional(Schema.String),
-    tableName: Schema.optional(Schema.String),
-    type: Schema.Literal('validation', 'operation'),
-  },
-) {}
-
-const createSchemaUpdateEffect = Effect.fn('createSchemaUpdateEffect')(function* <T>(params: {
-  data: T & { id: string }
-  schema: SchemaType.Schema<T>
-  z: ReturnType<typeof useZero>
-  onSuccess?: (data: T & { id: string }) => void
-  onError?: (error: SchemaUpdateError) => void
-}) {
-  const { data, schema, z, onSuccess, onError } = params
-
-  const entityTag = extractEntityTag(schema.ast)
-  const tableName = pipe(
-    entityTag,
-    Option.match({
-      onNone: nullOp,
-      onSome: (tag) => mkZeroTableName(tag),
-    }),
-  )
-
-  if (!tableName) {
-    return yield* Effect.fail(
-      new SchemaUpdateError({
-        message: 'Table name not found - entity tag missing from schema',
-        tableName: undefined,
-        type: 'validation',
-      }),
-    )
-  }
-
-  const updateMutator = getBaseMutator(z, tableName, 'update')
-
-  yield* pipe(
-    Effect.tryPromise({
-      catch: (cause) =>
-        new SchemaUpdateError({
-          cause,
-          message: `Failed to update in table ${tableName}`,
-          operation: 'update',
-          tableName,
-          type: 'operation',
-        }),
-      // Zero mutator expects any type due to dynamic schema nature
-      try: () => updateMutator(data as any),
-    }),
-    Effect.tapError((error) =>
-      Effect.gen(function* () {
-        const errorMessage = pipe(error.type, (type) => {
-          if (type === 'validation') {
-            return `Validation error: ${error.message}`
-          }
-          if (type === 'operation') {
-            return `Update failed: ${error.message}`
-          }
-          return 'Unknown error occurred'
-        })
-
-        yield* Effect.sync(() => toast.error(errorMessage))
-
-        if (onError) {
-          yield* Effect.sync(() => onError(error))
-        }
-      }),
-    ),
-    Effect.tap(() =>
-      Effect.gen(function* () {
-        yield* Effect.sync(() => toast.success('Successfully updated!'))
-
-        if (onSuccess) {
-          yield* Effect.sync(() => onSuccess(data))
-        }
-
-        yield* Effect.log('Schema update successful', {
-          id: data.id,
-          tableName,
-        })
-      }),
-    ),
-  )
-})
-
 /**
  * Hook that provides update functionality for a given schema using Zero mutations with Effect-RX
  */
@@ -380,18 +706,21 @@ export const useSchemaUpdate = <T>(
   schema: SchemaType.Schema<T>,
   options: {
     onSuccess?: (data: T & { id: string }) => void
-    onError?: (error: SchemaUpdateError) => void
+    onError?: (error: SchemaMutationError) => void
+    showToast?: boolean
   } = {},
 ) => {
-  const { onSuccess, onError } = options
+  const { onSuccess, onError, showToast = true } = options
   const z = useZero()
 
   const updateRx = Rx.fn((data: T & { id: string }) => {
-    return createSchemaUpdateEffect({
-      data,
+    return createSchemaMutationEffect({
+      data: data as T & { id?: string },
       onError,
       onSuccess,
+      operation: 'update',
       schema,
+      showToast,
       z,
     })
   })
@@ -401,96 +730,6 @@ export const useSchemaUpdate = <T>(
   return mutation
 }
 
-// Schema Delete Hook
-export class SchemaDeleteError extends Schema.TaggedError<SchemaDeleteError>()(
-  'SchemaDeleteError',
-  {
-    cause: Schema.optional(Schema.Unknown),
-    message: Schema.String,
-    operation: Schema.optional(Schema.String),
-    tableName: Schema.optional(Schema.String),
-    type: Schema.Literal('validation', 'operation'),
-  },
-) {}
-
-const createSchemaDeleteEffect = Effect.fn('createSchemaDeleteEffect')(function* <T>(params: {
-  id: string
-  schema: SchemaType.Schema<T>
-  z: ReturnType<typeof useZero>
-  onSuccess?: (id: string) => void
-  onError?: (error: SchemaDeleteError) => void
-}) {
-  const { id, schema, z, onSuccess, onError } = params
-
-  const entityTag = extractEntityTag(schema.ast)
-  const tableName = pipe(
-    entityTag,
-    Option.match({
-      onNone: nullOp,
-      onSome: (tag) => mkZeroTableName(tag),
-    }),
-  )
-
-  if (!tableName) {
-    return yield* Effect.fail(
-      new SchemaDeleteError({
-        message: 'Table name not found - entity tag missing from schema',
-        tableName: undefined,
-        type: 'validation',
-      }),
-    )
-  }
-
-  const deleteMutator = getBaseMutator(z, tableName, 'delete')
-
-  yield* pipe(
-    Effect.tryPromise({
-      catch: (cause) =>
-        new SchemaDeleteError({
-          cause,
-          message: `Failed to delete from table ${tableName}`,
-          operation: 'delete',
-          tableName,
-          type: 'operation',
-        }),
-      try: () => deleteMutator({ id } as any),
-    }),
-    Effect.tapError((error) =>
-      Effect.gen(function* () {
-        const errorMessage = pipe(error.type, (type) => {
-          if (type === 'validation') {
-            return `Validation error: ${error.message}`
-          }
-          if (type === 'operation') {
-            return `Delete failed: ${error.message}`
-          }
-          return 'Unknown error occurred'
-        })
-
-        yield* Effect.sync(() => toast.error(errorMessage))
-
-        if (onError) {
-          yield* Effect.sync(() => onError(error))
-        }
-      }),
-    ),
-    Effect.tap(() =>
-      Effect.gen(function* () {
-        yield* Effect.sync(() => toast.success('Successfully deleted!'))
-
-        if (onSuccess) {
-          yield* Effect.sync(() => onSuccess(id))
-        }
-
-        yield* Effect.log('Schema delete successful', {
-          id,
-          tableName,
-        })
-      }),
-    ),
-  )
-})
-
 /**
  * Hook that provides delete functionality for a given schema using Zero mutations with Effect-RX
  */
@@ -498,17 +737,18 @@ export const useSchemaDelete = <T>(
   schema: SchemaType.Schema<T>,
   options: {
     onSuccess?: (id: string) => void
-    onError?: (error: SchemaDeleteError) => void
+    onError?: (error: SchemaMutationError) => void
   } = {},
 ) => {
   const { onSuccess, onError } = options
   const z = useZero()
 
   const deleteRx = Rx.fn((id: string) => {
-    return createSchemaDeleteEffect({
+    return createSchemaMutationEffect({
       id,
       onError,
       onSuccess,
+      operation: 'delete',
       schema,
       z,
     })
@@ -519,102 +759,6 @@ export const useSchemaDelete = <T>(
   return mutation
 }
 
-// Schema Upsert Hook
-export class SchemaUpsertError extends Schema.TaggedError<SchemaUpsertError>()(
-  'SchemaUpsertError',
-  {
-    cause: Schema.optional(Schema.Unknown),
-    message: Schema.String,
-    operation: Schema.optional(Schema.String),
-    tableName: Schema.optional(Schema.String),
-    type: Schema.Literal('validation', 'operation'),
-  },
-) {}
-
-const createSchemaUpsertEffect = Effect.fn('createSchemaUpsertEffect')(function* <T>(params: {
-  data: T & { id?: string }
-  schema: SchemaType.Schema<T>
-  z: ReturnType<typeof useZero>
-  onSuccess?: (data: T & { id: string }) => void
-  onError?: (error: SchemaUpsertError) => void
-}) {
-  const { data, schema, z, onSuccess, onError } = params
-
-  const entityTag = extractEntityTag(schema.ast)
-  const tableName = pipe(
-    entityTag,
-    Option.match({
-      onNone: nullOp,
-      onSome: (tag) => mkZeroTableName(tag),
-    }),
-  )
-
-  if (!tableName) {
-    return yield* Effect.fail(
-      new SchemaUpsertError({
-        message: 'Table name not found - entity tag missing from schema',
-        tableName: undefined,
-        type: 'validation',
-      }),
-    )
-  }
-
-  // Ensure we have an ID for upsert
-  const dataWithId = {
-    id: data.id || getEntityId(tableName),
-    ...data,
-  } as T & { id: string }
-
-  const upsertMutator = getBaseMutator(z, tableName, 'upsert')
-
-  yield* pipe(
-    Effect.tryPromise({
-      catch: (cause) =>
-        new SchemaUpsertError({
-          cause,
-          message: `Failed to upsert into table ${tableName}`,
-          operation: 'upsert',
-          tableName,
-          type: 'operation',
-        }),
-      try: () => upsertMutator(dataWithId as any),
-    }),
-    Effect.tapError((error) =>
-      Effect.gen(function* () {
-        const errorMessage = pipe(error.type, (type) => {
-          if (type === 'validation') {
-            return `Validation error: ${error.message}`
-          }
-          if (type === 'operation') {
-            return `Upsert failed: ${error.message}`
-          }
-          return 'Unknown error occurred'
-        })
-
-        yield* Effect.sync(() => toast.error(errorMessage))
-
-        if (onError) {
-          yield* Effect.sync(() => onError(error))
-        }
-      }),
-    ),
-    Effect.tap(() =>
-      Effect.gen(function* () {
-        yield* Effect.sync(() => toast.success('Successfully saved!'))
-
-        if (onSuccess) {
-          yield* Effect.sync(() => onSuccess(dataWithId))
-        }
-
-        yield* Effect.log('Schema upsert successful', {
-          id: dataWithId.id,
-          tableName,
-        })
-      }),
-    ),
-  )
-})
-
 /**
  * Hook that provides upsert functionality for a given schema using Zero mutations with Effect-RX
  */
@@ -622,23 +766,58 @@ export const useSchemaUpsert = <T>(
   schema: SchemaType.Schema<T>,
   options: {
     onSuccess?: (data: T & { id: string }) => void
-    onError?: (error: SchemaUpsertError) => void
+    onError?: (error: SchemaMutationError) => void
   } = {},
 ) => {
   const { onSuccess, onError } = options
   const z = useZero()
 
   const upsertRx = Rx.fn((data: T & { id?: string }) => {
-    return createSchemaUpsertEffect({
+    return createSchemaMutationEffect({
       data,
       onError,
       onSuccess,
+      operation: 'upsert',
       schema,
       z,
     })
   })
 
   const mutation = useRxMutation(upsertRx)
+
+  return mutation
+}
+
+/**
+ * Hook for cell-level updates (useful for table edit-in-place)
+ * This provides a simpler API for updating a single field
+ */
+export const useSchemaCellUpdate = <T>(
+  schema: SchemaType.Schema<T>,
+  options: {
+    onSuccess?: (data: Partial<T> & { id: string }) => void
+    onError?: (error: SchemaMutationError) => void
+  } = {},
+) => {
+  const { onSuccess, onError } = options
+  const z = useZero()
+
+  const updateCellRx = Rx.fn((params: { id: string; field: string; value: any }) => {
+    const { id, field, value } = params
+    const data = { id, [field]: value } as T & { id: string }
+
+    return createSchemaMutationEffect({
+      data: data as T & { id?: string },
+      onError,
+      onSuccess,
+      operation: 'update',
+      schema,
+      showToast: false, // Suppress toast for cell updates
+      z,
+    })
+  })
+
+  const mutation = useRxMutation(updateCellRx)
 
   return mutation
 }
@@ -651,13 +830,13 @@ export const useSchemaMutation = <T>(
   schema: SchemaType.Schema<T>,
   options: {
     onInsertSuccess?: (data: T) => void
-    onInsertError?: (error: SchemaInsertError) => void
+    onInsertError?: (error: SchemaMutationError) => void
     onUpdateSuccess?: (data: T & { id: string }) => void
-    onUpdateError?: (error: SchemaUpdateError) => void
+    onUpdateError?: (error: SchemaMutationError) => void
     onDeleteSuccess?: (id: string) => void
-    onDeleteError?: (error: SchemaDeleteError) => void
+    onDeleteError?: (error: SchemaMutationError) => void
     onUpsertSuccess?: (data: T & { id: string }) => void
-    onUpsertError?: (error: SchemaUpsertError) => void
+    onUpsertError?: (error: SchemaMutationError) => void
   } = {},
 ) => {
   const insert = useSchemaInsert(schema, {
@@ -686,47 +865,6 @@ export const useSchemaMutation = <T>(
     update,
     upsert,
   }
-}
-
-/**
- * Hook for cell-level updates (useful for table edit-in-place)
- * This provides a simpler API for updating a single field
- */
-export const useSchemaCellUpdate = <T>(
-  schema: SchemaType.Schema<T>,
-  options: {
-    onSuccess?: (data: Partial<T> & { id: string }) => void
-    onError?: (error: SchemaUpdateError) => void
-    showToast?: boolean
-  } = {},
-) => {
-  const { onSuccess, onError, showToast = false } = options
-  const z = useZero()
-
-  const updateCellRx = Rx.fn((params: { id: string; field: string; value: any }) => {
-    const { id, field, value } = params
-    const data = { id, [field]: value } as T & { id: string }
-
-    return createSchemaUpdateEffect({
-      data,
-      onError,
-      onSuccess: (updatedData) => {
-        if (!showToast) {
-          // Override the default toast for cell updates
-          toast.dismiss()
-        }
-        if (onSuccess) {
-          onSuccess(updatedData)
-        }
-      },
-      schema,
-      z,
-    })
-  })
-
-  const mutation = useRxMutation(updateCellRx)
-
-  return mutation
 }
 
 /*
@@ -813,6 +951,144 @@ export interface SchemaEntityResult<T> {
 }
 
 /**
+ * Decode entity data through its schema to get proper class instance with getters
+ */
+export const decodeEntityThroughSchema = <T>(
+  schema: SchemaType.Schema<T>,
+  data: unknown,
+): OptionType<T> => {
+  return pipe(
+    Schema.decodeUnknown(schema)(data, { onExcessProperty: 'preserve' }),
+    Effect.match({
+      onFailure: (error) => {
+        Effect.logError('Failed to decode entity', { data, error }).pipe(Effect.runSync)
+        return Option.none()
+      },
+      onSuccess: (entity) => Option.some(entity),
+    }),
+    Effect.runSync,
+  )
+}
+
+/**
+ * Extract display name from entity, with fallbacks for common patterns
+ */
+export const extractEntityDisplayName = (
+  entity: any,
+  entityType: string,
+  entityId: string,
+): string => {
+  // First try the displayName getter if it exists
+  if ('displayName' in entity && typeof entity.displayName === 'string') {
+    return entity.displayName
+  }
+
+  // Try common fields
+  if (entity.name) return entity.name
+  if (entity.firstName || entity.lastName) {
+    return `${entity.firstName || ''} ${entity.lastName || ''}`.trim()
+  }
+
+  // Entity-specific fallbacks
+  if (entityType === 'address') {
+    const streetLine1 = entity.streetLine1 || ''
+    const city = entity.city || ''
+    if (streetLine1 && city) {
+      return `${streetLine1}, ${city}`
+    }
+    if (streetLine1) return streetLine1
+    if (city) return city
+  }
+
+  if (entityType === 'phoneNumber') {
+    const number = entity.number || ''
+    const location = entity.location || ''
+    if (number) {
+      return location ? `${location}: ${number}` : number
+    }
+  }
+
+  // Default to ID if no display name can be constructed
+  return entityId
+}
+
+/**
+ * Create a function to fetch and cache entity names
+ * @param z - Zero instance
+ * @param entityNamesCache - HashMap of entity type to entity ID to display name
+ * @param updateCache - Function to update the cache with new entity names
+ */
+export const createEntityNamesFetcher = (
+  z: ReturnType<typeof useZero>,
+  entityNamesCache: HashMap.HashMap<string, HashMap.HashMap<string, string>>,
+  updateCache: (entityType: string, entityId: string, displayName: string) => void,
+) => {
+  return (entityType: string, entityIds: ReadonlyArray<string>) => {
+    // Get cached names for this entity type
+    const cached = pipe(
+      entityNamesCache,
+      HashMap.get(entityType),
+      Option.getOrElse(() => HashMap.empty<string, string>()),
+    )
+
+    // Find missing IDs
+    const missingIds = pipe(
+      entityIds,
+      Array.filter((id) => pipe(cached, HashMap.has(id), (has) => !has)),
+    )
+
+    if (Array.isEmptyArray(missingIds)) return
+
+    // Convert entity type to table name
+    const tableName = mkZeroTableName(pipe(entityType, String.capitalize))
+
+    // Fetch each missing entity
+    pipe(
+      missingIds,
+      Array.forEach((entityId) => {
+        try {
+          // Create query for this entity
+          const query = getBaseEntityQuery(z, tableName, entityId)
+          const view = query.materialize()
+
+          view.addListener((result: any, resultType: string) => {
+            if (resultType === 'complete' && result) {
+              // Get the schema for this entity type
+              const entitySchemaOpt = getSchemaByEntityType(entityType)
+
+              let displayName = entityId // Default to ID
+
+              if (Option.isSome(entitySchemaOpt)) {
+                // Decode through schema to get class instance
+                const decodedEntityOpt = decodeEntityThroughSchema(entitySchemaOpt.value, result)
+
+                if (Option.isSome(decodedEntityOpt)) {
+                  displayName = extractEntityDisplayName(
+                    decodedEntityOpt.value,
+                    entityType,
+                    entityId,
+                  )
+                }
+              } else {
+                // No schema found, try basic patterns directly on raw result
+                displayName = extractEntityDisplayName(result, entityType, entityId)
+              }
+
+              // Update the cache
+              updateCache(entityType, entityId, displayName)
+            }
+          })
+        } catch (error) {
+          Effect.logWarning(`Failed to fetch entity ${entityType}/${entityId}`, { error }).pipe(
+            Effect.runSync,
+          )
+        }
+      }),
+    )
+  }
+}
+
+/**
  * Hook that provides individual entity data for a given schema and ID using Zero queries
  */
 export const useSchemaEntity = <T>(
@@ -863,21 +1139,22 @@ export const useSchemaEntity = <T>(
     }
 
     // Decode the raw data through the schema to get a class instance with getters
+    const entityOpt = decodeEntityThroughSchema(schema, data)
+
     return pipe(
-      Schema.decodeUnknown(schema)(data, { onExcessProperty: 'preserve' }),
-      Effect.match({
-        onFailure: (error) => ({
+      entityOpt,
+      Option.match({
+        onNone: () => ({
           entityOpt: Option.none(),
-          error: `Schema decode error: ${error}`,
+          error: 'Failed to decode entity through schema',
           loading: false,
         }),
-        onSuccess: (entity) => ({
+        onSome: (entity) => ({
           entityOpt: Option.some(entity),
           error: null,
           loading: false,
         }),
       }),
-      Effect.runSync,
     )
   }, [data, info, schema])
 }

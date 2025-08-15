@@ -4,10 +4,6 @@ import {
   mainNavItems,
   settingsNavItems,
 } from '@openfaith/openfaith/components/navigation/navShared'
-import {
-  getNavigationByModule,
-  useEntityIcons,
-} from '@openfaith/openfaith/components/navigation/schemaNavigation'
 import { SideBarItem } from '@openfaith/openfaith/components/navigation/sideBarItem'
 import { OrgSwitcher } from '@openfaith/openfaith/components/orgSwitcher'
 import { formatLabel } from '@openfaith/shared'
@@ -22,29 +18,30 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useEntityRegistry,
 } from '@openfaith/ui'
 import { Link } from '@tanstack/react-router'
-import { Array, HashMap, Option, pipe, Record } from 'effect'
-import { type ComponentProps, createElement, type FC } from 'react'
-
-const navigationByModule = getNavigationByModule()
-
-const allEntities = pipe(navigationByModule, Record.values, Array.flatten)
-
-const moduleSections = pipe(
-  navigationByModule,
-  Record.toEntries,
-  Array.map(([moduleKey, entities]) => ({
-    entities,
-    key: moduleKey,
-    label: formatLabel(moduleKey),
-  })),
-)
+import { Array, pipe, Record } from 'effect'
+import { type ComponentProps, createElement, type FC, useMemo } from 'react'
 
 type AppSidebarProps = ComponentProps<typeof Sidebar>
 
 export const AppNavigation: FC<AppSidebarProps> = (props) => {
-  const { iconComponents } = useEntityIcons(allEntities)
+  const { entitiesByModule, getEntityIcon } = useEntityRegistry()
+
+  const moduleSections = useMemo(
+    () =>
+      pipe(
+        entitiesByModule,
+        Record.toEntries,
+        Array.map(([moduleKey, entities]) => ({
+          entities,
+          key: moduleKey,
+          label: formatLabel(moduleKey),
+        })),
+      ),
+    [entitiesByModule],
+  )
 
   return (
     <Sidebar collapsible={'icon'} variant='inset' {...props}>
@@ -73,12 +70,7 @@ export const AppNavigation: FC<AppSidebarProps> = (props) => {
                   section.entities,
                   Array.map((entity) => (
                     <SideBarItem
-                      icon={pipe(
-                        iconComponents,
-                        HashMap.get(entity.tag),
-                        Option.map(createElement),
-                        Option.getOrNull,
-                      )}
+                      icon={createElement(getEntityIcon(entity.tag))}
                       key={entity.tag}
                       title={entity.navItem.title}
                       url={entity.navItem.url}
