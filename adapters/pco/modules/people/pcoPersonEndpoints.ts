@@ -3,9 +3,9 @@ import { pcoWebhookAdapter } from '@openfaith/pco/api/pcoWebhookAdapter'
 import {
   PcoPerson,
   PcoPersonCreatedWebhook,
-  PcoPersonUpdatedWebhook,
   PcoPersonDestroyedWebhook,
   PcoPersonMergerWebhook,
+  PcoPersonUpdatedWebhook,
 } from '@openfaith/pco/modules/people/pcoPersonSchema'
 
 /**
@@ -169,39 +169,37 @@ export const deletePersonDefinition = pcoApiAdapter({
  * Person Created Webhook
  */
 export const personCreatedWebhook = pcoWebhookAdapter({
-  webhookSchema: PcoPersonCreatedWebhook,
   eventType: 'people.v2.events.person.created',
-  operation: 'upsert',
   extractEntityId: (event) => event.attributes.payload.data.id,
+  operation: 'upsert',
+  webhookSchema: PcoPersonCreatedWebhook,
 })
 
 /**
  * Person Updated Webhook
  */
 export const personUpdatedWebhook = pcoWebhookAdapter({
-  webhookSchema: PcoPersonUpdatedWebhook,
   eventType: 'people.v2.events.person.updated',
-  operation: 'upsert',
   extractEntityId: (event) => event.attributes.payload.data.id,
+  operation: 'upsert',
+  webhookSchema: PcoPersonUpdatedWebhook,
 })
 
 /**
  * Person Destroyed Webhook
  */
 export const personDestroyedWebhook = pcoWebhookAdapter({
-  webhookSchema: PcoPersonDestroyedWebhook,
   eventType: 'people.v2.events.person.destroyed',
-  operation: 'delete',
   extractEntityId: (event) => event.attributes.payload.data.id,
+  operation: 'delete',
+  webhookSchema: PcoPersonDestroyedWebhook,
 })
 
 /**
  * Person Merger Webhook
  */
 export const personMergerWebhook = pcoWebhookAdapter({
-  webhookSchema: PcoPersonMergerWebhook,
   eventType: 'people.v2.events.person_merger.created',
-  operation: 'merge',
   extractEntityId: (event) => {
     const data = event.attributes.payload.data
     return {
@@ -209,4 +207,6 @@ export const personMergerWebhook = pcoWebhookAdapter({
       removeId: data.relationships.person_to_remove.data.id,
     }
   },
+  operation: 'merge',
+  webhookSchema: PcoPersonMergerWebhook,
 })

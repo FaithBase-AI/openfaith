@@ -1,4 +1,4 @@
-import { Schema } from 'effect'
+import type { Schema } from 'effect'
 
 /**
  * Operation types for webhook events

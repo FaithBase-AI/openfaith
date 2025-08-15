@@ -10,6 +10,7 @@ import {
   mkPcoSingleSchema,
   type PcoBuildPayloadSchemaType,
 } from '@openfaith/pco/api/pcoResponseSchemas'
+import type { BaseWebhookDefinition, WebhookOperation } from '@openfaith/pco/api/pcoWebhookAdapter'
 import { mkEntityName, mkTableName } from '@openfaith/shared'
 import type { CaseTransform } from '@openfaith/shared/types'
 import { Array, Option, pipe, Record, Schema } from 'effect'

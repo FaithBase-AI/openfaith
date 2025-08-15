@@ -177,12 +177,12 @@ export class PcoPersonDestroyedWebhook extends Schema.Class<PcoPersonDestroyedWe
   mkPcoWebhookDelivery(
     'people.v2.events.person.destroyed',
     Schema.Struct({
-      id: Schema.String,
-      type: Schema.Literal('Person'),
       // Destroyed events typically have minimal or no attributes
       attributes: Schema.optional(Schema.Unknown),
-      relationships: Schema.optional(Schema.Unknown),
+      id: Schema.String,
       links: Schema.optional(Schema.Unknown),
+      relationships: Schema.optional(Schema.Unknown),
+      type: Schema.Literal('Person'),
     }),
   ),
 ) {}
@@ -193,24 +193,24 @@ export class PcoPersonMergerWebhook extends Schema.Class<PcoPersonMergerWebhook>
   mkPcoWebhookDelivery(
     'people.v2.events.person_merger.created',
     Schema.Struct({
-      id: Schema.String,
-      type: Schema.Literal('PersonMerger'),
       attributes: Schema.optional(Schema.Unknown),
+      id: Schema.String,
+      links: Schema.optional(Schema.Unknown),
       relationships: Schema.Struct({
         person_to_keep: Schema.Struct({
           data: Schema.Struct({
-            type: Schema.Literal('Person'),
             id: Schema.String,
+            type: Schema.Literal('Person'),
           }),
         }),
         person_to_remove: Schema.Struct({
           data: Schema.Struct({
-            type: Schema.Literal('Person'),
             id: Schema.String,
+            type: Schema.Literal('Person'),
           }),
         }),
       }),
-      links: Schema.optional(Schema.Unknown),
+      type: Schema.Literal('PersonMerger'),
     }),
   ),
 ) {}
