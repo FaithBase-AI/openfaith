@@ -194,6 +194,11 @@ export const transformEntityDataE = Effect.fn('transformEntityDataE')(function* 
 export const findEntityManifestE = Effect.fn('findEntityManifestE')(function* (entityName: string) {
   return pipe(
     pcoEntityManifest,
+    // Filter out the webhooks property
+    (manifest) => {
+      const { webhooks: _webhooks, ...entities } = manifest
+      return entities
+    },
     Record.findFirst((manifest) => manifest.entity === entityName),
   )
 })

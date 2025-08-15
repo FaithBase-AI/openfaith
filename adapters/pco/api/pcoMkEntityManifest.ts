@@ -45,6 +45,7 @@ type CreatePcoEntityRegistry<Endpoints extends Endpoint.BaseAny> = {
 /**
  * Fallback schema for unknown includes
  */
+
 type FallbackEntitySchema<Include extends string> = Schema.Schema<{
   readonly attributes: any
   readonly id: string
@@ -91,13 +92,20 @@ type PcoEntitySchemaFromIncludes<
       >
 
 /**
- * Converts endpoint definitions into a typed entity manifest structure
+ * Base webhook definition that can be any webhook type
+ */
+export type BaseWebhookAny = BaseWebhookDefinition<Schema.Schema.Any, string, WebhookOperation>
+
+/**
+ * Converts endpoint and webhook definitions into a typed entity manifest structure
  * @since 1.0.0
  */
 export type ConvertPcoEntityManifest<
   Endpoints extends Endpoint.BaseAny,
+  Webhooks extends BaseWebhookAny,
   Errors extends ErrorConfig,
 > = {
+  // Entity definitions remain the same
   [Entity in Endpoints['entity']]: {
     /** The Effect schema for this entity's API resource */
     apiSchema: Extract<Endpoints, { entity: Entity }>['apiSchema']
@@ -214,6 +222,10 @@ export type ConvertPcoEntityManifest<
     /** Error configuration for HttpApiGroup */
     errors: Errors
     skipSync: boolean
+  }
+} & {
+  webhooks: {
+    [EventType in Webhooks['eventType']]: Extract<Webhooks, { eventType: EventType }>
   }
 }
 
@@ -370,11 +382,17 @@ export type ConvertPcoEntityRegistry<
  */
 export const mkPcoEntityManifest = <
   const Endpoints extends NonEmptyReadonlyArray<Endpoint.BaseAny>,
+  const Webhooks extends ReadonlyArray<BaseWebhookAny>,
   const Errors extends ErrorConfig,
 >(config: {
   readonly endpoints: Endpoints
+  readonly webhooks?: Webhooks
   readonly errors: Errors
-}): ConvertPcoEntityManifest<Endpoints[number], Errors> => {
+}): ConvertPcoEntityManifest<
+  Endpoints[number],
+  Webhooks extends ReadonlyArray<infer W> ? W : never,
+  Errors
+> => {
   const endpointLookup = pipe(
     config.endpoints,
     Array.groupBy((x) => x.entity),
@@ -395,9 +413,8 @@ export const mkPcoEntityManifest = <
     Record.fromEntries,
   )
 
-  // TODO: Create PcoEntity here out of endpointLookup
-
-  return pipe(
+  // Build the entities structure
+  const entities = pipe(
     endpointLookup,
     Array.map(([entity, entityEndpoints]) => {
       const firstEndpoint = pipe(entityEndpoints, Array.headNonEmpty)
@@ -517,7 +534,22 @@ export const mkPcoEntityManifest = <
       ] as const
     }),
     Record.fromEntries,
-  ) as any
+  )
+
+  // Build the webhooks as a flat structure
+  const webhooks = config.webhooks
+    ? pipe(
+        config.webhooks,
+        Array.map((webhook) => [webhook.eventType, webhook] as const),
+        Record.fromEntries,
+      )
+    : {}
+
+  // Return entities and webhooks in separate sections
+  return {
+    ...entities,
+    webhooks,
+  } as any
 }
 
 /**

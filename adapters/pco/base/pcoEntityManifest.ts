@@ -34,6 +34,10 @@ import {
   deletePersonDefinition,
   getPersonByIdDefinition,
   listPeopleDefinition,
+  personCreatedWebhook,
+  personDestroyedWebhook,
+  personMergerWebhook,
+  personUpdatedWebhook,
   updatePersonDefinition,
 } from '@openfaith/pco/modules/people/pcoPersonEndpoints'
 import {
@@ -91,14 +95,30 @@ export const pcoEntityManifest = mkPcoEntityManifest({
     503: PcoServiceUnavailableError,
     504: PcoGatewayTimeoutError,
   },
+  webhooks: [
+    personCreatedWebhook,
+    personUpdatedWebhook,
+    personDestroyedWebhook,
+    personMergerWebhook,
+  ],
 } as const)
 
-export const PcoEntityRegistry: ConvertPcoEntityRegistry<typeof pcoEntityManifest> = pipe(
+// Extract just the entity manifests (exclude webhooks)
+type PcoEntitiesManifest = Omit<typeof pcoEntityManifest, 'webhooks'>
+
+export const PcoEntityRegistry: ConvertPcoEntityRegistry<PcoEntitiesManifest> = pipe(
   pcoEntityManifest,
+  (manifest) => {
+    const { webhooks: _webhooks, ...entities } = manifest
+    return entities
+  },
   Record.values,
   Array.map((x) => [mkTableName(x.entity), x.apiSchema] as const),
   Record.fromEntries,
 ) as any
+
+// Export webhooks separately for easy access
+export const pcoWebhooks = pcoEntityManifest.webhooks
 
 export type PcoEntitySchema = (typeof PcoEntityRegistry)[keyof typeof PcoEntityRegistry]
 

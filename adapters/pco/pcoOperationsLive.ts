@@ -260,6 +260,11 @@ export const PcoOperationsLive = Layer.effect(
       getEntityManifest: (): AdapterEntityManifest => {
         return pipe(
           pcoEntityManifest,
+          // Filter out the webhooks property
+          (manifest) => {
+            const { webhooks: _webhooks, ...entities } = manifest
+            return entities
+          },
           Record.map((manifest) => ({
             endpoint: '',
             endpoints: manifest.endpoints,
@@ -297,6 +302,11 @@ export const PcoOperationsLive = Layer.effect(
           // Check if entity exists and is syncable
           const entityOpt = pipe(
             pcoEntityManifest,
+            // Filter out the webhooks property
+            (manifest) => {
+              const { webhooks: _webhooks, ...entities } = manifest
+              return entities
+            },
             Record.findFirst((x) => x.entity === entityName),
             Option.filter(([, x]) => {
               return !SchemaAST.getAnnotation<boolean>(OfSkipEntity)(x.apiSchema.ast).pipe(
