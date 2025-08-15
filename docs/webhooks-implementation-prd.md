@@ -11,13 +11,15 @@ This document outlines the implementation plan for a generic webhook infrastruct
 2. **Adapter Agnostic Design**: Create infrastructure that works for any ChMS adapter
 3. **Leverage Existing Infrastructure**: Reuse current sync workflows and patterns
 4. **Type Safety**: Maintain Effect-TS patterns and type safety throughout
+5. **Direct Database Updates**: Write directly to database for webhook data, avoiding unnecessary mutation processing
 
 ### Success Criteria
 - PCO webhooks successfully trigger data synchronization
-- System handles all PCO webhook event types from the legacy system
+- System handles all PCO webhook event types from entity manifest definitions
 - Infrastructure easily extensible to other adapters (CCB, Tithely, etc.)
 - Zero data loss during webhook processing
 - Proper error handling and retry mechanisms
+- Consistent side effects between user mutations and webhook updates
 
 ## Technical Architecture
 
@@ -28,12 +30,20 @@ External System (PCO) → Webhook Event → OpenFaith Webhook Endpoint
                                               ↓
                                     Authenticity Verification
                                               ↓
-                                    Adapter-Specific Router
+                                    AdapterOperations.processWebhook()
                                               ↓
-                                    Event-to-Mutation Converter
+                                    ExternalSyncSingleEntityWorkflow
                                               ↓
-                                    Existing Sync Workflows
+                                    Direct DB Write + External Push Trigger
 ```
+
+### Key Architecture Decisions
+
+1. **No Webhook Workflow**: Webhook handler directly calls `AdapterOperations.processWebhook()` which returns sync requests
+2. **Direct Database Writes**: Like import workflows, we write directly to DB instead of going through mutation processor
+3. **Shared Side Effects**: Extract `triggerExternalPush` function used by both mutation and webhook paths
+4. **Entity Manifest Integration**: Webhook definitions in entity manifest include schemas and entity mappings
+5. **Fresh Data Fetching**: Always fetch latest data from API to avoid webhook ordering issues
 
 ### Database Schema
 
@@ -194,7 +204,11 @@ export class WebhookApi extends HttpApi.make('webhooks').add(WebhookGroup).prefi
 ```typescript
 // Location: backend/server/handlers/webhookHandler.ts
 import { HttpApiBuilder } from '@effect/platform'
+import { AdapterOperations } from '@openfaith/adapter-core/layers/adapterOperations'
+import { TokenKey } from '@openfaith/adapter-core/server'
 import { WebhookApi, WebhookProcessingError, WebhookVerificationError } from '@openfaith/domain'
+import { PcoAdapterOperationsLayer } from '@openfaith/pco/pcoAdapterLayer'
+import { CcbAdapterOperationsLayer } from '@openfaith/ccb/ccbAdapterLayer'
 import { DBService } from '@openfaith/server/live/dbLive'
 import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
 import { Array, Effect, Layer, Option, pipe } from 'effect'
@@ -217,7 +231,7 @@ export const WebhookHandlerLive = HttpApiBuilder.group(WebhookApi, 'webhooks', (
       })
       
       // Verify webhook authenticity
-      const verifiedWebhookOpt = yield* pipe(
+      const verifiedWebhookOpt = pipe(
         webhookConfigs,
         Array.findFirst((config) =>
           verifyWebhook({
@@ -226,7 +240,6 @@ export const WebhookHandlerLive = HttpApiBuilder.group(WebhookApi, 'webhooks', (
             rawBody,
           }),
         ),
-        Effect.map(Option.fromNullable),
       )
       
       const verifiedWebhook = yield* pipe(
@@ -249,29 +262,43 @@ export const WebhookHandlerLive = HttpApiBuilder.group(WebhookApi, 'webhooks', (
         .set({ lastReceivedAt: new Date() })
         .where(eq(adapterWebhooksTable.id, verifiedWebhook.id))
       
-      // Route to adapter-specific handler
-      const workflowClient = yield* WorkflowClient
+      // Get the appropriate adapter layer
+      const adapterLayer = yield* getAdapterLayer(adapter)
       
-      yield* Effect.switch(adapter, {
-        pco: () =>
-          workflowClient.workflows.PcoWebhookWorkflow({
-            payload: {
-              webhookId: verifiedWebhook.id,
-              orgId: verifiedWebhook.orgId,
-              headers,
-              body,
-            },
-          }),
-        // Future adapters
-        ccb: () => Effect.succeed({ success: true, message: 'CCB webhook handler not implemented' }),
-        onDefault: () =>
-          Effect.fail(
-            new WebhookProcessingError({
-              adapter,
-              message: `No handler implemented for adapter: ${adapter}`,
-            }),
+      // Process webhook through adapter operations
+      const adapterOps = yield* AdapterOperations.pipe(
+        Effect.provide(adapterLayer),
+        Effect.provideService(TokenKey, verifiedWebhook.orgId),
+      )
+      
+      // Process webhook - returns array of sync requests
+      const syncRequests = yield* adapterOps.processWebhook(body)
+      
+      // Trigger sync workflows for all requests
+      if (syncRequests.length > 0) {
+        const workflowClient = yield* WorkflowClient
+        
+        yield* pipe(
+          syncRequests,
+          Array.map((syncRequest) =>
+            workflowClient.workflows.ExternalSyncSingleEntityWorkflow({
+              payload: {
+                tokenKey: verifiedWebhook.orgId,
+                entityType: syncRequest.entityType,
+                entityId: syncRequest.entityId,
+                operation: syncRequest.operation,
+                relatedIds: syncRequest.relatedIds,
+              },
+            })
           ),
-      })
+          Effect.all, // Process all in parallel
+          Effect.tap((results) => 
+            Effect.log(`Triggered ${results.length} entity syncs from webhook`)
+          ),
+        )
+      } else {
+        yield* Effect.log('No sync requests generated from webhook')
+      }
       
       // Update last processed timestamp
       yield* db
@@ -282,10 +309,28 @@ export const WebhookHandlerLive = HttpApiBuilder.group(WebhookApi, 'webhooks', (
       return {
         success: true,
         message: `Webhook processed for ${adapter}`,
+        syncedEntities: syncRequests.length,
       }
     }),
   ),
 )
+
+// Helper function to get adapter layer
+const getAdapterLayer = (adapter: string) => {
+  switch (adapter) {
+    case 'pco':
+      return Effect.succeed(PcoAdapterOperationsLayer)
+    case 'ccb':
+      return Effect.succeed(CcbAdapterOperationsLayer)
+    default:
+      return Effect.fail(
+        new WebhookProcessingError({
+          adapter,
+          message: `No adapter layer found for: ${adapter}`,
+        })
+      )
+  }
+}
 
 // Helper function to verify webhook based on method
 const verifyWebhook = ({
@@ -309,273 +354,440 @@ const verifyWebhook = ({
       
       return signature === expectedSignature
     }
-    // Add other verification methods as needed
+    case 'hmac-sha1': {
+      const signature = headers['x-webhook-signature']
+      if (!signature) return false
+      
+      const expectedSignature = crypto
+        .createHmac('sha1', config.authenticitySecret)
+        .update(rawBody)
+        .digest('hex')
+      
+      return signature === expectedSignature
+    }
     default:
       return false
   }
 }
 ```
 
-### PCO Webhook Workflow
+### AdapterOperations Interface Update
 
 ```typescript
-// Location: backend/workers/workflows/pcoWebhookWorkflow.ts
-import { Activity, Workflow } from '@effect/workflow'
-import { ExternalPushEntityWorkflow } from '@openfaith/workers/workflows/externalPushEntityWorkflow'
-import { Effect, Layer, Option, pipe, Record, Schema } from 'effect'
-import { nanoid } from 'nanoid'
+// Location: adapters/adapter-core/layers/adapterOperations.ts (additions)
 
-// PCO webhook event payload structure
-const PcoWebhookData = Schema.Struct({
-  id: Schema.String,
-  type: Schema.String,
-  attributes: Schema.Struct({
-    name: Schema.String,
-    payload: Schema.String, // JSON string with actual event data
-  }),
-  relationships: Schema.optional(Schema.Unknown),
-})
+export interface WebhookSyncRequest {
+  entityType: string
+  entityId: string
+  operation: 'create' | 'update' | 'delete' | 'merge'
+  relatedIds?: ReadonlyArray<string> // For merge operations
+}
 
-const PcoWebhookPayload = Schema.Struct({
-  webhookId: Schema.String,
-  orgId: Schema.String,
-  headers: Schema.Record({ key: Schema.String, value: Schema.String }),
-  body: Schema.Struct({
-    data: Schema.Array(PcoWebhookData),
-  }),
-})
+export interface AdapterOperations {
+  // ... existing methods ...
+  
+  // Process webhook and return sync requests
+  processWebhook: (
+    webhookData: unknown
+  ) => Effect.Effect<
+    ReadonlyArray<WebhookSyncRequest>,
+    AdapterValidationError,
+    never
+  >
+  
+  // Fetch single entity by ID
+  fetchEntityById: (
+    entityType: string,
+    entityId: string
+  ) => Effect.Effect<unknown, AdapterSyncError, never>
+}
+```
 
-// Define workflow
-export const PcoWebhookWorkflow = Workflow.make({
-  name: 'PcoWebhookWorkflow',
-  payload: PcoWebhookPayload,
-  success: Schema.Void,
-  error: Schema.Union(
-    Schema.TaggedError('PcoWebhookError')('PcoWebhookError', {
-      message: Schema.String,
-      eventType: Schema.optional(Schema.String),
-      cause: Schema.optional(Schema.Unknown),
-    }),
+### PCO AdapterOperations Implementation
+
+```typescript
+// Location: adapters/pco/pcoOperationsLive.ts (additions)
+import { pcoWebhookMap } from '@openfaith/pco/base/pcoEntityManifest'
+
+// PCO webhook envelope schema
+const PcoWebhookEnvelope = Schema.Struct({
+  data: Schema.Array(
+    Schema.Struct({
+      id: Schema.String,
+      type: Schema.String,
+      attributes: Schema.Struct({
+        name: Schema.String, // The event name (e.g., "people.v2.events.person.updated")
+        attempt: Schema.Number,
+        payload: Schema.String, // JSON string of actual payload
+      }),
+      relationships: Schema.optional(Schema.Unknown),
+    })
   ),
-  idempotencyKey: ({ webhookId, orgId }) => 
-    `pco-webhook-${webhookId}-${orgId}-${nanoid()}`,
 })
 
-// Workflow implementation
-export const PcoWebhookWorkflowLayer = PcoWebhookWorkflow.toLayer(
-  Effect.fn(function* (payload, executionId) {
-    yield* Effect.log(`Processing PCO webhook for org: ${payload.orgId}`)
+// In PcoOperationsLive:
+export const PcoOperationsLive = Layer.effect(
+  AdapterOperations,
+  Effect.gen(function* () {
+    const pcoClient = yield* PcoHttpClient
     
-    const { orgId, body } = payload
-    const event = pipe(body.data, Array.head)
-    
-    if (Option.isNone(event)) {
-      yield* Effect.log('No event data in webhook payload')
-      return
-    }
-    
-    const eventData = event.value
-    const eventType = eventData.attributes.name
-    const parsedPayload = JSON.parse(eventData.attributes.payload)
-    
-    yield* Effect.log(`Processing PCO event: ${eventType}`, {
-      eventId: eventData.id,
-      eventType,
+    return AdapterOperations.of({
+      // ... existing methods ...
+      
+      processWebhook: (webhookData: unknown) =>
+        Effect.gen(function* () {
+          // Parse the outer PCO webhook envelope
+          const parsed = yield* Schema.decodeUnknown(PcoWebhookEnvelope)(webhookData)
+          
+          // Process ALL events in the webhook delivery
+          const syncRequests = yield* pipe(
+            parsed.data,
+            Array.map((event) =>
+              Effect.gen(function* () {
+                const eventName = event.attributes.name
+                
+                // Look up webhook definition in the manifest
+                const webhookDefOpt = pipe(pcoWebhookMap, Record.get(eventName))
+                
+                if (Option.isNone(webhookDefOpt)) {
+                  yield* Effect.log(`Unknown webhook event type: ${eventName}`)
+                  return Option.none<WebhookSyncRequest>()
+                }
+                
+                const webhookDef = webhookDefOpt.value
+                const payloadData = JSON.parse(event.attributes.payload)
+                
+                // Parse the payload using the webhook's schema
+                const validatedPayload = yield* Schema.decodeUnknown(webhookDef.schema)(payloadData)
+                
+                // Extract entity information
+                const entityId = validatedPayload.data.id
+                const entityType = webhookDef.entity // From the webhook definition
+                
+                // Determine operation from event name
+                const operation = extractOperation(eventName)
+                
+                // Handle special cases like mergers
+                if (eventName.includes('merger')) {
+                  return Option.some({
+                    entityType,
+                    entityId: validatedPayload.data.relationships.person_to_keep.data.id,
+                    operation: 'merge' as const,
+                    relatedIds: [validatedPayload.data.relationships.person_to_remove.data.id],
+                  })
+                }
+                
+                // Handle contact info events - sync the parent person
+                if (
+                  eventName.includes('phone_number') ||
+                  eventName.includes('email') ||
+                  eventName.includes('address')
+                ) {
+                  return Option.some({
+                    entityType: 'Person',
+                    entityId: validatedPayload.data.relationships.person.data.id,
+                    operation: operation === 'delete' ? 'update' : operation, // Always update person when contact info changes
+                  })
+                }
+                
+                return Option.some({
+                  entityType,
+                  entityId,
+                  operation,
+                })
+              })
+            ),
+            Effect.all,
+          )
+          
+          // Filter out None values and return array
+          return pipe(
+            syncRequests,
+            Array.filterMap((x) => x), // Removes None values
+          )
+        }),
+      
+      fetchEntityById: (entityType: string, entityId: string) =>
+        Effect.gen(function* () {
+          const entityClient = getEntityClient(pcoClient, entityType)
+          
+          if (!entityClient || !entityClient.get) {
+            return yield* Effect.fail(
+              new AdapterSyncError({
+                adapter: 'pco',
+                entityName: entityType,
+                message: `Entity ${entityType} does not support get operation`,
+                operation: 'get',
+              })
+            )
+          }
+          
+          const urlParamName = mkUrlParamName(entityType)
+          
+          return yield* entityClient.get({
+            path: { [urlParamName]: entityId },
+          }).pipe(
+            Effect.mapError((error) =>
+              new AdapterSyncError({
+                adapter: 'pco',
+                cause: error,
+                entityName: entityType,
+                message: `Failed to fetch ${entityType} with ID ${entityId}`,
+                operation: 'get',
+              })
+            )
+          )
+        }),
     })
-    
-    // Convert PCO events to mutations based on event type
-    yield* Effect.switch(eventType, {
-      // Person events
-      'people.v2.events.person.created': () =>
-        handlePersonModify(orgId, parsedPayload.data.id),
-      'people.v2.events.person.updated': () =>
-        handlePersonModify(orgId, parsedPayload.data.id),
-      'people.v2.events.person.destroyed': () =>
-        handlePersonDelete(orgId, parsedPayload.data.id),
-      
-      // Person merger
-      'people.v2.events.person_merger.created': () =>
-        handlePersonMerge(
-          orgId,
-          parsedPayload.data.relationships.person_to_keep.data.id,
-          parsedPayload.data.relationships.person_to_remove.data.id,
-        ),
-      
-      // Contact info events
-      'people.v2.events.phone_number.created': () =>
-        handlePersonModify(orgId, parsedPayload.data.relationships.person.data.id),
-      'people.v2.events.phone_number.updated': () =>
-        handlePersonModify(orgId, parsedPayload.data.relationships.person.data.id),
-      'people.v2.events.email.created': () =>
-        handlePersonModify(orgId, parsedPayload.data.relationships.person.data.id),
-      'people.v2.events.email.updated': () =>
-        handlePersonModify(orgId, parsedPayload.data.relationships.person.data.id),
-      'people.v2.events.address.created': () =>
-        handlePersonModify(orgId, parsedPayload.data.relationships.person.data.id),
-      'people.v2.events.address.updated': () =>
-        handlePersonModify(orgId, parsedPayload.data.relationships.person.data.id),
-      
-      // Group events
-      'groups.v2.events.group.created': () =>
-        handleGroupModify(orgId, parsedPayload.data.id),
-      'groups.v2.events.group.updated': () =>
-        handleGroupModify(orgId, parsedPayload.data.id),
-      'groups.v2.events.group.destroyed': () =>
-        handleGroupDelete(orgId, parsedPayload.data.id),
-      
-      // Membership events
-      'groups.v2.events.membership.created': () =>
-        handleGroupModify(orgId, parsedPayload.data.relationships.group.data.id),
-      'groups.v2.events.membership.updated': () =>
-        handleGroupModify(orgId, parsedPayload.data.relationships.group.data.id),
-      'groups.v2.events.membership.destroyed': () =>
-        handleGroupModify(orgId, parsedPayload.data.relationships.group.data.id),
-      
-      // Default handler
-      onDefault: () =>
-        Effect.log(`Unhandled PCO event type: ${eventType}`),
-    })
-    
-    yield* Effect.log(`Completed processing PCO webhook event: ${eventType}`)
   }),
 )
 
-// Helper functions to trigger appropriate sync workflows
-const handlePersonModify = (orgId: string, personExternalId: string) =>
-  Effect.gen(function* () {
-    // Create a sync operation to fetch and update person data
-    yield* ExternalPushEntityWorkflow.execute({
-      tokenKey: orgId,
-      entityName: 'people',
-      mutations: [
-        {
-          mutation: {
-            type: 'custom' as const,
-            name: 'syncPerson',
-            args: [{ personExternalId }],
-            clientID: nanoid(),
-            id: Date.now(),
-            timestamp: Date.now(),
-          },
-          op: {
-            op: 'upsert' as const,
-            tableName: 'people',
-            primaryKey: { key: 'externalId', value: personExternalId },
-            value: { key: 'requiresSync', value: true },
-          },
-        },
-      ],
-    })
-  })
+// Helper to extract operation from event name
+const extractOperation = (eventName: string): 'create' | 'update' | 'delete' => {
+  if (pipe(eventName, String.includes('.created'))) return 'create'
+  if (pipe(eventName, String.includes('.updated'))) return 'update'
+  if (pipe(eventName, String.includes('.destroyed'))) return 'delete'
+  return 'update' // Default fallback
+}
+```
 
-const handlePersonDelete = (orgId: string, personExternalId: string) =>
-  Effect.gen(function* () {
-    yield* ExternalPushEntityWorkflow.execute({
-      tokenKey: orgId,
-      entityName: 'people',
-      mutations: [
-        {
-          mutation: {
-            type: 'crud' as const,
-            name: '_zero_crud',
-            args: [
-              {
-                ops: [
-                  {
-                    op: 'delete' as const,
-                    tableName: 'people',
-                    primaryKey: { key: 'externalId', value: personExternalId },
-                    value: { key: 'externalId', value: personExternalId },
-                  },
-                ],
-              },
-            ],
-            clientID: nanoid(),
-            id: Date.now(),
-            timestamp: Date.now(),
-          },
-          op: {
-            op: 'delete' as const,
-            tableName: 'people',
-            primaryKey: { key: 'externalId', value: personExternalId },
-            value: { key: 'externalId', value: personExternalId },
-          },
-        },
-      ],
-    })
-  })
+### Entity Manifest Webhook Export
 
-const handlePersonMerge = (orgId: string, keepId: string, removeId: string) =>
-  Effect.gen(function* () {
-    // Handle person merge by updating the kept person and removing the other
-    yield* Effect.all([
-      handlePersonModify(orgId, keepId),
-      handlePersonDelete(orgId, removeId),
-    ])
-  })
+```typescript
+// Location: adapters/pco/base/pcoEntityManifest.ts (additions)
 
-const handleGroupModify = (orgId: string, groupExternalId: string) =>
-  Effect.gen(function* () {
-    yield* ExternalPushEntityWorkflow.execute({
-      tokenKey: orgId,
-      entityName: 'groups',
-      mutations: [
-        {
-          mutation: {
-            type: 'custom' as const,
-            name: 'syncGroup',
-            args: [{ groupExternalId }],
-            clientID: nanoid(),
-            id: Date.now(),
-            timestamp: Date.now(),
-          },
-          op: {
-            op: 'upsert' as const,
-            tableName: 'groups',
-            primaryKey: { key: 'externalId', value: groupExternalId },
-            value: { key: 'requiresSync', value: true },
-          },
-        },
-      ],
-    })
-  })
+// Export webhooks as a lookup map for easy access
+export const pcoWebhookMap = pipe(
+  pcoEntityManifest.webhooks,
+  Array.map((webhook) => [webhook.event, webhook] as const),
+  Record.fromEntries,
+)
+```
 
-const handleGroupDelete = (orgId: string, groupExternalId: string) =>
-  Effect.gen(function* () {
-    yield* ExternalPushEntityWorkflow.execute({
-      tokenKey: orgId,
-      entityName: 'groups',
-      mutations: [
-        {
-          mutation: {
-            type: 'crud' as const,
-            name: '_zero_crud',
-            args: [
-              {
-                ops: [
-                  {
-                    op: 'delete' as const,
-                    tableName: 'groups',
-                    primaryKey: { key: 'externalId', value: groupExternalId },
-                    value: { key: 'externalId', value: groupExternalId },
-                  },
-                ],
-              },
-            ],
-            clientID: nanoid(),
-            id: Date.now(),
-            timestamp: Date.now(),
-          },
-          op: {
-            op: 'delete' as const,
-            tableName: 'groups',
-            primaryKey: { key: 'externalId', value: groupExternalId },
-            value: { key: 'externalId', value: groupExternalId },
-          },
-        },
-      ],
-    })
+### External Push Trigger Service
+
+```typescript
+// Location: backend/server/services/externalPushTrigger.ts
+import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
+import { Effect } from 'effect'
+
+export const triggerExternalPush = Effect.fn('triggerExternalPush')(function* (params: {
+  mutations: ReadonlyArray<Mutation>
+  tokenKey: string
+}) {
+  const workflowClient = yield* WorkflowClient
+  
+  yield* Effect.log('Triggering ExternalPushWorkflow', {
+    mutationCount: params.mutations.length,
+    tokenKey: params.tokenKey,
   })
+  
+  yield* workflowClient.workflows
+    .ExternalPushWorkflow({
+      payload: {
+        mutations: params.mutations,
+        tokenKey: params.tokenKey,
+      },
+    })
+    .pipe(
+      Effect.tap(() => Effect.log('ExternalPushWorkflow completed successfully')),
+      Effect.tapError((error) =>
+        Effect.logError('External sync workflow failed', {
+          error,
+          mutations: params.mutations,
+        }),
+      ),
+      Effect.ignore,
+    )
+})
+```
+
+### Single Entity Sync Workflow
+
+```typescript
+// Location: backend/workers/workflows/externalSyncSingleEntityWorkflow.ts
+import { Workflow } from '@effect/workflow'
+import { AdapterOperations } from '@openfaith/adapter-core/layers/adapterOperations'
+import { TokenKey } from '@openfaith/adapter-core/server'
+import { saveDataE } from '@openfaith/workers/helpers/saveDataE'
+import { triggerExternalPush } from '@openfaith/server/services/externalPushTrigger'
+import { Effect, Schema } from 'effect'
+import { nanoid } from 'nanoid'
+
+// Workflow payload schema
+const ExternalSyncSingleEntityPayload = Schema.Struct({
+  tokenKey: Schema.String,
+  entityType: Schema.String,
+  entityId: Schema.String,
+  operation: Schema.Literal('create', 'update', 'delete', 'merge'),
+  relatedIds: Schema.optional(Schema.Array(Schema.String)),
+})
+
+// Define the workflow
+export const ExternalSyncSingleEntityWorkflow = Workflow.make({
+  name: 'ExternalSyncSingleEntityWorkflow',
+  payload: ExternalSyncSingleEntityPayload,
+  success: Schema.Void,
+  error: Schema.TaggedError<ExternalSyncSingleEntityError>()(
+    'ExternalSyncSingleEntityError',
+    {
+      message: Schema.String,
+      entityType: Schema.optional(Schema.String),
+      entityId: Schema.optional(Schema.String),
+      cause: Schema.optional(Schema.Unknown),
+    }
+  ),
+  idempotencyKey: ({ tokenKey, entityType, entityId }) => 
+    `single-entity-sync-${tokenKey}-${entityType}-${entityId}-${Date.now()}`,
+})
+
+// Workflow implementation
+export const ExternalSyncSingleEntityWorkflowLayer = ExternalSyncSingleEntityWorkflow.toLayer(
+  Effect.fn(function* (payload, executionId) {
+    const { tokenKey, entityType, entityId, operation, relatedIds } = payload
+    
+    yield* Effect.log(`Syncing single entity: ${entityType} ${entityId} (${operation})`)
+    
+    // Get adapter operations (determine adapter from tokenKey)
+    const adapterOps = yield* AdapterOperations.pipe(
+      Effect.provide(getAdapterLayer(tokenKey)), // Helper to determine adapter
+      Effect.provideService(TokenKey, tokenKey),
+    )
+    
+    switch (operation) {
+      case 'create':
+      case 'update': {
+        // Fetch fresh data from API for the specific entity
+        const entityData = yield* adapterOps.fetchEntityById(entityType, entityId)
+        
+        // Write directly to database (like import workflows do)
+        yield* saveDataE({
+          data: entityData,
+          entityName: entityType,
+          adapter: adapterOps.getAdapterTag(),
+        })
+        
+        // Create mutation shape for external push
+        const mutation = {
+          type: 'crud' as const,
+          name: '_zero_crud',
+          clientID: nanoid(),
+          id: Date.now(),
+          timestamp: Date.now(),
+          args: [{
+            ops: [{
+              op: 'upsert' as const,
+              tableName: mkTableName(entityType),
+              primaryKey: { externalId: entityId },
+              value: entityData,
+            }],
+          }],
+        }
+        
+        // Trigger external push to sync to external system
+        yield* triggerExternalPush({
+          mutations: [mutation],
+          tokenKey,
+        })
+        
+        break
+      }
+      
+      case 'delete': {
+        // Mark as deleted in database
+        yield* markEntityAsDeleted({
+          entityType,
+          externalId: entityId,
+          adapter: adapterOps.getAdapterTag(),
+        })
+        
+        // Create delete mutation for external push
+        const mutation = {
+          type: 'crud' as const,
+          name: '_zero_crud',
+          clientID: nanoid(),
+          id: Date.now(),
+          timestamp: Date.now(),
+          args: [{
+            ops: [{
+              op: 'delete' as const,
+              tableName: mkTableName(entityType),
+              primaryKey: { externalId: entityId },
+            }],
+          }],
+        }
+        
+        yield* triggerExternalPush({
+          mutations: [mutation],
+          tokenKey,
+        })
+        
+        break
+      }
+      
+      case 'merge': {
+        // For merges: update the kept entity, delete the removed one
+        const [keepId, removeId] = [entityId, relatedIds?.[0]]
+        
+        if (removeId) {
+          // Fetch and save the kept entity
+          const keptEntityData = yield* adapterOps.fetchEntityById(entityType, keepId)
+          yield* saveDataE({
+            data: keptEntityData,
+            entityName: entityType,
+            adapter: adapterOps.getAdapterTag(),
+          })
+          
+          // Mark the removed entity as deleted
+          yield* markEntityAsDeleted({
+            entityType,
+            externalId: removeId,
+            adapter: adapterOps.getAdapterTag(),
+          })
+          
+          // Create mutations for external push
+          const mutations = [
+            {
+              type: 'crud' as const,
+              name: '_zero_crud',
+              clientID: nanoid(),
+              id: Date.now(),
+              timestamp: Date.now(),
+              args: [{
+                ops: [{
+                  op: 'upsert' as const,
+                  tableName: mkTableName(entityType),
+                  primaryKey: { externalId: keepId },
+                  value: keptEntityData,
+                }],
+              }],
+            },
+            {
+              type: 'crud' as const,
+              name: '_zero_crud',
+              clientID: nanoid(),
+              id: Date.now() + 1,
+              timestamp: Date.now(),
+              args: [{
+                ops: [{
+                  op: 'delete' as const,
+                  tableName: mkTableName(entityType),
+                  primaryKey: { externalId: removeId },
+                }],
+              }],
+            },
+          ]
+          
+          yield* triggerExternalPush({ mutations, tokenKey })
+        }
+        
+        break
+      }
+    }
+    
+    yield* Effect.log(`Completed single entity sync for ${entityType} ${entityId}`)
+  })
+)
 ```
 
 ### Server Configuration
@@ -606,23 +818,49 @@ export const ServerLive = Layer.mergeAll(
 )
 ```
 
+### Updated Zero Mutators Handler
+
+```typescript
+// Location: backend/server/handlers/zeroMutatorsHandler.ts (updated)
+import { triggerExternalPush } from '@openfaith/server/services/externalPushTrigger'
+
+// In the handler:
+const result = yield* appZeroStore.processMutations(
+  createMutators(authData),
+  input.urlParams,
+  input.payload as unknown as ReadonlyJSONObject,
+)
+
+// Use the extracted function for side effects
+if (authData.activeOrganizationId) {
+  yield* Effect.forkDaemon(
+    triggerExternalPush({
+      mutations: input.payload.mutations,
+      tokenKey: authData.activeOrganizationId,
+    })
+  )
+}
+
+return result
+```
+
 ### Workflow Registration
 
 ```typescript
 // Location: backend/workers/api/workflowApi.ts (additions)
-import { PcoWebhookWorkflow } from '@openfaith/workers/workflows/pcoWebhookWorkflow'
+import { ExternalSyncSingleEntityWorkflow } from '@openfaith/workers/workflows/externalSyncSingleEntityWorkflow'
 
 export const workflows = [
   // ... existing workflows
-  PcoWebhookWorkflow,
+  ExternalSyncSingleEntityWorkflow, // Add new workflow, remove PcoWebhookWorkflow
 ] as const
 
 // Location: backend/workers/runner.ts (additions)
-import { PcoWebhookWorkflowLayer } from '@openfaith/workers/workflows/pcoWebhookWorkflow'
+import { ExternalSyncSingleEntityWorkflowLayer } from '@openfaith/workers/workflows/externalSyncSingleEntityWorkflow'
 
 const EnvLayer = Layer.mergeAll(
   // ... existing layers
-  PcoWebhookWorkflowLayer,
+  ExternalSyncSingleEntityWorkflowLayer, // Add new layer, remove PcoWebhookWorkflowLayer
 )
 ```
 
@@ -633,25 +871,29 @@ const EnvLayer = Layer.mergeAll(
 2. Implement webhook schemas in packages/schema
 3. Add webhook API endpoint to Http.ts
 4. Create generic webhook handler
-5. Wire up routes in serverLive.ts
+5. Extract `triggerExternalPush` service function
+6. Wire up routes in serverLive.ts
 
-### Phase 2: PCO Implementation (Week 2)
-1. Implement PCO webhook workflow
-2. Add PCO-specific event handlers
-3. Map PCO events to sync operations
-4. Test with PCO sandbox webhooks
+### Phase 2: Adapter Integration (Week 2)
+1. Add `processWebhook` and `fetchEntityById` to AdapterOperations interface
+2. Implement these methods in PcoOperationsLive
+3. Create webhook lookup map from entity manifest
+4. Create ExternalSyncSingleEntityWorkflow
+5. Update webhook handler to use new architecture
 
 ### Phase 3: Testing & Refinement (Week 3)
 1. Comprehensive testing of all PCO event types
 2. Error handling and retry logic
-3. Monitoring and logging improvements
-4. Performance optimization
+3. Verify direct DB writes work with Zero
+4. Test side effects consistency
+5. Performance optimization
 
 ### Phase 4: Documentation & Rollout (Week 4)
 1. API documentation
 2. Setup guides for configuring webhooks
 3. Migration guide from old system
 4. Production deployment
+5. Remove old PcoWebhookWorkflow
 
 ## Migration Strategy
 
@@ -857,13 +1099,31 @@ const PCO_WEBHOOK_EVENTS = [
 }
 ```
 
+## Key Architecture Benefits
+
+### Simplified Flow
+- **No Webhook Workflow**: Direct processing through AdapterOperations eliminates unnecessary abstraction
+- **Direct DB Writes**: Like import workflows, avoiding mutation processor complexity
+- **Shared Side Effects**: Single `triggerExternalPush` function ensures consistency
+
+### Type Safety & Maintainability
+- **Entity Manifest Integration**: Webhook definitions with schemas provide type-safe validation
+- **Adapter Agnostic**: Any adapter implementing the interface works automatically
+- **Fresh Data**: Always fetches latest from API, avoiding webhook ordering issues
+
+### Performance & Reliability
+- **Parallel Processing**: Multiple webhook events processed concurrently
+- **Zero Compatibility**: Direct DB writes are picked up by Zero automatically
+- **Consistent Behavior**: Same side effects for user mutations and webhook updates
+
 ## Conclusion
 
 This implementation provides a robust, scalable webhook infrastructure that:
 1. Handles real-time data synchronization from external systems
 2. Maintains type safety with Effect-TS throughout
-3. Reuses existing sync workflows and patterns
-4. Easily extends to support additional adapters
-5. Provides comprehensive monitoring and error handling
+3. Writes directly to database for efficiency
+4. Shares side effect logic between mutation and webhook paths
+5. Leverages entity manifest for webhook definitions
+6. Easily extends to support additional adapters
 
-The phased approach ensures we can deliver value incrementally while maintaining system stability and data integrity.
+The refined architecture eliminates the webhook workflow, simplifies the data flow, and ensures consistency across all mutation paths while maintaining the benefits of the existing sync infrastructure.
