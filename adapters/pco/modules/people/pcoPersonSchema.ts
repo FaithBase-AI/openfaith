@@ -1,4 +1,4 @@
-import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
+import { mkPcoEntity, mkPcoWebhookDelivery } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
 import {
   BasePerson,
@@ -162,3 +162,69 @@ export const getTransformer = <A, I, R>(
 
 // Convenience function specifically for PcoPerson
 export const getPcoPersonTransformer = () => getTransformer(PcoPerson)
+
+/**
+ * Person Created Webhook Event
+ */
+export class PcoPersonCreatedWebhook extends Schema.Class<PcoPersonCreatedWebhook>(
+  'PcoPersonCreatedWebhook',
+)(mkPcoWebhookDelivery('people.v2.events.person.created', PcoPerson)) {}
+
+/**
+ * Person Updated Webhook Event
+ */
+export class PcoPersonUpdatedWebhook extends Schema.Class<PcoPersonUpdatedWebhook>(
+  'PcoPersonUpdatedWebhook',
+)(mkPcoWebhookDelivery('people.v2.events.person.updated', PcoPerson)) {}
+
+/**
+ * Person Destroyed Webhook Event
+ * Destroyed events only contain minimal data (id and type)
+ */
+export class PcoPersonDestroyedWebhook extends Schema.Class<PcoPersonDestroyedWebhook>(
+  'PcoPersonDestroyedWebhook',
+)(
+  mkPcoWebhookDelivery(
+    'people.v2.events.person.destroyed',
+    Schema.Struct({
+      id: Schema.String,
+      type: Schema.Literal('Person'),
+      // Destroyed events typically have minimal or no attributes
+      attributes: Schema.optional(Schema.Unknown),
+      relationships: Schema.optional(Schema.Unknown),
+      links: Schema.optional(Schema.Unknown),
+    }),
+  ),
+) {}
+
+/**
+ * Person Merger Webhook Event
+ * Special event that contains relationship data for merging two person records
+ */
+export class PcoPersonMergerWebhook extends Schema.Class<PcoPersonMergerWebhook>(
+  'PcoPersonMergerWebhook',
+)(
+  mkPcoWebhookDelivery(
+    'people.v2.events.person_merger.created',
+    Schema.Struct({
+      id: Schema.String,
+      type: Schema.Literal('PersonMerger'),
+      attributes: Schema.optional(Schema.Unknown),
+      relationships: Schema.Struct({
+        person_to_keep: Schema.Struct({
+          data: Schema.Struct({
+            type: Schema.Literal('Person'),
+            id: Schema.String,
+          }),
+        }),
+        person_to_remove: Schema.Struct({
+          data: Schema.Struct({
+            type: Schema.Literal('Person'),
+            id: Schema.String,
+          }),
+        }),
+      }),
+      links: Schema.optional(Schema.Unknown),
+    }),
+  ),
+) {}
