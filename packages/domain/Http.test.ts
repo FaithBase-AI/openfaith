@@ -8,6 +8,7 @@ import {
   DeleteOp,
   HttpError,
   InsertOp,
+  MainApi,
   Mutation,
   MutationError,
   MutationID,
@@ -27,7 +28,6 @@ import {
   UpsertOp,
   ValidationError,
   ZeroError,
-  ZeroMutatorsApi,
   ZeroMutatorsGroup,
   ZeroPusherError,
 } from '@openfaith/domain/Http'
@@ -474,11 +474,11 @@ effect('ZeroMutatorsGroup should be defined correctly', () =>
   }),
 )
 
-effect('ZeroMutatorsApi should be defined correctly', () =>
+effect('MainApi should be defined correctly', () =>
   Effect.gen(function* () {
-    expect(ZeroMutatorsApi).toBeDefined()
+    expect(MainApi).toBeDefined()
     // The API class doesn't have a direct identifier property
-    expect(typeof ZeroMutatorsApi).toBe('function')
+    expect(typeof MainApi).toBe('function')
   }),
 )
 

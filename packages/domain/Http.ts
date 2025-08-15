@@ -185,7 +185,7 @@ export class ValidationError extends Schema.TaggedError<ValidationError>()('Vali
 // Define the Zero custom mutators HTTP API group
 export const ZeroMutatorsGroup = HttpApiGroup.make('zero')
   .add(
-    HttpApiEndpoint.post('push', '/push')
+    HttpApiEndpoint.post('push', '/api/push')
       .setUrlParams(PushUrlParams)
       .setPayload(PushRequest)
       .addSuccess(PushResponse)
@@ -195,11 +195,68 @@ export const ZeroMutatorsGroup = HttpApiGroup.make('zero')
   )
   .middleware(SessionHttpMiddleware)
 
-// Define the complete HTTP API
-export class ZeroMutatorsApi extends HttpApi.make('zero')
-  .add(ZeroMutatorsGroup)
-  .prefix('/api/api') {}
-
 // Type exports for convenience
 export type PushRequestType = typeof PushRequest.Type
 export type PushResponseType = typeof PushResponse.Type
+
+// ============================================
+// Webhook API Definitions
+// ============================================
+
+// Webhook payload schemas
+export const WebhookHeaders = Schema.Record({ key: Schema.String, value: Schema.String })
+export type WebhookHeaders = typeof WebhookHeaders.Type
+
+export const WebhookPayload = Schema.Struct({
+  body: Schema.Unknown, // Raw body, will be parsed by adapter
+  headers: WebhookHeaders,
+  rawBody: Schema.String, // For HMAC verification
+})
+export type WebhookPayload = typeof WebhookPayload.Type
+
+// Webhook response
+export const WebhookResponse = Schema.Struct({
+  message: Schema.optional(Schema.String),
+  processedEventId: Schema.optional(Schema.String),
+  success: Schema.Boolean,
+})
+export type WebhookResponse = typeof WebhookResponse.Type
+
+// Webhook errors
+export class WebhookVerificationError extends Schema.TaggedError<WebhookVerificationError>()(
+  'WebhookVerificationError',
+  {
+    adapter: Schema.String,
+    message: Schema.String,
+  },
+) {}
+
+export class WebhookProcessingError extends Schema.TaggedError<WebhookProcessingError>()(
+  'WebhookProcessingError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    eventType: Schema.optional(Schema.String),
+    message: Schema.String,
+  },
+) {}
+
+// Webhook API group (no auth middleware - webhooks use their own verification)
+export const WebhookGroup = HttpApiGroup.make('webhooks').add(
+  HttpApiEndpoint.post('receive', '/webhooks/:adapter')
+    .setUrlParams(Schema.Struct({ adapter: Schema.String }))
+    .setPayload(WebhookPayload)
+    .addSuccess(WebhookResponse)
+    .addError(WebhookVerificationError, { status: 401 })
+    .addError(WebhookProcessingError, { status: 500 }),
+)
+
+// ============================================
+// Main Combined HTTP API
+// ============================================
+
+// Main API that combines both Zero mutators and Webhooks groups
+export class MainApi extends HttpApi.make('main')
+  .add(ZeroMutatorsGroup)
+  .add(WebhookGroup)
+  .prefix('/api') {}
