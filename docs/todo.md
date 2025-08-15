@@ -8,3 +8,4 @@
   - Sync with external adapter (optional)
     - PCO for now, all the other ones their as disabled options
 - [ ] Add minio / better-upload
+- [ ] symlink the envs with a script
