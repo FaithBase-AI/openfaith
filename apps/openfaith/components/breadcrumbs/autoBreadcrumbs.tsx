@@ -10,93 +10,138 @@ import {
   BreadcrumbSeparator,
 } from '@openfaith/ui'
 import { Link, useRouterState } from '@tanstack/react-router'
-import { Array, pipe } from 'effect'
-import type { ReactNode } from 'react'
+import { Array, HashSet, Option, pipe, String } from 'effect'
+import type { FC, ReactNode } from 'react'
 
-// Define breadcrumb renderers for specific route patterns
-const renderBreadcrumb = (segment: string): ReactNode => {
-  // Skip layout routes
+const NON_LINKABLE_SEGMENTS = HashSet.fromIterable(['settings'])
+
+const renderBreadcrumb = (segment: string): Option.Option<ReactNode> => {
   if (segment === '_app') {
-    return null
+    return Option.none()
   }
 
-  // Handle dynamic segments (starting with $)
-  if (segment.startsWith('$')) {
-    const paramName = segment.slice(1)
-    return formatLabel(paramName)
+  if (pipe(segment, String.startsWith('$'))) {
+    const paramName = pipe(segment, String.slice(1))
+    return Option.some(formatLabel(paramName))
   }
 
-  // For regular segments, use formatLabel to handle all cases
-  return formatLabel(segment)
+  return Option.some(formatLabel(segment))
 }
 
-const buildBreadcrumbPath = (segments: Array<string>, index: number): string => {
-  return `/${pipe(segments, Array.take(index + 1), Array.join('/'))}`.replace('//', '/')
+const buildBreadcrumbPath = (segments: ReadonlyArray<string>, index: number): string => {
+  return pipe(
+    segments,
+    Array.take(index + 1),
+    Array.join('/'),
+    (path) => `/${path}`,
+    String.replace('//', '/'),
+  )
 }
 
-export function AutoBreadcrumbs() {
+interface BreadcrumbData {
+  segment: string
+  content: ReactNode
+  path: string
+  index: number
+  isFirst: boolean
+  isLast: boolean
+  shouldBeLink: boolean
+}
+
+const createBreadcrumbData = (
+  segment: string,
+  index: number,
+  pathSegments: ReadonlyArray<string>,
+  validIndex: number,
+): Option.Option<BreadcrumbData> => {
+  return pipe(
+    renderBreadcrumb(segment),
+    Option.map((content) => ({
+      content,
+      index,
+      isFirst: validIndex === 0,
+      isLast: index === pathSegments.length - 1,
+      path: buildBreadcrumbPath(pathSegments, index),
+      segment,
+      shouldBeLink:
+        index !== pathSegments.length - 1 && !pipe(NON_LINKABLE_SEGMENTS, HashSet.has(segment)),
+    })),
+  )
+}
+
+const renderBreadcrumbItem = (data: BreadcrumbData): ReactNode => {
+  if (data.shouldBeLink) {
+    return (
+      <BreadcrumbItem key={`${data.segment}-${data.index}`}>
+        <BreadcrumbLink asChild>
+          <Link className='hidden md:block' to={data.path}>
+            {data.content}
+          </Link>
+        </BreadcrumbLink>
+      </BreadcrumbItem>
+    )
+  }
+
+  return (
+    <BreadcrumbItem key={`${data.segment}-${data.index}`}>
+      <BreadcrumbPage className='line-clamp-1 max-w-64'>{data.content}</BreadcrumbPage>
+    </BreadcrumbItem>
+  )
+}
+
+const renderBreadcrumbWithSeparator = (data: BreadcrumbData): ReadonlyArray<ReactNode> => {
+  const separator = data.isFirst
+    ? []
+    : [
+        <BreadcrumbSeparator
+          className='hidden md:block'
+          key={`${data.segment}-${data.index}-separator`}
+        />,
+      ]
+
+  const item = renderBreadcrumbItem(data)
+
+  return pipe(separator, Array.append(item))
+}
+
+export const AutoBreadcrumbs: FC = () => {
   const matches = useRouterState({ select: (s) => s.matches })
 
-  // Extract path segments from matched routes
   const pathSegments = pipe(
     matches,
     Array.map((match) => match.pathname),
-    Array.filter((path) => path !== '/'), // Remove root
-    Array.flatMap((path) => path.split('/').filter((segment) => segment !== '')),
-    // Remove duplicates manually
-    Array.reduce([] as Array<string>, (acc, segment) => {
-      if (!acc.includes(segment)) {
-        return [...acc, segment]
-      }
-      return acc
-    }),
+    Array.filter((path) => path !== '/'),
+    Array.flatMap((path) =>
+      pipe(
+        path,
+        String.split('/'),
+        Array.filter((segment) => segment !== ''),
+      ),
+    ),
+    Array.dedupe,
   )
 
-  // If no meaningful segments, don't render breadcrumbs
-  if (pathSegments.length === 0) {
+  if (pipe(pathSegments, Array.length) === 0) {
     return null
   }
 
-  const breadcrumbItems: Array<ReactNode> = []
+  // Create breadcrumb data with valid indices (accounting for filtered items)
+  const breadcrumbDataArray = pipe(
+    pathSegments,
+    Array.map((segment, index) => ({ index, segment })),
+    Array.filterMap(({ segment, index }) =>
+      pipe(
+        renderBreadcrumb(segment),
+        Option.map(() => ({ originalIndex: index, segment })),
+      ),
+    ),
+    Array.map(({ segment, originalIndex }, validIndex) =>
+      createBreadcrumbData(segment, originalIndex, pathSegments, validIndex),
+    ),
+    Array.getSomes,
+  )
 
-  pathSegments.forEach((segment, index) => {
-    const breadcrumbContent = renderBreadcrumb(segment)
-
-    // Skip null breadcrumbs (like _app)
-    if (!breadcrumbContent) {
-      return
-    }
-
-    const isFirst = breadcrumbItems.length === 0
-    const isLast = index === pathSegments.length - 1
-    const path = buildBreadcrumbPath(pathSegments, index)
-
-    // Add separator (except for first item)
-    if (!isFirst) {
-      breadcrumbItems.push(
-        <BreadcrumbSeparator className={'hidden md:block'} key={`${segment}-${index}-separator`} />,
-      )
-    }
-
-    // Add breadcrumb item
-    if (isLast) {
-      breadcrumbItems.push(
-        <BreadcrumbItem key={`${segment}-${index}`}>
-          <BreadcrumbPage className='line-clamp-1 max-w-64'>{breadcrumbContent}</BreadcrumbPage>
-        </BreadcrumbItem>,
-      )
-    } else {
-      breadcrumbItems.push(
-        <BreadcrumbItem key={`${segment}-${index}`}>
-          <BreadcrumbLink asChild>
-            <Link className='hidden md:block' to={path}>
-              {breadcrumbContent}
-            </Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>,
-      )
-    }
-  })
+  const breadcrumbItems = pipe(breadcrumbDataArray, Array.flatMap(renderBreadcrumbWithSeparator))
 
   return (
     <Breadcrumb>
