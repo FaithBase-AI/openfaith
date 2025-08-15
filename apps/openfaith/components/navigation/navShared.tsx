@@ -24,6 +24,11 @@ export const mainNavItems: Array<NavItem> = [
 
 export const settingsNavItems: Array<NavItem> = [
   {
+    icon: <PersonIcon />,
+    title: 'Profile',
+    url: '/settings/profile',
+  },
+  {
     icon: <SettingsIcon />,
     title: 'General',
     url: '/settings/general',
