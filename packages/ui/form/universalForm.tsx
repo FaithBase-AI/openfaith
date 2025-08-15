@@ -7,7 +7,7 @@ import { generateFieldConfigs } from '@openfaith/ui/form/fieldConfigGenerator'
 import { createValidator, validateFormData } from '@openfaith/ui/form/validation'
 import { useSchemaInsert, useSchemaUpdate } from '@openfaith/ui/shared/hooks/schemaHooks'
 import { Array, Order, pipe, Record, type Schema } from 'effect'
-import { type ReactNode, useMemo } from 'react'
+import { useMemo } from 'react'
 
 export interface UniversalFormProps<T> {
   schema: Schema.Schema<T>
@@ -18,7 +18,6 @@ export interface UniversalFormProps<T> {
   onError?: (error: any) => void
   fieldOverrides?: Partial<Record<keyof T, Partial<FieldConfig['field']>>>
   className?: string
-  children?: (form: any, fields: Record<keyof T, Required<FieldConfig['field']>>) => ReactNode
   loading?: boolean
 }
 
@@ -35,7 +34,6 @@ export function UniversalForm<T>({
   onError,
   fieldOverrides = {},
   className,
-  children,
   loading = false,
 }: UniversalFormProps<T>) {
   const fieldConfigs = generateFieldConfigs(schema, fieldOverrides)
@@ -85,10 +83,6 @@ export function UniversalForm<T>({
   // Check if any mutation is in progress
   const isMutating = isInsertPending || isUpdatePending
   const isSubmitting = form.state.isSubmitting || loading || isMutating
-
-  if (children) {
-    return <div className={className}>{children(form, fieldConfigs)}</div>
-  }
 
   const formFields = pipe(
     fieldConfigs,
