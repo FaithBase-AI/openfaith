@@ -1,14 +1,13 @@
 'use client'
 
-import { authClient } from '@openfaith/auth/authClient'
+import { createOrganization, updateOrganization } from '@openfaith/auth/authClientE'
 import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
 import { createOrgIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import { useChangeOrg } from '@openfaith/openfaith/shared/auth/useChangeOrg'
-import { asyncNoOp } from '@openfaith/shared'
 import { ArrowRightIcon, Button, QuickActionForm, useAppForm } from '@openfaith/ui'
 import type { OrgClientShape } from '@openfaith/zero'
 import { useRouter } from '@tanstack/react-router'
-import { Match, Option, pipe, Schema, String } from 'effect'
+import { Effect, Match, Option, pipe, Schema, String } from 'effect'
 import { useAtom } from 'jotai'
 import type { FC } from 'react'
 
@@ -58,57 +57,65 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
     onSubmit: async ({ value }) => {
       await pipe(
         Match.type<typeof props>(),
-        Match.tag('create', async () => {
-          const { data } = await authClient.organization.create({
-            name: pipe(value.name, String.trim),
-            slug: pipe(value.slug, String.trim),
-            userId,
-          })
+        Match.tag('create', () =>
+          Effect.gen(function* () {
+            const result = yield* createOrganization({
+              name: pipe(value.name, String.trim),
+              slug: pipe(value.slug, String.trim),
+              userId,
+            })
 
-          await pipe(
-            data,
-            Option.fromNullable,
-            Option.match({
-              onNone: asyncNoOp,
-              onSome: async (x) => changeOrg({ orgId: x.id }),
-            }),
-          )
+            if (result.data) {
+              yield* changeOrg({ orgId: result.data.id })
+            }
 
-          setTimeout(() => {
-            router.history.push('/dashboard')
-          }, 0)
-        }),
-        Match.tag('onboarding', async ({ redirect = '/dashboard' }) => {
-          const { data } = await authClient.organization.create({
-            name: pipe(value.name, String.trim),
-            slug: pipe(value.slug, String.trim),
-            userId: userId,
-          })
+            setTimeout(() => {
+              router.history.push('/dashboard')
+            }, 0)
+          }),
+        ),
+        Match.tag('onboarding', ({ redirect = '/dashboard' }) =>
+          Effect.gen(function* () {
+            const trimmedName = pipe(value.name, String.trim)
+            const trimmedSlug = pipe(value.slug, String.trim)
 
-          await pipe(
-            data,
-            Option.fromNullable,
-            Option.match({
-              onNone: asyncNoOp,
-              onSome: async (x) => changeOrg({ orgId: x.id }),
-            }),
-          )
+            const result = yield* createOrganization({
+              name: trimmedName,
+              slug: trimmedSlug,
+              userId: userId,
+            })
 
-          setTimeout(() => {
-            router.history.push(redirect)
-          }, 0)
-        }),
-        Match.tag('edit', async (x) => {
-          await authClient.organization.update({
+            if (result.data) {
+              yield* changeOrg({ orgId: result.data.id })
+            }
+
+            // For onboarding, pass org data in the URL if redirecting to onboarding flow
+            const finalRedirect = redirect.includes('/onboarding')
+              ? `/onboarding?step=${encodeURIComponent(
+                  JSON.stringify({
+                    _tag: 'integrations',
+                    orgName: trimmedName,
+                    orgSlug: trimmedSlug,
+                  }),
+                )}`
+              : redirect
+
+            setTimeout(() => {
+              router.history.push(finalRedirect)
+            }, 0)
+          }),
+        ),
+        Match.tag('edit', (x) =>
+          updateOrganization({
             data: {
               name: pipe(value.name, String.trim),
               slug: pipe(value.slug, String.trim),
             },
             organizationId: x.org.id,
-          })
-        }),
+          }),
+        ),
         Match.exhaustive,
-      )(props)
+      )(props).pipe(Effect.runPromise)
 
       setCreateOrgIsOpen(false)
     },
