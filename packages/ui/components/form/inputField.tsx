@@ -1,7 +1,7 @@
 'use client'
 
-import { getFieldErrors } from '@openfaith/ui/components/formFields/fieldHelpers'
-import { useFieldContext } from '@openfaith/ui/components/formFields/tsField'
+import { getFieldErrors } from '@openfaith/ui/components/form/fieldHelpers'
+import { useFieldContext } from '@openfaith/ui/components/form/tsField'
 import { Input, inputClassName } from '@openfaith/ui/components/ui/input'
 import { InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
 import { cn } from '@openfaith/ui/shared/utils'
@@ -28,11 +28,7 @@ export function InputField(props: InputFieldProps) {
 
   const field = useFieldContext<string>()
 
-  const { processedError } = getFieldErrors({
-    errors: field.state.meta.errors,
-    isTouched: field.state.meta.isTouched,
-    submissionAttempts: field.form.state.submissionAttempts,
-  })
+  const { processedError } = getFieldErrors(field.state.meta.errors)
 
   return (
     <InputWrapper
@@ -45,6 +41,7 @@ export function InputField(props: InputFieldProps) {
       required={required}
     >
       <Input
+        aria-invalid={!!processedError}
         id={field.name}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
@@ -77,11 +74,7 @@ export function SlugInputField(props: SlugInputFieldProps) {
 
   const field = useFieldContext<string>()
 
-  const { processedError } = getFieldErrors({
-    errors: field.state.meta.errors,
-    isTouched: field.state.meta.isTouched,
-    submissionAttempts: field.form.state.submissionAttempts,
-  })
+  const { processedError } = getFieldErrors(field.state.meta.errors)
 
   return (
     <InputWrapper

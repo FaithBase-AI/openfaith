@@ -180,7 +180,7 @@ export const Person = Schema.Struct({
   email: Schema.String.pipe(
     Schema.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, {
       message: () => "Invalid email address",
-    }),
+    })
   ).annotations({
     [UiConfig]: {
       field: {
@@ -195,7 +195,7 @@ export const Person = Schema.Struct({
     "Engineering",
     "Sales",
     "Marketing",
-    "HR",
+    "HR"
   ).annotations({
     [UiConfig]: {
       field: {
@@ -244,7 +244,7 @@ export interface ExtractedField {
 }
 
 export const extractSchemaFields = <T>(
-  schema: Schema.Schema<T>,
+  schema: Schema.Schema<T>
 ): ExtractedField[] => {
   const ast = schema.ast;
 
@@ -274,7 +274,7 @@ const isNullableSchema = (schema: SchemaAST.AST): boolean => {
 // packages/ui/src/form/fieldConfigGenerator.ts
 export const generateFieldConfigs = <T>(
   schema: Schema.Schema<T>,
-  overrides: Partial<Record<keyof T, Partial<FieldConfig["field"]>>> = {},
+  overrides: Partial<Record<keyof T, Partial<FieldConfig["field"]>>> = {}
 ): Record<keyof T, Required<FieldConfig["field"]>> => {
   const fields = extractSchemaFields(schema);
   const result = {} as Record<keyof T, Required<FieldConfig["field"]>>;
@@ -284,7 +284,7 @@ export const generateFieldConfigs = <T>(
 
     // Get UI config from annotation
     const uiConfig = SchemaAST.getAnnotation<FieldConfig>(UiConfig)(
-      field.schema,
+      field.schema
     );
     const fieldConfig = uiConfig?.field;
 
@@ -323,7 +323,7 @@ The system automatically detects field types from schema definitions, eliminatin
 ```typescript
 const autoDetectFieldConfig = (
   schema: Schema.Schema.AnyNoContext,
-  fieldName: string,
+  fieldName: string
 ): Partial<FieldConfig["field"]> => {
   const ast = schema.ast;
 
@@ -426,7 +426,7 @@ firstName: Schema.String.annotations({
 
 ```typescript
 // packages/ui/src/form/UniversalForm.tsx
-import { useAppForm } from '@openfaith/ui/components/formFields/tsForm'
+import { useAppForm } from '@openfaith/ui/components/form/tsForm'
 import { Schema } from 'effect'
 
 export const UniversalForm = <T>({
@@ -556,7 +556,7 @@ const getFieldComponent = (fieldType: FieldConfig["field"]["type"]) => {
 ```typescript
 const createValidator = (
   config: FieldConfig["field"],
-  schema: Schema.Schema<any>,
+  schema: Schema.Schema<any>
 ) => {
   return (value: any) => {
     // Basic required validation

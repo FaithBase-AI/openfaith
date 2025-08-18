@@ -867,6 +867,69 @@ export const useSchemaMutation = <T>(
   }
 }
 
+/**
+ * Common schema collection query builder
+ */
+const buildSchemaCollectionQuery = <T>(
+  schema: SchemaType.Schema<T>,
+  z: ReturnType<typeof useZero>,
+  limit?: number,
+) => {
+  const entityTag = extractEntityTag(schema.ast)
+
+  return pipe(
+    entityTag,
+    Option.match({
+      onNone: nullOp,
+      onSome: (tag) => {
+        const tableName = mkZeroTableName(pipe(tag, String.capitalize))
+        const baseQuery = getBaseEntitiesQuery(z, tableName)
+        return limit ? baseQuery.limit(limit) : baseQuery
+      },
+    }),
+  )
+}
+
+/**
+ * Common schema collection decoder
+ */
+const decodeSchemaCollection = <T>(
+  schema: SchemaType.Schema<T>,
+  result: unknown,
+  info: { type: string },
+  context: string,
+): Array<T> => {
+  if (!result || info.type !== 'complete') {
+    return []
+  }
+
+  // Check if result is array-like without using native Array.isArray
+  const resultArray =
+    result && typeof result === 'object' && 'length' in result ? (result as Array<unknown>) : []
+
+  return pipe(
+    resultArray,
+    Array.map((item) =>
+      pipe(
+        Schema.decodeUnknown(schema)(item, { onExcessProperty: 'preserve' }),
+        Effect.match({
+          onFailure: (error) => {
+            Effect.logError(`Failed to decode entity in ${context}`, {
+              error,
+              item,
+              schema: schema.ast._tag,
+            }).pipe(Effect.runSync)
+            return null // Skip items that fail to decode
+          },
+          onSuccess: (entity) => entity,
+        }),
+        Effect.runSync,
+      ),
+    ),
+    Array.filter((item): item is T => item !== null),
+  )
+}
+
 /*
  * Hook that provides collection data for a given schema using Zero queries with filtering support
  */
@@ -884,16 +947,7 @@ export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> })
   )
 
   const queryFn = (z: ReturnType<typeof useZero>) => {
-    return pipe(
-      entityTag,
-      Option.match({
-        onNone: nullOp,
-        onSome: (tag) => {
-          const tableName = mkZeroTableName(pipe(tag, String.capitalize))
-          return getBaseEntitiesQuery(z, tableName)
-        },
-      }),
-    )
+    return buildSchemaCollectionQuery(schema, z)
   }
 
   const { info, limit, nextPage, pageSize, result } = useFilterQuery({
@@ -905,33 +959,7 @@ export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> })
 
   // Decode the collection data through the schema to get class instances with getters
   const decodedCollection = useMemo(() => {
-    if (!result || info.type !== 'complete') {
-      return []
-    }
-
-    const resultArray = Array.isArray(result) ? result : []
-
-    return pipe(
-      resultArray,
-      Array.map((item) =>
-        pipe(
-          Schema.decodeUnknown(schema)(item, { onExcessProperty: 'preserve' }),
-          Effect.match({
-            onFailure: (error) => {
-              Effect.logError('Failed to decode entity in useSchemaCollection', {
-                error,
-                item,
-                schema: schema.ast._tag,
-              }).pipe(Effect.runSync)
-              return null // Skip items that fail to decode
-            },
-            onSuccess: (entity) => entity,
-          }),
-          Effect.runSync,
-        ),
-      ),
-      Array.filter((item): item is T => item !== null),
-    )
+    return decodeSchemaCollection(schema, result, info, 'useSchemaCollection')
   }, [result, info, schema])
 
   return {
@@ -940,6 +968,34 @@ export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> })
     loading: info.type !== 'complete',
     nextPage,
     pageSize,
+  }
+}
+
+/**
+ * Hook that provides collection data for a given schema using Zero queries WITHOUT filtering
+ * This is useful for components that need the full collection like select inputs
+ */
+export const useSchemaCollectionFull = <T>(params: {
+  schema: SchemaType.Schema<T>
+  limit?: number
+}) => {
+  const { schema, limit = 100 } = params
+  const z = useZero()
+
+  const query = useMemo(() => {
+    return buildSchemaCollectionQuery(schema, z, limit)
+  }, [z, schema, limit])
+
+  const [result, info] = useQuery(query as Parameters<typeof useQuery>[0])
+
+  // Decode the collection data through the schema to get class instances with getters
+  const decodedCollection = useMemo(() => {
+    return decodeSchemaCollection(schema, result, info, 'useSchemaCollectionFull')
+  }, [result, info, schema])
+
+  return {
+    collection: decodedCollection,
+    loading: info.type !== 'complete',
   }
 }
 

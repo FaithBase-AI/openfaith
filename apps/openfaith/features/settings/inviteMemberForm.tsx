@@ -3,6 +3,7 @@
 import { inviteMemberE } from '@openfaith/auth/authClient'
 import { inviteMemberIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import { Button, QuickActionForm, useAppForm } from '@openfaith/ui'
+import { revalidateLogic } from '@tanstack/react-form'
 import { Effect, pipe, Schema } from 'effect'
 import { useSetAtom } from 'jotai'
 import type { FC } from 'react'
@@ -37,8 +38,12 @@ export const InviteMemberForm: FC = () => {
 
       await Effect.runPromise(program)
     },
+    validationLogic: revalidateLogic({
+      mode: 'submit',
+      modeAfterSubmission: 'blur',
+    }),
     validators: {
-      onChange: Schema.standardSchemaV1(InviteMemberSchema),
+      onDynamic: Schema.standardSchemaV1(InviteMemberSchema),
     },
   })
 

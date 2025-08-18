@@ -12,7 +12,8 @@ export class EntityNotFoundError extends Schema.TaggedError<EntityNotFoundError>
 ) {}
 
 // Users
-export const getBaseUsersQuery = (z: ReturnType<typeof useZero>) => z.query.users
+export const getBaseUsersQuery = (z: ReturnType<typeof useZero>) =>
+  z.query.users.related('sourceEdges').related('targetEdges')
 export const getBaseUserQuery = (z: ReturnType<typeof useZero>, userId: string) =>
   getBaseUsersQuery(z).where('id', userId).one()
 

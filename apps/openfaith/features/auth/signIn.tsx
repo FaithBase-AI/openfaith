@@ -13,6 +13,7 @@ import {
   useAppForm,
   usePasteDetect,
 } from '@openfaith/ui'
+import { revalidateLogic } from '@tanstack/react-form'
 import { useRouter } from '@tanstack/react-router'
 import { useStore } from '@tanstack/react-store'
 import { Boolean, Option, pipe, Schema, String } from 'effect'
@@ -84,8 +85,12 @@ const SignIn: FC<SignInProps> = (props) => {
         type: 'sign-in',
       })
     },
+    validationLogic: revalidateLogic({
+      mode: 'submit',
+      modeAfterSubmission: 'blur',
+    }),
     validators: {
-      onChange: Schema.standardSchemaV1(SignInSchema),
+      onDynamic: Schema.standardSchemaV1(SignInSchema),
     },
   })
 
@@ -102,8 +107,12 @@ const SignIn: FC<SignInProps> = (props) => {
     defaultValues: {
       otp: '',
     },
+    validationLogic: revalidateLogic({
+      mode: 'submit',
+      modeAfterSubmission: 'blur',
+    }),
     validators: {
-      onChange: Schema.standardSchemaV1(OTPSchema),
+      onDynamic: Schema.standardSchemaV1(OTPSchema),
       onSubmitAsync: async ({ value }) => {
         const result = await authClient.signIn.emailOtp({
           email: email,

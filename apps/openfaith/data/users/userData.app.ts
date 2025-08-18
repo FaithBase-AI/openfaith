@@ -1,21 +1,11 @@
-import { authClient } from '@openfaith/auth/authClient'
+import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
+import { nullOp } from '@openfaith/shared'
 import { useStableMemo } from '@openfaith/ui'
 import { getBaseUserQuery, useZero } from '@openfaith/zero'
+import type { UserClientShape } from '@openfaith/zero/clientShapes'
 import { useQuery } from '@rocicorp/zero/react'
 import { Equivalence, Option, pipe, Schema, String } from 'effect'
-
-export function useCurrentUserOpt() {
-  const { data: session, isPending } = authClient.useSession()
-
-  return {
-    currentUserOpt: pipe(
-      session,
-      Option.fromNullable,
-      Option.map((x) => x.user),
-    ),
-    loading: isPending,
-  }
-}
+import type { FC, ReactNode } from 'react'
 
 export function useUserOpt(userId: string) {
   const z = useZero()
@@ -25,6 +15,17 @@ export function useUserOpt(userId: string) {
   return {
     loading: info.type !== 'complete',
     userOpt: pipe(user, Option.fromNullable),
+  }
+}
+
+export function useCurrentUserOpt() {
+  const userId = useUserId()
+
+  const { userOpt, loading } = useUserOpt(userId)
+
+  return {
+    currentUserOpt: userOpt,
+    loading,
   }
 }
 
@@ -48,5 +49,22 @@ export function useIsAdmin() {
       ),
     [currentUserOpt],
     Equivalence.tuple(Option.getEquivalence(orgUseRoleEq)),
+  )
+}
+
+type CurrentUserWrapperProps = {
+  children: (user: UserClientShape) => ReactNode
+}
+
+export const CurrentUserWrapper: FC<CurrentUserWrapperProps> = (props) => {
+  const { children } = props
+  const { currentUserOpt } = useCurrentUserOpt()
+
+  return pipe(
+    currentUserOpt,
+    Option.match({
+      onNone: nullOp,
+      onSome: (user) => children(user),
+    }),
   )
 }
