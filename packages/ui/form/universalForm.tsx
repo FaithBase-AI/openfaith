@@ -52,10 +52,6 @@ export function UniversalForm<T>({
   const form = useAppForm({
     defaultValues: (defaultValues ?? {}) as T,
     onSubmit: async ({ value }: { value: T }) => {
-      // Schema validation is now handled by TanStack Form validators
-      // The value here is already validated
-
-      // Use appropriate handler based on mode
       switch (mode) {
         case 'create':
           schemaInsert(value as any)
@@ -70,12 +66,10 @@ export function UniversalForm<T>({
           break
       }
     },
-    // Add validation logic configuration
     validationLogic: revalidateLogic({
       mode: 'submit',
       modeAfterSubmission: 'blur',
     }),
-    // Use the schema for dynamic validation
     validators: {
       onDynamic: Schema.standardSchemaV1(schema),
     },
@@ -112,9 +106,6 @@ export function UniversalForm<T>({
   )
 
   const submitButtonText = useMemo(() => {
-    if (isSubmitting) {
-      return 'Submitting...'
-    }
     switch (mode) {
       case 'create':
         return 'Create'
@@ -123,13 +114,13 @@ export function UniversalForm<T>({
       default:
         return 'Submit'
     }
-  }, [mode, isSubmitting])
+  }, [mode])
 
   return (
     <QuickActionForm
       Actions={
         <>
-          <Button className='mr-auto' disabled={isSubmitting} type='submit'>
+          <Button className='mr-auto' loading={isSubmitting} type='submit'>
             {submitButtonText}
           </Button>
           <Button
