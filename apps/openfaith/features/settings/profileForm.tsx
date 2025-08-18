@@ -5,7 +5,6 @@ import { CurrentUserWrapper } from '@openfaith/openfaith/data/users/userData.app
 import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
 import { EdgeDirectionSchema, nullOp } from '@openfaith/shared'
 import {
-  AlertCircleIcon,
   ArrowRightIcon,
   Button,
   Card,
@@ -42,19 +41,6 @@ const ProfileSchema = Schema.Struct({
   ),
   personId: Schema.Union(Schema.String, Schema.Null),
 })
-
-const FormError: FC<{ error: string }> = ({ error }) => {
-  return (
-    <div className='mb-4 rounded-lg border border-red-200 bg-red-50 p-4'>
-      <div className='flex items-start'>
-        <AlertCircleIcon className='h-5 w-5 text-red-400' />
-        <div className='ml-3 flex-1'>
-          <p className='text-red-700 text-sm'>{error}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 type ProfileFormProps =
   | {
@@ -284,15 +270,6 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
     </form.Subscribe>
   )
 
-  const formErrorDisplay = (
-    <form.Subscribe selector={(state) => state.errorMap}>
-      {(errorMap) => {
-        const formError = errorMap.onSubmit
-        return formError ? <FormError error={formError} /> : null
-      }}
-    </form.Subscribe>
-  )
-
   return pipe(
     Match.type<typeof props>(),
     Match.tag('standalone', () => (
@@ -304,16 +281,12 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {formErrorDisplay}
           <CardForm Actions={submitButton} form={form} Primary={formContent} />
         </CardContent>
       </Card>
     )),
     Match.tag('embedded', () => (
-      <>
-        {formErrorDisplay}
-        <CardForm Actions={submitButton} form={form} Primary={formContent} />
-      </>
+      <CardForm Actions={submitButton} form={form} Primary={formContent} />
     )),
     Match.exhaustive,
   )(props)

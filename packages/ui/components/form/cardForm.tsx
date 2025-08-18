@@ -21,6 +21,7 @@ type CardFormProps = Omit<ComponentProps<typeof Form>, 'children'> & {
 /**
  * A form component designed for use within Card components.
  * Provides a clean layout with optional secondary column and actions.
+ * Automatically includes error display from the base Form component.
  */
 export const CardForm: FC<CardFormProps> = (props) => {
   const {
