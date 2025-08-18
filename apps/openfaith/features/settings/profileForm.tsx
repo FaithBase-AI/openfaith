@@ -132,38 +132,41 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
                   name: value.name,
                 })
 
-                if (Option.isSome(currentPersonEdgeOpt)) {
-                  const edge = currentPersonEdgeOpt.value
-                  await tx.edges.delete({
-                    orgId: edge.orgId,
-                    relationshipType: edge.relationshipType,
-                    sourceEntityId: edge.sourceEntityId,
-                    targetEntityId: edge.targetEntityId,
-                  })
-                }
+                // If the form has a different personId than the initial value, do things.
+                if (currentPersonId !== value.personId) {
+                  // We have a previous personId, so we need to delete the edge.
+                  if (currentPersonEdgeOpt._tag === 'Some') {
+                    const edge = currentPersonEdgeOpt.value
+                    await tx.edges.delete({
+                      orgId: edge.orgId,
+                      relationshipType: edge.relationshipType,
+                      sourceEntityId: edge.sourceEntityId,
+                      targetEntityId: edge.targetEntityId,
+                    })
+                  }
 
-                // If personId is provided, create new edge
-                if (value.personId) {
-                  // Determine edge direction using the EdgeDirectionSchema
-                  const direction = Schema.decodeUnknownSync(EdgeDirectionSchema)({
-                    idA: userId,
-                    idB: value.personId,
-                  })
+                  // If the form has a new personId, we need to create a new edge.
+                  if (value.personId) {
+                    const direction = Schema.decodeUnknownSync(EdgeDirectionSchema)({
+                      idA: userId,
+                      idB: value.personId,
+                    })
 
-                  // Create the edge with proper direction
-                  await tx.edges.insert({
-                    _tag: 'edge',
-                    createdAt: Date.now(),
-                    metadata: {
-                      linkedAt: new Date().toISOString(),
-                    },
-                    orgId,
-                    relationshipType: 'user-is-person',
-                    sourceEntityId: direction.source,
-                    sourceEntityTypeTag: direction.source.startsWith('user') ? 'user' : 'person',
-                    targetEntityId: direction.target,
-                    targetEntityTypeTag: direction.target.startsWith('user') ? 'user' : 'person',
-                  })
+                    // Create the edge with proper direction
+                    await tx.edges.insert({
+                      _tag: 'edge',
+                      createdAt: Date.now(),
+                      metadata: {
+                        linkedAt: new Date().toISOString(),
+                      },
+                      orgId,
+                      relationshipType: 'user-is-person',
+                      sourceEntityId: direction.source,
+                      sourceEntityTypeTag: direction.source.startsWith('user') ? 'user' : 'person',
+                      targetEntityId: direction.target,
+                      targetEntityTypeTag: direction.target.startsWith('user') ? 'user' : 'person',
+                    })
+                  }
                 }
               }),
           })
