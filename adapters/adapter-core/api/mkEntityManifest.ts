@@ -203,7 +203,7 @@ export const mkEntityManifest = <
             {
               apiSchema: firstEndpoint.apiSchema,
               endpoints: Object.fromEntries(entityEndpoints.map((x) => [x.name, x])),
-              entity: entity,
+              entity,
               errors: config.errors,
               module: firstEndpoint.module,
             },

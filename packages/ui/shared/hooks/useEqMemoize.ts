@@ -20,11 +20,11 @@ export const useEqMemoize = <A extends ReadonlyArray<unknown>>(
   if (!eq(value, ref.current)) {
     // https://stackoverflow.com/questions/35469836/detecting-production-vs-development-react-at-runtime
     // eslint-disable-next-line no-restricted-properties
-    if (options && options.debug && process.env.NODE_ENV !== 'production') {
+    if (options?.debug && process.env.NODE_ENV !== 'production') {
       console.info('Stable hook update triggered:', {
         // eslint-disable-next-line react-compiler/react-compiler
         prev: ref.current,
-        value: value,
+        value,
       })
     }
     // eslint-disable-next-line react-compiler/react-compiler

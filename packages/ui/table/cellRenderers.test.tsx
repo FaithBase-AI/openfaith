@@ -22,7 +22,7 @@ effect('getCellRenderer returns function for unknown cell type (falls back to de
     expect(typeof renderer).toBe('function')
 
     // Should return string representation for unknown types
-    const result = renderer!(createMockCellContext('test'))
+    const result = renderer?.(createMockCellContext('test'))
     expect(result).toBe('test')
   }),
 )
@@ -39,7 +39,7 @@ effect('text cell renderer returns string value', () =>
     const renderer = getCellRenderer('text')
     expect(renderer).toBeDefined()
 
-    const result = renderer!(createMockCellContext('Hello World'))
+    const result = renderer?.(createMockCellContext('Hello World'))
     expect(result).toBe('Hello World')
   }),
 )
@@ -48,10 +48,10 @@ effect('text cell renderer handles null/undefined values', () =>
   Effect.gen(function* () {
     const renderer = getCellRenderer('text')
 
-    const nullResult = renderer!(createMockCellContext(null))
+    const nullResult = renderer?.(createMockCellContext(null))
     expect(nullResult).toBe('')
 
-    const undefinedResult = renderer!(createMockCellContext(undefined))
+    const undefinedResult = renderer?.(createMockCellContext(undefined))
     expect(undefinedResult).toBe('')
   }),
 )
@@ -59,7 +59,7 @@ effect('text cell renderer handles null/undefined values', () =>
 effect('email cell renderer creates mailto link', () =>
   Effect.gen(function* () {
     const renderer = getCellRenderer('email')
-    const result = renderer!(createMockCellContext('test@example.com'))
+    const result = renderer?.(createMockCellContext('test@example.com'))
 
     // Check that it's a React element with correct props
     expect(React.isValidElement(result)).toBe(true)
@@ -76,10 +76,10 @@ effect('email cell renderer handles empty values', () =>
   Effect.gen(function* () {
     const renderer = getCellRenderer('email')
 
-    const nullResult = renderer!(createMockCellContext(null))
+    const nullResult = renderer?.(createMockCellContext(null))
     expect(nullResult).toBe('')
 
-    const emptyResult = renderer!(createMockCellContext(''))
+    const emptyResult = renderer?.(createMockCellContext(''))
     expect(emptyResult).toBe('')
   }),
 )
@@ -88,10 +88,10 @@ effect('number cell renderer formats numbers with locale', () =>
   Effect.gen(function* () {
     const renderer = getCellRenderer('number')
 
-    const result = renderer!(createMockCellContext(1234567))
+    const result = renderer?.(createMockCellContext(1234567))
     expect(result).toBe('1,234,567')
 
-    const nullResult = renderer!(createMockCellContext(null))
+    const nullResult = renderer?.(createMockCellContext(null))
     expect(nullResult).toBe('')
   }),
 )
@@ -100,10 +100,10 @@ effect('currency cell renderer formats as USD currency', () =>
   Effect.gen(function* () {
     const renderer = getCellRenderer('currency')
 
-    const result = renderer!(createMockCellContext(1234.56))
+    const result = renderer?.(createMockCellContext(1234.56))
     expect(result).toBe('$1,234.56')
 
-    const nullResult = renderer!(createMockCellContext(null))
+    const nullResult = renderer?.(createMockCellContext(null))
     expect(nullResult).toBe('')
   }),
 )
@@ -112,7 +112,7 @@ effect('boolean cell renderer creates badge with correct styling', () =>
   Effect.gen(function* () {
     const renderer = getCellRenderer('boolean')
 
-    const trueResult = renderer!(createMockCellContext(true))
+    const trueResult = renderer?.(createMockCellContext(true))
     expect(React.isValidElement(trueResult)).toBe(true)
     if (isReactElementWithProps(trueResult)) {
       expect(trueResult.type).toBe('span')
@@ -120,7 +120,7 @@ effect('boolean cell renderer creates badge with correct styling', () =>
       expect((trueResult.props as any).children).toBe('Yes')
     }
 
-    const falseResult = renderer!(createMockCellContext(false))
+    const falseResult = renderer?.(createMockCellContext(false))
     expect(React.isValidElement(falseResult)).toBe(true)
     if (isReactElementWithProps(falseResult)) {
       expect((falseResult.props as any).className).toContain('bg-gray-100')
@@ -134,13 +134,13 @@ effect('date cell renderer formats date correctly', () =>
     const renderer = getCellRenderer('date')
 
     const testDate = '2023-12-25T10:30:00Z'
-    const result = renderer!(createMockCellContext(testDate))
+    const result = renderer?.(createMockCellContext(testDate))
 
     // Should be a formatted date string
     expect(typeof result).toBe('string')
     expect(result).toContain('12/25/2023')
 
-    const emptyResult = renderer!(createMockCellContext(''))
+    const emptyResult = renderer?.(createMockCellContext(''))
     expect(emptyResult).toBe('')
   }),
 )
@@ -150,14 +150,14 @@ effect('datetime cell renderer formats datetime correctly', () =>
     const renderer = getCellRenderer('datetime')
 
     const testDate = '2023-12-25T10:30:00Z'
-    const result = renderer!(createMockCellContext(testDate))
+    const result = renderer?.(createMockCellContext(testDate))
 
     // Should be a formatted datetime string
     expect(typeof result).toBe('string')
     expect(result).toContain('12/25/2023')
     expect(result).toContain('10:30')
 
-    const emptyResult = renderer!(createMockCellContext(''))
+    const emptyResult = renderer?.(createMockCellContext(''))
     expect(emptyResult).toBe('')
   }),
 )
@@ -166,7 +166,7 @@ effect('badge cell renderer creates styled badge', () =>
   Effect.gen(function* () {
     const renderer = getCellRenderer('badge')
 
-    const result = renderer!(createMockCellContext('Active'))
+    const result = renderer?.(createMockCellContext('Active'))
     expect(React.isValidElement(result)).toBe(true)
     if (isReactElementWithProps(result)) {
       expect(result.type).toBe('span')
@@ -174,7 +174,7 @@ effect('badge cell renderer creates styled badge', () =>
       expect((result.props as any).children).toBe('Active')
     }
 
-    const emptyResult = renderer!(createMockCellContext(''))
+    const emptyResult = renderer?.(createMockCellContext(''))
     expect(emptyResult).toBe('')
   }),
 )
@@ -183,7 +183,7 @@ effect('link cell renderer creates external link', () =>
   Effect.gen(function* () {
     const renderer = getCellRenderer('link')
 
-    const result = renderer!(createMockCellContext('https://example.com'))
+    const result = renderer?.(createMockCellContext('https://example.com'))
     expect(React.isValidElement(result)).toBe(true)
     if (isReactElementWithProps(result)) {
       expect(result.type).toBe('a')
@@ -193,7 +193,7 @@ effect('link cell renderer creates external link', () =>
       expect((result.props as any).children).toBe('https://example.com')
     }
 
-    const emptyResult = renderer!(createMockCellContext(''))
+    const emptyResult = renderer?.(createMockCellContext(''))
     expect(emptyResult).toBe('')
   }),
 )
@@ -203,7 +203,7 @@ effect('avatar cell renderer creates image with fallback', () =>
     const renderer = getCellRenderer('avatar')
 
     const mockRow = { firstName: 'John', lastName: 'Doe' }
-    const result = renderer!(createMockCellContext('https://example.com/avatar.jpg', mockRow))
+    const result = renderer?.(createMockCellContext('https://example.com/avatar.jpg', mockRow))
 
     expect(React.isValidElement(result)).toBe(true)
     if (isReactElementWithProps(result)) {
@@ -220,7 +220,7 @@ effect('avatar cell renderer creates initials fallback when no image', () =>
     const renderer = getCellRenderer('avatar')
 
     const mockRow = { firstName: 'John', lastName: 'Doe' }
-    const result = renderer!(createMockCellContext(null, mockRow))
+    const result = renderer?.(createMockCellContext(null, mockRow))
 
     expect(React.isValidElement(result)).toBe(true)
     if (isReactElementWithProps(result)) {
@@ -238,7 +238,7 @@ effect('avatar cell renderer handles missing name gracefully', () =>
     const renderer = getCellRenderer('avatar')
 
     const mockRow = {}
-    const result = renderer!(createMockCellContext(null, mockRow))
+    const result = renderer?.(createMockCellContext(null, mockRow))
 
     expect(React.isValidElement(result)).toBe(true)
     if (isReactElementWithProps(result)) {
@@ -252,7 +252,7 @@ effect('avatar cell renderer handles single name', () =>
     const renderer = getCellRenderer('avatar')
 
     const mockRow = { name: 'John' }
-    const result = renderer!(createMockCellContext(null, mockRow))
+    const result = renderer?.(createMockCellContext(null, mockRow))
 
     expect(React.isValidElement(result)).toBe(true)
     if (isReactElementWithProps(result)) {
@@ -265,10 +265,10 @@ effect('default case returns string representation', () =>
   Effect.gen(function* () {
     const renderer = getCellRenderer('unknown-type' as any)
 
-    const result = renderer!(createMockCellContext(42))
+    const result = renderer?.(createMockCellContext(42))
     expect(result).toBe('42')
 
-    const nullResult = renderer!(createMockCellContext(null))
+    const nullResult = renderer?.(createMockCellContext(null))
     expect(nullResult).toBe('')
   }),
 )

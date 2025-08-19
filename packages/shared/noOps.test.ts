@@ -132,7 +132,7 @@ effect('nullOpE should compose with other Effects', () =>
 // Test that functions have no side effects
 effect('no-op functions should have no side effects', () =>
   Effect.gen(function* () {
-    let sideEffectCounter = 0
+    const sideEffectCounter = 0
 
     // Call all no-op functions
     noOp()

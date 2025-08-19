@@ -43,5 +43,8 @@ export const PcoPeopleImportConflict = mkPcoEntity({
   links: Schema.Struct({}),
   relationships: Schema.Struct({}),
   type: 'PeopleImportConflict',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-people-import-conflict' })
+}).annotations({
+  [OfSkipEntity]: true,
+  [OfIdentifier]: 'pco-people-import-conflict',
+})
 export type PcoPeopleImportConflict = typeof PcoPeopleImportConflict.Type

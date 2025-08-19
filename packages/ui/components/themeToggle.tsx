@@ -13,9 +13,9 @@ export const ThemeToggle: FC<ButtonProps> = (props) => {
   useEffect(() => {
     if (typeof window !== 'undefined' && document.querySelector('meta[name="theme-color"]')) {
       if (theme === 'dark') {
-        document.querySelector('meta[name="theme-color"]')!.setAttribute('content', '#000000')
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#000000')
       } else {
-        document.querySelector('meta[name="theme-color"]')!.setAttribute('content', '#ffffff')
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#ffffff')
       }
     }
   }, [theme])

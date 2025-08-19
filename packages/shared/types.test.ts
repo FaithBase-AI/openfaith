@@ -124,6 +124,8 @@ effect('SyncStatus should support pattern matching', () =>
           return 'completed'
         case 'error':
           return `error: ${status.message}`
+        default:
+          return 'unknown'
       }
     })
 

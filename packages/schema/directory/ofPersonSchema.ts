@@ -161,10 +161,20 @@ export class Person extends BasePerson.extend<Person>('Person')(BaseIdentifiedEn
     [OfRelations]: [
       {
         direction: 'both',
-        form: { input: 'combobox', label: 'Sacraments', order: 20, show: true },
+        form: {
+          input: 'combobox',
+          label: 'Sacraments',
+          order: 20,
+          show: true,
+        },
         key: 'sacraments',
         label: 'Sacraments',
-        table: { header: 'Sacraments', maxVisibleBadges: 3, order: 6, show: true },
+        table: {
+          header: 'Sacraments',
+          maxVisibleBadges: 3,
+          order: 6,
+          show: true,
+        },
         targetEntityTag: 'sacrament',
       },
     ],

@@ -64,7 +64,9 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
     return extractEntityInfo(schema)
   }, [schema])
 
-  const { collection, nextPage, pageSize, limit } = useSchemaCollection({ schema })
+  const { collection, nextPage, pageSize, limit } = useSchemaCollection({
+    schema,
+  })
 
   // Fetch entity relationships for this entity type
   const z = useZero()

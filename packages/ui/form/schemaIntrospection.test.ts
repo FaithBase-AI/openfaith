@@ -342,8 +342,8 @@ effect(
       expect(createdAtField).toBeDefined()
 
       // Test that both fields can have their UI config extracted
-      const updatedAtConfig = getUiConfigFromAST(updatedAtField!.schema)
-      const createdAtConfig = getUiConfigFromAST(createdAtField!.schema)
+      const updatedAtConfig = getUiConfigFromAST(updatedAtField?.schema)
+      const createdAtConfig = getUiConfigFromAST(createdAtField?.schema)
 
       expect(updatedAtConfig?.table?.cellType).toBe('datetime')
       expect(createdAtConfig?.table?.cellType).toBe('datetime')
@@ -390,8 +390,8 @@ effect('getUiConfigFromAST - handles the exact BaseSystemFieldsSchema pattern', 
     expect(updatedAtField).toBeDefined()
 
     // Test that both fields can have their UI config extracted
-    const createdAtConfig = getUiConfigFromAST(createdAtField!.schema)
-    const updatedAtConfig = getUiConfigFromAST(updatedAtField!.schema)
+    const createdAtConfig = getUiConfigFromAST(createdAtField?.schema)
+    const updatedAtConfig = getUiConfigFromAST(updatedAtField?.schema)
 
     expect(createdAtConfig?.table?.cellType).toBe('datetime')
     expect(updatedAtConfig?.table?.cellType).toBe('datetime')
@@ -454,8 +454,8 @@ effect(
       expect(createdAtField).toBeDefined()
 
       // Test that both fields can have their UI config extracted
-      const updatedAtConfig = getUiConfigFromAST(updatedAtField!.schema)
-      const createdAtConfig = getUiConfigFromAST(createdAtField!.schema)
+      const updatedAtConfig = getUiConfigFromAST(updatedAtField?.schema)
+      const createdAtConfig = getUiConfigFromAST(createdAtField?.schema)
 
       expect(updatedAtConfig?.table?.cellType).toBe('datetime')
       expect(createdAtConfig?.table?.cellType).toBe('datetime')

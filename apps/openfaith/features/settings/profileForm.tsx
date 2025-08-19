@@ -1,5 +1,6 @@
 'use client'
 
+import { sendVerificationOtpE, verifyEmailE } from '@openfaith/auth/authClientE'
 import { useOrgId } from '@openfaith/openfaith/data/users/useOrgId'
 import { CurrentUserWrapper } from '@openfaith/openfaith/data/users/userData.app'
 import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
@@ -16,12 +17,13 @@ import {
   toast,
   useAppForm,
   useStableMemo,
+  VerifyEmailOtpDialog,
 } from '@openfaith/ui'
 import { useZero } from '@openfaith/zero'
 import type { UserClientShape } from '@openfaith/zero/clientShapes'
 import { revalidateLogic } from '@tanstack/react-form'
 import { Array, Effect, Equivalence, Match, Option, pipe, Schema } from 'effect'
-import { type FC, useMemo } from 'react'
+import { type FC, useMemo, useState } from 'react'
 
 class ProfileUpdateError extends Schema.TaggedError<ProfileUpdateError>()('ProfileUpdateError', {
   cause: Schema.optional(Schema.Unknown),
@@ -60,6 +62,8 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
   const userId = useUserId()
   const orgId = useOrgId()
   const z = useZero()
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState('')
 
   const currentPersonEdgeOpt = useMemo(
     () =>
@@ -173,8 +177,26 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
 
           // If email changed, trigger verification
           if (emailChanged) {
-            // TODO: Implement email verification dialog
-            yield* Effect.log('Email changed, verification needed')
+            // Send OTP for email verification
+            yield* pipe(
+              sendVerificationOtpE({
+                email: value.email,
+                type: 'email-verification',
+              }),
+              Effect.mapError(
+                (cause) =>
+                  new ProfileUpdateError({
+                    cause,
+                    message: 'Failed to send verification email',
+                  }),
+              ),
+            )
+
+            // Show the verification dialog
+            yield* Effect.sync(() => {
+              setPendingEmail(value.email)
+              setShowVerificationDialog(true)
+            })
           }
 
           yield* pipe(
@@ -247,6 +269,21 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
     </>
   )
 
+  const handleEmailVerification = (otp: string) =>
+    verifyEmailE({
+      email: pendingEmail,
+      otp,
+    }).pipe(
+      Effect.tap(() =>
+        Effect.sync(() => {
+          toast.success('Email verified successfully!')
+          setShowVerificationDialog(false)
+          setPendingEmail('')
+        }),
+      ),
+      Effect.map(() => undefined),
+    )
+
   const submitButton = (
     <form.Subscribe
       selector={(state) => ({
@@ -273,26 +310,41 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
     </form.Subscribe>
   )
 
-  return pipe(
-    Match.type<typeof props>(),
-    Match.tag('standalone', () => (
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Settings</CardTitle>
-          <CardDescription>
-            Manage your personal information and profile connections
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+  return (
+    <>
+      {pipe(
+        Match.type<typeof props>(),
+        Match.tag('standalone', () => (
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Settings</CardTitle>
+              <CardDescription>
+                Manage your personal information and profile connections
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CardForm Actions={submitButton} form={form} Primary={formContent} />
+            </CardContent>
+          </Card>
+        )),
+        Match.tag('embedded', () => (
           <CardForm Actions={submitButton} form={form} Primary={formContent} />
-        </CardContent>
-      </Card>
-    )),
-    Match.tag('embedded', () => (
-      <CardForm Actions={submitButton} form={form} Primary={formContent} />
-    )),
-    Match.exhaustive,
-  )(props)
+        )),
+        Match.exhaustive,
+      )(props)}
+
+      <VerifyEmailOtpDialog
+        autoSubmit
+        description='Enter the verification code sent to your new email address'
+        email={pendingEmail}
+        onOpenChange={setShowVerificationDialog}
+        onSubmit={handleEmailVerification}
+        open={showVerificationDialog}
+        submitLabel='Verify Email'
+        title='Verify Your Email'
+      />
+    </>
+  )
 }
 
 const WrappedProfileForm: FC<ProfileFormProps> = (props) => {

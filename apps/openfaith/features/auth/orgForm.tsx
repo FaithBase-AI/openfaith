@@ -83,7 +83,7 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
           const { data } = await authClient.organization.create({
             name: pipe(value.name, String.trim),
             slug: pipe(value.slug, String.trim),
-            userId: userId,
+            userId,
           })
 
           await pipe(

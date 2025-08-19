@@ -354,7 +354,11 @@ effect(
       // mkExternalLinksE filters out newly created links (same lastProcessedAt)
       // So we need to query the database directly for the created links
       const sql = yield* SqlClient.SqlClient
-      const mainLinks = yield* sql<{ entityId: string; externalId: string; lastProcessedAt: Date }>`
+      const mainLinks = yield* sql<{
+        entityId: string
+        externalId: string
+        lastProcessedAt: Date
+      }>`
       SELECT "entityId", "externalId", "lastProcessedAt" 
       FROM "openfaith_externalLinks" 
       WHERE "externalId" = ${mainEntity.id}
@@ -547,7 +551,11 @@ effect(
       expect(result[0]?.externalId).toBe('pco_new_123')
 
       // Verify the external link was created in the database
-      const links = yield* sql<{ externalId: string; updatedAt: Date; lastProcessedAt: Date }>`
+      const links = yield* sql<{
+        externalId: string
+        updatedAt: Date
+        lastProcessedAt: Date
+      }>`
         SELECT "externalId", "updatedAt", "lastProcessedAt" 
         FROM "openfaith_externalLinks" 
         WHERE "externalId" = 'pco_new_123'
@@ -585,7 +593,10 @@ effect(
       // First call - create with newer data
       yield* mkExternalLinksE([newerEntity])
 
-      const initialLinks = yield* sql<{ updatedAt: Date; lastProcessedAt: Date }>`
+      const initialLinks = yield* sql<{
+        updatedAt: Date
+        lastProcessedAt: Date
+      }>`
         SELECT "updatedAt", "lastProcessedAt" FROM "openfaith_externalLinks" WHERE "externalId" = 'pco_older_123'
       `
       const initialLastProcessedAt = initialLinks[0]?.lastProcessedAt
@@ -609,7 +620,10 @@ effect(
 
       // Verify updatedAt was updated to the older value
       // and lastProcessedAt WAS updated (because updatedAt changed)
-      const updatedLinks = yield* sql<{ updatedAt: Date; lastProcessedAt: Date }>`
+      const updatedLinks = yield* sql<{
+        updatedAt: Date
+        lastProcessedAt: Date
+      }>`
         SELECT "updatedAt", "lastProcessedAt" FROM "openfaith_externalLinks" WHERE "externalId" = 'pco_older_123'
       `
       expect(updatedLinks[0]?.updatedAt).toEqual(new Date('2023-01-10T10:30:00Z'))
@@ -645,7 +659,10 @@ effect(
       // First call - create with older data
       yield* mkExternalLinksE([olderEntity])
 
-      const initialLinks = yield* sql<{ updatedAt: Date; lastProcessedAt: Date }>`
+      const initialLinks = yield* sql<{
+        updatedAt: Date
+        lastProcessedAt: Date
+      }>`
         SELECT "updatedAt", "lastProcessedAt" FROM "openfaith_externalLinks" WHERE "externalId" = 'pco_newer_123'
       `
       const initialLastProcessedAt = initialLinks[0]?.lastProcessedAt
@@ -668,7 +685,10 @@ effect(
       expect(result[0]?.externalId).toBe('pco_newer_123')
 
       // Verify both updatedAt and lastProcessedAt were updated
-      const updatedLinks = yield* sql<{ updatedAt: Date; lastProcessedAt: Date }>`
+      const updatedLinks = yield* sql<{
+        updatedAt: Date
+        lastProcessedAt: Date
+      }>`
         SELECT "updatedAt", "lastProcessedAt" FROM "openfaith_externalLinks" WHERE "externalId" = 'pco_newer_123'
       `
       expect(updatedLinks[0]?.updatedAt).toEqual(new Date('2023-01-20T10:30:00Z'))

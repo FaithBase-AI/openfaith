@@ -417,7 +417,12 @@ effect(
         }),
       )
 
-      const dbRels = [{ sourceEntityType: 'person', targetEntityTypes: ['sacrament', 'group'] }]
+      const dbRels = [
+        {
+          sourceEntityType: 'person',
+          targetEntityTypes: ['sacrament', 'group'],
+        },
+      ]
 
       const merged = buildEntityRelationshipsForTable(PersonSchemaWithRel as any, dbRels)
       expect(merged.length).toBe(1)

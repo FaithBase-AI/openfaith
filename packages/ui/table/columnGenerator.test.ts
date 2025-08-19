@@ -299,9 +299,9 @@ effect('generateColumns respects field ordering', () =>
     expect(columns).toHaveLength(4)
 
     // Check that columns are in the correct order
-    expect('accessorKey' in columns[0]! && columns[0]!.accessorKey).toBe('third') // order: 0
-    expect('accessorKey' in columns[1]! && columns[1]!.accessorKey).toBe('second') // order: 1
-    expect('accessorKey' in columns[2]! && columns[2]!.accessorKey).toBe('first') // order: 2
-    expect('accessorKey' in columns[3]! && columns[3]!.accessorKey).toBe('unordered') // no order (999)
+    expect('accessorKey' in columns[0]! && columns[0]?.accessorKey).toBe('third') // order: 0
+    expect('accessorKey' in columns[1]! && columns[1]?.accessorKey).toBe('second') // order: 1
+    expect('accessorKey' in columns[2]! && columns[2]?.accessorKey).toBe('first') // order: 2
+    expect('accessorKey' in columns[3]! && columns[3]?.accessorKey).toBe('unordered') // no order (999)
   }),
 )

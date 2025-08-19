@@ -24,10 +24,24 @@ import type { default as zeroSchema } from './drizzle-zero.config'
 export const schema = {
   relationships: {
     adapterDetails: {
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
     },
     adapterTokens: {
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
       user: [
         {
           cardinality: 'one',
@@ -38,7 +52,14 @@ export const schema = {
       ],
     },
     addresses: {
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
       sourceEdges: [
         {
           cardinality: 'many',
@@ -57,7 +78,14 @@ export const schema = {
       ],
     },
     campuses: {
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
       sourceEdges: [
         {
           cardinality: 'many',
@@ -120,7 +148,14 @@ export const schema = {
       ],
     },
     edges: {
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
       sourceAddress: [
         {
           cardinality: 'one',
@@ -315,10 +350,24 @@ export const schema = {
       ],
     },
     entityRelationships: {
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
     },
     externalLinks: {
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
     },
     fieldOptions: {
       field: [
@@ -329,7 +378,14 @@ export const schema = {
           sourceField: ['fieldId'],
         },
       ],
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
     },
     fields: {
       options: [
@@ -340,7 +396,14 @@ export const schema = {
           sourceField: ['id'],
         },
       ],
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
     },
     folders: {
       childFolders: [
@@ -351,7 +414,14 @@ export const schema = {
           sourceField: ['id'],
         },
       ],
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
       parentFolder: [
         {
           cardinality: 'one',
@@ -394,10 +464,24 @@ export const schema = {
           sourceField: ['inviterId'],
         },
       ],
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
     },
     journeys: {
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
       pathway: [
         {
           cardinality: 'one',
@@ -424,7 +508,14 @@ export const schema = {
       ],
     },
     orgSettings: {
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
       orgUsers: [
         {
           cardinality: 'many',
@@ -533,7 +624,14 @@ export const schema = {
       ],
     },
     orgUsers: {
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
       orgSettings: [
         {
           cardinality: 'one',
@@ -576,7 +674,14 @@ export const schema = {
           sourceField: ['linkedFieldId'],
         },
       ],
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
       sourceEdges: [
         {
           cardinality: 'many',
@@ -595,7 +700,14 @@ export const schema = {
       ],
     },
     people: {
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
       sourceEdges: [
         {
           cardinality: 'many',
@@ -614,7 +726,14 @@ export const schema = {
       ],
     },
     phoneNumbers: {
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
       sourceEdges: [
         {
           cardinality: 'many',
@@ -633,7 +752,14 @@ export const schema = {
       ],
     },
     qualifications: {
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
       sourceEdges: [
         {
           cardinality: 'many',
@@ -660,7 +786,14 @@ export const schema = {
           sourceField: ['administeredBy'],
         },
       ],
-      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      org: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'orgs',
+          sourceField: ['orgId'],
+        },
+      ],
       recipient: [
         {
           cardinality: 'one',

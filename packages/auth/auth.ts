@@ -66,12 +66,12 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema: {
-      ['openfaith_invitations']: schema.invitationsTable,
-      ['openfaith_jwks']: schema.jwksTable,
-      ['openfaith_orgs']: schema.orgsTable,
-      ['openfaith_orgUsers']: schema.orgUsersTable,
-      ['openfaith_users']: schema.usersTable,
-      ['openfaith_verifications']: schema.verificationsTable,
+      openfaith_invitations: schema.invitationsTable,
+      openfaith_jwks: schema.jwksTable,
+      openfaith_orgs: schema.orgsTable,
+      openfaith_orgUsers: schema.orgUsersTable,
+      openfaith_users: schema.usersTable,
+      openfaith_verifications: schema.verificationsTable,
     },
   }),
   databaseHooks: {
@@ -105,6 +105,21 @@ export const auth = betterAuth({
           }
         },
       },
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: false, // We're using OTP for sign-in
+    sendVerificationEmail: async ({ user, url }) => {
+      // Extract OTP from the URL if needed or generate one
+      await resend.emails.send({
+        from,
+        react: reactOTPEmail({
+          appName: env.VITE_APP_NAME,
+          otp: url.substring(url.length - 6), // Use last 6 chars as OTP
+        }),
+        subject: `Verify your email for ${env.VITE_APP_NAME}`,
+        to: user.email,
+      })
     },
   },
   hooks: {
@@ -363,6 +378,22 @@ export const auth = betterAuth({
   },
   trustedOrigins: [`https://${env.VITE_PROD_ROOT_DOMAIN}`],
   user: {
+    changeEmail: {
+      enabled: true,
+      sendChangeEmailVerification: async ({ user, token }) => {
+        // For now, we're using OTP for email verification
+        // This can be enhanced to send a proper change email verification
+        await resend.emails.send({
+          from,
+          react: reactOTPEmail({
+            appName: env.VITE_APP_NAME,
+            otp: token.substring(0, 6), // Use first 6 chars of token as OTP
+          }),
+          subject: `Verify your new email for ${env.VITE_APP_NAME}`,
+          to: user.email, // Send to current email to approve the change
+        })
+      },
+    },
     modelName: getTableName('users'),
   },
   verification: {
@@ -402,9 +433,9 @@ export const modelToType: Record<Models, string> = {
   member: 'orguser',
   organization: 'org',
   passkey: 'passkey',
-  ['rate-limit']: 'ratelimit',
+  'rate-limit': 'ratelimit',
   session: 'session',
-  ['two-factor']: 'twofactor',
+  'two-factor': 'twofactor',
   user: 'user',
   verification: 'verification',
 }

@@ -254,7 +254,10 @@ effect('PcoPerson transformation: handles gender variations correctly', () =>
     expect(resultF.gender).toBe('female')
 
     // Test with 'Female' gender value
-    const pcoPersonDataFemale = { ...pcoPersonDataM, gender: 'Female' as const }
+    const pcoPersonDataFemale = {
+      ...pcoPersonDataM,
+      gender: 'Female' as const,
+    }
     const resultFemale = Schema.decodeSync(pcoPersonTransformer)(pcoPersonDataFemale)
     expect(resultFemale.gender).toBe('female')
   }),

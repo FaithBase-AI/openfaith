@@ -44,5 +44,8 @@ export const PcoFormSubmissionValue = mkPcoEntity({
     }),
   }),
   type: 'FormSubmissionValue',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-form-submission-value' })
+}).annotations({
+  [OfSkipEntity]: true,
+  [OfIdentifier]: 'pco-form-submission-value',
+})
 export type PcoFormSubmissionValue = typeof PcoFormSubmissionValue.Type

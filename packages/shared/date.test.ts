@@ -40,10 +40,22 @@ effect('TimestampToIsoString - decode: handles different timestamps correctly', 
 effect('TimestampToIsoString - encode: handles different ISO strings correctly', () =>
   Effect.gen(function* () {
     const testCases = [
-      { expected: '1970-01-01T00:00:00Z', isoString: '1970-01-01T00:00:00.000Z' },
-      { expected: '2020-01-01T00:00:00Z', isoString: '2020-01-01T00:00:00.000Z' },
-      { expected: '2023-01-01T00:00:00Z', isoString: '2023-01-01T00:00:00.000Z' },
-      { expected: '2009-02-13T23:31:30Z', isoString: '2009-02-13T23:31:30.123Z' },
+      {
+        expected: '1970-01-01T00:00:00Z',
+        isoString: '1970-01-01T00:00:00.000Z',
+      },
+      {
+        expected: '2020-01-01T00:00:00Z',
+        isoString: '2020-01-01T00:00:00.000Z',
+      },
+      {
+        expected: '2023-01-01T00:00:00Z',
+        isoString: '2023-01-01T00:00:00.000Z',
+      },
+      {
+        expected: '2009-02-13T23:31:30Z',
+        isoString: '2009-02-13T23:31:30.123Z',
+      },
     ]
 
     for (const { isoString, expected } of testCases) {

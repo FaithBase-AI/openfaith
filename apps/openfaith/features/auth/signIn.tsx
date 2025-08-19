@@ -1,5 +1,6 @@
 'use client'
 import { authClient } from '@openfaith/auth/authClient'
+import { sendVerificationOtpE } from '@openfaith/auth/authClientE'
 import { env, nullOp } from '@openfaith/shared'
 import {
   ArrowRightIcon,
@@ -10,14 +11,14 @@ import {
   CardHeader,
   CardTitle,
   Form,
+  OtpForm,
+  toast,
   useAppForm,
-  usePasteDetect,
 } from '@openfaith/ui'
 import { revalidateLogic } from '@tanstack/react-form'
 import { useRouter } from '@tanstack/react-router'
 import { useStore } from '@tanstack/react-store'
-import { Boolean, Option, pipe, Schema, String } from 'effect'
-import { REGEXP_ONLY_DIGITS } from 'input-otp'
+import { Boolean, Effect, Option, pipe, Schema } from 'effect'
 import { useQueryState } from 'nuqs'
 import { type FC, useEffect } from 'react'
 
@@ -28,10 +29,6 @@ const SignInSchema = Schema.Struct({
       message: () => 'Email must have a length of at least 3',
     }),
   ),
-})
-
-const OTPSchema = Schema.Struct({
-  otp: Schema.String.pipe(Schema.minLength(6)),
 })
 
 type SignInProps = {
@@ -79,22 +76,48 @@ const SignIn: FC<SignInProps> = (props) => {
     defaultValues: {
       email: passedOtpEmail || '',
     },
-    onSubmit: async ({ value }) => {
-      await authClient.emailOtp.sendVerificationOtp({
-        email: value.email,
-        type: 'sign-in',
-      })
-    },
     validationLogic: revalidateLogic({
       mode: 'submit',
       modeAfterSubmission: 'blur',
     }),
     validators: {
       onDynamic: Schema.standardSchemaV1(SignInSchema),
+      onSubmitAsync: async ({ value }) => {
+        await Effect.gen(function* () {
+          yield* sendVerificationOtpE({
+            email: value.email,
+            type: 'sign-in',
+          })
+
+          return
+        }).pipe(
+          // Handle specific error types
+          Effect.catchTags({
+            EmailOtpError: (error) =>
+              Effect.gen(function* () {
+                yield* Effect.logError('Failed to send OTP', { error })
+                yield* Effect.sync(() =>
+                  toast.error(error.message || 'Failed to send verification code'),
+                )
+
+                return {
+                  fields: {},
+                  form: error.message || 'Failed to send verification code',
+                }
+              }),
+          }),
+          // Handle all remaining errors and defects
+          Effect.catchAllDefect(() =>
+            Effect.succeed({
+              fields: {},
+              form: 'Something went wrong',
+            }),
+          ),
+          Effect.runPromise,
+        )
+      },
     },
   })
-
-  const { pastedContent, resetPasteContent } = usePasteDetect()
 
   const email = useStore(emailForm.store, (state) => state.values.email)
   const emailFormSubmitting = useStore(emailForm.store, (state) => state.isSubmitting)
@@ -102,56 +125,6 @@ const SignIn: FC<SignInProps> = (props) => {
     emailForm.store,
     (state) => state.isSubmitted || pipe(passedOtpEmail, Option.fromNullable, Option.isSome),
   )
-
-  const otpForm = useAppForm({
-    defaultValues: {
-      otp: '',
-    },
-    validationLogic: revalidateLogic({
-      mode: 'submit',
-      modeAfterSubmission: 'blur',
-    }),
-    validators: {
-      onDynamic: Schema.standardSchemaV1(OTPSchema),
-      onSubmitAsync: async ({ value }) => {
-        const result = await authClient.signIn.emailOtp({
-          email: email,
-          otp: value.otp,
-        })
-
-        if (result.error) {
-          return {
-            fields: {
-              otp: result.error.message,
-            },
-          }
-        }
-
-        return
-      },
-    },
-  })
-
-  const otpValue = useStore(otpForm.store, (state) => state.values.otp)
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: no update
-  useEffect(() => {
-    if (otpValue.length === 6 && otpValue.match(REGEXP_ONLY_DIGITS)) {
-      otpForm.handleSubmit()
-    }
-  }, [otpValue])
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: no update
-  useEffect(() => {
-    if (typeof pastedContent === 'string') {
-      const trimmedContent = pipe(pastedContent, String.trim)
-      if (trimmedContent.match(REGEXP_ONLY_DIGITS) !== null && emailFormHasSubmitted) {
-        otpForm.reset()
-        otpForm.setFieldValue('otp', trimmedContent)
-      }
-    }
-    resetPasteContent()
-  }, [pastedContent])
 
   return (
     <Card className='w-96 max-w-[calc(100vw-2.5rem)]'>
@@ -200,23 +173,7 @@ const SignIn: FC<SignInProps> = (props) => {
                 </Button>
               </Form>
             ),
-            onTrue: () => (
-              <Form form={otpForm}>
-                <otpForm.AppField
-                  children={(field) => <field.OTPField autoFocus label='OTP' required />}
-                  name='otp'
-                />
-
-                <otpForm.Subscribe selector={(x) => x.isSubmitting}>
-                  {(x) => (
-                    <Button className='w-full gap-2' loading={x} type='submit'>
-                      Sign In
-                      <ArrowRightIcon />
-                    </Button>
-                  )}
-                </otpForm.Subscribe>
-              </Form>
-            ),
+            onTrue: () => <OtpForm _tag='sign-in' autoSubmit email={email} submitLabel='Sign In' />,
           }),
         )}
       </CardContent>

@@ -417,7 +417,10 @@ export const buildEntityRelationshipsForTable = <T>(
   const declaredTargetsOrdered: ReadonlyArray<string> = pipe(
     declared,
     Array.filter((r) => r.table?.show === true),
-    Array.map((r) => ({ order: r.table?.order ?? 999, tag: r.targetEntityTag })),
+    Array.map((r) => ({
+      order: r.table?.order ?? 999,
+      tag: r.targetEntityTag,
+    })),
     Array.sort(Order.struct({ order: Order.number })),
     Array.map((r) => r.tag),
   )

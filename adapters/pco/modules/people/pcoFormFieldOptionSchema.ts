@@ -44,5 +44,8 @@ export const PcoFormFieldOption = mkPcoEntity({
     }),
   }),
   type: 'FormFieldOption',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-form-field-option' })
+}).annotations({
+  [OfSkipEntity]: true,
+  [OfIdentifier]: 'pco-form-field-option',
+})
 export type PcoFormFieldOption = typeof PcoFormFieldOption.Type

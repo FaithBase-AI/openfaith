@@ -53,7 +53,6 @@ export const ResponsiveMenuContent: FC<ComponentPropsWithoutRef<typeof DropdownM
     isMdScreen,
     Boolean.match({
       onFalse: () => (
-        // @ts-ignore
         <DrawerContent {...domProps}>
           <ScrollArea viewportClassName={'overflow-x-hidden!'}>{children}</ScrollArea>
         </DrawerContent>
@@ -112,7 +111,7 @@ export const ResponsiveMenuItem: FC<ComponentPropsWithoutRef<typeof DropdownMenu
     isMdScreen,
     Boolean.match({
       onFalse: () => (
-        // @ts-ignore
+        // @ts-expect-error
         <div
           className={cn(dropdownMenuItemVariants(), className)}
           data-inset={false}

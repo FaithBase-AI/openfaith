@@ -53,7 +53,10 @@ const detectFilterType = (
   fieldSchema: ExtractedField['schema'],
   fieldName: string,
   tableConfig: FieldConfig['table'],
-): { type: ColumnDataType; options?: Array<{ value: string; label: string }> } => {
+): {
+  type: ColumnDataType
+  options?: Array<{ value: string; label: string }>
+} => {
   const ast = extractAST(fieldSchema)
   const underlyingType = getUnderlyingType(ast)
   const lowerFieldName = pipe(fieldName, String.toLowerCase)

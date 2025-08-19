@@ -1,6 +1,6 @@
 'use client'
 
-import { inviteMemberE } from '@openfaith/auth/authClient'
+import { inviteMemberE } from '@openfaith/auth/authClientE'
 import { inviteMemberIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import { Button, QuickActionForm, useAppForm } from '@openfaith/ui'
 import { revalidateLogic } from '@tanstack/react-form'

@@ -21,7 +21,7 @@ export const getAnnotationFromSchema = <A>(annotation: any, schema: any): Option
   }
 
   // For class-based schemas, try to get from the constructor or prototype
-  if (schema.constructor && schema.constructor.ast) {
+  if (schema.constructor?.ast) {
     return SchemaAST.getAnnotation<A>(annotation)(schema.constructor.ast)
   }
 

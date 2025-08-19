@@ -37,7 +37,7 @@ export const CollectionSearchFilter = <T,>(props: CollectionSearchFilterProps<T>
   // Handle input change
   const handleChange = (value: string | number) => {
     pipe(
-      value + '',
+      `${value}`,
       String.isNonEmpty,
       Boolean.match({
         onFalse: () =>
@@ -60,7 +60,7 @@ export const CollectionSearchFilter = <T,>(props: CollectionSearchFilterProps<T>
                       columnId: filterColumnId,
                       operator: 'contains',
                       type: 'text',
-                      values: [value + ''],
+                      values: [`${value}`],
                     }),
                   ),
                 onSome: () =>
@@ -71,7 +71,7 @@ export const CollectionSearchFilter = <T,>(props: CollectionSearchFilterProps<T>
                         f.columnId === filterColumnId,
                         Boolean.match({
                           onFalse: () => f,
-                          onTrue: () => ({ ...f, values: [value + ''] }),
+                          onTrue: () => ({ ...f, values: [`${value}`] }),
                         }),
                       ),
                     ),
