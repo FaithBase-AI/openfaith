@@ -905,14 +905,10 @@ export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> })
 
   // Decode the collection data through the schema to get class instances with getters
   const decodedCollection = useMemo(() => {
-    if (!result || info.type !== 'complete') {
-      return []
-    }
-
-    const resultArray = Array.isArray(result) ? result : []
-
     return pipe(
-      resultArray,
+      result as Array<unknown>,
+      Option.fromNullable,
+      Option.getOrElse((): Array<unknown> => []),
       Array.map((item) =>
         pipe(
           Schema.decodeUnknown(schema)(item, { onExcessProperty: 'preserve' }),
@@ -923,16 +919,16 @@ export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> })
                 item,
                 schema: schema.ast._tag,
               }).pipe(Effect.runSync)
-              return null // Skip items that fail to decode
+              return Option.none() // Skip items that fail to decode
             },
-            onSuccess: (entity) => entity,
+            onSuccess: Option.some,
           }),
           Effect.runSync,
         ),
       ),
-      Array.filter((item): item is T => item !== null),
+      Array.getSomes,
     )
-  }, [result, info, schema])
+  }, [result, schema])
 
   return {
     collection: decodedCollection,
