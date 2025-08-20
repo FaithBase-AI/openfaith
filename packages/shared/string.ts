@@ -211,3 +211,6 @@ export const formatLabel = (fieldName: string): string =>
       ),
     ),
   )
+
+//  this is the same regex that better-auth uses for email validation
+export const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/

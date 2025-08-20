@@ -1,6 +1,6 @@
 'use client'
 
-import { sendVerificationOtpE, verifyEmailE } from '@openfaith/auth/authClientE'
+import { sendEmailChangeVerificationE } from '@openfaith/auth/authClientE'
 import { useOrgId } from '@openfaith/openfaith/data/users/useOrgId'
 import { CurrentUserWrapper } from '@openfaith/openfaith/data/users/userData.app'
 import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
@@ -18,12 +18,13 @@ import {
   useAppForm,
   useStableMemo,
   VerifyEmailOtpDialog,
+  type VerifyEmailOtpDialogRef,
 } from '@openfaith/ui'
 import { useZero } from '@openfaith/zero'
 import type { UserClientShape } from '@openfaith/zero/clientShapes'
 import { revalidateLogic } from '@tanstack/react-form'
 import { Array, Effect, Equivalence, Match, Option, pipe, Schema } from 'effect'
-import { type FC, useMemo, useState } from 'react'
+import { type FC, useMemo, useRef } from 'react'
 
 class ProfileUpdateError extends Schema.TaggedError<ProfileUpdateError>()('ProfileUpdateError', {
   cause: Schema.optional(Schema.Unknown),
@@ -62,8 +63,7 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
   const userId = useUserId()
   const orgId = useOrgId()
   const z = useZero()
-  const [showVerificationDialog, setShowVerificationDialog] = useState(false)
-  const [pendingEmail, setPendingEmail] = useState('')
+  const verifyEmailOtpDialogRef = useRef<VerifyEmailOtpDialogRef>(null)
 
   const currentPersonEdgeOpt = useMemo(
     () =>
@@ -131,14 +131,12 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
             try: () =>
               z.mutateBatch(async (tx) => {
                 await tx.users.update({
-                  email: value.email,
                   id: userId,
                   name: value.name,
                 })
 
-                // If the form has a different personId than the initial value, do things.
+                // Handle person edge changes
                 if (currentPersonId !== value.personId) {
-                  // We have a previous personId, so we need to delete the edge.
                   if (currentPersonEdgeOpt._tag === 'Some') {
                     const edge = currentPersonEdgeOpt.value
                     await tx.edges.delete({
@@ -149,14 +147,12 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
                     })
                   }
 
-                  // If the form has a new personId, we need to create a new edge.
                   if (value.personId) {
                     const direction = Schema.decodeUnknownSync(EdgeDirectionSchema)({
                       idA: userId,
                       idB: value.personId,
                     })
 
-                    // Create the edge with proper direction
                     await tx.edges.insert({
                       _tag: 'edge',
                       createdAt: Date.now(),
@@ -175,28 +171,29 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
               }),
           })
 
-          // If email changed, trigger verification
+          // If email changed, verify it before saving
           if (emailChanged) {
-            // Send OTP for email verification
-            yield* pipe(
-              sendVerificationOtpE({
-                email: value.email,
-                type: 'email-verification',
-              }),
-              Effect.mapError(
-                (cause) =>
-                  new ProfileUpdateError({
-                    cause,
-                    message: 'Failed to send verification email',
-                  }),
-              ),
-            )
-
-            // Show the verification dialog
-            yield* Effect.sync(() => {
-              setPendingEmail(value.email)
-              setShowVerificationDialog(true)
+            // Send OTP for email change (don't map error, let it propagate)
+            yield* sendEmailChangeVerificationE({
+              newEmail: value.email,
             })
+
+            // Open dialog and wait for verification
+            if (!verifyEmailOtpDialogRef.current) {
+              return yield* Effect.fail(
+                new ProfileUpdateError({
+                  message: 'Verification dialog not available',
+                }),
+              )
+            }
+
+            // This will wait for the user to verify or cancel (don't map error)
+            yield* verifyEmailOtpDialogRef.current.open(value.email)
+
+            // If we get here, verification succeeded - dialog has the OTP
+            // Note: The actual email update happens on the server side when verifying the OTP
+            // The verifyEmailOtpDialog internally calls the verify endpoint which updates the email
+            // We don't need to manually update the email in the database here
           }
 
           yield* pipe(
@@ -209,18 +206,55 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
 
           return null
         }).pipe(
-          Effect.catchAll((error) =>
-            Effect.gen(function* () {
-              yield* Effect.logError('Profile update failed', { error })
-              yield* Effect.sync(() => toast.error('Profile update failed'))
+          Effect.catchTags({
+            EmailChangeError: (error) =>
+              Effect.gen(function* () {
+                yield* Effect.logError('Failed to send email change OTP', { error })
+                return {
+                  fields: {
+                    email: 'Failed to send verification code. Please try again.',
+                  },
+                }
+              }),
+            OtpVerificationCancelledError: (error) =>
+              Effect.gen(function* () {
+                yield* Effect.logError('Email verification cancelled', { error })
+                return {
+                  fields: {
+                    email:
+                      'Email verification was cancelled. Please verify your email to update it.',
+                  },
+                }
+              }),
+            ProfileUpdateError: (error) =>
+              Effect.gen(function* () {
+                yield* Effect.logError('Profile update failed', { error })
 
-              // Return form-level error object for TanStack Form
+                // If email verification failed, show specific error on email field
+                if (error.message.includes('email') || error.message.includes('verification')) {
+                  return {
+                    fields: {
+                      email: error.message,
+                    },
+                  }
+                }
+
+                return {
+                  fields: {},
+                  form: error.message || 'Failed to update profile. Please try again.',
+                }
+              }),
+          }),
+          Effect.catchAllDefect((defect) =>
+            Effect.gen(function* () {
+              yield* Effect.logError('Unexpected error in profile update', { defect })
               return {
                 fields: {},
-                form: 'Failed to update profile. Please try again.',
+                form: 'An unexpected error occurred. Please try again.',
               }
             }),
           ),
+          Effect.ensureErrorType<never>(),
           Effect.runPromise,
         )
       },
@@ -268,21 +302,6 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
       />
     </>
   )
-
-  const handleEmailVerification = (otp: string) =>
-    verifyEmailE({
-      email: pendingEmail,
-      otp,
-    }).pipe(
-      Effect.tap(() =>
-        Effect.sync(() => {
-          toast.success('Email verified successfully!')
-          setShowVerificationDialog(false)
-          setPendingEmail('')
-        }),
-      ),
-      Effect.map(() => undefined),
-    )
 
   const submitButton = (
     <form.Subscribe
@@ -336,10 +355,7 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
       <VerifyEmailOtpDialog
         autoSubmit
         description='Enter the verification code sent to your new email address'
-        email={pendingEmail}
-        onOpenChange={setShowVerificationDialog}
-        onSubmit={handleEmailVerification}
-        open={showVerificationDialog}
+        ref={verifyEmailOtpDialogRef}
         submitLabel='Verify Email'
         title='Verify Your Email'
       />

@@ -3,16 +3,21 @@ import { Array, pipe, Schema } from 'effect'
 
 export type MaybeFieldValue<T> = T | (T | undefined) | (T | null) | (T | undefined | null)
 
-const ErrorSchema = Schema.Struct({
-  message: Schema.String,
-})
+// Schema that accepts either {message: string} or string and transforms to string
+const ErrorMessageSchema = Schema.Union(
+  Schema.transform(Schema.Struct({ message: Schema.String }), Schema.String, {
+    decode: (obj) => obj.message,
+    encode: (str) => ({ message: str }),
+    strict: true,
+  }),
+  Schema.String,
+)
 
 const extractErrorMessages = (errors: Array<ValidationError>) =>
   pipe(
     errors,
-    Array.map((x) => Schema.decodeUnknownOption(ErrorSchema)(x)),
+    Array.map((x) => Schema.decodeUnknownOption(ErrorMessageSchema)(x)),
     Array.getSomes,
-    Array.map((error) => error.message),
     Array.join(', '),
   )
 

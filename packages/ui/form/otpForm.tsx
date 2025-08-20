@@ -1,11 +1,11 @@
 'use client'
 
-import { signInWithEmailOtpE, verifyEmailE } from '@openfaith/auth/authClientE'
+import { signInWithEmailOtpE, verifyEmailChangeE, verifyEmailE } from '@openfaith/auth/authClientE'
 import { nullOp } from '@openfaith/shared'
 import { ArrowRightIcon, Button, Form, useAppForm, usePasteDetect } from '@openfaith/ui'
 import { revalidateLogic } from '@tanstack/react-form'
 import { useStore } from '@tanstack/react-store'
-import { Effect, Match, pipe, Schema, String } from 'effect'
+import { Effect, pipe, Schema, String } from 'effect'
 import { REGEXP_ONLY_DIGITS } from 'input-otp'
 import { type FC, useEffect } from 'react'
 
@@ -28,7 +28,11 @@ interface VerifyEmailOtpFormProps extends OtpFormBaseProps {
   _tag: 'verify-email'
 }
 
-export type OtpFormProps = SignInOtpFormProps | VerifyEmailOtpFormProps
+interface EmailChangeOtpFormProps extends OtpFormBaseProps {
+  _tag: 'email-change'
+}
+
+export type OtpFormProps = SignInOtpFormProps | VerifyEmailOtpFormProps | EmailChangeOtpFormProps
 
 export const OtpForm: FC<OtpFormProps> = (props) => {
   const { email, submitLabel = 'Verify', autoSubmit = true, onSuccess = nullOp } = props
@@ -47,31 +51,72 @@ export const OtpForm: FC<OtpFormProps> = (props) => {
       onDynamic: Schema.standardSchemaV1(OTPSchema),
       onSubmitAsync: async ({ value }) => {
         return await Effect.gen(function* () {
-          yield* Match.type<typeof props>().pipe(
-            Match.tag('sign-in', () =>
-              signInWithEmailOtpE({
-                email,
-                otp: value.otp,
-              }),
-            ),
-            Match.tag('verify-email', () =>
-              verifyEmailE({
-                email,
-                otp: value.otp,
-              }),
-            ),
-            Match.exhaustive,
-          )(props)
+          if (props._tag === 'sign-in') {
+            yield* signInWithEmailOtpE({
+              email,
+              otp: value.otp,
+            })
+          }
+
+          if (props._tag === 'verify-email') {
+            yield* verifyEmailE({
+              email,
+              otp: value.otp,
+            })
+          }
+
+          if (props._tag === 'email-change') {
+            yield* verifyEmailChangeE({
+              newEmail: email,
+              otp: value.otp,
+            })
+          }
+
+          // yield* Match.type<typeof props>().pipe(
+          //   Match.tag('sign-in', () =>
+          //     signInWithEmailOtpE({
+          //       email,
+          //       otp: value.otp,
+          //     }),
+          //   ),
+          //   Match.tag('verify-email', () =>
+          //     verifyEmailE({
+          //       email,
+          //       otp: value.otp,
+          //     }),
+          //   ),
+          //   Match.tag('email-change', () =>
+          //     verifyEmailChangeOtpE({
+          //       newEmail: email,
+          //       otp: value.otp,
+          //     }),
+          //   ),
+          //   Match.exhaustive,
+          // )(props)
 
           yield* Effect.sync(() => onSuccess())
+
+          return undefined
         }).pipe(
           Effect.catchTags({
-            OTPVerificationError: (error) =>
-              Effect.succeed({
+            EmailChangeError: (error) => {
+              console.log('EmailChangeError', error)
+
+              return Effect.succeed({
                 fields: {
                   otp: error.message,
                 },
-              }),
+              })
+            },
+            OTPVerificationError: (error) => {
+              console.log('OTPVerificationError', error)
+
+              return Effect.succeed({
+                fields: {
+                  otp: error.message,
+                },
+              })
+            },
           }),
           Effect.catchAllDefect(() =>
             Effect.succeed({
@@ -80,6 +125,7 @@ export const OtpForm: FC<OtpFormProps> = (props) => {
               },
             }),
           ),
+          Effect.ensureErrorType<never>(),
           Effect.runPromise,
         )
       },

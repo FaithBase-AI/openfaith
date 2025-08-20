@@ -1,4 +1,5 @@
 import { FetchHttpClient } from '@effect/platform'
+import { emailChangeOTP } from '@openfaith/auth/plugins'
 import { redis, resend } from '@openfaith/be-shared'
 import { getTableName, schema, usersTable } from '@openfaith/db'
 import { reactInvitationEmail, reactOTPEmail } from '@openfaith/email'
@@ -285,6 +286,7 @@ export const auth = betterAuth({
         await resend.emails.send({
           from,
           react: reactOTPEmail({
+            _tag: 'sign-in',
             appName: env.VITE_APP_NAME,
             otp,
           }),
@@ -347,6 +349,21 @@ export const auth = betterAuth({
         })
       },
     }),
+    emailChangeOTP({
+      expiresIn: 50000,
+      async sendEmailChangeOTP({ newEmail, otp }) {
+        await resend.emails.send({
+          from,
+          react: reactOTPEmail({
+            _tag: 'email-change',
+            appName: env.VITE_APP_NAME,
+            otp,
+          }),
+          subject: `Verify email ${env.VITE_APP_NAME}`,
+          to: newEmail,
+        })
+      },
+    }),
     admin(),
     // reactStartCookies must be the last plugin in the array.
     reactStartCookies(),
@@ -386,6 +403,7 @@ export const auth = betterAuth({
         await resend.emails.send({
           from,
           react: reactOTPEmail({
+            _tag: 'email-change',
             appName: env.VITE_APP_NAME,
             otp: token.substring(0, 6), // Use first 6 chars of token as OTP
           }),

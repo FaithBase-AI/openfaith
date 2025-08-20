@@ -1,4 +1,5 @@
 import { ProfileForm } from '@openfaith/openfaith/features/settings/profileForm'
+import { ScrollArea } from '@openfaith/ui'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_app/settings/profile')({
@@ -7,8 +8,8 @@ export const Route = createFileRoute('/_app/settings/profile')({
 
 function RouteComponent() {
   return (
-    <div className='flex flex-1 flex-col p-6'>
+    <ScrollArea viewportClassName='px-6 pb-6'>
       <ProfileForm _tag='standalone' />
-    </div>
+    </ScrollArea>
   )
 }
