@@ -172,6 +172,10 @@ export const auth = betterAuth({
             const session = ctx.context.newSession || ctx.context.session
             ctx.context.session = session
 
+            if (!session) {
+              return
+            }
+
             const token =
               ctx.context.responseHeaders?.get('set-auth-jwt') ||
               (await getJwtToken(ctx, {

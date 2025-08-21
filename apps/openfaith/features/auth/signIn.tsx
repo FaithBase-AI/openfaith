@@ -17,7 +17,6 @@ import {
 } from '@openfaith/ui'
 import { revalidateLogic } from '@tanstack/react-form'
 import { useRouter } from '@tanstack/react-router'
-import { useStore } from '@tanstack/react-store'
 import { Boolean, Effect, Option, pipe, Schema } from 'effect'
 import { useQueryState } from 'nuqs'
 import { type FC, useEffect } from 'react'
@@ -82,7 +81,7 @@ const SignIn: FC<SignInProps> = (props) => {
     }),
     validators: {
       onDynamic: Schema.standardSchemaV1(SignInSchema),
-      onSubmitAsync: async ({ value }) => {
+      onSubmitAsync: async ({ value }) =>
         await Effect.gen(function* () {
           yield* sendVerificationOtpE({
             email: value.email,
@@ -91,7 +90,6 @@ const SignIn: FC<SignInProps> = (props) => {
 
           return
         }).pipe(
-          // Handle specific error types
           Effect.catchTags({
             EmailOtpError: (error) =>
               Effect.gen(function* () {
@@ -106,7 +104,6 @@ const SignIn: FC<SignInProps> = (props) => {
                 }
               }),
           }),
-          // Handle all remaining errors and defects
           Effect.catchAllDefect(() =>
             Effect.succeed({
               fields: {},
@@ -114,68 +111,94 @@ const SignIn: FC<SignInProps> = (props) => {
             }),
           ),
           Effect.runPromise,
-        )
-      },
+        ),
     },
   })
-
-  const email = useStore(emailForm.store, (state) => state.values.email)
-  const emailFormSubmitting = useStore(emailForm.store, (state) => state.isSubmitting)
-  const emailFormHasSubmitted = useStore(
-    emailForm.store,
-    (state) => state.isSubmitted || pipe(passedOtpEmail, Option.fromNullable, Option.isSome),
-  )
 
   return (
     <Card className='w-96 max-w-[calc(100vw-2.5rem)]'>
       <CardHeader>
         <CardTitle className='font-medium text-4xl'>
-          {pipe(
-            emailFormHasSubmitted,
-            Boolean.match({
-              onFalse: () => `Sign in to ${env.VITE_APP_NAME}`,
-              onTrue: () => 'Check your email',
-            }),
-          )}
+          <emailForm.Subscribe
+            selector={(state) =>
+              state.isSubmitted || pipe(passedOtpEmail, Option.fromNullable, Option.isSome)
+            }
+          >
+            {(emailFormHasSubmitted) =>
+              pipe(
+                emailFormHasSubmitted,
+                Boolean.match({
+                  onFalse: () => `Sign in to ${env.VITE_APP_NAME}`,
+                  onTrue: () => 'Check your email',
+                }),
+              )
+            }
+          </emailForm.Subscribe>
         </CardTitle>
         <CardDescription className='font-normal text-sm'>
-          {pipe(
-            emailFormHasSubmitted,
-            Boolean.match({
-              onFalse: () => 'Welcome back! Please sign in to continue',
-              onTrue: () => 'Use the verification link sent to your email',
-            }),
-          )}
+          <emailForm.Subscribe
+            selector={(state) =>
+              state.isSubmitted || pipe(passedOtpEmail, Option.fromNullable, Option.isSome)
+            }
+          >
+            {(emailFormHasSubmitted) =>
+              pipe(
+                emailFormHasSubmitted,
+                Boolean.match({
+                  onFalse: () => 'Welcome back! Please sign in to continue',
+                  onTrue: () => 'Use the verification link sent to your email',
+                }),
+              )
+            }
+          </emailForm.Subscribe>
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {pipe(
-          emailFormHasSubmitted,
-          Boolean.match({
-            onFalse: () => (
-              <Form form={emailForm}>
-                <emailForm.AppField
-                  children={(field) => (
-                    <field.InputField
-                      autoCapitalize='none'
-                      autoComplete='email'
-                      label='Email address'
-                      placeholder='you@gmail.com'
-                      required
+        <emailForm.Subscribe
+          selector={(state) =>
+            state.isSubmitted || pipe(passedOtpEmail, Option.fromNullable, Option.isSome)
+          }
+        >
+          {(emailFormHasSubmitted) => {
+            return pipe(
+              emailFormHasSubmitted,
+              Boolean.match({
+                onFalse: () => (
+                  <Form form={emailForm}>
+                    <emailForm.AppField
+                      children={(field) => (
+                        <field.InputField
+                          autoCapitalize='none'
+                          autoComplete='email'
+                          label='Email address'
+                          placeholder='you@gmail.com'
+                          required
+                        />
+                      )}
+                      name='email'
                     />
-                  )}
-                  name='email'
-                />
 
-                <Button className='w-full gap-2' loading={emailFormSubmitting} type='submit'>
-                  Continue
-                  <ArrowRightIcon />
-                </Button>
-              </Form>
-            ),
-            onTrue: () => <OtpForm _tag='sign-in' autoSubmit email={email} submitLabel='Sign In' />,
-          }),
-        )}
+                    <emailForm.Subscribe selector={(state) => state.isSubmitting}>
+                      {(isSubmitting) => (
+                        <Button className='w-full gap-2' loading={isSubmitting} type='submit'>
+                          Continue
+                          <ArrowRightIcon />
+                        </Button>
+                      )}
+                    </emailForm.Subscribe>
+                  </Form>
+                ),
+                onTrue: () => (
+                  <emailForm.Subscribe selector={(state) => state.values.email}>
+                    {(email) => (
+                      <OtpForm _tag='sign-in' autoSubmit email={email} submitLabel='Sign In' />
+                    )}
+                  </emailForm.Subscribe>
+                ),
+              }),
+            )
+          }}
+        </emailForm.Subscribe>
       </CardContent>
     </Card>
   )

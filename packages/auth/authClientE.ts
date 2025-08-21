@@ -320,7 +320,7 @@ export const sendEmailChangeVerificationE = Effect.fn('sendEmailChangeVerificati
   return result.data
 })
 
-export const verifyEmailChangeE = Effect.fn('verifyEmailChange')(function* (
+export const verifyEmailChangeOtpE = Effect.fn('verifyEmailChangeOtp')(function* (
   params: Parameters<typeof authClient.emailChangeOtp.verify>[0],
 ) {
   yield* Effect.annotateCurrentSpan('emailChangeOtp.verify', params)
