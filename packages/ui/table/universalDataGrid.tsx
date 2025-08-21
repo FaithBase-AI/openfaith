@@ -2,7 +2,7 @@
 
 import '@glideapps/glide-data-grid/dist/index.css'
 
-import type { GridCell, Item } from '@glideapps/glide-data-grid'
+import type { GridCell, Item, Rectangle } from '@glideapps/glide-data-grid'
 import { GridCellKind } from '@glideapps/glide-data-grid'
 import type { Edge } from '@openfaith/db'
 import { extractEntityInfo } from '@openfaith/schema'
@@ -77,7 +77,7 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     return extractEntityInfo(schema)
   }, [schema])
 
-  const { collection } = useSchemaCollection({ schema })
+  const { collection, nextPage, loading } = useSchemaCollection({ schema })
 
   // Use the schema update hook for mutations
   const { mutate: updateEntity } = useSchemaUpdate(schema, {
@@ -320,6 +320,25 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     </Button>
   )
 
+  const handleVisibleRegionChanged = useCallback(
+    (range: Rectangle) => {
+      // Rectangle has x, y, width, height
+      // y is the row index, height is the number of visible rows
+      const visibleEndRow = range.y + range.height
+
+      // Check if we're near the bottom (within 5 rows)
+      const threshold = 5
+      const nearBottom = visibleEndRow >= collection.length - threshold
+
+      // Trigger loading more data if we're near the bottom and not already loading
+      if (nearBottom && !loading) {
+        // Call nextPage to load more data
+        nextPage()
+      }
+    },
+    [collection.length, nextPage, loading],
+  )
+
   // Merge className with flex layout classes
   const containerClassName = className
     ? `${className} flex flex-col h-full`
@@ -340,6 +359,7 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
         onCellEdited={editable ? handleCellEdited : undefined}
         onRowClick={handleRowClick}
         onRowsSelected={onRowsSelected}
+        onVisibleRegionChanged={handleVisibleRegionChanged}
         showRowNumbers={showRowNumbers}
       />
     </div>
