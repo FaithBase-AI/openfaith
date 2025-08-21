@@ -43,36 +43,42 @@ const SignIn: FC<SignInProps> = (props) => {
 
   const { session } = useRouteContext({ from: '/_auth/sign-in' })
 
+  const goToRedirect = () =>
+    setTimeout(() => {
+      pipe(
+        invitationId,
+        Option.fromNullable,
+        Option.match({
+          onNone: () => {
+            router.navigate({ replace: true, to: redirect })
+          },
+          onSome: () => {
+            router.navigate({ replace: true, to: redirect })
+
+            // router.navigate({
+            //   params: { id: x },
+            //   replace: true,
+            //   to: '/accept-invitation/$id',
+            // })
+          },
+        }),
+      )
+    }, 0)
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: no update
   useEffect(() => {
     pipe(
-      session.data,
+      session,
       Option.fromNullable,
+      Option.flatMapNullable((x) => x.data),
       Option.match({
         onNone: nullOp,
         onSome: () => {
-          pipe(
-            invitationId,
-            Option.fromNullable,
-            Option.match({
-              onNone: () => {
-                router.navigate({ replace: true, to: redirect })
-              },
-              onSome: () => {
-                router.navigate({ replace: true, to: redirect })
-
-                // router.navigate({
-                //   params: { id: x },
-                //   replace: true,
-                //   to: '/accept-invitation/$id',
-                // })
-              },
-            }),
-          )
+          goToRedirect()
         },
       }),
     )
-  }, [session.data])
+  }, [])
 
   const emailForm = useAppForm({
     defaultValues: {
@@ -165,7 +171,7 @@ const SignIn: FC<SignInProps> = (props) => {
         >
           {(emailFormHasSubmitted) =>
             pipe(
-              emailFormHasSubmitted,
+              emailFormHasSubmitted || !!session?.data,
               Boolean.match({
                 onFalse: () => (
                   <Form form={emailForm}>
@@ -195,7 +201,13 @@ const SignIn: FC<SignInProps> = (props) => {
                 onTrue: () => (
                   <emailForm.Subscribe selector={(state) => state.values.email}>
                     {(email) => (
-                      <OtpForm _tag='sign-in' autoSubmit email={email} submitLabel='Sign In' />
+                      <OtpForm
+                        _tag='sign-in'
+                        autoSubmit
+                        email={email}
+                        onSuccess={goToRedirect}
+                        submitLabel='Sign In'
+                      />
                     )}
                   </emailForm.Subscribe>
                 ),
