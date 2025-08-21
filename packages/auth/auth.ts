@@ -115,6 +115,7 @@ export const auth = betterAuth({
       await resend.emails.send({
         from,
         react: reactOTPEmail({
+          _tag: 'sign-in',
           appName: env.VITE_APP_NAME,
           otp: url.substring(url.length - 6), // Use last 6 chars as OTP
         }),
