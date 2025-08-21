@@ -62,7 +62,7 @@ function RouteComponent() {
             </div>
           </div> */}
 
-          <div className='hidden flex-row gap-2 text-white/70 md:flex'>
+          <div className='mt-auto flex-row gap-2 text-white/70 md:flex'>
             <Link to='/'>Home</Link>
           </div>
         </div>
