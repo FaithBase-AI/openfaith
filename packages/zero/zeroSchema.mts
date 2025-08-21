@@ -1,11 +1,5 @@
 import { schema, type Schema as ZSchema } from '@openfaith/zero/zero-schema.gen'
-import {
-  ANYONE_CAN,
-  ANYONE_CAN_DO_ANYTHING,
-  definePermissions,
-  type ExpressionBuilder,
-  NOBODY_CAN,
-} from '@rocicorp/zero'
+import { ANYONE_CAN, definePermissions, type ExpressionBuilder, NOBODY_CAN } from '@rocicorp/zero'
 import { Schema } from 'effect'
 
 export { schema, type ZSchema }
@@ -50,6 +44,14 @@ export type AuthData = {
   activeOrganizationId: string | null
 }
 
+// Type helper to filter tables that have a specific field
+type TablesWithField<Schema extends { tables: Record<string, any> }, Field extends string> = {
+  [K in keyof Schema['tables']]: Field extends keyof Schema['tables'][K]['columns'] ? K : never
+}[keyof Schema['tables']]
+
+// Create a union type of all tables that have orgId
+type TablesWithOrgId = TablesWithField<ZSchema, 'orgId'>
+
 export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
   // Helper functions for common permission checks
   const allowIfUserIsSelf = (authData: AuthData, eb: ExpressionBuilder<ZSchema, 'users'>) =>
@@ -71,7 +73,20 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
       q.where('userId', authData.id).where('role', 'IN', ['owner', 'admin']),
     )
 
+  const allowIfOrg = (authData: AuthData, eb: ExpressionBuilder<ZSchema, TablesWithOrgId>) => {
+    if (!authData.activeOrganizationId) {
+      return eb.cmpLit(1, '=', 0)
+    }
+
+    return eb.cmp('orgId', '=', authData.activeOrganizationId)
+  }
+
   return {
+    adapterDetails: {
+      row: {
+        select: [allowIfOrg],
+      },
+    },
     adapterTokens: {
       row: {
         insert: [allowIfAdmin],
@@ -85,7 +100,7 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     addresses: {
       row: {
         insert: [allowIfAdmin],
-        select: ANYONE_CAN,
+        select: [allowIfOrg],
         update: {
           postMutation: [allowIfAdmin],
           preMutation: [allowIfAdmin],
@@ -95,7 +110,7 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     campuses: {
       row: {
         insert: [allowIfAdmin],
-        select: ANYONE_CAN,
+        select: [allowIfOrg],
         update: {
           postMutation: [allowIfAdmin],
           preMutation: [allowIfAdmin],
@@ -105,7 +120,7 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     edges: {
       row: {
         insert: [allowIfAdmin],
-        select: [allowIfAdmin],
+        select: [allowIfOrg],
         update: {
           postMutation: [allowIfAdmin],
           preMutation: [allowIfAdmin],
@@ -114,13 +129,13 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     },
     entityRelationships: {
       row: {
-        select: ANYONE_CAN,
+        select: [allowIfOrg],
       },
     },
     folders: {
       row: {
         insert: [allowIfAdmin],
-        select: ANYONE_CAN,
+        select: [allowIfOrg],
         update: {
           postMutation: [allowIfAdmin],
           preMutation: [allowIfAdmin],
@@ -130,7 +145,7 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     orgSettings: {
       row: {
         insert: [allowIfAdmin],
-        select: ANYONE_CAN,
+        select: [allowIfOrg],
         update: {
           postMutation: [allowIfOrgAdmin, allowIfAdmin],
           preMutation: [allowIfOrgAdmin, allowIfAdmin],
@@ -150,24 +165,23 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     orgUsers: {
       row: {
         insert: NOBODY_CAN,
-        select: ANYONE_CAN,
+        select: [allowIfOrg],
       },
     },
-    people: ANYONE_CAN_DO_ANYTHING,
-    // people: {
-    //   row: {
-    //     insert: [allowIfAdmin],
-    //     select: ANYONE_CAN,
-    //     update: {
-    //       postMutation: [allowIfAdmin],
-    //       preMutation: [allowIfAdmin],
-    //     },
-    //   },
-    // },
+    people: {
+      row: {
+        insert: [allowIfAdmin],
+        select: [allowIfOrg],
+        update: {
+          postMutation: [allowIfAdmin],
+          preMutation: [allowIfAdmin],
+        },
+      },
+    },
     phoneNumbers: {
       row: {
         insert: [allowIfAdmin],
-        select: ANYONE_CAN,
+        select: [allowIfOrg],
         update: {
           postMutation: [allowIfAdmin],
           preMutation: [allowIfAdmin],
