@@ -54,7 +54,7 @@ export const OtpForm: FC<OtpFormProps> = (props) => {
       onDynamic: Schema.standardSchemaV1(OTPSchema),
       onSubmitAsync: async ({ value }) =>
         await Effect.gen(function* () {
-          const result = yield* Match.type<typeof props>().pipe(
+          yield* Match.type<typeof props>().pipe(
             Match.tag('sign-in', () =>
               signInWithEmailOtpE({
                 email,
@@ -75,8 +75,6 @@ export const OtpForm: FC<OtpFormProps> = (props) => {
             ),
             Match.exhaustive,
           )(props)
-
-          console.log(result)
 
           yield* Effect.sync(() => onSuccess())
         }).pipe(

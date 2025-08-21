@@ -1,5 +1,4 @@
 'use client'
-import { authClient } from '@openfaith/auth/authClient'
 import { sendVerificationOtpE } from '@openfaith/auth/authClientE'
 import { env, nullOp } from '@openfaith/shared'
 import {
@@ -16,7 +15,7 @@ import {
   useAppForm,
 } from '@openfaith/ui'
 import { revalidateLogic } from '@tanstack/react-form'
-import { useRouter } from '@tanstack/react-router'
+import { useRouteContext, useRouter } from '@tanstack/react-router'
 import { Boolean, Effect, Option, pipe, Schema } from 'effect'
 import { useQueryState } from 'nuqs'
 import { type FC, useEffect } from 'react'
@@ -42,34 +41,38 @@ const SignIn: FC<SignInProps> = (props) => {
   const [invitationId] = useQueryState('invitation-id')
   const [passedOtpEmail] = useQueryState('email')
 
-  const { data: session } = authClient.useSession()
+  const { session } = useRouteContext({ from: '/_auth/sign-in' })
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: no update
   useEffect(() => {
     pipe(
-      session,
+      session.data,
       Option.fromNullable,
       Option.match({
         onNone: nullOp,
         onSome: () => {
-          setTimeout(() => {
-            pipe(
-              invitationId,
-              Option.fromNullable,
-              Option.match({
-                onNone: () => {
-                  router.history.push(redirect)
-                },
-                onSome: (x) => {
-                  router.history.push(`/accept-invitation/${x}`)
-                },
-              }),
-            )
-          }, 0)
+          pipe(
+            invitationId,
+            Option.fromNullable,
+            Option.match({
+              onNone: () => {
+                router.navigate({ replace: true, to: redirect })
+              },
+              onSome: () => {
+                router.navigate({ replace: true, to: redirect })
+
+                // router.navigate({
+                //   params: { id: x },
+                //   replace: true,
+                //   to: '/accept-invitation/$id',
+                // })
+              },
+            }),
+          )
         },
       }),
     )
-  }, [session])
+  }, [session.data])
 
   const emailForm = useAppForm({
     defaultValues: {
@@ -110,6 +113,7 @@ const SignIn: FC<SignInProps> = (props) => {
               form: 'Something went wrong',
             }),
           ),
+          Effect.ensureErrorType<never>(),
           Effect.runPromise,
         ),
     },
@@ -159,8 +163,8 @@ const SignIn: FC<SignInProps> = (props) => {
             state.isSubmitted || pipe(passedOtpEmail, Option.fromNullable, Option.isSome)
           }
         >
-          {(emailFormHasSubmitted) => {
-            return pipe(
+          {(emailFormHasSubmitted) =>
+            pipe(
               emailFormHasSubmitted,
               Boolean.match({
                 onFalse: () => (
@@ -197,7 +201,7 @@ const SignIn: FC<SignInProps> = (props) => {
                 ),
               }),
             )
-          }}
+          }
         </emailForm.Subscribe>
       </CardContent>
     </Card>

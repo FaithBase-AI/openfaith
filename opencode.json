@@ -1,5 +1,13 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "plan": {
+      "tools": {
+        "context7*": true,
+        "effect_docs*": true
+      }
+    }
+  },
   "experimental": {
     "hook": {
       "file_edited": {
