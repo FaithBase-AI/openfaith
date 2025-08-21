@@ -83,13 +83,13 @@ const getQuery = <
 
   pipe(
     urlFilters,
-    Array.map((x) => {
+    Array.forEach((x) => {
       switch (x.type) {
         case 'option':
           query = query.where((q) =>
             q.exists(x.columnId as Parameters<typeof q.exists>[0], (q) =>
               q.where(
-                // @ts-ignore
+                // @ts-expect-error
                 'id',
                 pipe(
                   x.operator === 'is',
@@ -107,7 +107,7 @@ const getQuery = <
           query = query.where((q) =>
             q.exists(x.columnId as Parameters<typeof q.exists>[0], (q) =>
               q.where(
-                // @ts-ignore
+                // @ts-expect-error
                 'id',
                 pipe(
                   x.operator === 'include',
@@ -132,7 +132,7 @@ const getQuery = <
               onNone: noOp,
               onSome: (y) => {
                 query = query.where(
-                  // @ts-ignore
+                  // @ts-expect-error
                   x.columnId,
                   pipe(
                     x.operator === 'contains',
@@ -168,16 +168,16 @@ const getQuery = <
               Boolean.match({
                 onFalse: () =>
                   q.or(
-                    // @ts-ignore
+                    // @ts-expect-error
                     q.cmp(x.columnId, '>', endDate),
-                    // @ts-ignore
+                    // @ts-expect-error
                     q.cmp(x.columnId, '<', startDate),
                   ),
                 onTrue: () =>
                   q.and(
-                    // @ts-ignore
+                    // @ts-expect-error
                     q.cmp(x.columnId, '>=', startDate),
-                    // @ts-ignore
+                    // @ts-expect-error
                     q.cmp(x.columnId, '<=', endDate),
                   ),
               }),
@@ -200,39 +200,39 @@ const getQuery = <
           )
           switch (x.operator) {
             case 'is':
-              // @ts-ignore
+              // @ts-expect-error
               query = query.where(x.columnId, '=', firstValue)
               return
             case 'is not':
-              // @ts-ignore
+              // @ts-expect-error
               query = query.where(x.columnId, '!=', firstValue)
               return
             case 'is greater than':
-              // @ts-ignore
+              // @ts-expect-error
               query = query.where(x.columnId, '>', firstValue)
               return
             case 'is greater than or equal to':
-              // @ts-ignore
+              // @ts-expect-error
               query = query.where(x.columnId, '>=', firstValue)
               return
             case 'is less than':
-              // @ts-ignore
+              // @ts-expect-error
               query = query.where(x.columnId, '<', firstValue)
               return
             case 'is less than or equal to':
-              // @ts-ignore
+              // @ts-expect-error
               query = query.where(x.columnId, '<=', firstValue)
               return
             case 'is between':
-              // @ts-ignore
+              // @ts-expect-error
               query = query.where(x.columnId, '>=', firstValue)
-              // @ts-ignore
+              // @ts-expect-error
               query = query.where(x.columnId, '<=', secondValue)
               return
             case 'is not between':
-              // @ts-ignore
+              // @ts-expect-error
               query = query.where(x.columnId, '>', firstValue)
-              // @ts-ignore
+              // @ts-expect-error
               query = query.where(x.columnId, '<', secondValue)
               return
             default:

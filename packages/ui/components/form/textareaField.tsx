@@ -1,7 +1,7 @@
 'use client'
 
-import { getFieldErrors } from '@openfaith/ui/components/formFields/fieldHelpers'
-import { useFieldContext } from '@openfaith/ui/components/formFields/tsField'
+import { getFieldErrors } from '@openfaith/ui/components/form/fieldHelpers'
+import { useFieldContext } from '@openfaith/ui/components/form/tsField'
 import { InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
 import { Textarea } from '@openfaith/ui/components/ui/textarea'
 import type { ComponentProps, ReactNode } from 'react'
@@ -26,11 +26,7 @@ export function TextareaField(props: TextareaFieldProps) {
 
   const field = useFieldContext<string>()
 
-  const { processedError } = getFieldErrors({
-    errors: field.state.meta.errors,
-    isTouched: field.state.meta.isTouched,
-    submissionAttempts: field.form.state.submissionAttempts,
-  })
+  const { processedError } = getFieldErrors(field.state.meta.errors)
 
   return (
     <InputWrapper

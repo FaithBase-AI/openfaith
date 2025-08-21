@@ -7,6 +7,7 @@ import { useChangeOrg } from '@openfaith/openfaith/shared/auth/useChangeOrg'
 import { asyncNoOp } from '@openfaith/shared'
 import { ArrowRightIcon, Button, QuickActionForm, useAppForm } from '@openfaith/ui'
 import type { OrgClientShape } from '@openfaith/zero'
+import { revalidateLogic } from '@tanstack/react-form'
 import { useRouter } from '@tanstack/react-router'
 import { Match, Option, pipe, Schema, String } from 'effect'
 import { useAtom } from 'jotai'
@@ -82,7 +83,7 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
           const { data } = await authClient.organization.create({
             name: pipe(value.name, String.trim),
             slug: pipe(value.slug, String.trim),
-            userId: userId,
+            userId,
           })
 
           await pipe(
@@ -112,8 +113,12 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
 
       setCreateOrgIsOpen(false)
     },
+    validationLogic: revalidateLogic({
+      mode: 'submit',
+      modeAfterSubmission: 'blur',
+    }),
     validators: {
-      onChange: Schema.standardSchemaV1(OrgSchema),
+      onDynamic: Schema.standardSchemaV1(OrgSchema),
     },
   })
 

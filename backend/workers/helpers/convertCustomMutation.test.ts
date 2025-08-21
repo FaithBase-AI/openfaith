@@ -29,14 +29,14 @@ effect('should convert people|update mutation correctly', () =>
     expect(result).toHaveLength(1)
     const item = result[0]
     expect(item).toBeDefined()
-    expect(item!.entityName).toBe('people')
-    expect(item!.op.op).toBe('update')
-    expect(item!.op.tableName).toBe('people')
-    expect(item!.op.primaryKey).toEqual({ id: 'person_123' })
-    expect(item!.op.value).toEqual({ id: 'person_123', name: 'John Doe' })
-    expect(item!.mutation.type).toBe('crud')
-    expect(item!.mutation.name).toBe('_zero_crud')
-    expect(item!.mutation.args[0]!.ops).toHaveLength(1)
+    expect(item?.entityName).toBe('people')
+    expect(item?.op.op).toBe('update')
+    expect(item?.op.tableName).toBe('people')
+    expect(item?.op.primaryKey).toEqual({ id: 'person_123' })
+    expect(item?.op.value).toEqual({ id: 'person_123', name: 'John Doe' })
+    expect(item?.mutation.type).toBe('crud')
+    expect(item?.mutation.name).toBe('_zero_crud')
+    expect(item?.mutation.args[0]?.ops).toHaveLength(1)
   }),
 )
 
@@ -51,11 +51,11 @@ effect('should convert people|create mutation correctly', () =>
     expect(result).toHaveLength(1)
     const item = result[0]
     expect(item).toBeDefined()
-    expect(item!.entityName).toBe('people')
-    expect(item!.op.op).toBe('insert')
-    expect(item!.op.tableName).toBe('people')
-    expect(item!.op.primaryKey).toEqual({ id: 'person_456' })
-    expect(item!.op.value).toEqual({
+    expect(item?.entityName).toBe('people')
+    expect(item?.op.op).toBe('insert')
+    expect(item?.op.tableName).toBe('people')
+    expect(item?.op.primaryKey).toEqual({ id: 'person_456' })
+    expect(item?.op.value).toEqual({
       email: 'jane@example.com',
       id: 'person_456',
       name: 'Jane Doe',
@@ -74,11 +74,11 @@ effect('should convert people|delete mutation correctly', () =>
     expect(result).toHaveLength(1)
     const item = result[0]
     expect(item).toBeDefined()
-    expect(item!.entityName).toBe('people')
-    expect(item!.op.op).toBe('delete')
-    expect(item!.op.tableName).toBe('people')
-    expect(item!.op.primaryKey).toEqual({ id: 'person_789' })
-    expect(item!.op.value).toEqual({ id: 'person_789' }) // For delete, value is the primary key
+    expect(item?.entityName).toBe('people')
+    expect(item?.op.op).toBe('delete')
+    expect(item?.op.tableName).toBe('people')
+    expect(item?.op.primaryKey).toEqual({ id: 'person_789' })
+    expect(item?.op.value).toEqual({ id: 'person_789' }) // For delete, value is the primary key
   }),
 )
 
@@ -93,8 +93,8 @@ effect('should handle different entity types', () =>
     expect(result).toHaveLength(1)
     const item = result[0]
     expect(item).toBeDefined()
-    expect(item!.entityName).toBe('groups')
-    expect(item!.op.tableName).toBe('groups')
+    expect(item?.entityName).toBe('groups')
+    expect(item?.op.tableName).toBe('groups')
   }),
 )
 
@@ -161,12 +161,12 @@ effect('should convert multiple valid mutations', () =>
     const result = yield* convertCustomMutations(mutations)
 
     expect(result).toHaveLength(3)
-    expect(result[0]!.entityName).toBe('people')
-    expect(result[0]!.op.op).toBe('update')
-    expect(result[1]!.entityName).toBe('groups')
-    expect(result[1]!.op.op).toBe('insert')
-    expect(result[2]!.entityName).toBe('people')
-    expect(result[2]!.op.op).toBe('delete')
+    expect(result[0]?.entityName).toBe('people')
+    expect(result[0]?.op.op).toBe('update')
+    expect(result[1]?.entityName).toBe('groups')
+    expect(result[1]?.op.op).toBe('insert')
+    expect(result[2]?.entityName).toBe('people')
+    expect(result[2]?.op.op).toBe('delete')
   }),
 )
 
@@ -187,9 +187,9 @@ effect('should skip invalid mutations and continue with valid ones', () =>
 
     // Should only return the 2 valid mutations
     expect(result).toHaveLength(2)
-    expect(result[0]!.entityName).toBe('people')
-    expect(result[0]!.op.op).toBe('update')
-    expect(result[1]!.entityName).toBe('groups')
-    expect(result[1]!.op.op).toBe('insert')
+    expect(result[0]?.entityName).toBe('people')
+    expect(result[0]?.op.op).toBe('update')
+    expect(result[1]?.entityName).toBe('groups')
+    expect(result[1]?.op.op).toBe('insert')
   }),
 )

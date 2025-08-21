@@ -123,7 +123,11 @@ effect('getAnnotationFromSchema should work with all supported entity types', ()
       { expectedEntity: Person, name: 'Person', schema: PcoPerson },
       { expectedEntity: Campus, name: 'Campus', schema: PcoCampus },
       { expectedEntity: Address, name: 'Address', schema: PcoAddress },
-      { expectedEntity: PhoneNumber, name: 'PhoneNumber', schema: PcoPhoneNumber },
+      {
+        expectedEntity: PhoneNumber,
+        name: 'PhoneNumber',
+        schema: PcoPhoneNumber,
+      },
     ]
 
     pipe(

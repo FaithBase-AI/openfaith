@@ -1,7 +1,7 @@
 'use client'
 
-import { getFieldErrors } from '@openfaith/ui/components/formFields/fieldHelpers'
-import { useFieldContext } from '@openfaith/ui/components/formFields/tsField'
+import { getFieldErrors } from '@openfaith/ui/components/form/fieldHelpers'
+import { useFieldContext } from '@openfaith/ui/components/form/tsField'
 import {
   ResponsiveMenu,
   ResponsiveMenuContent,
@@ -57,11 +57,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
 
   const field = useFieldContext<number | undefined>()
 
-  const { processedError } = getFieldErrors({
-    errors: field.state.meta.errors,
-    isTouched: field.state.meta.isTouched,
-    submissionAttempts: field.form.state.submissionAttempts,
-  })
+  const { processedError } = getFieldErrors(field.state.meta.errors)
 
   const currentDate = field.state.value ? new Date(field.state.value) : undefined
 

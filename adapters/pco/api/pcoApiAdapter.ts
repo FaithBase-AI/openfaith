@@ -445,7 +445,6 @@ function createApiAdapter<TFieldsKey extends string>() {
 export const pcoApiAdapter = createApiAdapter<'attributes'>()
 
 export function getQueryParamSchema(apiSchema: Schema.Struct<any>, field: string) {
-  // @ts-ignore - We assume the schema has `fields.attributes.fields`
   const attributeType = apiSchema.fields?.attributes?.fields[field]?.ast._tag
 
   switch (attributeType) {

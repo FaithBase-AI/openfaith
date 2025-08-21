@@ -1,5 +1,5 @@
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
-import { useAppForm } from '@openfaith/ui/components/formFields/tsForm'
+import { useAppForm } from '@openfaith/ui/components/form/tsForm'
 import { QuickActionForm } from '@openfaith/ui/components/quickActions/quickActionsComponents'
 import { Button } from '@openfaith/ui/components/ui/button'
 import { getComponentProps, getFieldComponentName } from '@openfaith/ui/form/fieldComponentMapping'

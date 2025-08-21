@@ -1,7 +1,7 @@
 'use client'
 
-import { getFieldErrors } from '@openfaith/ui/components/formFields/fieldHelpers'
-import { useFieldContext } from '@openfaith/ui/components/formFields/tsField'
+import { getFieldErrors } from '@openfaith/ui/components/form/fieldHelpers'
+import { useFieldContext } from '@openfaith/ui/components/form/tsField'
 import { Button } from '@openfaith/ui/components/ui/button'
 import { Calendar } from '@openfaith/ui/components/ui/calendar'
 import { InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
@@ -35,11 +35,7 @@ export const DatePickerField = (props: DatePickerFieldProps) => {
 
   const field = useFieldContext<number | undefined>()
 
-  const { processedError } = getFieldErrors({
-    errors: field.state.meta.errors,
-    isTouched: field.state.meta.isTouched,
-    submissionAttempts: field.form.state.submissionAttempts,
-  })
+  const { processedError } = getFieldErrors(field.state.meta.errors)
 
   return (
     <InputWrapper

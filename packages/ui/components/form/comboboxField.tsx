@@ -1,5 +1,7 @@
-import { getFieldErrors } from '@openfaith/ui/components/formFields/fieldHelpers'
-import { useFieldContext } from '@openfaith/ui/components/formFields/tsField'
+'use client'
+
+import { getFieldErrors } from '@openfaith/ui/components/form/fieldHelpers'
+import { useFieldContext } from '@openfaith/ui/components/form/tsField'
 import { Combobox } from '@openfaith/ui/components/ui/combobox'
 import { SelectComboBoxTrigger } from '@openfaith/ui/components/ui/combobox-triggers'
 import { InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
@@ -7,7 +9,7 @@ import { cn } from '@openfaith/ui/shared/utils'
 import { Array, Option, pipe } from 'effect'
 import type { ComponentProps, ReactNode } from 'react'
 
-export type SingleComboboxFieldProps = Omit<
+export type ComboboxFieldProps = Omit<
   ComponentProps<typeof Combobox>,
   'selectedOptions' | 'addItem' | 'removeItem' | 'mode' | 'emptyText'
 > & {
@@ -20,7 +22,7 @@ export type SingleComboboxFieldProps = Omit<
   required?: boolean
 }
 
-export const SingleComboboxField = (props: SingleComboboxFieldProps) => {
+export const ComboboxField = (props: ComboboxFieldProps) => {
   const {
     label,
     wrapperClassName,
@@ -36,25 +38,19 @@ export const SingleComboboxField = (props: SingleComboboxFieldProps) => {
     ...domProps
   } = props
 
-  const field = useFieldContext<string | null>()
+  const field = useFieldContext<Array<string>>()
 
   const value = pipe(
     field.state.value,
     Option.fromNullable,
-    Option.getOrElse((): string | null => null),
+    Option.getOrElse((): Array<string> => []),
   )
 
-  const { processedError } = getFieldErrors({
-    errors: field.state.meta.errors,
-    isTouched: field.state.meta.isTouched,
-    submissionAttempts: field.form.state.submissionAttempts,
-  })
+  const { processedError } = getFieldErrors(field.state.meta.errors)
 
   const selectedOptions = pipe(
-    pipe(
-      options,
-      Array.filter((x) => x.id === value),
-    ),
+    options,
+    Array.filter((x) => pipe(value, Array.contains(x.id))),
   )
 
   return (
@@ -69,18 +65,23 @@ export const SingleComboboxField = (props: SingleComboboxFieldProps) => {
     >
       <Combobox
         addItem={(id) => {
-          field.handleChange(id)
+          field.handleChange([...value, id])
         }}
         alignOffset={alignOffset}
         ComboboxTrigger={SelectComboBoxTrigger}
         className={className}
         disabled={disabled}
         emptyText={placeholder}
-        mode={'single'}
+        mode={'multiple'}
         options={options}
         popOverContentClassName={cn('w-(--radix-popover-trigger-width)', popOverContentClassName)}
-        removeItem={() => {
-          field.handleChange(null)
+        removeItem={(id) => {
+          field.handleChange(
+            pipe(
+              value,
+              Array.filter((x) => x !== id),
+            ),
+          )
         }}
         selectedOptions={selectedOptions}
         {...domProps}

@@ -48,5 +48,8 @@ export const PcoBackgroundCheck = mkPcoEntity({
     }),
   }),
   type: 'BackgroundCheck',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-background-check' })
+}).annotations({
+  [OfSkipEntity]: true,
+  [OfIdentifier]: 'pco-background-check',
+})
 export type PcoBackgroundCheck = typeof PcoBackgroundCheck.Type

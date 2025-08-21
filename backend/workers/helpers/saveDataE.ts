@@ -216,7 +216,7 @@ const extractDirectRelationships = Effect.fn('extractDirectRelationships')(funct
           Record.toEntries,
           Array.forEach(([relKey, targetType]) => {
             const relData = entity.relationships?.[relKey]?.data
-            if (relData && relData.id) {
+            if (relData?.id) {
               directRelationships.push({
                 createdAt: pipe(
                   entity.attributes.created_at,

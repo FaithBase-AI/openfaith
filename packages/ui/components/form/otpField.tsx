@@ -1,7 +1,7 @@
 'use client'
 
-import { getFieldErrors } from '@openfaith/ui/components/formFields/fieldHelpers'
-import { useFieldContext } from '@openfaith/ui/components/formFields/tsField'
+import { getFieldErrors } from '@openfaith/ui/components/form/fieldHelpers'
+import { useFieldContext } from '@openfaith/ui/components/form/tsField'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@openfaith/ui/components/ui/input-otp'
 import { InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
 import { REGEXP_ONLY_DIGITS } from 'input-otp'
@@ -27,11 +27,7 @@ export function OTPField(props: OTPFieldProps) {
 
   const field = useFieldContext<string>()
 
-  const { processedError } = getFieldErrors({
-    errors: field.state.meta.errors,
-    isTouched: field.state.meta.isTouched,
-    submissionAttempts: field.form.state.submissionAttempts,
-  })
+  const { processedError } = getFieldErrors(field.state.meta.errors)
 
   return (
     <InputWrapper

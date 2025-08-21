@@ -88,7 +88,7 @@ export const DefaultCollectionCard = <TData,>(
                           <div className={'flex-1 font-semibold text-sm'}>
                             {flexRender(
                               z.column.columnDef.header,
-                              // @ts-ignore
+                              // @ts-expect-error
                               z.getContext(),
                             )}
                           </div>

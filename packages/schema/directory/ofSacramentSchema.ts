@@ -104,7 +104,12 @@ export class Sacrament extends BaseSacrament.extend<Sacrament>('Sacrament')(
       [OfRelations]: [
         {
           direction: 'both',
-          form: { input: 'singleCombobox', label: 'Received By', order: 4, show: true },
+          form: {
+            input: 'singleCombobox',
+            label: 'Received By',
+            order: 4,
+            show: true,
+          },
           key: 'recipient',
           label: 'Received By',
           table: { header: 'Received By', order: 2, show: true },
@@ -112,7 +117,12 @@ export class Sacrament extends BaseSacrament.extend<Sacrament>('Sacrament')(
         },
         {
           direction: 'both',
-          form: { input: 'singleCombobox', label: 'Administered By', order: 5, show: true },
+          form: {
+            input: 'singleCombobox',
+            label: 'Administered By',
+            order: 5,
+            show: true,
+          },
           key: 'minister',
           label: 'Administered By',
           table: { header: 'Administered By', order: 3, show: true },

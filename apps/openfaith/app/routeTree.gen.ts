@@ -21,6 +21,7 @@ import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppGroupRouteRouteImport } from './routes/_app/$group/route'
 import { Route as AppSettingsTeamRouteImport } from './routes/_app/settings/team'
+import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
 import { Route as AppSettingsIntegrationsRouteImport } from './routes/_app/settings/integrations'
 import { Route as AppSettingsGeneralRouteImport } from './routes/_app/settings/general'
 import { Route as AppDevLogsRouteImport } from './routes/_app/dev/logs'
@@ -80,6 +81,11 @@ const AppGroupRouteRoute = AppGroupRouteRouteImport.update({
 const AppSettingsTeamRoute = AppSettingsTeamRouteImport.update({
   id: '/settings/team',
   path: '/settings/team',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppSettingsProfileRoute = AppSettingsProfileRouteImport.update({
+  id: '/settings/profile',
+  path: '/settings/profile',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppSettingsIntegrationsRoute = AppSettingsIntegrationsRouteImport.update({
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/dev/logs': typeof AppDevLogsRoute
   '/settings/general': typeof AppSettingsGeneralRoute
   '/settings/integrations': typeof AppSettingsIntegrationsRoute
+  '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/team': typeof AppSettingsTeamRoute
   '/$group/$entity/$entityId': typeof AppGroupEntityEntityIdRoute
   '/$group/$entity/': typeof AppGroupEntityIndexRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/dev/logs': typeof AppDevLogsRoute
   '/settings/general': typeof AppSettingsGeneralRoute
   '/settings/integrations': typeof AppSettingsIntegrationsRoute
+  '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/team': typeof AppSettingsTeamRoute
   '/$group/$entity/$entityId': typeof AppGroupEntityEntityIdRoute
   '/$group/$entity': typeof AppGroupEntityIndexRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/_app/dev/logs': typeof AppDevLogsRoute
   '/_app/settings/general': typeof AppSettingsGeneralRoute
   '/_app/settings/integrations': typeof AppSettingsIntegrationsRoute
+  '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/team': typeof AppSettingsTeamRoute
   '/_app/$group/$entity/$entityId': typeof AppGroupEntityEntityIdRoute
   '/_app/$group/$entity/': typeof AppGroupEntityIndexRoute
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/dev/logs'
     | '/settings/general'
     | '/settings/integrations'
+    | '/settings/profile'
     | '/settings/team'
     | '/$group/$entity/$entityId'
     | '/$group/$entity/'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/dev/logs'
     | '/settings/general'
     | '/settings/integrations'
+    | '/settings/profile'
     | '/settings/team'
     | '/$group/$entity/$entityId'
     | '/$group/$entity'
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/_app/dev/logs'
     | '/_app/settings/general'
     | '/_app/settings/integrations'
+    | '/_app/settings/profile'
     | '/_app/settings/team'
     | '/_app/$group/$entity/$entityId'
     | '/_app/$group/$entity/'
@@ -355,6 +367,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/team'
       fullPath: '/settings/team'
       preLoaderRoute: typeof AppSettingsTeamRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/settings/profile': {
+      id: '/_app/settings/profile'
+      path: '/settings/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AppSettingsProfileRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/settings/integrations': {
@@ -474,6 +493,7 @@ interface AppRouteRouteChildren {
   AppDevLogsRoute: typeof AppDevLogsRoute
   AppSettingsGeneralRoute: typeof AppSettingsGeneralRoute
   AppSettingsIntegrationsRoute: typeof AppSettingsIntegrationsRoute
+  AppSettingsProfileRoute: typeof AppSettingsProfileRoute
   AppSettingsTeamRoute: typeof AppSettingsTeamRoute
 }
 
@@ -485,6 +505,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppDevLogsRoute: AppDevLogsRoute,
   AppSettingsGeneralRoute: AppSettingsGeneralRoute,
   AppSettingsIntegrationsRoute: AppSettingsIntegrationsRoute,
+  AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppSettingsTeamRoute: AppSettingsTeamRoute,
 }
 

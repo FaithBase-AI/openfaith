@@ -6,17 +6,27 @@ export const PcoWorkflowCardAttributes = Schema.Struct({
   calculated_due_at_in_days_ago: Schema.Number.annotations({
     [OfFieldName]: 'calculatedDueAtInDaysAgo',
   }),
-  completed_at: Schema.NullOr(Schema.String).annotations({ [OfFieldName]: 'completedAt' }),
+  completed_at: Schema.NullOr(Schema.String).annotations({
+    [OfFieldName]: 'completedAt',
+  }),
   created_at: Schema.String.annotations({ [OfFieldName]: 'createdAt' }),
   flagged_for_notification_at: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'flaggedForNotificationAt',
   }),
-  moved_to_step_at: Schema.NullOr(Schema.String).annotations({ [OfFieldName]: 'movedToStepAt' }),
+  moved_to_step_at: Schema.NullOr(Schema.String).annotations({
+    [OfFieldName]: 'movedToStepAt',
+  }),
   overdue: Schema.Boolean.annotations({ [OfFieldName]: 'overdue' }),
-  removed_at: Schema.NullOr(Schema.String).annotations({ [OfFieldName]: 'removedAt' }),
-  snooze_until: Schema.NullOr(Schema.String).annotations({ [OfFieldName]: 'snoozeUntil' }),
+  removed_at: Schema.NullOr(Schema.String).annotations({
+    [OfFieldName]: 'removedAt',
+  }),
+  snooze_until: Schema.NullOr(Schema.String).annotations({
+    [OfFieldName]: 'snoozeUntil',
+  }),
   stage: Schema.String.annotations({ [OfFieldName]: 'stage' }),
-  sticky_assignment: Schema.Boolean.annotations({ [OfFieldName]: 'stickyAssignment' }),
+  sticky_assignment: Schema.Boolean.annotations({
+    [OfFieldName]: 'stickyAssignment',
+  }),
   updated_at: Schema.String.annotations({ [OfFieldName]: 'updatedAt' }),
 })
 export type PcoWorkflowCardAttributes = typeof PcoWorkflowCardAttributes.Type
@@ -30,7 +40,10 @@ export const PcoWorkflowCard = mkPcoEntity({
     }),
     current_step: Schema.Struct({
       data: Schema.NullOr(
-        Schema.Struct({ id: Schema.String, type: Schema.Literal('WorkflowStep') }),
+        Schema.Struct({
+          id: Schema.String,
+          type: Schema.Literal('WorkflowStep'),
+        }),
       ),
     }),
     person: Schema.Struct({

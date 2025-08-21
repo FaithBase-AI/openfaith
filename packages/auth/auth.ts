@@ -1,4 +1,5 @@
 import { FetchHttpClient } from '@effect/platform'
+import { emailChangeOTP } from '@openfaith/auth/plugins'
 import { redis, resend } from '@openfaith/be-shared'
 import { getTableName, schema, usersTable } from '@openfaith/db'
 import { reactInvitationEmail, reactOTPEmail } from '@openfaith/email'
@@ -66,12 +67,12 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema: {
-      ['openfaith_invitations']: schema.invitationsTable,
-      ['openfaith_jwks']: schema.jwksTable,
-      ['openfaith_orgs']: schema.orgsTable,
-      ['openfaith_orgUsers']: schema.orgUsersTable,
-      ['openfaith_users']: schema.usersTable,
-      ['openfaith_verifications']: schema.verificationsTable,
+      openfaith_invitations: schema.invitationsTable,
+      openfaith_jwks: schema.jwksTable,
+      openfaith_orgs: schema.orgsTable,
+      openfaith_orgUsers: schema.orgUsersTable,
+      openfaith_users: schema.usersTable,
+      openfaith_verifications: schema.verificationsTable,
     },
   }),
   databaseHooks: {
@@ -105,6 +106,22 @@ export const auth = betterAuth({
           }
         },
       },
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: false, // We're using OTP for sign-in
+    sendVerificationEmail: async ({ user, url }) => {
+      // Extract OTP from the URL if needed or generate one
+      await resend.emails.send({
+        from,
+        react: reactOTPEmail({
+          _tag: 'sign-in',
+          appName: env.VITE_APP_NAME,
+          otp: url.substring(url.length - 6), // Use last 6 chars as OTP
+        }),
+        subject: `Verify your email for ${env.VITE_APP_NAME}`,
+        to: user.email,
+      })
     },
   },
   hooks: {
@@ -154,6 +171,10 @@ export const auth = betterAuth({
           onSome: async () => {
             const session = ctx.context.newSession || ctx.context.session
             ctx.context.session = session
+
+            if (!session) {
+              return
+            }
 
             const token =
               ctx.context.responseHeaders?.get('set-auth-jwt') ||
@@ -270,6 +291,7 @@ export const auth = betterAuth({
         await resend.emails.send({
           from,
           react: reactOTPEmail({
+            _tag: 'sign-in',
             appName: env.VITE_APP_NAME,
             otp,
           }),
@@ -329,6 +351,21 @@ export const auth = betterAuth({
           }),
           subject: `You've been invited to join ${data.organization.name} on ${env.VITE_APP_NAME}`,
           to: data.email,
+        })
+      },
+    }),
+    emailChangeOTP({
+      expiresIn: 50000,
+      async sendEmailChangeOTP({ newEmail, otp }) {
+        await resend.emails.send({
+          from,
+          react: reactOTPEmail({
+            _tag: 'email-change',
+            appName: env.VITE_APP_NAME,
+            otp,
+          }),
+          subject: `Verify email ${env.VITE_APP_NAME}`,
+          to: newEmail,
         })
       },
     }),
@@ -402,9 +439,9 @@ export const modelToType: Record<Models, string> = {
   member: 'orguser',
   organization: 'org',
   passkey: 'passkey',
-  ['rate-limit']: 'ratelimit',
+  'rate-limit': 'ratelimit',
   session: 'session',
-  ['two-factor']: 'twofactor',
+  'two-factor': 'twofactor',
   user: 'user',
   verification: 'verification',
 }

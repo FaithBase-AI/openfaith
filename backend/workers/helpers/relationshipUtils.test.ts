@@ -36,7 +36,10 @@ effect('expandBidirectionalPairs: self relationships produce single pair', () =>
 effect('expandBidirectionalPairs: handles multiple targets with compression', () =>
   Effect.gen(function* () {
     const input: ReadonlyArray<RelationshipInput> = [
-      { sourceEntityTypeTag: 'person', targetEntityTypeTags: ['address', 'phoneNumber'] },
+      {
+        sourceEntityTypeTag: 'person',
+        targetEntityTypeTags: ['address', 'phoneNumber'],
+      },
     ]
     const pairs = yield* expandBidirectionalPairs(input)
     // Should create bidirectional pairs for each target
@@ -139,7 +142,10 @@ effect('end-to-end: compress inputs, expand pairs, group by source', () =>
     // Multiple inputs with duplicates
     const inputs: ReadonlyArray<RelationshipInput> = [
       { sourceEntityTypeTag: 'person', targetEntityTypeTags: ['address'] },
-      { sourceEntityTypeTag: 'person', targetEntityTypeTags: ['phoneNumber', 'address'] }, // duplicate address
+      {
+        sourceEntityTypeTag: 'person',
+        targetEntityTypeTags: ['phoneNumber', 'address'],
+      }, // duplicate address
       { sourceEntityTypeTag: 'person', targetEntityTypeTags: ['person'] }, // self-relationship
     ]
 
