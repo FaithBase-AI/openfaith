@@ -31,5 +31,8 @@ export const PcoMailchimpSyncStatus = mkPcoEntity({
   links: Schema.Struct({}),
   relationships: Schema.Struct({}),
   type: 'MailchimpSyncStatus',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-mailchimp-sync-status' })
+}).annotations({
+  [OfSkipEntity]: true,
+  [OfIdentifier]: 'pco-mailchimp-sync-status',
+})
 export type PcoMailchimpSyncStatus = typeof PcoMailchimpSyncStatus.Type

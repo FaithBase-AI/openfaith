@@ -1,5 +1,5 @@
 'use client'
-import { authClient } from '@openfaith/auth/authClient'
+import { sendVerificationOtpE } from '@openfaith/auth/authClientE'
 import { env, nullOp } from '@openfaith/shared'
 import {
   ArrowRightIcon,
@@ -10,13 +10,12 @@ import {
   CardHeader,
   CardTitle,
   Form,
+  OtpForm,
   useAppForm,
-  usePasteDetect,
 } from '@openfaith/ui'
-import { useRouter } from '@tanstack/react-router'
-import { useStore } from '@tanstack/react-store'
-import { Boolean, Option, pipe, Schema, String } from 'effect'
-import { REGEXP_ONLY_DIGITS } from 'input-otp'
+import { revalidateLogic } from '@tanstack/react-form'
+import { useRouteContext, useRouter } from '@tanstack/react-router'
+import { Boolean, Effect, Option, pipe, Schema } from 'effect'
 import { useQueryState } from 'nuqs'
 import { type FC, useEffect } from 'react'
 
@@ -27,10 +26,6 @@ const SignInSchema = Schema.Struct({
       message: () => 'Email must have a length of at least 3',
     }),
   ),
-})
-
-const OTPSchema = Schema.Struct({
-  otp: Schema.String.pipe(Schema.minLength(6)),
 })
 
 type SignInProps = {
@@ -45,171 +40,176 @@ const SignIn: FC<SignInProps> = (props) => {
   const [invitationId] = useQueryState('invitation-id')
   const [passedOtpEmail] = useQueryState('email')
 
-  const { data: session } = authClient.useSession()
+  const { session } = useRouteContext({ from: '/_auth/sign-in' })
+
+  const goToRedirect = () =>
+    setTimeout(() => {
+      pipe(
+        invitationId,
+        Option.fromNullable,
+        Option.match({
+          onNone: () => {
+            router.navigate({ replace: true, to: redirect })
+          },
+          onSome: () => {
+            router.navigate({ replace: true, to: redirect })
+
+            // router.navigate({
+            //   params: { id: x },
+            //   replace: true,
+            //   to: '/accept-invitation/$id',
+            // })
+          },
+        }),
+      )
+    }, 0)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: no update
   useEffect(() => {
     pipe(
       session,
       Option.fromNullable,
+      Option.flatMapNullable((x) => x.data),
       Option.match({
         onNone: nullOp,
         onSome: () => {
-          setTimeout(() => {
-            pipe(
-              invitationId,
-              Option.fromNullable,
-              Option.match({
-                onNone: () => {
-                  router.history.push(redirect)
-                },
-                onSome: (x) => {
-                  router.history.push(`/accept-invitation/${x}`)
-                },
-              }),
-            )
-          }, 0)
+          goToRedirect()
         },
       }),
     )
-  }, [session])
+  }, [])
 
   const emailForm = useAppForm({
     defaultValues: {
       email: passedOtpEmail || '',
     },
-    onSubmit: async ({ value }) => {
-      await authClient.emailOtp.sendVerificationOtp({
-        email: value.email,
-        type: 'sign-in',
-      })
-    },
+    validationLogic: revalidateLogic({
+      mode: 'submit',
+      modeAfterSubmission: 'blur',
+    }),
     validators: {
-      onChange: Schema.standardSchemaV1(SignInSchema),
+      onDynamic: Schema.standardSchemaV1(SignInSchema),
+      onSubmitAsync: async ({ value }) =>
+        await Effect.gen(function* () {
+          yield* sendVerificationOtpE({
+            email: value.email,
+            type: 'sign-in',
+          })
+
+          return
+        }).pipe(
+          Effect.catchTags({
+            EmailOtpError: (error) =>
+              Effect.gen(function* () {
+                yield* Effect.logError('Failed to send OTP', { error })
+                return {
+                  fields: {},
+                  form: error.message || 'Failed to send verification code',
+                }
+              }),
+          }),
+          Effect.catchAllDefect(() =>
+            Effect.succeed({
+              fields: {},
+              form: 'Something went wrong',
+            }),
+          ),
+          Effect.ensureErrorType<never>(),
+          Effect.runPromise,
+        ),
     },
   })
-
-  const { pastedContent, resetPasteContent } = usePasteDetect()
-
-  const email = useStore(emailForm.store, (state) => state.values.email)
-  const emailFormSubmitting = useStore(emailForm.store, (state) => state.isSubmitting)
-  const emailFormHasSubmitted = useStore(
-    emailForm.store,
-    (state) => state.isSubmitted || pipe(passedOtpEmail, Option.fromNullable, Option.isSome),
-  )
-
-  const otpForm = useAppForm({
-    defaultValues: {
-      otp: '',
-    },
-    validators: {
-      onChange: Schema.standardSchemaV1(OTPSchema),
-      onSubmitAsync: async ({ value }) => {
-        const result = await authClient.signIn.emailOtp({
-          email: email,
-          otp: value.otp,
-        })
-
-        if (result.error) {
-          return {
-            fields: {
-              otp: result.error.message,
-            },
-          }
-        }
-
-        return
-      },
-    },
-  })
-
-  const otpValue = useStore(otpForm.store, (state) => state.values.otp)
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: no update
-  useEffect(() => {
-    if (otpValue.length === 6 && otpValue.match(REGEXP_ONLY_DIGITS)) {
-      otpForm.handleSubmit()
-    }
-  }, [otpValue])
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: no update
-  useEffect(() => {
-    if (typeof pastedContent === 'string') {
-      const trimmedContent = pipe(pastedContent, String.trim)
-      if (trimmedContent.match(REGEXP_ONLY_DIGITS) !== null && emailFormHasSubmitted) {
-        otpForm.reset()
-        otpForm.setFieldValue('otp', trimmedContent)
-      }
-    }
-    resetPasteContent()
-  }, [pastedContent])
 
   return (
     <Card className='w-96 max-w-[calc(100vw-2.5rem)]'>
       <CardHeader>
         <CardTitle className='font-medium text-4xl'>
-          {pipe(
-            emailFormHasSubmitted,
-            Boolean.match({
-              onFalse: () => `Sign in to ${env.VITE_APP_NAME}`,
-              onTrue: () => 'Check your email',
-            }),
-          )}
+          <emailForm.Subscribe
+            selector={(state) =>
+              state.isSubmitted || pipe(passedOtpEmail, Option.fromNullable, Option.isSome)
+            }
+          >
+            {(emailFormHasSubmitted) =>
+              pipe(
+                emailFormHasSubmitted,
+                Boolean.match({
+                  onFalse: () => `Sign in to ${env.VITE_APP_NAME}`,
+                  onTrue: () => 'Check your email',
+                }),
+              )
+            }
+          </emailForm.Subscribe>
         </CardTitle>
         <CardDescription className='font-normal text-sm'>
-          {pipe(
-            emailFormHasSubmitted,
-            Boolean.match({
-              onFalse: () => 'Welcome back! Please sign in to continue',
-              onTrue: () => 'Use the verification link sent to your email',
-            }),
-          )}
+          <emailForm.Subscribe
+            selector={(state) =>
+              state.isSubmitted || pipe(passedOtpEmail, Option.fromNullable, Option.isSome)
+            }
+          >
+            {(emailFormHasSubmitted) =>
+              pipe(
+                emailFormHasSubmitted,
+                Boolean.match({
+                  onFalse: () => 'Welcome back! Please sign in to continue',
+                  onTrue: () => 'Use the verification link sent to your email',
+                }),
+              )
+            }
+          </emailForm.Subscribe>
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {pipe(
-          emailFormHasSubmitted,
-          Boolean.match({
-            onFalse: () => (
-              <Form form={emailForm}>
-                <emailForm.AppField
-                  children={(field) => (
-                    <field.InputField
-                      autoCapitalize='none'
-                      autoComplete='email'
-                      label='Email address'
-                      placeholder='you@gmail.com'
-                      required
+        <emailForm.Subscribe
+          selector={(state) =>
+            state.isSubmitted || pipe(passedOtpEmail, Option.fromNullable, Option.isSome)
+          }
+        >
+          {(emailFormHasSubmitted) =>
+            pipe(
+              emailFormHasSubmitted || !!session?.data,
+              Boolean.match({
+                onFalse: () => (
+                  <Form form={emailForm}>
+                    <emailForm.AppField
+                      children={(field) => (
+                        <field.InputField
+                          autoCapitalize='none'
+                          autoComplete='email'
+                          label='Email address'
+                          placeholder='you@gmail.com'
+                          required
+                        />
+                      )}
+                      name='email'
                     />
-                  )}
-                  name='email'
-                />
 
-                <Button className='w-full gap-2' loading={emailFormSubmitting} type='submit'>
-                  Continue
-                  <ArrowRightIcon />
-                </Button>
-              </Form>
-            ),
-            onTrue: () => (
-              <Form form={otpForm}>
-                <otpForm.AppField
-                  children={(field) => <field.OTPField autoFocus label='OTP' required />}
-                  name='otp'
-                />
-
-                <otpForm.Subscribe selector={(x) => x.isSubmitting}>
-                  {(x) => (
-                    <Button className='w-full gap-2' loading={x} type='submit'>
-                      Sign In
-                      <ArrowRightIcon />
-                    </Button>
-                  )}
-                </otpForm.Subscribe>
-              </Form>
-            ),
-          }),
-        )}
+                    <emailForm.Subscribe selector={(state) => state.isSubmitting}>
+                      {(isSubmitting) => (
+                        <Button className='w-full gap-2' loading={isSubmitting} type='submit'>
+                          Continue
+                          <ArrowRightIcon />
+                        </Button>
+                      )}
+                    </emailForm.Subscribe>
+                  </Form>
+                ),
+                onTrue: () => (
+                  <emailForm.Subscribe selector={(state) => state.values.email}>
+                    {(email) => (
+                      <OtpForm
+                        _tag='sign-in'
+                        autoSubmit
+                        email={email}
+                        onSuccess={goToRedirect}
+                        submitLabel='Sign In'
+                      />
+                    )}
+                  </emailForm.Subscribe>
+                ),
+              }),
+            )
+          }
+        </emailForm.Subscribe>
       </CardContent>
     </Card>
   )

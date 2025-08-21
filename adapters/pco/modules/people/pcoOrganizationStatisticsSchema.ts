@@ -10,5 +10,8 @@ export const PcoOrganizationStatistics = mkPcoEntity({
   links: Schema.Struct({}),
   relationships: Schema.Struct({}),
   type: 'OrganizationStatistics',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-organization-statistics' })
+}).annotations({
+  [OfSkipEntity]: true,
+  [OfIdentifier]: 'pco-organization-statistics',
+})
 export type PcoOrganizationStatistics = typeof PcoOrganizationStatistics.Type

@@ -504,7 +504,7 @@ export const mkPcoEntityManifest = <
             }),
             Record.fromEntries,
           ),
-          entity: entity,
+          entity,
           errors: config.errors,
           module: firstEndpoint.module,
           skipSync: pipe(

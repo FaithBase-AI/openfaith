@@ -29,21 +29,21 @@ export function pluralize(word: string): string {
   if (word.length > 1 && word.endsWith('y')) {
     const beforeY = word[word.length - 2] || ''
     if (!'aeiou'.includes(beforeY.toLowerCase())) {
-      return word.slice(0, -1) + 'ies'
+      return `${word.slice(0, -1)}ies`
     }
   }
 
   // Words ending in s, x, z, ch, sh
   if (word.match(/[sxz]$|[cs]h$/)) {
-    return word + 'es'
+    return `${word}es`
   }
 
   // Words ending in 'f' or 'fe'
   if (word.endsWith('f')) {
-    return word.slice(0, -1) + 'ves'
+    return `${word.slice(0, -1)}ves`
   }
   if (word.endsWith('fe')) {
-    return word.slice(0, -2) + 'ves'
+    return `${word.slice(0, -2)}ves`
   }
 
   // Words ending in 'o' preceded by consonant
@@ -53,13 +53,13 @@ export function pluralize(word: string): string {
       // Common exceptions that just add 's'
       const oExceptions = ['photo', 'piano', 'halo', 'solo', 'pro', 'auto']
       if (!oExceptions.includes(lower)) {
-        return word + 'es'
+        return `${word}es`
       }
     }
   }
 
   // Default: add 's'
-  return word + 's'
+  return `${word}s`
 }
 
 export function singularize(word: string): string {
@@ -88,12 +88,12 @@ export function singularize(word: string): string {
 
   // Words ending in 'ies'
   if (word.endsWith('ies')) {
-    return word.slice(0, -3) + 'y'
+    return `${word.slice(0, -3)}y`
   }
 
   // Words ending in 'ves'
   if (word.endsWith('ves')) {
-    return word.slice(0, -3) + 'f'
+    return `${word.slice(0, -3)}f`
   }
 
   // Words ending in 'es'
@@ -111,7 +111,7 @@ export function singularize(word: string): string {
       }
     }
     // Otherwise, it might be a regular 'e' ending
-    return base + 'e'
+    return `${base}e`
   }
 
   // Words ending in 's' (but not 'ss')
@@ -211,3 +211,6 @@ export const formatLabel = (fieldName: string): string =>
       ),
     ),
   )
+
+//  this is the same regex that better-auth uses for email validation
+export const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/

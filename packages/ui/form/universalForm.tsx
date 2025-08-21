@@ -1,12 +1,12 @@
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
-import { useAppForm } from '@openfaith/ui/components/formFields/tsForm'
+import { useAppForm } from '@openfaith/ui/components/form/tsForm'
 import { QuickActionForm } from '@openfaith/ui/components/quickActions/quickActionsComponents'
 import { Button } from '@openfaith/ui/components/ui/button'
 import { getComponentProps, getFieldComponentName } from '@openfaith/ui/form/fieldComponentMapping'
 import { generateFieldConfigs } from '@openfaith/ui/form/fieldConfigGenerator'
-import { createValidator, validateFormData } from '@openfaith/ui/form/validation'
 import { useSchemaInsert, useSchemaUpdate } from '@openfaith/ui/shared/hooks/schemaHooks'
-import { Array, Order, pipe, Record, type Schema } from 'effect'
+import { revalidateLogic } from '@tanstack/react-form'
+import { Array, Order, pipe, Record, Schema } from 'effect'
 import { useMemo } from 'react'
 
 export interface UniversalFormProps<T> {
@@ -52,31 +52,26 @@ export function UniversalForm<T>({
   const form = useAppForm({
     defaultValues: (defaultValues ?? {}) as T,
     onSubmit: async ({ value }: { value: T }) => {
-      const validation = validateFormData(schema, value)
-      if (!validation.isValid) {
-        console.error('Schema validation failed:', validation.errors)
-        if (onError) {
-          onError(new Error('Validation failed'))
-        }
-        return
-      }
-
-      const validData = validation.data!
-
-      // Use appropriate handler based on mode
       switch (mode) {
         case 'create':
-          schemaInsert(validData as any)
+          schemaInsert(value as any)
           break
         case 'edit':
-          schemaUpdate(validData as any)
+          schemaUpdate(value as any)
           break
         default:
           if (onSubmit) {
-            await onSubmit(validData)
+            await onSubmit(value)
           }
           break
       }
+    },
+    validationLogic: revalidateLogic({
+      mode: 'submit',
+      modeAfterSubmission: 'blur',
+    }),
+    validators: {
+      onDynamic: Schema.standardSchemaV1(schema),
     },
   })
 
@@ -100,13 +95,7 @@ export function UniversalForm<T>({
       const componentName = getFieldComponentName(typedConfig.type)
 
       return (
-        <form.AppField
-          key={String(key)}
-          name={key as string}
-          validators={{
-            onChange: createValidator(typedConfig, schema, key as keyof T),
-          }}
-        >
+        <form.AppField key={String(key)} name={key as string}>
           {(field) => {
             const FieldComponent = (field as any)[componentName]
             return <FieldComponent {...componentProps} />
@@ -117,9 +106,6 @@ export function UniversalForm<T>({
   )
 
   const submitButtonText = useMemo(() => {
-    if (isSubmitting) {
-      return 'Submitting...'
-    }
     switch (mode) {
       case 'create':
         return 'Create'
@@ -128,13 +114,13 @@ export function UniversalForm<T>({
       default:
         return 'Submit'
     }
-  }, [mode, isSubmitting])
+  }, [mode])
 
   return (
     <QuickActionForm
       Actions={
         <>
-          <Button className='mr-auto' disabled={isSubmitting} type='submit'>
+          <Button className='mr-auto' loading={isSubmitting} type='submit'>
             {submitButtonText}
           </Button>
           <Button

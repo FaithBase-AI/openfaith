@@ -19,11 +19,15 @@ export class BaseQualification extends BaseSystemFields.extend<BaseQualification
   }),
   key: Schema.String.annotations({
     description: 'Stable key within org (e.g., membership, freedom_class)',
-    [OfUiConfig]: { table: { filterable: true, order: 0, pinned: 'left', sortable: true } },
+    [OfUiConfig]: {
+      table: { filterable: true, order: 0, pinned: 'left', sortable: true },
+    },
   }),
   name: Schema.String.annotations({
     description: 'Human friendly name',
-    [OfUiConfig]: { table: { filterable: true, order: 1, pinned: 'left', sortable: true } },
+    [OfUiConfig]: {
+      table: { filterable: true, order: 1, pinned: 'left', sortable: true },
+    },
   }),
 }) {}
 

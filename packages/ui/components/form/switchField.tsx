@@ -2,8 +2,8 @@
 /** biome-ignore-all lint/a11y/noNoninteractiveElementToInteractiveRole: this is the way */
 'use client'
 
-import { getFieldErrors } from '@openfaith/ui/components/formFields/fieldHelpers'
-import { useFieldContext } from '@openfaith/ui/components/formFields/tsField'
+import { getFieldErrors } from '@openfaith/ui/components/form/fieldHelpers'
+import { useFieldContext } from '@openfaith/ui/components/form/tsField'
 import { InputLabel, InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
 import { Switch } from '@openfaith/ui/components/ui/switch'
 import { cn } from '@openfaith/ui/shared/utils'
@@ -31,11 +31,7 @@ export function SwitchField(props: SwitchFieldProps) {
 
   const field = useFieldContext<boolean>()
 
-  const { processedError } = getFieldErrors({
-    errors: field.state.meta.errors,
-    isTouched: field.state.meta.isTouched,
-    submissionAttempts: field.form.state.submissionAttempts,
-  })
+  const { processedError } = getFieldErrors(field.state.meta.errors)
 
   return (
     <InputWrapper

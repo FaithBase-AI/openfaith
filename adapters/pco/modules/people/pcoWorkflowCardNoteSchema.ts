@@ -14,7 +14,10 @@ export const PcoWorkflowCardNote = mkPcoEntity({
   relationships: Schema.Struct({
     note_category: Schema.Struct({
       data: Schema.NullOr(
-        Schema.Struct({ id: Schema.String, type: Schema.Literal('NoteCategory') }),
+        Schema.Struct({
+          id: Schema.String,
+          type: Schema.Literal('NoteCategory'),
+        }),
       ),
     }),
   }),

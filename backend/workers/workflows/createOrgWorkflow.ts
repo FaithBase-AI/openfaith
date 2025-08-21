@@ -62,7 +62,7 @@ export const CreateOrgWorkflowLayer = CreateOrgWorkflow.toLayer(
                   (sacramentType) =>
                     ({
                       _tag: 'sacrament',
-                      createdAt: createdAt,
+                      createdAt,
                       createdBy: payload.userId,
                       id: pipe(
                         currentSacraments,
@@ -125,7 +125,10 @@ export const CreateOrgWorkflowLayer = CreateOrgWorkflow.toLayer(
           ),
           Effect.mapError(
             (error) =>
-              new CreateOrgWorkflowError({ cause: error, message: 'Failed to seed relationships' }),
+              new CreateOrgWorkflowError({
+                cause: error,
+                message: 'Failed to seed relationships',
+              }),
           ),
         ),
         name: 'SeedEntityRelationships',

@@ -1,12 +1,12 @@
+import { authClient } from '@openfaith/auth/authClient'
 import { Effect, Schema } from 'effect'
-import { authClient } from './authClient'
 
 // Define tagged errors for auth operations
 export class AuthError extends Schema.TaggedError<AuthError>()('AuthError', {
   cause: Schema.optional(Schema.Unknown),
   message: Schema.String,
-  operation: Schema.String,
-  params: Schema.Unknown,
+  operation: Schema.optional(Schema.String),
+  params: Schema.optional(Schema.Unknown),
 }) {}
 
 export class OrganizationCreateError extends Schema.TaggedError<OrganizationCreateError>()(
@@ -30,7 +30,21 @@ export class OrganizationUpdateError extends Schema.TaggedError<OrganizationUpda
 export class EmailOtpError extends Schema.TaggedError<EmailOtpError>()('EmailOtpError', {
   cause: Schema.optional(Schema.Unknown),
   message: Schema.String,
-  params: Schema.Unknown,
+  params: Schema.optional(Schema.Unknown),
+}) {}
+
+export class OTPVerificationError extends Schema.TaggedError<OTPVerificationError>()(
+  'OTPVerificationError',
+  {
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+  },
+) {}
+
+export class EmailChangeError extends Schema.TaggedError<EmailChangeError>()('EmailChangeError', {
+  cause: Schema.optional(Schema.Unknown),
+  message: Schema.String,
+  operation: Schema.optional(Schema.String),
 }) {}
 
 // Organization operations
@@ -160,6 +174,69 @@ export const signOut = Effect.fn('signOut')(function* () {
     try: () => authClient.signOut(),
   })
 })
+
+// Email verification operations
+export const verifyEmail = Effect.fn('verifyEmail')(function* (
+  params: Parameters<typeof authClient.emailOtp.verifyEmail>[0],
+) {
+  yield* Effect.annotateCurrentSpan('auth.verifyEmail', params)
+
+  return yield* Effect.tryPromise({
+    catch: (cause) =>
+      new OTPVerificationError({
+        cause,
+        message: 'Failed to verify email',
+      }),
+    try: () => authClient.emailOtp.verifyEmail(params),
+  })
+})
+
+// Email change OTP operations
+export const sendEmailChangeVerification = Effect.fn('sendEmailChangeVerification')(function* (
+  params: Parameters<typeof authClient.emailChangeOtp.sendVerification>[0],
+) {
+  yield* Effect.annotateCurrentSpan('emailChangeOtp.sendVerification', params)
+
+  return yield* Effect.tryPromise({
+    catch: (cause) =>
+      new EmailChangeError({
+        cause,
+        message:
+          cause instanceof Error ? cause.message : 'Failed to send email change verification',
+        operation: 'sendEmailChangeVerification',
+      }),
+    try: () => authClient.emailChangeOtp.sendVerification(params),
+  })
+})
+
+export const verifyEmailChangeOtp = Effect.fn('verifyEmailChangeOtp')(function* (
+  params: Parameters<typeof authClient.emailChangeOtp.verify>[0],
+) {
+  yield* Effect.annotateCurrentSpan('emailChangeOtp.verify', params)
+
+  return yield* Effect.tryPromise({
+    catch: (cause) =>
+      new EmailChangeError({
+        cause,
+        message: cause instanceof Error ? cause.message : 'Failed to verify email change',
+        operation: 'verifyEmailChange',
+      }),
+    try: () => authClient.emailChangeOtp.verify(params),
+  })
+})
+
+// Legacy exports for backward compatibility
+export const createOrganizationE = createOrganization
+export const updateOrganizationE = updateOrganization
+export const inviteMemberE = inviteMember
+export const setActiveOrganizationE = setActiveOrganization
+export const signInWithEmailOtpE = signInWithEmailOtp
+export const sendVerificationOtpE = sendOtp
+export const getSessionE = getSession
+export const signOutE = signOut
+export const verifyEmailE = verifyEmail
+export const sendEmailChangeVerificationE = sendEmailChangeVerification
+export const verifyEmailChangeOtpE = verifyEmailChangeOtp
 
 // Type exports for convenience
 export type Session = typeof authClient.$Infer.Session

@@ -1,5 +1,5 @@
 import { nullOp } from '@openfaith/shared'
-import { InputErrors } from '@openfaith/ui/components/formFields/inputPrimitives'
+import { InputErrors } from '@openfaith/ui/components/form/inputPrimitives'
 import { Label } from '@openfaith/ui/components/ui/label'
 import { cn } from '@openfaith/ui/shared/utils'
 import { Option, pipe, String } from 'effect'

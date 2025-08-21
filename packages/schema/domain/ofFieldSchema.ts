@@ -10,11 +10,15 @@ export class BaseField extends BaseSystemFields.extend<BaseField>('BaseField')({
   description: Schema.String.pipe(Schema.NullOr),
   entityTag: Schema.String.annotations({
     description: 'Entity tag this field belongs to (person, group, etc.)',
-    [OfUiConfig]: { table: { cellType: 'badge', filterable: true, order: 2, sortable: true } },
+    [OfUiConfig]: {
+      table: { cellType: 'badge', filterable: true, order: 2, sortable: true },
+    },
   }),
   key: Schema.String.annotations({
     description: 'Programmatic field key (e.g., status, assimilationStatus)',
-    [OfUiConfig]: { table: { filterable: true, order: 0, pinned: 'left', sortable: true } },
+    [OfUiConfig]: {
+      table: { filterable: true, order: 0, pinned: 'left', sortable: true },
+    },
   }),
   label: Schema.String.annotations({
     description: 'Display label',
@@ -60,7 +64,10 @@ export class BaseFieldOption extends BaseSystemFields.extend<BaseFieldOption>('B
   order: Schema.Number.annotations({
     [OfUiConfig]: { table: { order: 2, sortable: true } },
   }),
-  pathwayConfig: Schema.Record({ key: Schema.String, value: Schema.Unknown }).annotations({
+  pathwayConfig: Schema.Record({
+    key: Schema.String,
+    value: Schema.Unknown,
+  }).annotations({
     [OfUiConfig]: { table: { hidden: true } },
   }),
   value: Schema.String.annotations({

@@ -10,7 +10,7 @@ import { CollectionDataGrid } from '@openfaith/ui/components/collections/collect
 import { Button } from '@openfaith/ui/components/ui/button'
 import {
   buildEntityRelationshipsForTable,
-  createEntityNamesFetcher,
+  useEntityNamesFetcher,
   useSchemaCollection,
   useSchemaUpdate,
 } from '@openfaith/ui/shared/hooks/schemaHooks'
@@ -29,9 +29,9 @@ import { getRelatedEntityIds } from '@openfaith/ui/table/relationColumnGenerator
 import { getBaseEntityRelationshipsQuery } from '@openfaith/zero/baseQueries'
 import { useZero } from '@openfaith/zero/useZero'
 import { useQuery } from '@rocicorp/zero/react'
-import { Array, HashMap, Option, pipe, type Schema, String } from 'effect'
+import { Array, pipe, type Schema, String } from 'effect'
 import type { ReactNode } from 'react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 
 export interface UniversalDataGridProps<T> {
   schema: Schema.Schema<T>
@@ -86,35 +86,16 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     },
   })
 
+  // Use the entity names fetcher hook for managing entity name lookups
+  const { fetchEntityNames, getEntityNames, clearFetchedCache } = useEntityNamesFetcher()
+
   // Fetch entity relationships for this entity type
   const z = useZero()
 
-  // State to store entity names cache using HashMap for better performance
-  const [entityNamesCache, setEntityNamesCache] = useState<
-    HashMap.HashMap<string, HashMap.HashMap<string, string>>
-  >(HashMap.empty())
-
-  // Helper to update the cache
-  const updateCache = useCallback((entityType: string, entityId: string, displayName: string) => {
-    setEntityNamesCache((prev) => {
-      const existingType = pipe(prev, HashMap.get(entityType))
-
-      return pipe(
-        existingType,
-        Option.match({
-          onNone: () => pipe(prev, HashMap.set(entityType, HashMap.make([entityId, displayName]))),
-          onSome: (existing) =>
-            pipe(prev, HashMap.set(entityType, pipe(existing, HashMap.set(entityId, displayName)))),
-        }),
-      )
-    })
-  }, [])
-
-  // Create the entity names fetcher
-  const fetchEntityNames = useMemo(
-    () => createEntityNamesFetcher(z, entityNamesCache, updateCache),
-    [z, entityNamesCache, updateCache],
-  )
+  // Clear fetched cache when collection changes
+  useEffect(() => {
+    clearFetchedCache()
+  }, [clearFetchedCache])
 
   const entityRelationshipsQuery = useMemo(() => {
     if (!showRelations || !entityInfo.entityName) {
@@ -214,22 +195,7 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
         }
 
         // Get cached names for this entity type
-        const entityNames = pipe(
-          entityNamesCache,
-          HashMap.get(targetEntityType),
-          Option.map((typeCache) => {
-            // Convert HashMap to plain object for getRelationCell
-            const names: Record<string, string> = {}
-            pipe(
-              typeCache,
-              HashMap.forEach((value, key) => {
-                names[key] = value
-              }),
-            )
-            return names
-          }),
-          Option.getOrElse(() => ({}) as Record<string, string>),
-        )
+        const entityNames = getEntityNames(targetEntityType)
 
         // Return cell with badges for related entities
         return getRelationCell(relatedIds, entityNames) // Show all badges with names
@@ -249,7 +215,7 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
       const value = dataRow[field.key as keyof T]
       return getGridCellContent(field, value, editable)
     },
-    [collection, columns, columnIdToField, editable, fetchEntityNames, entityNamesCache],
+    [collection, columns, columnIdToField, editable, fetchEntityNames, getEntityNames],
   )
 
   // Handle cell edit

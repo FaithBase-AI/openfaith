@@ -1,7 +1,7 @@
 'use client'
 
-import { getFieldErrors } from '@openfaith/ui/components/formFields/fieldHelpers'
-import { useFieldContext } from '@openfaith/ui/components/formFields/tsField'
+import { getFieldErrors } from '@openfaith/ui/components/form/fieldHelpers'
+import { useFieldContext } from '@openfaith/ui/components/form/tsField'
 import { InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
 import { TagInput } from '@openfaith/ui/components/ui/tag-input'
 import type { ComponentProps, ReactNode } from 'react'
@@ -26,11 +26,7 @@ export function TagInputField(props: TagInputFieldProps) {
 
   const field = useFieldContext<ReadonlyArray<string>>()
 
-  const { processedError } = getFieldErrors({
-    errors: field.state.meta.errors,
-    isTouched: field.state.meta.isTouched,
-    submissionAttempts: field.form.state.submissionAttempts,
-  })
+  const { processedError } = getFieldErrors(field.state.meta.errors)
 
   return (
     <InputWrapper

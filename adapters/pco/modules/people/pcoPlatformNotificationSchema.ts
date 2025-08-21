@@ -15,5 +15,8 @@ export const PcoPlatformNotification = mkPcoEntity({
   links: Schema.Struct({}),
   relationships: Schema.Struct({}),
   type: 'PlatformNotification',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-platform-notification' })
+}).annotations({
+  [OfSkipEntity]: true,
+  [OfIdentifier]: 'pco-platform-notification',
+})
 export type PcoPlatformNotification = typeof PcoPlatformNotification.Type

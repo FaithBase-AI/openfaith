@@ -31,5 +31,8 @@ export const PcoPeopleImportHistory = mkPcoEntity({
   links: Schema.Struct({}),
   relationships: Schema.Struct({}),
   type: 'PeopleImportHistory',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-people-import-history' })
+}).annotations({
+  [OfSkipEntity]: true,
+  [OfIdentifier]: 'pco-people-import-history',
+})
 export type PcoPeopleImportHistory = typeof PcoPeopleImportHistory.Type
