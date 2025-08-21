@@ -400,23 +400,6 @@ export const auth = betterAuth({
   },
   trustedOrigins: [`https://${env.VITE_PROD_ROOT_DOMAIN}`],
   user: {
-    changeEmail: {
-      enabled: true,
-      sendChangeEmailVerification: async ({ user, token }) => {
-        // For now, we're using OTP for email verification
-        // This can be enhanced to send a proper change email verification
-        await resend.emails.send({
-          from,
-          react: reactOTPEmail({
-            _tag: 'email-change',
-            appName: env.VITE_APP_NAME,
-            otp: token.substring(0, 6), // Use first 6 chars of token as OTP
-          }),
-          subject: `Verify your new email for ${env.VITE_APP_NAME}`,
-          to: user.email, // Send to current email to approve the change
-        })
-      },
-    },
     modelName: getTableName('users'),
   },
   verification: {

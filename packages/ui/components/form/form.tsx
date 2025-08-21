@@ -3,7 +3,6 @@ import { cn } from '@openfaith/ui/shared/utils'
 import { Boolean, Match, Option, pipe } from 'effect'
 import type { FC, HTMLProps, ReactNode } from 'react'
 
-// Type for the form state with errorMap (exported for FormErrorDisplay)
 export type FormStateWithErrorMap = {
   errorMap: {
     onSubmit?: unknown

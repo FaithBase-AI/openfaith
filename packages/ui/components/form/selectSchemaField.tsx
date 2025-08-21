@@ -11,8 +11,12 @@ import {
   useSchemaCollectionFull,
 } from '@openfaith/ui/shared/hooks/schemaHooks'
 import { cn } from '@openfaith/ui/shared/utils'
-import { Array, Option, pipe, type Schema as SchemaType } from 'effect'
+import { Array, Option, pipe, Schema, type Schema as SchemaType } from 'effect'
 import { type ComponentProps, type ReactNode, useMemo } from 'react'
+
+const BaseOptionSchema = Schema.Struct({
+  id: Schema.String,
+})
 
 export type SelectSchemaFieldProps = Omit<
   ComponentProps<typeof Combobox>,
@@ -78,12 +82,11 @@ export const SelectSchemaField = (props: SelectSchemaFieldProps) => {
   )
 }
 
-// Use SchemaType.Schema for proper typing
 type InnerProps<T = unknown> = Omit<
   ComponentProps<typeof Combobox>,
   'selectedOptions' | 'addItem' | 'removeItem' | 'mode' | 'emptyText' | 'options'
 > & {
-  schema: SchemaType.Schema<T> // Proper schema type from Effect
+  schema: SchemaType.Schema<T>
   schemaName: string
   includeNone: boolean
   noneLabel: string
@@ -119,46 +122,23 @@ const SelectSchemaFieldInner = <T,>(props: InnerProps<T>) => {
 
   const { collection, loading } = useSchemaCollectionFull({ schema })
 
-  const options: ReadonlyArray<BaseComboboxItem> = useMemo(() => {
-    // Type guard to ensure entity has an id property
-    const hasId = (entity: unknown): entity is { id: string } & Record<string, unknown> => {
-      return (
-        typeof entity === 'object' &&
-        entity !== null &&
-        'id' in entity &&
-        typeof (entity as Record<string, unknown>).id === 'string'
-      )
-    }
-
-    const baseOptions = pipe(
-      collection,
-      Array.map((entity): BaseComboboxItem => {
-        if (hasId(entity)) {
-          return {
-            id: entity.id,
-            name: extractEntityDisplayName(entity, schemaName, entity.id),
-          }
-        }
-        // Fallback for entities without proper id
-        return {
-          id: '',
-          name: extractEntityDisplayName(entity, schemaName, ''),
-        }
-      }),
-    )
-
-    if (includeNone) {
-      return [
-        {
-          id: '',
-          name: noneLabel,
-        },
-        ...baseOptions,
-      ]
-    }
-
-    return baseOptions
-  }, [collection, includeNone, noneLabel, schemaName])
+  const options: ReadonlyArray<BaseComboboxItem> = useMemo(
+    () =>
+      pipe(
+        collection,
+        Array.filterMap((entity): Option.Option<BaseComboboxItem> => {
+          return pipe(
+            Schema.decodeUnknownOption(BaseOptionSchema)(entity, { onExcessProperty: 'preserve' }),
+            Option.map((x) => ({
+              id: x.id,
+              name: extractEntityDisplayName(entity, schemaName, x.id),
+            })),
+          )
+        }),
+        Array.appendAll(includeNone ? [{ id: '', name: noneLabel }] : []),
+      ),
+    [collection, includeNone, noneLabel, schemaName],
+  )
 
   const entityTitle = useMemo(() => singularize(schemaName), [schemaName])
 

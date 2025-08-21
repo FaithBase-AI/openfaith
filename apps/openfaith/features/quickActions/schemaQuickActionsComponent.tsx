@@ -8,7 +8,7 @@ import { UniversalQuickAction } from '@openfaith/openfaith/features/quickActions
 import { Array, pipe } from 'effect'
 import type { FC } from 'react'
 
-type SchemaQuickActionsProps = {}
+interface SchemaQuickActionsProps {}
 
 export const SchemaQuickActions: FC<SchemaQuickActionsProps> = () => {
   // Create actions

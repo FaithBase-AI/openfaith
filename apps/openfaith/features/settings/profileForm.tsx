@@ -71,6 +71,7 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
         user.sourceEdges,
         Array.appendAll(user.targetEdges),
         Array.findFirst(
+          // We need to deal with this hardcoding down the road. It needs to be generated.
           (edge) => edge.relationshipType === 'user-is-person' && edge.orgId === orgId,
         ),
       ),
@@ -160,6 +161,7 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
                         linkedAt: new Date().toISOString(),
                       },
                       orgId,
+                      // We need to deal with this hardcoding down the road. It needs to be generated.
                       relationshipType: 'user-is-person',
                       sourceEntityId: direction.source,
                       sourceEntityTypeTag: direction.source.startsWith('user') ? 'user' : 'person',
@@ -203,8 +205,6 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
           )(props)
 
           yield* Effect.sync(() => toast.success('Profile updated successfully!'))
-
-          return null
         }).pipe(
           Effect.catchTags({
             EmailChangeError: (error) =>

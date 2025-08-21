@@ -12,9 +12,7 @@ import { TextareaField } from '@openfaith/ui/components/form/textareaField'
 import { fieldContext, formContext } from '@openfaith/ui/components/form/tsField'
 import { createFormHook } from '@tanstack/react-form'
 
-// Create and export the form hook with base configuration
 export const { useAppForm, withForm } = createFormHook({
-  // We'll add field components as we convert them
   fieldComponents: {
     ComboboxField,
     DatePickerField,
@@ -30,7 +28,6 @@ export const { useAppForm, withForm } = createFormHook({
     TextareaField,
   },
   fieldContext,
-  // We'll add form components as we need them
   formComponents: {},
   formContext,
 })

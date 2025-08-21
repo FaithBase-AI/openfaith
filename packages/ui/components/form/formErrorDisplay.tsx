@@ -5,7 +5,6 @@ import { AlertCircleIcon } from '@openfaith/ui/icons/alertCircleIcon'
 import { Option, pipe } from 'effect'
 import type { FC, ReactNode } from 'react'
 
-// Type for the error map structure based on TanStack Form
 type ErrorMap = {
   // It's actually { form: unknown }
   onSubmit?: unknown
@@ -15,12 +14,10 @@ type ErrorMap = {
   onServer?: unknown
 }
 
-// Type for the form state with errorMap
 type FormStateWithErrorMap = {
   errorMap: ErrorMap
 }
 
-// Props type for the component
 type FormErrorDisplayProps = {
   form: {
     Subscribe: <TSelected = FormStateWithErrorMap>(props: {
@@ -30,13 +27,6 @@ type FormErrorDisplayProps = {
   }
 }
 
-/**
- * A form error display component that subscribes to form state and displays
- * submission errors in a styled alert box.
- *
- * @example
- * <FormErrorDisplay form={form} />
- */
 export const FormErrorDisplay: FC<FormErrorDisplayProps> = (props) => {
   const { form } = props
 
