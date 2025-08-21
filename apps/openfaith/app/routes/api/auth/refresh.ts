@@ -1,5 +1,6 @@
 import { auth, setCookies } from '@openfaith/auth/auth'
 import { createServerFileRoute } from '@tanstack/react-start/server'
+import { Option, pipe } from 'effect'
 
 export const ServerRoute = createServerFileRoute('/api/auth/refresh').methods({
   GET: async ({ request }) => {
@@ -86,11 +87,32 @@ function createResponse(
   setCookies(headers, {
     activeOrganizationId: activeOrganizationId || undefined,
     email,
-    impersonatedBy: impersonatedBy || undefined,
+    ...pipe(
+      impersonatedBy,
+      Option.fromNullable,
+      Option.match({
+        onNone: () => ({}),
+        onSome: (x) => ({ impersonatedBy: x }),
+      }),
+    ),
     jwt,
-    orgRole: orgRole || undefined,
+    ...pipe(
+      orgRole,
+      Option.fromNullable,
+      Option.match({
+        onNone: () => ({}),
+        onSome: (x) => ({ orgRole: x }),
+      }),
+    ),
     userid,
-    userRole: userRole || undefined,
+    ...pipe(
+      userRole,
+      Option.fromNullable,
+      Option.match({
+        onNone: () => ({}),
+        onSome: (x) => ({ userRole: x }),
+      }),
+    ),
   })
 
   return new Response(null, {
