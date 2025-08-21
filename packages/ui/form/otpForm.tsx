@@ -85,12 +85,6 @@ export const OtpForm: FC<OtpFormProps> = (props) => {
                   otp: error.message,
                 },
               }),
-            EmailOtpError: (error) =>
-              Effect.succeed({
-                fields: {
-                  otp: error.message,
-                },
-              }),
             OTPVerificationError: (error) =>
               Effect.succeed({
                 fields: {

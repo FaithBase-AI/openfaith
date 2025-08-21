@@ -48,12 +48,12 @@ export class EmailChangeError extends Schema.TaggedError<EmailChangeError>()('Em
 }) {}
 
 // Organization operations
-export const createOrganization = Effect.fn('createOrganization')(function* (
+export const createOrganizationE = Effect.fn('createOrganization')(function* (
   params: Parameters<typeof authClient.organization.create>[0],
 ) {
   yield* Effect.annotateCurrentSpan('organization.create', params)
 
-  return yield* Effect.tryPromise({
+  const result = yield* Effect.tryPromise({
     catch: (cause) =>
       new OrganizationCreateError({
         cause,
@@ -62,14 +62,25 @@ export const createOrganization = Effect.fn('createOrganization')(function* (
       }),
     try: () => authClient.organization.create(params),
   })
+
+  if (result.error) {
+    return yield* Effect.fail(
+      new OrganizationCreateError({
+        message: result.error.message || 'Failed to create organization',
+        params,
+      }),
+    )
+  }
+
+  return result.data
 })
 
-export const updateOrganization = Effect.fn('updateOrganization')(function* (
+export const updateOrganizationE = Effect.fn('updateOrganization')(function* (
   params: Parameters<typeof authClient.organization.update>[0],
 ) {
   yield* Effect.annotateCurrentSpan('organization.update', params)
 
-  return yield* Effect.tryPromise({
+  const result = yield* Effect.tryPromise({
     catch: (cause) =>
       new OrganizationUpdateError({
         cause,
@@ -78,14 +89,25 @@ export const updateOrganization = Effect.fn('updateOrganization')(function* (
       }),
     try: () => authClient.organization.update(params),
   })
+
+  if (result.error) {
+    return yield* Effect.fail(
+      new OrganizationUpdateError({
+        message: result.error.message || 'Failed to update organization',
+        params,
+      }),
+    )
+  }
+
+  return result.data
 })
 
-export const inviteMember = Effect.fn('inviteMember')(function* (
+export const inviteMemberE = Effect.fn('inviteMember')(function* (
   params: Parameters<typeof authClient.organization.inviteMember>[0],
 ) {
   yield* Effect.annotateCurrentSpan('organization.inviteMember', params)
 
-  return yield* Effect.tryPromise({
+  const result = yield* Effect.tryPromise({
     catch: (cause) =>
       new AuthError({
         cause,
@@ -95,14 +117,26 @@ export const inviteMember = Effect.fn('inviteMember')(function* (
       }),
     try: () => authClient.organization.inviteMember(params),
   })
+
+  if (result.error) {
+    return yield* Effect.fail(
+      new AuthError({
+        message: result.error.message || 'Failed to invite member',
+        operation: 'inviteMember',
+        params,
+      }),
+    )
+  }
+
+  return result.data
 })
 
-export const setActiveOrganization = Effect.fn('setActiveOrganization')(function* (
+export const setActiveOrganizationE = Effect.fn('setActiveOrganization')(function* (
   params: Parameters<typeof authClient.organization.setActive>[0],
 ) {
   yield* Effect.annotateCurrentSpan('organization.setActive', params)
 
-  return yield* Effect.tryPromise({
+  const result = yield* Effect.tryPromise({
     catch: (cause) =>
       new AuthError({
         cause,
@@ -112,31 +146,52 @@ export const setActiveOrganization = Effect.fn('setActiveOrganization')(function
       }),
     try: () => authClient.organization.setActive(params),
   })
+
+  if (result.error) {
+    return yield* Effect.fail(
+      new AuthError({
+        message: result.error.message || 'Failed to set active organization',
+        operation: 'setActiveOrganization',
+        params,
+      }),
+    )
+  }
+
+  return result.data
 })
 
 // Email OTP operations
-export const signInWithEmailOtp = Effect.fn('signInWithEmailOtp')(function* (
+export const signInWithEmailOtpE = Effect.fn('signInWithEmailOtp')(function* (
   params: Parameters<typeof authClient.signIn.emailOtp>[0],
 ) {
   yield* Effect.annotateCurrentSpan('auth.emailOtp', { email: params.email })
 
-  return yield* Effect.tryPromise({
+  const result = yield* Effect.tryPromise({
     catch: (cause) =>
-      new EmailOtpError({
+      new OTPVerificationError({
         cause,
-        message: cause instanceof Error ? cause.message : 'Failed to sign in with OTP',
-        params,
+        message: 'Failed to sign in with OTP',
       }),
     try: () => authClient.signIn.emailOtp(params),
   })
+
+  if (result.error) {
+    return yield* Effect.fail(
+      new OTPVerificationError({
+        message: result.error.message || 'Invalid verification code',
+      }),
+    )
+  }
+
+  return result.data
 })
 
-export const sendOtp = Effect.fn('sendOtp')(function* (
+export const sendVerificationOtpE = Effect.fn('sendOtp')(function* (
   params: Parameters<typeof authClient.emailOtp.sendVerificationOtp>[0],
 ) {
   yield* Effect.annotateCurrentSpan('auth.sendOtp', params)
 
-  return yield* Effect.tryPromise({
+  const result = yield* Effect.tryPromise({
     catch: (cause) =>
       new EmailOtpError({
         cause,
@@ -145,11 +200,22 @@ export const sendOtp = Effect.fn('sendOtp')(function* (
       }),
     try: () => authClient.emailOtp.sendVerificationOtp(params),
   })
+
+  if (result.error) {
+    return yield* Effect.fail(
+      new EmailOtpError({
+        message: result.error.message || 'Failed to send OTP',
+        params,
+      }),
+    )
+  }
+
+  return result.data
 })
 
 // Session operations
-export const getSession = Effect.fn('getSession')(function* () {
-  return yield* Effect.tryPromise({
+export const getSessionE = Effect.fn('getSession')(function* () {
+  const result = yield* Effect.tryPromise({
     catch: (cause) =>
       new AuthError({
         cause,
@@ -159,11 +225,23 @@ export const getSession = Effect.fn('getSession')(function* () {
       }),
     try: () => authClient.getSession(),
   })
+
+  if (result.error) {
+    return yield* Effect.fail(
+      new AuthError({
+        message: result.error.message || 'Failed to get session',
+        operation: 'getSession',
+        params: {},
+      }),
+    )
+  }
+
+  return result.data
 })
 
 // Sign out
-export const signOut = Effect.fn('signOut')(function* () {
-  return yield* Effect.tryPromise({
+export const signOutE = Effect.fn('signOut')(function* () {
+  const result = yield* Effect.tryPromise({
     catch: (cause) =>
       new AuthError({
         cause,
@@ -173,15 +251,27 @@ export const signOut = Effect.fn('signOut')(function* () {
       }),
     try: () => authClient.signOut(),
   })
+
+  if (result.error) {
+    return yield* Effect.fail(
+      new AuthError({
+        message: result.error.message || 'Failed to sign out',
+        operation: 'signOut',
+        params: {},
+      }),
+    )
+  }
+
+  return result.data
 })
 
-// Email verification operations
-export const verifyEmail = Effect.fn('verifyEmail')(function* (
+// Email verification operations (moved from authClient.ts)
+export const verifyEmailE = Effect.fn('verifyEmail')(function* (
   params: Parameters<typeof authClient.emailOtp.verifyEmail>[0],
 ) {
   yield* Effect.annotateCurrentSpan('auth.verifyEmail', params)
 
-  return yield* Effect.tryPromise({
+  const result = yield* Effect.tryPromise({
     catch: (cause) =>
       new OTPVerificationError({
         cause,
@@ -189,15 +279,25 @@ export const verifyEmail = Effect.fn('verifyEmail')(function* (
       }),
     try: () => authClient.emailOtp.verifyEmail(params),
   })
+
+  if (result.error) {
+    return yield* Effect.fail(
+      new OTPVerificationError({
+        message: result.error.message || 'Email verification failed',
+      }),
+    )
+  }
+
+  return result.data
 })
 
 // Email change OTP operations
-export const sendEmailChangeVerification = Effect.fn('sendEmailChangeVerification')(function* (
+export const sendEmailChangeVerificationE = Effect.fn('sendEmailChangeVerification')(function* (
   params: Parameters<typeof authClient.emailChangeOtp.sendVerification>[0],
 ) {
   yield* Effect.annotateCurrentSpan('emailChangeOtp.sendVerification', params)
 
-  return yield* Effect.tryPromise({
+  const result = yield* Effect.tryPromise({
     catch: (cause) =>
       new EmailChangeError({
         cause,
@@ -207,14 +307,25 @@ export const sendEmailChangeVerification = Effect.fn('sendEmailChangeVerificatio
       }),
     try: () => authClient.emailChangeOtp.sendVerification(params),
   })
+
+  if (result.error) {
+    return yield* Effect.fail(
+      new EmailChangeError({
+        message: result.error.message || 'Failed to send email change verification',
+        operation: 'sendEmailChangeVerification',
+      }),
+    )
+  }
+
+  return result.data
 })
 
-export const verifyEmailChangeOtp = Effect.fn('verifyEmailChangeOtp')(function* (
+export const verifyEmailChangeOtpE = Effect.fn('verifyEmailChangeOtp')(function* (
   params: Parameters<typeof authClient.emailChangeOtp.verify>[0],
 ) {
   yield* Effect.annotateCurrentSpan('emailChangeOtp.verify', params)
 
-  return yield* Effect.tryPromise({
+  const result = yield* Effect.tryPromise({
     catch: (cause) =>
       new EmailChangeError({
         cause,
@@ -223,22 +334,15 @@ export const verifyEmailChangeOtp = Effect.fn('verifyEmailChangeOtp')(function* 
       }),
     try: () => authClient.emailChangeOtp.verify(params),
   })
+
+  if (result.error) {
+    return yield* Effect.fail(
+      new EmailChangeError({
+        message: result.error.message || 'Email verification failed',
+        operation: 'verifyEmailChange',
+      }),
+    )
+  }
+
+  return result.data
 })
-
-// Legacy exports for backward compatibility
-export const createOrganizationE = createOrganization
-export const updateOrganizationE = updateOrganization
-export const inviteMemberE = inviteMember
-export const setActiveOrganizationE = setActiveOrganization
-export const signInWithEmailOtpE = signInWithEmailOtp
-export const sendVerificationOtpE = sendOtp
-export const getSessionE = getSession
-export const signOutE = signOut
-export const verifyEmailE = verifyEmail
-export const sendEmailChangeVerificationE = sendEmailChangeVerification
-export const verifyEmailChangeOtpE = verifyEmailChangeOtp
-
-// Type exports for convenience
-export type Session = typeof authClient.$Infer.Session
-export type ActiveOrg = typeof authClient.$Infer.ActiveOrganization
-export type SlimOrg = typeof authClient.$Infer.Organization

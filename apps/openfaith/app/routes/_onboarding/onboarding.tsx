@@ -15,7 +15,6 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Array, Data, Effect, Match, pipe, Schema } from 'effect'
 import type { FC } from 'react'
 
-// Define the step types using Data.taggedEnum
 type OnboardingStep = Data.TaggedEnum<{
   organization: {}
   integrations: {
@@ -68,13 +67,6 @@ function OnboardingPage() {
   const { step } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
 
-  const updateStep = (newStep: OnboardingStep) => {
-    navigate({
-      search: { step: newStep },
-      to: '/onboarding',
-    })
-  }
-
   return (
     <div className='m-auto flex w-full max-w-2xl flex-col items-start gap-4'>
       <OnboardingProgress
@@ -105,7 +97,6 @@ function OnboardingPage() {
                 <IntegrationsComponent />
               </ScrollArea>
               <IntegrationsButtons
-                onBack={() => updateStep(OnboardingStep.organization())}
                 onContinue={() => navigate({ to: '/dashboard' })}
                 onSkip={() => navigate({ to: '/dashboard' })}
               />
@@ -118,13 +109,12 @@ function OnboardingPage() {
   )
 }
 interface IntegrationsButtonsProps {
-  onBack: () => void
   onSkip: () => void
   onContinue: () => void
 }
 
 const IntegrationsButtons: FC<IntegrationsButtonsProps> = (props) => {
-  const { onBack, onSkip, onContinue } = props
+  const { onSkip, onContinue } = props
 
   const { adapterDetailsCollection, loading } = useAdaptersDetailsCollection()
 

@@ -1,4 +1,4 @@
-import { setActiveOrganization } from '@openfaith/auth/authClientE'
+import { setActiveOrganizationE } from '@openfaith/auth/authClientE'
 import { activeOrgIdAtom } from '@openfaith/openfaith/shared/auth/authState'
 import { useRouter } from '@tanstack/react-router'
 import { Boolean, Effect, Option, pipe, Schema } from 'effect'
@@ -44,15 +44,12 @@ export function useChangeOrg() {
 
     // Set the active organization in the auth system
     // This updates the session on the backend
-    yield* setActiveOrganization({
+    yield* setActiveOrganizationE({
       organizationId: orgId,
     })
 
     // Refresh the session to get updated cookies with the new activeOrganizationId
     yield* refreshSession()
-
-    // Small delay to ensure cookies are propagated
-    yield* Effect.sleep('100 millis')
 
     // Execute optional refetch callback
     yield* pipe(
