@@ -83,7 +83,7 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
             const result = yield* createOrganization({
               name: trimmedName,
               slug: trimmedSlug,
-              userId: userId,
+              userId,
             })
 
             if (result.data) {
