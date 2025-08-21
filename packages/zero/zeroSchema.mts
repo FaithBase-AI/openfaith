@@ -1,6 +1,6 @@
 import { schema, type Schema as ZSchema } from '@openfaith/zero/zero-schema.gen'
-import { ANYONE_CAN, definePermissions, type ExpressionBuilder, NOBODY_CAN } from '@rocicorp/zero'
-import { Schema } from 'effect'
+import { definePermissions, type ExpressionBuilder, NOBODY_CAN } from '@rocicorp/zero'
+import { Option, pipe, Schema } from 'effect'
 
 export { schema, type ZSchema }
 
@@ -65,6 +65,21 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     eb: ExpressionBuilder<ZSchema, T>,
   ) => eb.cmpLit(authData.role, '=', 'admin')
 
+  const allowIfSameOrgViaOrgUser = (authData: AuthData, eb: ExpressionBuilder<ZSchema, 'users'>) =>
+    eb.exists('orgUsers', (q) =>
+      q.whereExists('org', (oq) =>
+        oq.where(
+          'id',
+          '=',
+          pipe(
+            authData.activeOrganizationId,
+            Option.fromNullable,
+            Option.getOrElse(() => ''),
+          ),
+        ),
+      ),
+    )
+
   const allowIfOrgAdmin = (
     authData: AuthData,
     eb: ExpressionBuilder<ZSchema, 'orgs' | 'orgSettings'>,
@@ -74,11 +89,15 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     )
 
   const allowIfOrg = (authData: AuthData, eb: ExpressionBuilder<ZSchema, TablesWithOrgId>) => {
-    if (!authData.activeOrganizationId) {
-      return eb.cmpLit(1, '=', 0)
-    }
-
-    return eb.cmp('orgId', '=', authData.activeOrganizationId)
+    return eb.cmp(
+      'orgId',
+      '=',
+      pipe(
+        authData.activeOrganizationId,
+        Option.fromNullable,
+        Option.getOrElse(() => ''),
+      ),
+    )
   }
 
   return {
@@ -191,7 +210,7 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     users: {
       row: {
         insert: [allowIfAdmin],
-        select: ANYONE_CAN,
+        select: [allowIfUserIsSelf, allowIfSameOrgViaOrgUser, allowIfAdmin],
         update: {
           postMutation: [allowIfUserIsSelf, allowIfAdmin],
           preMutation: [allowIfUserIsSelf, allowIfAdmin],

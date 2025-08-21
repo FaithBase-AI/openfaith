@@ -30,6 +30,9 @@ export const getBaseOrgUsersQuery = (z: ReturnType<typeof useZero>) =>
 export const getBaseOrgUserQuery = (z: ReturnType<typeof useZero>, userId: string) =>
   z.query.orgUsers.related('user').where('id', userId).one()
 
+// AdapterDetails
+export const getBaseAdapterDetailsQuery = (z: ReturnType<typeof useZero>) => z.query.adapterDetails
+
 export const getBaseEntitiesQuery = (z: ReturnType<typeof useZero>, entityName: string) => {
   return Effect.gen(function* () {
     if (!(entityName in z.query)) {
