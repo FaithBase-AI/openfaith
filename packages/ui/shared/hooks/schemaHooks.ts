@@ -22,6 +22,7 @@ import {
   Clock,
   Effect,
   HashMap,
+  HashSet,
   Option,
   Order,
   pipe,
@@ -34,7 +35,7 @@ import type { Option as OptionType } from 'effect/Option'
 import { atom, useAtom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 import type { ComponentType } from 'react'
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export type CachedEntityConfig = {
   tag: string
@@ -1071,11 +1072,38 @@ export const extractEntityDisplayName = (
   return entityId
 }
 
+// Error class for listener cleanup failures
+export class ListenerCleanupError extends Schema.TaggedError<ListenerCleanupError>()(
+  'ListenerCleanupError',
+  {
+    cause: Schema.optional(Schema.Unknown),
+    entityId: Schema.optional(Schema.String),
+    entityType: Schema.optional(Schema.String),
+    message: Schema.String,
+  },
+) {}
+
 /**
  * Create a function to fetch and cache entity names
+ *
+ * IMPORTANT: This function returns a cleanup Effect that MUST be executed to prevent memory leaks.
+ * The cleanup Effect removes all view listeners that were added during fetching.
+ *
+ * Usage in React:
+ * ```typescript
+ * useEffect(() => {
+ *   const fetcher = createEntityNamesFetcher(z, cache, updateCache)
+ *   const cleanupEffect = fetcher(entityType, entityIds)
+ *   return () => {
+ *     Effect.runSync(cleanupEffect())
+ *   }
+ * }, [entityType, entityIds])
+ * ```
+ *
  * @param z - Zero instance
  * @param entityNamesCache - HashMap of entity type to entity ID to display name
  * @param updateCache - Function to update the cache with new entity names
+ * @returns A function that fetches entity names and returns a cleanup Effect
  */
 export const createEntityNamesFetcher = (
   z: ReturnType<typeof useZero>,
@@ -1083,6 +1111,9 @@ export const createEntityNamesFetcher = (
   updateCache: (entityType: string, entityId: string, displayName: string) => void,
 ) => {
   return (entityType: string, entityIds: ReadonlyArray<string>) => {
+    // Track listeners for cleanup
+    const listeners: Array<{ view: any; listener: (result: any, resultType: string) => void }> = []
+
     // Get cached names for this entity type
     const cached = pipe(
       entityNamesCache,
@@ -1096,8 +1127,6 @@ export const createEntityNamesFetcher = (
       Array.filter((id) => pipe(cached, HashMap.has(id), (has) => !has)),
     )
 
-    if (Array.isEmptyArray(missingIds)) return
-
     // Convert entity type to table name
     const tableName = mkZeroTableName(pipe(entityType, String.capitalize))
 
@@ -1110,7 +1139,7 @@ export const createEntityNamesFetcher = (
           const query = getBaseEntityQuery(z, tableName, entityId)
           const view = query.materialize()
 
-          view.addListener((result: any, resultType: string) => {
+          const listener = (result: any, resultType: string) => {
             if (resultType === 'complete' && result) {
               // Get the schema for this entity type
               const entitySchemaOpt = getSchemaByEntityType(entityType)
@@ -1136,7 +1165,10 @@ export const createEntityNamesFetcher = (
               // Update the cache
               updateCache(entityType, entityId, displayName)
             }
-          })
+          }
+
+          view.addListener(listener)
+          listeners.push({ listener, view })
         } catch (error) {
           Effect.logWarning(`Failed to fetch entity ${entityType}/${entityId}`, { error }).pipe(
             Effect.runSync,
@@ -1144,6 +1176,160 @@ export const createEntityNamesFetcher = (
         }
       }),
     )
+
+    // Return cleanup function that returns an Effect
+    return () =>
+      pipe(
+        Effect.forEach(
+          listeners,
+          ({ view, listener }) =>
+            Effect.try({
+              catch: (cause) =>
+                new ListenerCleanupError({
+                  cause,
+                  entityType,
+                  message: 'Failed to remove listener during cleanup',
+                }),
+              try: () => view.removeListener(listener),
+            }),
+          { concurrency: 'unbounded' },
+        ),
+        Effect.catchAll((error) =>
+          pipe(
+            Effect.logWarning('Listener cleanup error (ignored)', { error }),
+            Effect.map(() => []),
+          ),
+        ),
+      )
+  }
+}
+
+/**
+ * Hook that manages entity name fetching with automatic cleanup
+ * This hook encapsulates all the complexity of fetching entity names,
+ * managing listeners, and cleaning them up properly.
+ */
+export const useEntityNamesFetcher = () => {
+  const z = useZero()
+
+  // State to store entity names cache using HashMap for better performance
+  const [entityNamesCache, setEntityNamesCache] = useState<
+    HashMap.HashMap<string, HashMap.HashMap<string, string>>
+  >(HashMap.empty())
+
+  // Helper to update the cache
+  const updateCache = useCallback((entityType: string, entityId: string, displayName: string) => {
+    setEntityNamesCache((prev) => {
+      const existingType = pipe(prev, HashMap.get(entityType))
+
+      return pipe(
+        existingType,
+        Option.match({
+          onNone: () => pipe(prev, HashMap.set(entityType, HashMap.make([entityId, displayName]))),
+          onSome: (existing) =>
+            pipe(prev, HashMap.set(entityType, pipe(existing, HashMap.set(entityId, displayName)))),
+        }),
+      )
+    })
+  }, [])
+
+  // Track cleanup functions for entity name fetchers using HashMap
+  const cleanupFunctionsRef = useRef<
+    HashMap.HashMap<string, () => Effect.Effect<any, never, never>>
+  >(HashMap.empty())
+
+  // Track which entity types and IDs we've already fetched to avoid duplicates using HashSet
+  const fetchedEntitiesRef = useRef<HashSet.HashSet<string>>(HashSet.empty())
+
+  // Create the entity names fetcher
+  const fetcher = useMemo(
+    () => createEntityNamesFetcher(z, entityNamesCache, updateCache),
+    [z, entityNamesCache, updateCache],
+  )
+
+  // Function to fetch entity names with automatic cleanup management
+  const fetchEntityNames = useCallback(
+    (entityType: string, entityIds: ReadonlyArray<string>) => {
+      if (entityIds.length === 0) {
+        return
+      }
+
+      // Create a unique key for this fetch operation
+      const fetchKey = `${entityType}:${pipe(entityIds, Array.join(','))}`
+
+      // Only fetch if we haven't already fetched these specific entities
+      const hasFetched = pipe(fetchedEntitiesRef.current, HashSet.has(fetchKey))
+      if (!hasFetched) {
+        // Mark as fetched
+        fetchedEntitiesRef.current = pipe(fetchedEntitiesRef.current, HashSet.add(fetchKey))
+
+        // Call the fetcher and store the cleanup function
+        const cleanupEffect = fetcher(entityType, entityIds)
+
+        // If there's an existing cleanup for this key, call it first
+        const existingCleanupOpt = pipe(cleanupFunctionsRef.current, HashMap.get(fetchKey))
+        if (Option.isSome(existingCleanupOpt)) {
+          existingCleanupOpt.value().pipe(Effect.runSync)
+        }
+
+        // Store the new cleanup function
+        cleanupFunctionsRef.current = pipe(
+          cleanupFunctionsRef.current,
+          HashMap.set(fetchKey, cleanupEffect),
+        )
+      }
+    },
+    [fetcher],
+  )
+
+  // Get entity names from cache for a specific type
+  const getEntityNames = useCallback(
+    (entityType: string): Record<string, string> => {
+      return pipe(
+        entityNamesCache,
+        HashMap.get(entityType),
+        Option.map((typeCache) => {
+          // Convert HashMap to plain object
+          const names: Record<string, string> = {}
+          pipe(
+            typeCache,
+            HashMap.forEach((value, key) => {
+              names[key] = value
+            }),
+          )
+          return names
+        }),
+        Option.getOrElse(() => ({}) as Record<string, string>),
+      )
+    },
+    [entityNamesCache],
+  )
+
+  // Cleanup all listeners on unmount
+  useEffect(() => {
+    return () => {
+      // Run all cleanup effects in parallel
+      Effect.forEach(
+        pipe(cleanupFunctionsRef.current, HashMap.values, Array.fromIterable),
+        (cleanup) => cleanup(),
+        { concurrency: 'unbounded', discard: true },
+      ).pipe(Effect.runSync)
+
+      cleanupFunctionsRef.current = HashMap.empty()
+      fetchedEntitiesRef.current = HashSet.empty()
+    }
+  }, [])
+
+  // Clear fetched set when cache changes (for refresh scenarios)
+  const clearFetchedCache = useCallback(() => {
+    fetchedEntitiesRef.current = HashSet.empty()
+  }, [])
+
+  return {
+    clearFetchedCache,
+    entityNamesCache,
+    fetchEntityNames,
+    getEntityNames,
   }
 }
 
