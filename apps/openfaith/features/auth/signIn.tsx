@@ -11,7 +11,6 @@ import {
   CardTitle,
   Form,
   OtpForm,
-  toast,
   useAppForm,
 } from '@openfaith/ui'
 import { revalidateLogic } from '@tanstack/react-form'
@@ -103,10 +102,6 @@ const SignIn: FC<SignInProps> = (props) => {
             EmailOtpError: (error) =>
               Effect.gen(function* () {
                 yield* Effect.logError('Failed to send OTP', { error })
-                yield* Effect.sync(() =>
-                  toast.error(error.message || 'Failed to send verification code'),
-                )
-
                 return {
                   fields: {},
                   form: error.message || 'Failed to send verification code',

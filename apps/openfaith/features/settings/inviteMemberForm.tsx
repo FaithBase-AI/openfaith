@@ -4,7 +4,7 @@ import { inviteMemberE } from '@openfaith/auth/authClientE'
 import { inviteMemberIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import { Button, QuickActionForm, useAppForm } from '@openfaith/ui'
 import { revalidateLogic } from '@tanstack/react-form'
-import { Effect, pipe, Schema } from 'effect'
+import { Effect, Schema } from 'effect'
 import { useSetAtom } from 'jotai'
 import type { FC } from 'react'
 
@@ -21,29 +21,39 @@ export const InviteMemberForm: FC = () => {
       email: '',
       role: 'member',
     },
-    onSubmit: async ({ value }) => {
-      const program = pipe(
-        inviteMemberE({
-          email: value.email,
-          role: value.role as 'member' | 'admin',
-        }),
-        Effect.tap(() => Effect.sync(() => setInviteMemberIsOpen(false))),
-        Effect.catchAll(() =>
-          Effect.sync(() => {
-            // Handle error - could add toast notification here
-            console.error('Failed to send invitation')
-          }),
-        ),
-      )
-
-      await Effect.runPromise(program)
-    },
     validationLogic: revalidateLogic({
       mode: 'submit',
       modeAfterSubmission: 'blur',
     }),
     validators: {
       onDynamic: Schema.standardSchemaV1(InviteMemberSchema),
+      onSubmitAsync: async ({ value }) =>
+        await Effect.gen(function* () {
+          yield* inviteMemberE({
+            email: value.email,
+            role: value.role as 'member' | 'admin',
+          })
+          yield* Effect.sync(() => setInviteMemberIsOpen(false))
+          return
+        }).pipe(
+          Effect.catchAll((error) =>
+            Effect.gen(function* () {
+              yield* Effect.logError('Failed to send invitation', { error })
+              return {
+                fields: {},
+                form: 'Failed to send invitation. Please try again.',
+              }
+            }),
+          ),
+          Effect.catchAllDefect(() =>
+            Effect.succeed({
+              fields: {},
+              form: 'Something went wrong',
+            }),
+          ),
+          Effect.ensureErrorType<never>(),
+          Effect.runPromise,
+        ),
     },
   })
 
