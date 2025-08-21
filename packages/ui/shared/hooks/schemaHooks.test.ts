@@ -737,7 +737,7 @@ const createMockView = () => {
     triggerComplete: (data: any) => {
       pipe(
         listeners,
-        Array.forEach((listener) => listener(data, 'complete')),
+        Array.map((listener) => listener(data, 'complete')),
       )
     },
   }

@@ -1,8 +1,14 @@
 import { Rx } from '@effect-rx/rx-react'
 import { useRxMutation, useRxQuery } from '@openfaith/openfaith/shared/hooks/rxHooks'
-import { discoverUiEntities, type EntityUiConfig } from '@openfaith/schema/shared/entityDiscovery'
-import { extractEntityInfo, extractEntityTag } from '@openfaith/schema/shared/introspection'
-import { OfForeignKey, OfRelations, type RelationConfig } from '@openfaith/schema/shared/schema'
+import {
+  discoverUiEntities,
+  type EntityUiConfig,
+  extractEntityInfo,
+  extractEntityTag,
+  OfForeignKey,
+  OfRelations,
+  type RelationConfig,
+} from '@openfaith/schema'
 import { getEntityId, mkZeroTableName, nullOp, pluralize, singularize } from '@openfaith/shared'
 import { toast } from '@openfaith/ui/components/ui/sonner'
 import { CircleIcon } from '@openfaith/ui/icons/circleIcon'
@@ -1112,7 +1118,10 @@ export const createEntityNamesFetcher = (
 ) => {
   return (entityType: string, entityIds: ReadonlyArray<string>) => {
     // Track listeners for cleanup
-    const listeners: Array<{ view: any; listener: (result: any, resultType: string) => void }> = []
+    const listeners: Array<{
+      view: any
+      listener: (result: any, resultType: string) => void
+    }> = []
 
     // Get cached names for this entity type
     const cached = pipe(
