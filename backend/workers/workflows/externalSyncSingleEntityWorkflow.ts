@@ -3,7 +3,7 @@ import { AdapterOperations } from '@openfaith/adapter-core/layers/adapterOperati
 import { TokenKey } from '@openfaith/adapter-core/server'
 import type { Mutation } from '@openfaith/domain'
 import { PcoAdapterOperationsLayer } from '@openfaith/pco/pcoAdapterLayer'
-// @ts-ignore - Type resolution issue with monorepo
+// @ts-expect-error - Type resolution issue with monorepo
 import { mutationSideEffects } from '@openfaith/server/services/externalPushTrigger'
 import { mkTableName } from '@openfaith/shared'
 // import { saveDataE } from '@openfaith/workers/helpers/saveDataE' // TODO: Re-enable when implemented
