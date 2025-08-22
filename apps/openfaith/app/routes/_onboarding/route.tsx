@@ -19,7 +19,7 @@ function RouteComponent() {
   return (
     <div
       className={
-        'flex min-h-screen w-full shrink-0 flex-col bg-linear-to-br from-emerald-800 to-emerald-700 md:flex-row'
+        'flex min-h-screen w-full shrink-0 flex-col bg-gradient-to-br from-emerald-800 to-emerald-700 md:flex-row'
       }
     >
       <div className={'flex shrink-0 flex-col md:w-[36%] md:max-w-[500px] lg:w-[40%]'}>
@@ -39,11 +39,30 @@ function RouteComponent() {
             <p className='font-bold text-5xl'>Welcome!</p>
 
             <p className='text-md text-white/60'>
-              Your gateway to seeing all your data in one place.
+              Your gateway to unifying all your church data in one powerful platform.
             </p>
           </div>
 
-          <div className='mt-auto hidden flex-row gap-2 text-white/70 md:flex'>
+          {/* Quote temporarily commented out */}
+          {/* <div className='mt-auto mb-12 hidden flex-col gap-4 md:flex'>
+            <p className='text-lg text-white/90'>
+              "OpenFaith has transformed how we manage our church community. Everything is
+              connected, synchronized, and accessible in one place."
+            </p>
+
+            <div className='flex flex-row items-center gap-3'>
+              <div className='flex h-12 w-12 items-center justify-center rounded-full bg-white/20'>
+                <span className='font-semibold text-lg'>JD</span>
+              </div>
+
+              <div className='flex flex-col'>
+                <p className='font-semibold'>John Davidson</p>
+                <p className='text-sm text-white/60'>Lead Pastor, Grace Community Church</p>
+              </div>
+            </div>
+          </div> */}
+
+          <div className='mt-auto flex-row gap-2 text-white/70 md:flex'>
             <Link to='/'>Home</Link>
           </div>
         </div>
