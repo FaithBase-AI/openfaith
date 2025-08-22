@@ -39,7 +39,6 @@ export interface UniversalDataGridProps<T> {
   onEditRow?: (row: T) => void
   onRowsSelected?: (rows: Array<T>) => void
   onCellEdit?: (row: T, field: string, newValue: any) => void
-  className?: string
   showRowNumbers?: boolean
   Actions?: ReactNode
   showRelations?: boolean
@@ -49,6 +48,7 @@ export interface UniversalDataGridProps<T> {
     filterColumnId?: string
     filterKey?: string
   }
+  enableVirtualScrolling?: boolean // Enable virtual scrolling for pagination
 }
 
 export const UniversalDataGrid = <T extends Record<string, any>>(
@@ -60,12 +60,12 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     // onEditRow: providedOnEditRow,
     onRowsSelected,
     onCellEdit,
-    className = '',
     showRowNumbers = true,
     Actions,
     showRelations = true,
     editable = true,
     filtering = {},
+    enableVirtualScrolling = true,
   } = props
 
   // Use auto edit handler if none provided
@@ -77,7 +77,7 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     return extractEntityInfo(schema)
   }, [schema])
 
-  const { collection, nextPage, loading } = useSchemaCollection({ schema })
+  const { collection, nextPage, loading, pageSize } = useSchemaCollection({ schema })
 
   // Use the schema update hook for mutations
   const { mutate: updateEntity } = useSchemaUpdate(schema, {
@@ -320,48 +320,63 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     </Button>
   )
 
+  // Detect if we're likely on the last page of data
+  const isLikelyLastPage = collection.length > 0 && collection.length % pageSize !== 0
+
   const handleVisibleRegionChanged = useCallback(
     (range: Rectangle) => {
       // Rectangle has x, y, width, height
       // y is the row index, height is the number of visible rows
       const visibleEndRow = range.y + range.height
 
-      // Check if we're near the bottom (within 5 rows)
-      const threshold = 5
+      // Check if we're near the bottom
+      // Use a larger threshold (25% of pageSize) to trigger loading earlier
+      const threshold = Math.max(5, Math.floor(pageSize * 0.25))
       const nearBottom = visibleEndRow >= collection.length - threshold
 
       // Trigger loading more data if we're near the bottom and not already loading
-      if (nearBottom && !loading) {
-        // Call nextPage to load more data
+      // Also check that we have a full page of data (to avoid triggering on initial load)
+      if (nearBottom && !loading && collection.length >= pageSize && !isLikelyLastPage) {
         nextPage()
       }
     },
-    [collection.length, nextPage, loading],
+    [collection.length, nextPage, loading, pageSize, isLikelyLastPage],
   )
 
-  // Merge className with flex layout classes
-  const containerClassName = className
-    ? `${className} flex flex-col h-full`
-    : 'flex flex-col h-full'
+  // Calculate virtual row count for scrolling
+  // We add a buffer beyond loaded data to trigger pagination, but not too much to avoid flashing
+  // If the last fetch returned less than pageSize items, we're likely at the end
+  const virtualRowCount = useMemo(() => {
+    if (!enableVirtualScrolling) {
+      return collection.length
+    }
+    // If we're likely on the last page, don't extend beyond current data
+    if (isLikelyLastPage) {
+      return collection.length
+    }
+    // Otherwise, add a small buffer to trigger pagination
+    // This prevents showing loading cells for items that don't exist yet
+    return collection.length + pageSize
+  }, [enableVirtualScrolling, collection.length, pageSize, isLikelyLastPage])
 
   return (
-    <div className={containerClassName}>
-      <CollectionDataGrid
-        _tag={entityInfo.entityTag || 'default'}
-        Actions={ToolbarActions}
-        columns={columns}
-        data={collection}
-        filterColumnId={filtering.filterColumnId || 'name'}
-        filterKey={filtering.filterKey || `${entityName}-filter`}
-        filterPlaceHolder={filterPlaceHolder}
-        filtersDef={filtersDef}
-        getCellContent={getCellContent}
-        onCellEdited={editable ? handleCellEdited : undefined}
-        onRowClick={handleRowClick}
-        onRowsSelected={onRowsSelected}
-        onVisibleRegionChanged={handleVisibleRegionChanged}
-        showRowNumbers={showRowNumbers}
-      />
-    </div>
+    <CollectionDataGrid
+      _tag={entityInfo.entityTag || 'default'}
+      Actions={ToolbarActions}
+      columns={columns}
+      data={collection}
+      enableVirtualScrolling={enableVirtualScrolling}
+      filterColumnId={filtering.filterColumnId || 'name'}
+      filterKey={filtering.filterKey || `${entityName}-filter`}
+      filterPlaceHolder={filterPlaceHolder}
+      filtersDef={filtersDef}
+      getCellContent={getCellContent}
+      onCellEdited={editable ? handleCellEdited : undefined}
+      onRowClick={handleRowClick}
+      onRowsSelected={onRowsSelected}
+      onVisibleRegionChanged={handleVisibleRegionChanged}
+      showRowNumbers={showRowNumbers}
+      totalRows={virtualRowCount}
+    />
   )
 }

@@ -12,7 +12,7 @@ import {
   ShareNodesIcon,
 } from '@openfaith/ui'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Array, Data, Effect, Match, pipe, Schema } from 'effect'
+import { Array, Data, Match, pipe, Schema } from 'effect'
 import type { FC } from 'react'
 
 type OnboardingStep = Data.TaggedEnum<{
@@ -36,6 +36,11 @@ const OnboardingStepSchema = Schema.Union(
   }),
 )
 
+const OnboardingSearch = Schema.Struct({
+  redirect: Schema.String.pipe(Schema.optional),
+  step: Schema.optional(OnboardingStepSchema),
+})
+
 const stepLookup = {
   integrations: 2,
   organization: 1,
@@ -53,18 +58,11 @@ const stepTitleLookup = {
 
 export const Route = createFileRoute('/_onboarding/onboarding')({
   component: OnboardingPage,
-  validateSearch: (search: Record<string, unknown>) => {
-    return pipe(
-      Schema.decodeUnknown(OnboardingStepSchema)(search.step),
-      Effect.map((step) => ({ step })),
-      Effect.orElse(() => Effect.succeed({ step: OnboardingStep.organization() })),
-      Effect.runSync,
-    )
-  },
+  validateSearch: Schema.standardSchemaV1(OnboardingSearch),
 })
 
 function OnboardingPage() {
-  const { step } = Route.useSearch()
+  const { step = OnboardingStep.organization() } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
 
   return (

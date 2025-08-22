@@ -1,11 +1,9 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
-import {
-  getNavigationByModule,
-  loadAllEntityIcons,
-} from '@openfaith/openfaith/components/navigation/schemaNavigation'
+import { getNavigationByModule } from '@openfaith/openfaith/components/navigation/schemaNavigation'
 import * as OfSchemas from '@openfaith/schema'
 import { discoverUiEntities, type EntityUiConfig } from '@openfaith/schema'
+import { loadAllEntityIcons } from '@openfaith/ui/shared/hooks/schemaHooks'
 import { Array, Effect, HashMap, Option, pipe, Record, Schema } from 'effect'
 
 effect('should discover schemas with navigation configs', () =>
@@ -326,31 +324,26 @@ effect('should load icon components using the actual loadIcon logic', () =>
   }),
 )
 
-effect('should test useEntityIcons hook with Effect-RX integration', () =>
+effect('should test useEntityIcons hook with Effect-Atom integration', () =>
   Effect.gen(function* () {
-    // Test that the Rx family pattern works correctly
+    // Test that the Atom pattern works correctly
     // This simulates what happens in the React component
     const entities = discoverUiEntities()
 
     // Verify we have entities to work with
     expect(entities.length).toBeGreaterThanOrEqual(3)
 
-    // Test the Rx family creation - this should work without React
-    const { Rx } = yield* Effect.promise(() => import('@effect-rx/rx'))
+    // Test the Atom creation - this should work without React
+    const { Atom } = yield* Effect.promise(() => import('@effect-atom/atom'))
 
-    // Create the same Rx family as in the component
-    const testEntityIconsRx = Rx.family((entities: Array<EntityUiConfig>) =>
-      Rx.fn(() => loadAllEntityIcons(entities)),
-    )
-
-    // Create an Rx instance for our entities
-    const iconRx = testEntityIconsRx(entities)
+    // Create the same Atom as in the component
+    const testEntityIconsAtom = Atom.make(loadAllEntityIcons(entities))
 
     // This should be defined
-    expect(iconRx).toBeDefined()
+    expect(testEntityIconsAtom).toBeDefined()
 
-    // The Rx should have the correct structure
-    expect(typeof iconRx).toBe('object')
+    // The Atom should have the correct structure
+    expect(typeof testEntityIconsAtom).toBe('object')
   }),
 )
 

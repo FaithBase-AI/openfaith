@@ -1,7 +1,7 @@
+import { useAtom } from '@effect-atom/atom-react'
 import { usePlanningCenterConnect } from '@openfaith/openfaith/adapters/pcoClient'
 import { useAdaptersDetailsCollection } from '@openfaith/openfaith/data/adapterDetails/adapterDetailsData.app'
-import { adapterConnectRx } from '@openfaith/openfaith/data/rpcState'
-import { useRxMutation } from '@openfaith/openfaith/shared/hooks/rxHooks'
+import { adapterConnectAtom } from '@openfaith/openfaith/data/rpcState'
 import {
   BoxOption,
   CheckIcon,
@@ -71,13 +71,15 @@ const givingOptions = [
 ]
 
 export function IntegrationsComponent() {
-  const { mutate: adapterConnect } = useRxMutation(adapterConnectRx)
+  const [, adapterConnectSet] = useAtom(adapterConnectAtom, {
+    mode: 'promiseExit',
+  })
 
   const { adapterDetailsCollection } = useAdaptersDetailsCollection()
 
   const { onClick, loading } = usePlanningCenterConnect({
     onConnect: (params) => {
-      adapterConnect({
+      adapterConnectSet({
         adapter: 'pco',
         code: params.code,
         redirectUri: params.redirectUri,

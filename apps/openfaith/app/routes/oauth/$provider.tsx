@@ -1,18 +1,15 @@
 import { AppLoading } from '@openfaith/openfaith/components/appLoading'
 import { PostCodeMessage } from '@openfaith/openfaith/components/postCodeMessage'
 import { createFileRoute } from '@tanstack/react-router'
+import { Schema } from 'effect'
 
-type OAuthSearch = {
-  code: string
-}
+const OAuthSearch = Schema.Struct({
+  code: Schema.String,
+})
 
 export const Route = createFileRoute('/oauth/$provider')({
   component: RouteComponent,
-  validateSearch: (search: Record<string, unknown>): OAuthSearch => {
-    return {
-      code: (search.code as string) || '',
-    }
-  },
+  validateSearch: Schema.standardSchemaV1(OAuthSearch),
 })
 
 function RouteComponent() {

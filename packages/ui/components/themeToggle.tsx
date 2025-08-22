@@ -8,23 +8,23 @@ import { useTheme } from 'next-themes'
 import { type FC, useEffect } from 'react'
 
 export const ThemeToggle: FC<ButtonProps> = (props) => {
-  const { setTheme, theme } = useTheme()
+  const { setTheme, resolvedTheme } = useTheme()
 
   useEffect(() => {
     if (typeof window !== 'undefined' && document.querySelector('meta[name="theme-color"]')) {
-      if (theme === 'dark') {
+      if (resolvedTheme === 'dark') {
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#000000')
       } else {
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#ffffff')
       }
     }
-  }, [theme])
+  }, [resolvedTheme])
 
   return (
     <Button
       onClick={() => {
         pipe(
-          theme === 'dark',
+          resolvedTheme === 'dark',
           Boolean.match({
             onFalse: () => setTheme('dark'),
             onTrue: () => setTheme('light'),
