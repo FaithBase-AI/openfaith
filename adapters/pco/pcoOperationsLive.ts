@@ -36,11 +36,11 @@ import {
 // Get the actual type from the service
 type BasePcoClientType = Effect.Effect.Success<typeof PcoHttpClient>
 
-type PcoEntityClientKeys = Exclude<keyof BasePcoClientType, '_tag' | 'token'>
+type PcoEntityClientKeys = Exclude<keyof BasePcoClientType, '_tag' | 'token' | 'webhooks'>
 
 type PcoClientType = Pick<BasePcoClientType, PcoEntityClientKeys>
 
-type EntityClient = PcoClientType[Exclude<keyof PcoClientType, '_tag' | 'token'>]
+type EntityClient = PcoClientType[keyof PcoClientType]
 
 // Type guard to ensure we have a valid entity client with required methods
 const isValidEntityClient = (client: unknown): client is EntityClient => {
