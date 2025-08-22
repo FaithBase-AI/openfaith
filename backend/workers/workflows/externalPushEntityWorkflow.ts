@@ -25,6 +25,7 @@ class ExternalLinkNotFoundErrorSchema extends Schema.TaggedError<ExternalLinkNot
 // Define the workflow payload schema
 const ExternalPushEntityPayload = Schema.Struct({
   entityName: Schema.String,
+  excludeAdapter: Schema.optional(Schema.Literal('pco', 'ccb')),
   mutations: Schema.Array(
     Schema.Struct({
       mutation: CRUDMutation,
@@ -56,7 +57,7 @@ export const ExternalPushEntityWorkflowLayer = ExternalPushEntityWorkflow.toLaye
     yield* Effect.log(`🔄 Starting external sync entity workflow for: ${payload.entityName}`)
     yield* Effect.log(`🆔 Execution ID: ${executionId}`)
 
-    const { entityName, mutations, tokenKey } = payload
+    const { entityName, mutations, tokenKey, excludeAdapter } = payload
 
     // Create the external sync activity
     yield* Activity.make({
@@ -82,7 +83,7 @@ export const ExternalPushEntityWorkflowLayer = ExternalPushEntityWorkflow.toLaye
         )
 
         // Process mutations using the helper - let specific errors flow through
-        yield* syncDataE(mutations)
+        yield* syncDataE(mutations, excludeAdapter)
       }).pipe(
         Effect.withSpan('external-sync-entity-activity'),
         Effect.provide(Layer.mergeAll(ExternalLinkManagerLive, PcoApiLayer)),

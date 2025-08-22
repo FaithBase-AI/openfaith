@@ -1,12 +1,32 @@
 import crypto from 'node:crypto'
 import { HttpApiBuilder } from '@effect/platform'
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
+import { AdapterOperations } from '@openfaith/adapter-core/layers/adapterOperations'
+import { TokenKey } from '@openfaith/adapter-core/server'
 import { adapterWebhooksTable } from '@openfaith/db'
 import { MainApi, WebhookProcessingError, WebhookVerificationError } from '@openfaith/domain'
+import { PcoAdapterOperationsLayer } from '@openfaith/pco/pcoAdapterLayer'
 import { DBLive } from '@openfaith/server/live/dbLive'
 import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
 import { and, eq } from 'drizzle-orm'
 import { Array, Effect, Layer, Option, pipe } from 'effect'
+
+// Helper function to get the appropriate adapter layer
+const getAdapterLayer = (adapter: string) => {
+  switch (adapter) {
+    case 'pco':
+      return Effect.succeed(PcoAdapterOperationsLayer)
+    // case 'ccb':
+    //   return Effect.succeed(CcbAdapterOperationsLayer) // Add when CCB adapter is ready
+    default:
+      return Effect.fail(
+        new WebhookProcessingError({
+          adapter,
+          message: `No adapter layer found for: ${adapter}`,
+        }),
+      )
+  }
+}
 
 export const WebhookHandlerLive = HttpApiBuilder.group(MainApi, 'webhooks', (handlers) =>
   handlers.handle('receive', (input) =>
@@ -61,6 +81,7 @@ export const WebhookHandlerLive = HttpApiBuilder.group(MainApi, 'webhooks', (han
         }),
       )
 
+      // Update last received timestamp
       yield* Effect.tryPromise({
         catch: (error) =>
           new WebhookProcessingError({
@@ -74,46 +95,63 @@ export const WebhookHandlerLive = HttpApiBuilder.group(MainApi, 'webhooks', (han
             .where(eq(adapterWebhooksTable.id, verifiedWebhook.id)),
       })
 
-      const workflowClient = yield* WorkflowClient
+      // Get the appropriate adapter layer
+      const adapterLayer = yield* getAdapterLayer(adapter)
 
-      yield* pipe(adapter, (adapterName) => {
-        if (adapterName === 'pco') {
-          return pipe(
-            workflowClient.workflows.PcoWebhookWorkflow({
+      // Process webhook through adapter operations
+      const adapterOps = yield* pipe(
+        AdapterOperations,
+        Effect.provide(adapterLayer),
+        Effect.provideService(TokenKey, verifiedWebhook.orgId),
+      )
+
+      // Process webhook - returns array of sync requests
+      const syncRequests = yield* pipe(
+        adapterOps.processWebhook(body),
+        Effect.mapError(
+          (error) =>
+            new WebhookProcessingError({
+              adapter,
+              message: `Failed to process webhook: ${error}`,
+            }),
+        ),
+      )
+
+      // Trigger sync workflows for all requests
+      if (syncRequests.length > 0) {
+        const workflowClient = yield* WorkflowClient
+
+        yield* pipe(
+          syncRequests,
+          Array.map((syncRequest) =>
+            workflowClient.workflows.ExternalSyncSingleEntityWorkflow({
               payload: {
-                body: body as {
-                  readonly data: ReadonlyArray<{
-                    readonly id: string
-                    readonly type: string
-                    readonly attributes: {
-                      readonly payload: string
-                      readonly name: string
-                    }
-                    readonly relationships?: unknown
-                  }>
-                },
-                headers,
-                orgId: verifiedWebhook.orgId,
-                webhookId: verifiedWebhook.id,
+                entityId: syncRequest.entityId,
+                entityType: syncRequest.entityType,
+                operation: syncRequest.operation,
+                relatedIds: syncRequest.relatedIds,
+                tokenKey: verifiedWebhook.orgId,
+                webhookData: syncRequest.webhookData, // Pass webhook data for fallback
               },
             }),
-            Effect.mapError(
-              (error) =>
-                new WebhookProcessingError({
-                  adapter,
-                  message: `Workflow error: ${error}`,
-                }),
-            ),
-          )
-        }
-        return Effect.fail(
-          new WebhookProcessingError({
-            adapter,
-            message: `No handler implemented for adapter: ${adapter}`,
-          }),
+          ),
+          Effect.all, // Process all in parallel
+          Effect.tap((results) =>
+            Effect.log(`Triggered ${results.length} entity syncs from webhook`),
+          ),
+          Effect.mapError(
+            (error) =>
+              new WebhookProcessingError({
+                adapter,
+                message: `Workflow error: ${error}`,
+              }),
+          ),
         )
-      })
+      } else {
+        yield* Effect.log('No sync requests generated from webhook')
+      }
 
+      // Update last processed timestamp
       yield* Effect.tryPromise({
         catch: (error) =>
           new WebhookProcessingError({
@@ -128,7 +166,7 @@ export const WebhookHandlerLive = HttpApiBuilder.group(MainApi, 'webhooks', (han
       })
 
       return {
-        message: `Webhook processed for ${adapter}`,
+        message: `Webhook processed for ${adapter}. Synced ${syncRequests.length} entities.`,
         success: true,
       }
     }),

@@ -11,6 +11,7 @@ class ExternalPushError extends Schema.TaggedError<ExternalPushError>()('Externa
 
 // Define the workflow payload schema
 const ExternalPushPayload = Schema.Struct({
+  excludeAdapter: Schema.optional(Schema.Literal('pco', 'ccb')),
   mutations: Schema.Array(Mutation),
   tokenKey: Schema.String, // PushRequest['mutations'] but simplified for workflow
 })
@@ -30,9 +31,10 @@ export const ExternalPushWorkflowLayer = ExternalPushWorkflow.toLayer(
     yield* Effect.log(`🔄 Starting external sync workflow for token: ${payload.tokenKey}`)
     yield* Effect.log(`🆔 Execution ID: ${executionId}`)
 
-    const { tokenKey, mutations } = payload
+    const { tokenKey, mutations, excludeAdapter } = payload
 
     yield* Effect.log('Processing mutations for external sync', {
+      excludeAdapter,
       mutationCount: mutations.length,
       mutationNames: mutations.map((m) => m.name),
       mutationTypes: mutations.map((m) => m.type),
@@ -98,6 +100,7 @@ export const ExternalPushWorkflowLayer = ExternalPushWorkflow.toLayer(
       (entityWorkflow) =>
         ExternalPushEntityWorkflow.execute({
           entityName: entityWorkflow.entityName,
+          excludeAdapter,
           mutations: entityWorkflow.mutations,
           tokenKey,
         }).pipe(

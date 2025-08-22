@@ -40,6 +40,15 @@ export const SyncResult = Schema.Struct({
 })
 export type SyncResult = typeof SyncResult.Type
 
+export const WebhookSyncRequest = Schema.Struct({
+  entityId: Schema.String,
+  entityType: Schema.String,
+  operation: Schema.Literal('create', 'update', 'delete', 'merge'),
+  relatedIds: Schema.optional(Schema.Array(Schema.String)),
+  webhookData: Schema.optional(Schema.Unknown),
+})
+export type WebhookSyncRequest = typeof WebhookSyncRequest.Type
+
 export class AdapterOperations extends Context.Tag('@openfaith/adapter-core/AdapterOperations')<
   AdapterOperations,
   {
@@ -77,5 +86,14 @@ export class AdapterOperations extends Context.Tag('@openfaith/adapter-core/Adap
     ) => Effect.Effect<unknown, AdapterValidationError>
 
     readonly getAdapterTag: () => string
+
+    readonly processWebhook: (
+      webhookData: unknown,
+    ) => Effect.Effect<ReadonlyArray<WebhookSyncRequest>, AdapterValidationError>
+
+    readonly fetchEntityById: (
+      entityType: string,
+      entityId: string,
+    ) => Effect.Effect<unknown, AdapterSyncError>
   }
 >() {}

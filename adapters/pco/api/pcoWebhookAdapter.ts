@@ -7,13 +7,10 @@ export type WebhookOperation = 'upsert' | 'delete' | 'merge'
 
 /**
  * Type to extract the event from the webhook schema
- * PCO webhooks have data[0] structure, we want just the event object
+ * The webhook schemas created by mkPcoWebhookDelivery are already individual events,
+ * not wrapped in a data array
  */
-export type ExtractEventType<T extends Schema.Schema.Any> = Schema.Schema.Type<T> extends {
-  data: ReadonlyArray<infer E>
-}
-  ? E
-  : never
+export type ExtractEventType<T extends Schema.Schema.Any> = Schema.Schema.Type<T>
 
 /**
  * Base webhook definition type

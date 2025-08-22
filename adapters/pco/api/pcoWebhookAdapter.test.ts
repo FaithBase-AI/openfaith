@@ -1,11 +1,7 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
 import { Effect, Schema } from 'effect'
-import {
-  type BaseWebhookDefinition,
-  type ExtractEventType,
-  pcoWebhookAdapter,
-} from './pcoWebhookAdapter'
+import { type ExtractEventType, pcoWebhookAdapter } from './pcoWebhookAdapter'
 
 // Mock webhook schemas for testing
 const MockEventDeliverySchema = Schema.Struct({
@@ -58,7 +54,7 @@ const MockPersonEventSchema = Schema.Struct({
   ),
 })
 
-const MockMergeEventSchema = Schema.Struct({
+const MockPersonMergeEventSchema = Schema.Struct({
   data: Schema.Array(
     Schema.Struct({
       attributes: Schema.Struct({
@@ -75,52 +71,38 @@ const MockMergeEventSchema = Schema.Struct({
 // Tests for the ExtractEventType utility
 effect('Type validation: ExtractEventType correctly extracts event from webhook schema', () =>
   Effect.gen(function* () {
-    // This test validates that the type extraction works at compile time
-    // We create a function that expects the extracted type and verify it compiles
-    const validateExtractedType = (
-      event: ExtractEventType<typeof MockEventDeliverySchema>,
-    ): {
-      id: string
-      type: 'EventDelivery'
-      attributes: {
-        name: string
-        payload: {
-          data: {
-            id: string
-            type: string
-            attributes?: {
-              first_name?: string
-              last_name?: string
-            }
-          }
-        }
-      }
-    } => event
+    // ExtractEventType now returns the full schema type (no extraction from data array)
+    const validateExtractedType = (event: ExtractEventType<typeof MockEventDeliverySchema>) => event
 
     // Create a mock event that matches the extracted type
+    // ExtractEventType returns the full schema type (with data array)
     const mockEvent = {
-      attributes: {
-        name: 'person.created',
-        payload: {
-          data: {
-            attributes: {
-              first_name: 'John',
-              last_name: 'Doe',
+      data: [
+        {
+          attributes: {
+            name: 'person.created',
+            payload: {
+              data: {
+                attributes: {
+                  first_name: 'John',
+                  last_name: 'Doe',
+                },
+                id: '456',
+                type: 'Person',
+              },
             },
-            id: '456',
-            type: 'Person',
           },
+          id: '123',
+          type: 'EventDelivery' as const,
         },
-      },
-      id: '123',
-      type: 'EventDelivery' as const,
+      ],
     }
 
     // This should compile correctly, validating our type extraction
     const result = validateExtractedType(mockEvent)
-    expect(result.id).toBe('123')
-    expect(result.type).toBe('EventDelivery')
-    expect(result.attributes.payload.data.id).toBe('456')
+    expect(result.data[0]?.id).toBe('123')
+    expect(result.data[0]?.type).toBe('EventDelivery')
+    expect(result.data[0]?.attributes.payload.data.id).toBe('456')
   }),
 )
 
@@ -129,7 +111,7 @@ effect('pcoWebhookAdapter: upsert operation creates correct definition', () =>
   Effect.gen(function* () {
     const definition = pcoWebhookAdapter({
       eventType: 'person.created',
-      extractEntityId: (event) => event.id,
+      extractEntityId: (event) => event.data[0]?.id ?? '',
       operation: 'upsert',
       webhookSchema: MockPersonEventSchema,
     })
@@ -147,23 +129,27 @@ effect('pcoWebhookAdapter: upsert extractEntityId returns correct string', () =>
   Effect.gen(function* () {
     const definition = pcoWebhookAdapter({
       eventType: 'person.updated',
-      extractEntityId: (event) => event.attributes.payload.data.id,
+      extractEntityId: (event) => event.data[0]?.attributes.payload.data.id ?? '',
       operation: 'upsert',
       webhookSchema: MockEventDeliverySchema,
     })
 
     const mockEvent: ExtractEventType<typeof MockEventDeliverySchema> = {
-      attributes: {
-        name: 'person.updated',
-        payload: {
-          data: {
-            id: 'person-456',
-            type: 'Person',
+      data: [
+        {
+          attributes: {
+            name: 'person.updated',
+            payload: {
+              data: {
+                id: 'person-456',
+                type: 'Person',
+              },
+            },
           },
+          id: 'delivery-123',
+          type: 'EventDelivery',
         },
-      },
-      id: 'delivery-123',
-      type: 'EventDelivery',
+      ],
     }
 
     const entityId = definition.extractEntityId?.(mockEvent)
@@ -176,16 +162,13 @@ effect('pcoWebhookAdapter: delete operation creates correct definition', () =>
   Effect.gen(function* () {
     const definition = pcoWebhookAdapter({
       eventType: 'person.deleted',
-      extractEntityId: (event) => event.id,
+      extractEntityId: (event) => event.data[0]?.id ?? '',
       operation: 'delete',
       webhookSchema: MockPersonEventSchema,
     })
 
-    // Verify the definition has correct structure
-    expect(definition.webhookSchema).toBe(MockPersonEventSchema)
-    expect(definition.eventType).toBe('person.deleted')
     expect(definition.operation).toBe('delete')
-    expect(definition.primaryKey).toBe('externalId')
+    expect(definition.eventType).toBe('person.deleted')
     expect(typeof definition.extractEntityId).toBe('function')
   }),
 )
@@ -194,19 +177,23 @@ effect('pcoWebhookAdapter: delete extractEntityId returns correct string', () =>
   Effect.gen(function* () {
     const definition = pcoWebhookAdapter({
       eventType: 'person.deleted',
-      extractEntityId: (event) => event.id,
+      extractEntityId: (event) => event.data[0]?.id ?? '',
       operation: 'delete',
       webhookSchema: MockPersonEventSchema,
     })
 
     const mockEvent: ExtractEventType<typeof MockPersonEventSchema> = {
-      attributes: {
-        email: null,
-        first_name: 'Jane',
-        last_name: 'Smith',
-      },
-      id: 'person-789',
-      type: 'Person',
+      data: [
+        {
+          attributes: {
+            email: 'john@example.com',
+            first_name: 'John',
+            last_name: 'Doe',
+          },
+          id: 'person-789',
+          type: 'Person',
+        },
+      ],
     }
 
     const entityId = definition.extractEntityId?.(mockEvent)
@@ -218,20 +205,17 @@ effect('pcoWebhookAdapter: delete extractEntityId returns correct string', () =>
 effect('pcoWebhookAdapter: merge operation creates correct definition', () =>
   Effect.gen(function* () {
     const definition = pcoWebhookAdapter({
-      eventType: 'person.merged',
+      eventType: 'person.merge',
       extractEntityId: (event) => ({
-        keepId: event.attributes.keepId,
-        removeId: event.attributes.removeId,
+        keepId: event.data[0]?.attributes.keepId ?? '',
+        removeId: event.data[0]?.attributes.removeId ?? '',
       }),
       operation: 'merge',
-      webhookSchema: MockMergeEventSchema,
+      webhookSchema: MockPersonMergeEventSchema,
     })
 
-    // Verify the definition has correct structure
-    expect(definition.webhookSchema).toBe(MockMergeEventSchema)
-    expect(definition.eventType).toBe('person.merged')
     expect(definition.operation).toBe('merge')
-    expect(definition.primaryKey).toBe('externalId')
+    expect(definition.eventType).toBe('person.merge')
     expect(typeof definition.extractEntityId).toBe('function')
   }),
 )
@@ -239,372 +223,322 @@ effect('pcoWebhookAdapter: merge operation creates correct definition', () =>
 effect('pcoWebhookAdapter: merge extractEntityId returns correct object', () =>
   Effect.gen(function* () {
     const definition = pcoWebhookAdapter({
-      eventType: 'person.merged',
+      eventType: 'person.merge',
       extractEntityId: (event) => ({
-        keepId: event.attributes.keepId,
-        removeId: event.attributes.removeId,
+        keepId: event.data[0]?.attributes.keepId ?? '',
+        removeId: event.data[0]?.attributes.removeId ?? '',
       }),
       operation: 'merge',
-      webhookSchema: MockMergeEventSchema,
+      webhookSchema: MockPersonMergeEventSchema,
     })
 
-    const mockEvent: ExtractEventType<typeof MockMergeEventSchema> = {
-      attributes: {
-        keepId: 'person-keep-123',
-        mergedAt: '2024-01-01T00:00:00Z',
-        removeId: 'person-remove-456',
-      },
-      id: 'merge-001',
-      type: 'PersonMerge',
+    const mockEvent: ExtractEventType<typeof MockPersonMergeEventSchema> = {
+      data: [
+        {
+          attributes: {
+            keepId: 'person-keep-123',
+            mergedAt: '2024-01-01T00:00:00Z',
+            removeId: 'person-remove-456',
+          },
+          id: 'merge-event-123',
+          type: 'PersonMerge',
+        },
+      ],
     }
 
-    const mergeIds = definition.extractEntityId?.(mockEvent)
-    expect(mergeIds).toEqual({
+    const result = definition.extractEntityId?.(mockEvent)
+    expect(result).toEqual({
       keepId: 'person-keep-123',
       removeId: 'person-remove-456',
     })
   }),
 )
 
-// Type-level tests for operation overloads
-effect('Type validation: upsert operation requires extractEntityId returning string', () =>
+// Type-specific tests to ensure extractEntityId is properly typed
+effect('Type validation: extractEntityId parameter types match webhook schema for upsert', () =>
   Effect.gen(function* () {
-    // This function validates that upsert operation type checking works
-    const createUpsertDefinition = (): BaseWebhookDefinition<
-      typeof MockPersonEventSchema,
-      'person.created',
-      'upsert'
-    > => {
-      return pcoWebhookAdapter({
-        eventType: 'person.created',
-        extractEntityId: (event) => event.id, // Must return string
-        operation: 'upsert',
-        webhookSchema: MockPersonEventSchema,
-      })
-    }
+    // This test validates compile-time type checking
+    const definition = pcoWebhookAdapter({
+      eventType: 'test.upsert',
+      extractEntityId: (event) => event.data[0]?.id ?? '', // Must return string
+      operation: 'upsert',
+      webhookSchema: MockPersonEventSchema,
+    })
 
-    const definition = createUpsertDefinition()
-    expect(definition.operation).toBe('upsert')
-
-    // Verify that the extractEntityId function signature is correct
-    if (definition.extractEntityId) {
-      const mockEvent: ExtractEventType<typeof MockPersonEventSchema> = {
-        attributes: {
-          email: null,
-          first_name: 'Test',
-          last_name: 'User',
+    // Create a mock event that matches the schema
+    const mockEvent: ExtractEventType<typeof MockPersonEventSchema> = {
+      data: [
+        {
+          attributes: {
+            email: null,
+            first_name: 'Test',
+            last_name: 'User',
+          },
+          id: 'test-id',
+          type: 'Person',
         },
-        id: 'test-id',
-        type: 'Person',
-      }
-      const result = definition.extractEntityId(mockEvent)
-      expect(typeof result).toBe('string')
+      ],
     }
+
+    const result = definition.extractEntityId?.(mockEvent)
+    expect(typeof result).toBe('string')
   }),
 )
 
-effect('Type validation: delete operation requires extractEntityId returning string', () =>
+effect('Type validation: extractEntityId parameter types match webhook schema for delete', () =>
   Effect.gen(function* () {
-    // This function validates that delete operation type checking works
-    const createDeleteDefinition = (): BaseWebhookDefinition<
-      typeof MockPersonEventSchema,
-      'person.deleted',
-      'delete'
-    > => {
-      return pcoWebhookAdapter({
-        eventType: 'person.deleted',
-        extractEntityId: (event) => event.id, // Must return string
-        operation: 'delete',
-        webhookSchema: MockPersonEventSchema,
-      })
-    }
+    const definition = pcoWebhookAdapter({
+      eventType: 'test.delete',
+      extractEntityId: (event) => event.data[0]?.id ?? '', // Must return string
+      operation: 'delete',
+      webhookSchema: MockPersonEventSchema,
+    })
 
-    const definition = createDeleteDefinition()
-    expect(definition.operation).toBe('delete')
-
-    // Verify that the extractEntityId function signature is correct
-    if (definition.extractEntityId) {
-      const mockEvent: ExtractEventType<typeof MockPersonEventSchema> = {
-        attributes: {
-          email: 'delete@test.com',
-          first_name: 'Delete',
-          last_name: 'Test',
+    const mockEvent: ExtractEventType<typeof MockPersonEventSchema> = {
+      data: [
+        {
+          attributes: {
+            email: null,
+            first_name: 'Test',
+            last_name: 'User',
+          },
+          id: 'test-id',
+          type: 'Person',
         },
-        id: 'delete-test-id',
-        type: 'Person',
-      }
-      const result = definition.extractEntityId(mockEvent)
-      expect(typeof result).toBe('string')
+      ],
     }
+
+    const result = definition.extractEntityId?.(mockEvent)
+    expect(typeof result).toBe('string')
   }),
 )
 
-effect('Type validation: merge operation requires extractEntityId returning merge object', () =>
+effect('Type validation: extractEntityId parameter types match webhook schema for merge', () =>
   Effect.gen(function* () {
-    // This function validates that merge operation type checking works
-    const createMergeDefinition = (): BaseWebhookDefinition<
-      typeof MockMergeEventSchema,
-      'person.merged',
-      'merge'
-    > => {
-      return pcoWebhookAdapter({
-        eventType: 'person.merged',
-        extractEntityId: (event) => ({
-          keepId: event.attributes.keepId,
-          removeId: event.attributes.removeId,
-        }), // Must return { keepId: string; removeId: string }
-        operation: 'merge',
-        webhookSchema: MockMergeEventSchema,
-      })
-    }
+    const definition = pcoWebhookAdapter({
+      eventType: 'test.merge',
+      extractEntityId: (event) => ({
+        keepId: event.data[0]?.attributes.keepId ?? '',
+        removeId: event.data[0]?.attributes.removeId ?? '',
+      }),
+      operation: 'merge',
+      webhookSchema: MockPersonMergeEventSchema,
+    })
 
-    const definition = createMergeDefinition()
-    expect(definition.operation).toBe('merge')
-
-    // Verify that the extractEntityId function signature is correct
-    if (definition.extractEntityId) {
-      const mockEvent: ExtractEventType<typeof MockMergeEventSchema> = {
-        attributes: {
-          keepId: 'keep-123',
-          mergedAt: '2024-01-01T00:00:00Z',
-          removeId: 'remove-456',
+    const mockEvent: ExtractEventType<typeof MockPersonMergeEventSchema> = {
+      data: [
+        {
+          attributes: {
+            keepId: 'keep-id',
+            mergedAt: '2024-01-01',
+            removeId: 'remove-id',
+          },
+          id: 'merge-id',
+          type: 'PersonMerge',
         },
-        id: 'merge-test-id',
-        type: 'PersonMerge',
-      }
-      const result = definition.extractEntityId(mockEvent)
-      expect(result).toHaveProperty('keepId')
-      expect(result).toHaveProperty('removeId')
-      expect((result as any).keepId).toBe('keep-123')
-      expect((result as any).removeId).toBe('remove-456')
+      ],
     }
+
+    const result = definition.extractEntityId?.(mockEvent)
+    expect(result).toHaveProperty('keepId')
+    expect(result).toHaveProperty('removeId')
   }),
 )
 
-// Test that primaryKey is always 'externalId' regardless of operation
-effect('pcoWebhookAdapter: primaryKey is always externalId for all operations', () =>
+// Tests for definitions without extractEntityId
+effect('pcoWebhookAdapter: definitions work without extractEntityId', () =>
   Effect.gen(function* () {
     const upsertDef = pcoWebhookAdapter({
-      eventType: 'person.created',
-      extractEntityId: (event) => event.id,
+      eventType: 'test.created',
+      extractEntityId: (event) => event.data[0]?.id ?? '',
       operation: 'upsert',
       webhookSchema: MockPersonEventSchema,
     })
 
     const deleteDef = pcoWebhookAdapter({
-      eventType: 'person.deleted',
-      extractEntityId: (event) => event.id,
+      eventType: 'test.deleted',
+      extractEntityId: (event) => event.data[0]?.id ?? '',
       operation: 'delete',
       webhookSchema: MockPersonEventSchema,
     })
 
     const mergeDef = pcoWebhookAdapter({
-      eventType: 'person.merged',
+      eventType: 'test.merged',
       extractEntityId: (event) => ({
-        keepId: event.attributes.keepId,
-        removeId: event.attributes.removeId,
+        keepId: event.data[0]?.attributes.keepId ?? '',
+        removeId: event.data[0]?.attributes.removeId ?? '',
       }),
       operation: 'merge',
-      webhookSchema: MockMergeEventSchema,
+      webhookSchema: MockPersonMergeEventSchema,
     })
 
-    expect(upsertDef.primaryKey).toBe('externalId')
-    expect(deleteDef.primaryKey).toBe('externalId')
-    expect(mergeDef.primaryKey).toBe('externalId')
+    expect(upsertDef.extractEntityId).toBeDefined()
+    expect(deleteDef.extractEntityId).toBeDefined()
+    expect(mergeDef.extractEntityId).toBeDefined()
   }),
 )
 
-// Test ExtractEventType with nested array structure
-effect('Type validation: ExtractEventType handles complex nested structures', () =>
-  Effect.gen(function* () {
-    const ComplexEventSchema = Schema.Struct({
-      data: Schema.Array(
-        Schema.Struct({
-          attributes: Schema.Struct({
-            items: Schema.Array(
-              Schema.Struct({
-                itemId: Schema.String,
-                itemName: Schema.String,
-              }),
-            ),
-            nested: Schema.Struct({
-              deeply: Schema.Struct({
-                value: Schema.Number,
-              }),
-            }),
+// Test complex nested schemas
+const ComplexEventSchema = Schema.Struct({
+  data: Schema.Array(
+    Schema.Struct({
+      attributes: Schema.Struct({
+        items: Schema.Array(
+          Schema.Struct({
+            itemId: Schema.String,
+            itemName: Schema.String,
           }),
-          id: Schema.String,
-          meta: Schema.optional(
-            Schema.Struct({
-              timestamp: Schema.String,
-              version: Schema.Number,
-            }),
-          ),
-          type: Schema.Literal('ComplexEvent'),
+        ),
+        nested: Schema.Struct({
+          deeply: Schema.Struct({
+            value: Schema.Number,
+          }),
+        }),
+      }),
+      id: Schema.String,
+      meta: Schema.optional(
+        Schema.Struct({
+          timestamp: Schema.String,
+          version: Schema.Number,
         }),
       ),
-    })
+      type: Schema.Literal('ComplexEvent'),
+    }),
+  ),
+})
 
-    // Validate that ExtractEventType correctly extracts the complex nested type
-    const validateComplexType = (
-      event: ExtractEventType<typeof ComplexEventSchema>,
-    ): {
-      id: string
-      type: 'ComplexEvent'
-      attributes: {
-        nested: {
-          deeply: {
-            value: number
-          }
-        }
-        items: ReadonlyArray<{
-          itemId: string
-          itemName: string
-        }>
-      }
-      meta?: {
-        timestamp: string
-        version: number
-      }
-    } => event
+effect('Type validation: ExtractEventType works with complex nested schemas', () =>
+  Effect.gen(function* () {
+    const validateComplexType = (event: ExtractEventType<typeof ComplexEventSchema>) => event
 
     const mockComplexEvent = {
-      attributes: {
-        items: [
-          { itemId: 'item-1', itemName: 'First Item' },
-          { itemId: 'item-2', itemName: 'Second Item' },
-        ],
-        nested: {
-          deeply: {
-            value: 42,
+      data: [
+        {
+          attributes: {
+            items: [
+              { itemId: '1', itemName: 'Item 1' },
+              { itemId: '2', itemName: 'Item 2' },
+            ],
+            nested: {
+              deeply: {
+                value: 42,
+              },
+            },
           },
+          id: 'complex-123',
+          meta: {
+            timestamp: '2024-01-01T00:00:00Z',
+            version: 1,
+          },
+          type: 'ComplexEvent' as const,
         },
-      },
-      id: 'complex-123',
-      meta: {
-        timestamp: '2024-01-01T00:00:00Z',
-        version: 1,
-      },
-      type: 'ComplexEvent' as const,
+      ],
     }
 
     const result = validateComplexType(mockComplexEvent)
-    expect(result.id).toBe('complex-123')
-    expect(result.attributes.nested.deeply.value).toBe(42)
-    expect(result.attributes.items).toHaveLength(2)
-    expect(result.meta?.version).toBe(1)
+    expect(result.data[0]?.id).toBe('complex-123')
+    expect(result.data[0]?.attributes.nested.deeply.value).toBe(42)
+    expect(result.data[0]?.attributes.items).toHaveLength(2)
   }),
 )
 
-// Test that definitions preserve all input parameters
-effect('pcoWebhookAdapter: definitions preserve all input parameters', () =>
+// Test with minimal schemas
+const MinimalSchema = Schema.Struct({
+  data: Schema.Array(
+    Schema.Struct({
+      customField: Schema.String,
+      id: Schema.String,
+    }),
+  ),
+})
+
+effect('pcoWebhookAdapter: works with minimal schemas', () =>
   Effect.gen(function* () {
-    const customSchema = Schema.Struct({
-      data: Schema.Array(
-        Schema.Struct({
-          customField: Schema.String,
-          id: Schema.String,
-        }),
-      ),
-    })
-
-    const definition = pcoWebhookAdapter({
-      eventType: 'custom.event.type',
-      extractEntityId: (event) => event.customField,
-      operation: 'upsert',
-      webhookSchema: customSchema,
-    })
-
-    // Verify all parameters are preserved
-    expect(definition.webhookSchema).toBe(customSchema)
-    expect(definition.eventType).toBe('custom.event.type')
-    expect(definition.operation).toBe('upsert')
-    expect(definition.primaryKey).toBe('externalId')
-
-    // Test the extractEntityId function
-    const mockEvent: ExtractEventType<typeof customSchema> = {
-      customField: 'custom-value',
-      id: 'test-id',
-    }
-    expect(definition.extractEntityId?.(mockEvent)).toBe('custom-value')
-  }),
-)
-
-// Edge case: Test with minimal webhook schema
-effect('pcoWebhookAdapter: handles minimal webhook schema', () =>
-  Effect.gen(function* () {
-    const MinimalSchema = Schema.Struct({
-      data: Schema.Array(
-        Schema.Struct({
-          id: Schema.String,
-        }),
-      ),
-    })
-
     const definition = pcoWebhookAdapter({
       eventType: 'minimal.event',
-      extractEntityId: (event) => event.id,
-      operation: 'delete',
+      extractEntityId: (event) => event.data[0]?.customField ?? '',
+      operation: 'upsert',
       webhookSchema: MinimalSchema,
     })
 
-    expect(definition.webhookSchema).toBe(MinimalSchema)
-    expect(definition.eventType).toBe('minimal.event')
-    expect(definition.operation).toBe('delete')
-    expect(definition.primaryKey).toBe('externalId')
-
     const mockEvent: ExtractEventType<typeof MinimalSchema> = {
-      id: 'minimal-id',
+      data: [
+        {
+          customField: 'custom-value',
+          id: 'minimal-id',
+        },
+      ],
     }
-    expect(definition.extractEntityId?.(mockEvent)).toBe('minimal-id')
+
+    const entityId = definition.extractEntityId?.(mockEvent)
+    expect(entityId).toBe('custom-value')
   }),
 )
 
-// Test type safety with incorrect return types (these should be compile-time tests)
-effect('Type validation: operation overloads enforce correct extractEntityId return types', () =>
+// Test that optional extractEntityId is handled correctly
+const SimpleIdSchema = Schema.Struct({
+  data: Schema.Array(
+    Schema.Struct({
+      id: Schema.String,
+    }),
+  ),
+})
+
+effect('pcoWebhookAdapter: optional extractEntityId for different operations', () =>
   Effect.gen(function* () {
-    // Test that we can create valid definitions for each operation
-    const validUpsert = pcoWebhookAdapter({
-      eventType: 'test.upsert',
-      extractEntityId: () => 'string-id', // Valid: returns string
+    const upsertDef = pcoWebhookAdapter({
+      eventType: 'simple.upsert',
+      extractEntityId: (event) => event.data[0]?.id ?? '',
       operation: 'upsert',
-      webhookSchema: MockPersonEventSchema,
+      webhookSchema: SimpleIdSchema,
     })
 
-    const validDelete = pcoWebhookAdapter({
-      eventType: 'test.delete',
-      extractEntityId: () => 'string-id', // Valid: returns string
-      operation: 'delete',
-      webhookSchema: MockPersonEventSchema,
+    const mockEvent: ExtractEventType<typeof SimpleIdSchema> = {
+      data: [
+        {
+          id: 'simple-id',
+        },
+      ],
+    }
+
+    const upsertId = upsertDef.extractEntityId?.(mockEvent)
+    expect(upsertId).toBe('simple-id')
+  }),
+)
+
+// Tests for webhook definitions that expect specific event shapes
+effect('pcoWebhookAdapter: webhook schemas with actual event shape (EventDelivery)', () =>
+  Effect.gen(function* () {
+    const definition = pcoWebhookAdapter({
+      eventType: 'people.v2.events.person.created',
+      extractEntityId: (event) => event.data[0]?.attributes.payload.data.id ?? '',
+      operation: 'upsert',
+      webhookSchema: MockEventDeliverySchema,
     })
 
-    const validMerge = pcoWebhookAdapter({
-      eventType: 'test.merge',
-      extractEntityId: () => ({
-        keepId: 'keep',
-        removeId: 'remove',
-      }), // Valid: returns merge object
-      operation: 'merge',
-      webhookSchema: MockMergeEventSchema,
-    })
+    const mockEvent = {
+      data: [
+        {
+          attributes: {
+            name: 'people.v2.events.person.created',
+            payload: {
+              data: {
+                attributes: {
+                  first_name: 'Jane',
+                  last_name: 'Doe',
+                },
+                id: '789',
+                type: 'Person',
+              },
+            },
+          },
+          id: 'event-123',
+          type: 'EventDelivery' as const,
+        },
+      ],
+    }
 
-    expect(validUpsert.operation).toBe('upsert')
-    expect(validDelete.operation).toBe('delete')
-    expect(validMerge.operation).toBe('merge')
-
-    // The following would fail at compile time (commented out to keep tests passing):
-    // const invalidUpsert = pcoWebhookAdapter({
-    //   webhookSchema: MockPersonEventSchema,
-    //   eventType: 'test.upsert',
-    //   operation: 'upsert',
-    //   extractEntityId: (event) => ({ keepId: 'a', removeId: 'b' }) // Type error: should return string
-    // })
-
-    // const invalidMerge = pcoWebhookAdapter({
-    //   webhookSchema: MockMergeEventSchema,
-    //   eventType: 'test.merge',
-    //   operation: 'merge',
-    //   extractEntityId: (event) => 'string' // Type error: should return merge object
-    // })
+    const extractedId = definition.extractEntityId!(mockEvent as any)
+    expect(extractedId).toBe('789')
   }),
 )

@@ -6,12 +6,13 @@ import { NodeClusterRunnerSocket, NodeHttpServer, NodeRuntime } from '@effect/pl
 import { WorkflowProxyServer } from '@effect/workflow'
 import { DBLive, TokenManagerLive } from '@openfaith/server'
 import { HealthLive, WorkflowApi, workflows } from '@openfaith/workers/api/workflowApi'
+import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
 import { CreateOrgWorkflowLayer } from '@openfaith/workers/workflows/createOrgWorkflow'
 import { ExternalPushEntityWorkflowLayer } from '@openfaith/workers/workflows/externalPushEntityWorkflow'
 import { ExternalPushWorkflowLayer } from '@openfaith/workers/workflows/externalPushWorkflow'
 import { ExternalSyncEntityWorkflowLayer } from '@openfaith/workers/workflows/externalSyncEntityWorkflow'
+import { ExternalSyncSingleEntityWorkflowLayer } from '@openfaith/workers/workflows/externalSyncSingleEntityWorkflow'
 import { ExternalSyncWorkflowLayer } from '@openfaith/workers/workflows/externalSyncWorkflow'
-import { PcoWebhookWorkflowLayer } from '@openfaith/workers/workflows/pcoWebhookWorkflow'
 import { TestWorkflowLayer } from '@openfaith/workers/workflows/testWorkflow'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
@@ -43,10 +44,10 @@ const port = 3020
 const EnvLayer = Layer.mergeAll(
   ExternalSyncWorkflowLayer,
   ExternalSyncEntityWorkflowLayer,
+  ExternalSyncSingleEntityWorkflowLayer,
   ExternalPushWorkflowLayer,
   ExternalPushEntityWorkflowLayer,
   CreateOrgWorkflowLayer,
-  PcoWebhookWorkflowLayer,
   TestWorkflowLayer,
 ).pipe(
   Layer.provide(WorkflowEngineLayer),
@@ -63,6 +64,7 @@ HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(NodeHttpServer.layer(createServer, { port })),
   Layer.provide(FetchHttpClient.layer),
   Layer.provide(NodeSdkLive),
+  Layer.provide(WorkflowClient.Default),
   Layer.launch,
   NodeRuntime.runMain,
 )

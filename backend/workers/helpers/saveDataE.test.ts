@@ -33,6 +33,14 @@ const TestAdapterOperations = Layer.succeed(
         ? Option.some(entity.attributes.updated_at)
         : Option.none()
     },
+    fetchEntityById: (entityType: string, entityId: string) =>
+      Effect.succeed({
+        attributes: {
+          name: `Test ${entityType} ${entityId}`,
+        },
+        id: entityId,
+        type: entityType,
+      }),
     fetchToken: () =>
       Effect.fail(
         new AdapterTokenError({
@@ -44,6 +52,7 @@ const TestAdapterOperations = Layer.succeed(
     getEntityManifest: () => ({}),
     listEntityData: () => Stream.empty,
     processEntityData: () => Effect.succeed(undefined),
+    processWebhook: () => Effect.succeed([]),
     syncEntityData: () => Effect.succeed([]),
     transformEntityData: (_entityName: string, data: unknown) => Effect.succeed(data),
   }),

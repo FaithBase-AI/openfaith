@@ -39,7 +39,9 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   notFoundComponent: () => <NotFound />,
 })
 
-function RootDocument() {
+function RootDocument(props: unknown) {
+  console.log('root document', props)
+
   return (
     <html lang='en' suppressHydrationWarning>
       <head>

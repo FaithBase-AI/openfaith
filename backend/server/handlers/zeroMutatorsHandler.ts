@@ -3,7 +3,8 @@ import { TokenKey } from '@openfaith/adapter-core/server'
 import { MainApi, MutatorError, SessionContext } from '@openfaith/domain'
 import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
 import { AppZeroStore, ZeroLive } from '@openfaith/server/live/zeroLive'
-import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
+import { mutationSideEffects } from '@openfaith/server/services/externalPushTrigger'
+
 import { createMutators } from '@openfaith/zero'
 import type { ReadonlyJSONObject } from '@rocicorp/zero'
 import { Effect, Layer, Option, pipe } from 'effect'
@@ -43,35 +44,20 @@ export const ZeroHandlerLive = HttpApiBuilder.group(MainApi, 'zero', (handlers) 
       })
 
       // We use forkDaemon, it acts like after from nextjs. It splits off of the fiber of this effect and continues running on it's own effect. This let's us return result without waiting for the side effects to complete.
-      yield* Effect.forkDaemon(
-        Effect.gen(function* () {
-          yield* Effect.log('Daemon fiber started for external sync')
+      if (authData.activeOrganizationId) {
+        const organizationId = authData.activeOrganizationId
+        yield* Effect.forkDaemon(
+          Effect.gen(function* () {
+            yield* Effect.log('Daemon fiber started for external sync')
 
-          if (authData.activeOrganizationId) {
-            const workflowClient = yield* WorkflowClient
-
-            yield* Effect.log('Triggering ExternalPushWorkflow')
-
-            yield* workflowClient.workflows
-              .ExternalPushWorkflow({
-                payload: {
-                  mutations: input.payload.mutations,
-                  tokenKey: authData.activeOrganizationId,
-                },
-              })
-              .pipe(
-                Effect.tap(() => Effect.log('ExternalPushWorkflow completed successfully')),
-                Effect.tapError((error) =>
-                  Effect.logError('External sync workflow failed', {
-                    error,
-                    mutations: input.payload.mutations,
-                  }),
-                ),
-                Effect.ignore,
-              )
-          }
-        }),
-      )
+            yield* mutationSideEffects({
+              mutations: input.payload.mutations,
+              source: 'internal',
+              tokenKey: organizationId,
+            })
+          }),
+        )
+      }
 
       return result
     }),

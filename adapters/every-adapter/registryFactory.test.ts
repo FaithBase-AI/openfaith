@@ -9,6 +9,13 @@ import { Effect, Layer, Option, Stream } from 'effect'
 const createMockAdapterOperations = (tag: string) =>
   AdapterOperations.of({
     extractUpdatedAt: () => Option.some('2023-01-01T00:00:00Z'),
+
+    fetchEntityById: (entityType, entityId) =>
+      Effect.succeed({
+        id: entityId,
+        name: `Mock ${entityType} ${entityId}`,
+        type: entityType,
+      }),
     fetchToken: () =>
       Effect.succeed({
         accessToken: `mock-token-${tag}`,
@@ -33,6 +40,8 @@ const createMockAdapterOperations = (tag: string) =>
     listEntityData: (entityName) => Stream.make({ id: '1', name: `mock-${entityName}` }),
 
     processEntityData: () => Effect.void,
+
+    processWebhook: () => Effect.succeed([]),
 
     syncEntityData: (entityName, operations) =>
       Effect.succeed(

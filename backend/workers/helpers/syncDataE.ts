@@ -392,8 +392,17 @@ export const syncToExternalSystemsE = Effect.fn('syncToExternalSystemsE')(functi
   op: CrudOperation,
   entityName: string,
   externalLinks: ReadonlyArray<ExternalLink>,
+  excludeAdapter?: 'pco' | 'ccb',
 ) {
-  yield* Effect.forEach(externalLinks, (link) =>
+  // Filter out the excluded adapter if specified
+  const linksToSync = excludeAdapter
+    ? pipe(
+        externalLinks,
+        Array.filter((link) => link.adapter !== excludeAdapter),
+      )
+    : externalLinks
+
+  yield* Effect.forEach(linksToSync, (link) =>
     Effect.gen(function* () {
       if (link.adapter === 'pco') {
         yield* syncToPcoE(op, entityName, link)
@@ -411,6 +420,7 @@ export const syncToExternalSystemsE = Effect.fn('syncToExternalSystemsE')(functi
  */
 export const processCrudOperationE = Effect.fn('processCrudOperationE')(function* (
   op: CrudOperation,
+  excludeAdapter?: 'pco' | 'ccb',
 ) {
   const entityName = mkEntityName(op.tableName)
   // Extract entity ID from primaryKey record
@@ -419,6 +429,7 @@ export const processCrudOperationE = Effect.fn('processCrudOperationE')(function
   yield* Effect.log('Processing CRUD operation', {
     entityId,
     entityName,
+    excludeAdapter,
     operation: op.op,
     tableName: op.tableName,
   })
@@ -448,11 +459,12 @@ export const processCrudOperationE = Effect.fn('processCrudOperationE')(function
   yield* Effect.log('Found external links', {
     adapters: externalLinks.map((link) => link.adapter),
     entityId,
+    excludeAdapter,
     linkCount: externalLinks.length,
   })
 
-  // Sync to each external system
-  yield* syncToExternalSystemsE(op, entityName, externalLinks)
+  // Sync to each external system (excluding the specified adapter if any)
+  yield* syncToExternalSystemsE(op, entityName, externalLinks, excludeAdapter)
 })
 
 /**
@@ -461,14 +473,16 @@ export const processCrudOperationE = Effect.fn('processCrudOperationE')(function
  */
 export const syncDataE = Effect.fn('syncDataE')(function* (
   mutations: ReadonlyArray<{ mutation: CRUDMutation; op: CRUDOp }>,
+  excludeAdapter?: 'pco' | 'ccb',
 ) {
   yield* Effect.log('Starting external sync for mutations', {
+    excludeAdapter,
     mutationCount: mutations.length,
   })
 
   // Process each mutation
   yield* Effect.forEach(mutations, ({ op }) =>
-    processCrudOperationE(op).pipe(
+    processCrudOperationE(op, excludeAdapter).pipe(
       Effect.tapError((error) =>
         Effect.logError('Failed to process CRUD operation', {
           error,

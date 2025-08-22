@@ -445,8 +445,8 @@ effect('mkPcoEntityManifest: handles complex endpoint combinations', () =>
       errors: testErrors,
     })
 
-    // Test that we have both entities
-    expect(Object.keys(manifest)).toEqual(['Person', 'Address'])
+    // Test that we have both entities and webhooks
+    expect(Object.keys(manifest)).toEqual(['Person', 'Address', 'webhooks'])
 
     // Test Person entity has all endpoints
     const personEndpoints = Object.keys(manifest.Person.endpoints)

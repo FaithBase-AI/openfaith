@@ -75,24 +75,20 @@ export const mkPcoWebhookDelivery = <TData extends Schema.Schema.Any>(
   data: TData,
 ) =>
   Schema.Struct({
-    data: Schema.Array(
-      Schema.Struct({
-        attributes: Schema.Struct({
-          attempt: Schema.Number,
-          name: Schema.Literal(webhook),
-          // Parse the JSON string payload into a structured event
-          payload: Schema.parseJson(mkPcoWebhookPayload(data)),
+    attributes: Schema.Struct({
+      attempt: Schema.Number,
+      name: Schema.Literal(webhook),
+      // Parse the JSON string payload into a structured event
+      payload: Schema.parseJson(mkPcoWebhookPayload(data)),
+    }),
+    id: Schema.String,
+    relationships: Schema.Struct({
+      organization: Schema.Struct({
+        data: Schema.Struct({
+          id: Schema.String,
+          type: Schema.Literal('Organization'),
         }),
-        id: Schema.String,
-        relationships: Schema.Struct({
-          organization: Schema.Struct({
-            data: Schema.Struct({
-              id: Schema.String,
-              type: Schema.Literal('Organization'),
-            }),
-          }),
-        }),
-        type: Schema.Literal('EventDelivery'),
       }),
-    ),
+    }),
+    type: Schema.Literal('EventDelivery'),
   })

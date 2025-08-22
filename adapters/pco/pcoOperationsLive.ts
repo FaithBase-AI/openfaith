@@ -19,7 +19,19 @@ import {
   transformEntityDataE,
   transformPartialEntityDataE,
 } from '@openfaith/workers/helpers/syncDataE'
-import { Chunk, Effect, Layer, Option, pipe, Record, SchemaAST, Stream } from 'effect'
+import {
+  Array,
+  Chunk,
+  Effect,
+  Layer,
+  Option,
+  pipe,
+  Record,
+  Schema,
+  SchemaAST,
+  Stream,
+  String,
+} from 'effect'
 
 // Get the actual type from the service
 type BasePcoClientType = Effect.Effect.Success<typeof PcoHttpClient>
@@ -84,6 +96,48 @@ const createPcoEntityPaginatedStream = <Client extends EntityClient>(
       ),
     )
   })
+}
+
+const fetchPcoEntityById = (
+  entityName: string,
+  client: EntityClient,
+  entityId: string,
+): Effect.Effect<unknown, AdapterSyncError> => {
+  if (!client || !('get' in client)) {
+    return Effect.fail(
+      new AdapterSyncError({
+        adapter: 'pco',
+        entityName,
+        message: `Entity ${entityName} does not support get operation`,
+        operation: 'get',
+      }),
+    )
+  }
+
+  const urlParamName = mkUrlParamName(entityName)
+
+  // Use a type-safe approach for the get method call
+  // We need to handle the path parameter dynamically since we don't know the entity type at compile time
+  const pathParam = { [urlParamName]: entityId }
+
+  // Call get method with appropriate type casting for dynamic path parameter
+  const getMethod = client.get as any
+
+  return pipe(
+    getMethod({ path: pathParam }),
+    Effect.mapError(
+      (error) =>
+        new AdapterSyncError({
+          adapter: 'pco',
+          cause: error,
+          entityName,
+          message: `Failed to get ${entityName} with ID ${entityId}`,
+          operation: 'get',
+        }),
+    ),
+    // Provide any required services/context
+    Effect.provide(Layer.empty),
+  ) as Effect.Effect<unknown, AdapterSyncError>
 }
 
 const mkInsertEffect = <ClientKey extends PcoEntityClientKeys>(
@@ -246,6 +300,25 @@ export const PcoOperationsLive = Layer.effect(
 
     return AdapterOperations.of({
       extractUpdatedAt: extractPcoUpdatedAt,
+
+      fetchEntityById: (entityType: string, entityId: string) => {
+        const entityClient = getEntityClient(pcoClient, entityType)
+
+        if (!entityClient) {
+          return Effect.fail(
+            new AdapterSyncError({
+              adapter: 'pco',
+              entityName: entityType,
+              message: `Entity ${entityType} not found in PCO client`,
+              operation: 'get',
+            }),
+          )
+        }
+
+        // Use the fetchPcoEntityById helper to get the entity by ID
+        return fetchPcoEntityById(entityType, entityClient, entityId)
+      },
+
       fetchToken: (_params: { code: string; redirectUri: string }) =>
         Effect.fail(
           new AdapterTokenError({
@@ -360,6 +433,148 @@ export const PcoOperationsLive = Layer.effect(
           ),
         ),
 
+      processWebhook: (webhookData: unknown) =>
+        Effect.gen(function* () {
+          // First, try to parse as a basic PCO webhook envelope
+          // PCO sends webhooks with a data array containing events
+          const WebhookEnvelope = Schema.Struct({
+            data: Schema.Array(
+              Schema.Union(
+                ...pipe(
+                  pcoEntityManifest.webhooks,
+                  Record.values,
+                  Array.map((x) => x.webhookSchema),
+                ),
+              ),
+            ),
+          })
+
+          const envelopeResult = yield* Schema.decodeUnknown(WebhookEnvelope)(webhookData).pipe(
+            Effect.mapError(
+              (error) =>
+                new AdapterValidationError({
+                  adapter: 'pco',
+                  entityName: 'unknown',
+                  field: 'data',
+                  message: `Invalid webhook envelope structure: ${error}`,
+                }),
+            ),
+          )
+
+          // Process each event in the data array using Effect.forEach
+          const requests = yield* Effect.forEach(envelopeResult.data, (eventData) =>
+            Effect.gen(function* () {
+              // The eventData is already parsed and validated by the Schema.Union
+              const eventName = eventData.attributes.name
+              const eventPayload = eventData.attributes.payload
+
+              // Get the webhook definition - we know it exists because the schema validated it
+              const webhookDef =
+                pcoEntityManifest.webhooks[eventName as keyof typeof pcoEntityManifest.webhooks]
+
+              if (!webhookDef) {
+                // This shouldn't happen since the schema already validated, but handle gracefully
+                yield* Effect.log(
+                  `Unexpected: webhook definition not found for validated event: ${eventName}`,
+                )
+                return []
+              }
+
+              // Extract entity ID using the webhook's extractEntityId function
+              // Note: extractEntityId is always defined for valid webhook definitions
+              const entityIdData = webhookDef.extractEntityId
+                ? webhookDef.extractEntityId(eventData as any)
+                : undefined
+
+              if (!entityIdData) {
+                yield* Effect.log(`No entity ID extracted for ${eventName}`)
+                return []
+              }
+
+              // Extract entity type from event name (e.g., "people.v2.events.person.created" -> "Person")
+              const entityType = pipe(
+                eventName,
+                String.split('.'),
+                Array.get(3),
+                Option.map(String.snakeToPascal),
+                Option.getOrElse(() => 'Unknown'),
+              )
+
+              // Get webhook payload data for fallback (PCO includes full entity data in payload.data)
+              const webhookPayloadData = eventPayload?.data || undefined
+
+              // Create sync request(s) based on operation type
+              switch (webhookDef.operation) {
+                case 'upsert': {
+                  const entityId = entityIdData as string
+                  return [
+                    {
+                      entityId,
+                      entityType,
+                      operation: pipe(eventName, String.includes('.created'))
+                        ? ('create' as const)
+                        : ('update' as const),
+                      webhookData: webhookPayloadData,
+                    },
+                  ]
+                }
+
+                case 'delete': {
+                  const entityId = entityIdData as string
+                  return [
+                    {
+                      entityId,
+                      entityType,
+                      operation: 'delete' as const,
+                    },
+                  ]
+                }
+
+                case 'merge': {
+                  const mergeData = entityIdData as { keepId: string; removeId: string }
+                  if (!mergeData?.keepId || !mergeData?.removeId) {
+                    yield* Effect.log(`Invalid merge data for ${eventName}`)
+                    return []
+                  }
+
+                  return [
+                    // Delete the removed record
+                    {
+                      entityId: mergeData.removeId,
+                      entityType,
+                      operation: 'delete' as const,
+                    },
+                    // Update the kept record with any new data
+                    {
+                      entityId: mergeData.keepId,
+                      entityType,
+                      operation: 'update' as const,
+                      webhookData: webhookPayloadData,
+                    },
+                  ]
+                }
+
+                default:
+                  return []
+              }
+            }),
+          )
+
+          // Flatten the array of arrays into a single array
+          return pipe(requests, Array.flatten)
+        }).pipe(
+          Effect.mapError(
+            (error) =>
+              new AdapterValidationError({
+                adapter: 'pco',
+                cause: error,
+                entityName: 'unknown',
+                field: 'webhook',
+                message: 'Failed to process webhook data',
+              }),
+          ),
+        ),
+
       syncEntityData: (entityName: string, operations: ReadonlyArray<CRUDOp>) =>
         Effect.gen(function* () {
           // PCO client uses entity names directly (Campus, not campuses)
@@ -405,7 +620,7 @@ export const PcoOperationsLive = Layer.effect(
                 Effect.catchAll((error) =>
                   Effect.succeed({
                     entityName,
-                    error: String(error),
+                    error: `${error}`,
                     externalId,
                     operation: op.op,
                     success: false,
