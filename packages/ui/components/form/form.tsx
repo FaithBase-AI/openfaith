@@ -1,10 +1,25 @@
+import { FormErrorDisplay } from '@openfaith/ui/components/form/formErrorDisplay'
 import { cn } from '@openfaith/ui/shared/utils'
 import { Boolean, Match, Option, pipe } from 'effect'
-import type { FC, HTMLProps } from 'react'
+import type { FC, HTMLProps, ReactNode } from 'react'
+
+export type FormStateWithErrorMap = {
+  errorMap: {
+    onSubmit?: unknown
+    onBlur?: unknown
+    onChange?: unknown
+    onMount?: unknown
+    onServer?: unknown
+  }
+}
 
 type FormProps = Omit<HTMLProps<HTMLFormElement>, 'form'> & {
   form: {
     handleSubmit: () => void
+    Subscribe: <TSelected = FormStateWithErrorMap>(props: {
+      selector: (state: FormStateWithErrorMap) => TSelected
+      children: (state: TSelected) => ReactNode
+    }) => ReactNode
   }
 }
 
@@ -21,6 +36,7 @@ export const Form: FC<FormProps> = (props) => {
       }}
       {...domProps}
     >
+      <FormErrorDisplay form={form} />
       {children}
 
       <input hidden type='submit' />

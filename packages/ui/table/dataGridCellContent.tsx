@@ -2,6 +2,7 @@ import type { GridCell } from '@glideapps/glide-data-grid'
 import { GridCellKind } from '@glideapps/glide-data-grid'
 import { autoDetectCellConfig, extractAST, getContextConfig } from '@openfaith/schema'
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
+import { Array, Option, pipe, Record } from 'effect'
 
 /**
  * Converts schema field type to GridCell type
@@ -124,26 +125,20 @@ export const getActionsCell = (): GridCell => {
   }
 }
 
-/**
- * Creates a placeholder cell for relation columns
- * In the future, this could show badges or counts
- */
-export const getRelationCell = (relationData?: any): GridCell => {
-  if (!relationData) {
-    return {
-      allowOverlay: false,
-      data: '',
-      displayData: '',
-      kind: GridCellKind.Text,
-    }
-  }
-
-  // For now, just show a count if we have data
-  const count = Array.isArray(relationData) ? relationData.length : 0
-  return {
-    allowOverlay: false,
-    data: `${count}`,
-    displayData: count > 0 ? `${count} items` : '',
-    kind: GridCellKind.Text,
-  }
-}
+export const getRelationCell = (
+  relatedIds: ReadonlyArray<string> = [],
+  entityNames: Record<string, string> = {},
+): GridCell => ({
+  allowOverlay: false,
+  data: pipe(
+    relatedIds,
+    Array.map((id) =>
+      pipe(
+        entityNames,
+        Record.get(id),
+        Option.getOrElse(() => id),
+      ),
+    ),
+  ),
+  kind: GridCellKind.Bubble,
+})

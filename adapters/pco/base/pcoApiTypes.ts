@@ -1,7 +1,7 @@
 import { Schema } from 'effect'
 
 export const PcoHeaders = Schema.Struct({
-  ['Authorization']: Schema.String,
+  Authorization: Schema.String,
 })
 export type PcoHeaders = typeof PcoHeaders.Type
 

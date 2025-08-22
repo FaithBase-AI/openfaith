@@ -18,7 +18,7 @@ effect('should discover schemas with navigation configs', () =>
     // Check that all entities have required properties
     pipe(
       entities,
-      Array.forEach((entity) => {
+      Array.map((entity) => {
         expect(entity.tag).toBeDefined()
         expect(typeof entity.tag).toBe('string')
         expect(entity.navConfig).toBeDefined()
@@ -190,7 +190,7 @@ effect('should only process schemas with navigation enabled', () =>
     // All discovered entities should have navigation enabled
     pipe(
       entities,
-      Array.forEach((entity) => {
+      Array.map((entity) => {
         expect(entity.navConfig.enabled).toBe(true)
         return Effect.void
       }),
@@ -211,7 +211,7 @@ effect('should generate correct URLs for entities', () =>
 
     pipe(
       entities,
-      Array.forEach((entity) => {
+      Array.map((entity) => {
         // URL should be generated from module and tag with proper pluralization
         // Just verify the URL starts with the module and contains a pluralized form
         expect(entity.navItem.url).toMatch(new RegExp(`^/${entity.navConfig.module}/`))
@@ -229,7 +229,7 @@ effect('should have valid icon names for all discovered entities', () =>
     // All entities should have icon names defined
     pipe(
       entities,
-      Array.forEach((entity) => {
+      Array.map((entity) => {
         expect(entity.navItem.iconName).toBeDefined()
         if (entity.navItem.iconName) {
           expect(typeof entity.navItem.iconName).toBe('string')
@@ -368,7 +368,7 @@ effect('should validate that all referenced icons exist in static icon map', () 
     // Each entity should have a corresponding icon component
     pipe(
       entities,
-      Array.forEach((entity) => {
+      Array.map((entity) => {
         const iconComponent = pipe(iconComponents, HashMap.get(entity.tag))
         expect(Option.isSome(iconComponent)).toBe(true)
 
@@ -399,7 +399,7 @@ effect('should validate icon component displayNames match expected pattern', () 
 
     pipe(
       knownIcons,
-      Array.forEach(({ tag, expectedDisplayName }) => {
+      Array.map(({ tag, expectedDisplayName }) => {
         const iconComponent = pipe(iconComponents, HashMap.get(tag))
         if (Option.isSome(iconComponent)) {
           expect(iconComponent.value.displayName).toBe(expectedDisplayName)

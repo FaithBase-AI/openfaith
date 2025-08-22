@@ -9,7 +9,7 @@ export const env = createEnv({
     DB_HOST_PRIMARY: z.string(),
     DB_NAME: z.string(),
     DB_PASSWORD: z.string(),
-    DB_PORT: z.string().transform((x) => Number.parseInt(x)),
+    DB_PORT: z.string().transform((x) => Number.parseInt(x, 10)),
     DB_USERNAME: z.string(),
 
     // Zero
@@ -19,7 +19,7 @@ export const env = createEnv({
     ZERO_REPLICA_FILE: z.string(),
     ZERO_AUTH_JWKS_URL: z.string(),
     ZERO_APP_ID: z.string(),
-    ZERO_NUM_SYNC_WORKERS: z.string().transform((x) => Number.parseInt(x)),
+    ZERO_NUM_SYNC_WORKERS: z.string().transform((x) => Number.parseInt(x, 10)),
     ZERO_LOG_LEVEL: z.string(),
     ZERO_ADMIN_PASSWORD: z.string(),
     ZERO_PUSH_URL: z.string(),

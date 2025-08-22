@@ -20,5 +20,5 @@ const connection = new SQL({
 })
 
 export const db = drizzle(connection, {
-  schema: schema,
+  schema,
 })

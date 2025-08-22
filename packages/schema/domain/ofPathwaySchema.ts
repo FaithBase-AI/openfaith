@@ -13,9 +13,14 @@ export class BasePathway extends BaseSystemFields.extend<BasePathway>('BasePathw
   }),
   active: Schema.Boolean.annotations({
     description: 'Pathway active flag',
-    [OfUiConfig]: { table: { cellType: 'badge', filterable: true, order: 5, sortable: true } },
+    [OfUiConfig]: {
+      table: { cellType: 'badge', filterable: true, order: 5, sortable: true },
+    },
   }),
-  completionRule: Schema.Record({ key: Schema.String, value: Schema.Unknown }).annotations({
+  completionRule: Schema.Record({
+    key: Schema.String,
+    value: Schema.Unknown,
+  }).annotations({
     description: 'Rule config for pathway completion',
     [OfUiConfig]: { table: { hidden: true } },
   }),
@@ -25,7 +30,10 @@ export class BasePathway extends BaseSystemFields.extend<BasePathway>('BasePathw
       table: { order: 3, sortable: true },
     },
   }),
-  enrollmentConfig: Schema.Record({ key: Schema.String, value: Schema.Unknown }).annotations({
+  enrollmentConfig: Schema.Record({
+    key: Schema.String,
+    value: Schema.Unknown,
+  }).annotations({
     description: 'Enrollment rules DSL (see PathwayEnrollmentRules.md)',
     [OfUiConfig]: { table: { hidden: true } },
   }),
@@ -44,7 +52,10 @@ export class BasePathway extends BaseSystemFields.extend<BasePathway>('BasePathw
       },
     },
   }),
-  stepsConfig: Schema.Record({ key: Schema.String, value: Schema.Unknown }).annotations({
+  stepsConfig: Schema.Record({
+    key: Schema.String,
+    value: Schema.Unknown,
+  }).annotations({
     description: 'Field-driven board config and per-option overrides',
     [OfUiConfig]: { table: { hidden: true } },
   }),
@@ -92,7 +103,9 @@ export class BaseJourney extends BaseSystemFields.extend<BaseJourney>('BaseJourn
   pathwayId: Schema.String,
   state: Schema.String.annotations({
     description: 'pending | active | completed | archived',
-    [OfUiConfig]: { table: { cellType: 'badge', filterable: true, order: 1, pinned: 'left' } },
+    [OfUiConfig]: {
+      table: { cellType: 'badge', filterable: true, order: 1, pinned: 'left' },
+    },
   }),
   subjectId: Schema.String.annotations({
     description: 'ID of the subject entity',
@@ -100,7 +113,9 @@ export class BaseJourney extends BaseSystemFields.extend<BaseJourney>('BaseJourn
   }),
   subjectTag: Schema.String.annotations({
     description: 'Entity tag of the subject (person, group, campus, etc.)',
-    [OfUiConfig]: { table: { cellType: 'badge', filterable: true, order: 2, sortable: true } },
+    [OfUiConfig]: {
+      table: { cellType: 'badge', filterable: true, order: 2, sortable: true },
+    },
   }),
 }) {}
 

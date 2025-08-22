@@ -1,11 +1,16 @@
+import { expect } from 'bun:test'
 import { GridCellKind } from '@glideapps/glide-data-grid'
-import { effect, expect } from '@openfaith/bun-test'
-import { Effect } from 'effect'
+import { effect } from '@openfaith/bun-test'
+import { Effect, Schema } from 'effect'
 import { getActionsCell, getGridCellContent, getRelationCell } from './dataGridCellContent'
 
 effect('getGridCellContent handles null and undefined values', () =>
   Effect.gen(function* () {
-    const field = { key: 'test', schema: {} }
+    // Create a minimal field object with a PropertySignature schema
+    const field = {
+      key: 'test',
+      schema: Schema.String.ast,
+    }
 
     const nullCell = getGridCellContent(field, null)
     expect(nullCell.kind).toBe(GridCellKind.Text)
@@ -25,7 +30,10 @@ effect('getGridCellContent handles null and undefined values', () =>
 
 effect('getGridCellContent handles boolean values', () =>
   Effect.gen(function* () {
-    const field = { key: 'isActive', schema: {} }
+    const field = {
+      key: 'isActive',
+      schema: Schema.Boolean.ast,
+    }
 
     const trueCell = getGridCellContent(field, true)
     expect(trueCell.kind).toBe(GridCellKind.Boolean)
@@ -43,7 +51,10 @@ effect('getGridCellContent handles boolean values', () =>
 
 effect('getGridCellContent handles number values', () =>
   Effect.gen(function* () {
-    const field = { key: 'count', schema: {} }
+    const field = {
+      key: 'count',
+      schema: Schema.Number.ast,
+    }
 
     const numberCell = getGridCellContent(field, 42)
     expect(numberCell.kind).toBe(GridCellKind.Number)
@@ -56,7 +67,10 @@ effect('getGridCellContent handles number values', () =>
 
 effect('getGridCellContent handles avatar/image values', () =>
   Effect.gen(function* () {
-    const field = { key: 'avatar', schema: {} }
+    const field = {
+      key: 'avatar',
+      schema: Schema.String.ast,
+    }
 
     const imageUrl = 'https://example.com/avatar.jpg'
     const avatarCell = getGridCellContent(field, imageUrl)
@@ -70,7 +84,10 @@ effect('getGridCellContent handles avatar/image values', () =>
 
 effect('getGridCellContent handles link/email values', () =>
   Effect.gen(function* () {
-    const field = { key: 'website', schema: {} }
+    const field = {
+      key: 'website',
+      schema: Schema.String.ast,
+    }
 
     const linkCell = getGridCellContent(field, 'https://example.com')
     expect(linkCell.kind).toBe(GridCellKind.Uri)
@@ -101,28 +118,45 @@ effect('getRelationCell handles empty and populated relation data', () =>
       expect(emptyCell.displayData).toBe('')
     }
 
-    // Null relation
-    const nullCell = getRelationCell(null)
-    expect(nullCell.kind).toBe(GridCellKind.Text)
-    if (nullCell.kind === GridCellKind.Text) {
-      expect(nullCell.data).toBe('')
-      expect(nullCell.displayData).toBe('')
+    // Undefined relation
+    const undefinedCell = getRelationCell(undefined)
+    expect(undefinedCell.kind).toBe(GridCellKind.Text)
+    if (undefinedCell.kind === GridCellKind.Text) {
+      expect(undefinedCell.data).toBe('')
+      expect(undefinedCell.displayData).toBe('')
     }
 
-    // Array with items
-    const populatedCell = getRelationCell([1, 2, 3])
-    expect(populatedCell.kind).toBe(GridCellKind.Text)
-    if (populatedCell.kind === GridCellKind.Text) {
-      expect(populatedCell.data).toBe('3')
-      expect(populatedCell.displayData).toBe('3 items')
+    // Array with string IDs
+    const populatedCell = getRelationCell(['id1', 'id2', 'id3'])
+    expect(populatedCell.kind).toBe(GridCellKind.Bubble)
+    if (populatedCell.kind === GridCellKind.Bubble) {
+      expect(populatedCell.data).toEqual(['id1', 'id2', 'id3'])
     }
 
     // Empty array
     const emptyArrayCell = getRelationCell([])
     expect(emptyArrayCell.kind).toBe(GridCellKind.Text)
     if (emptyArrayCell.kind === GridCellKind.Text) {
-      expect(emptyArrayCell.data).toBe('0')
+      expect(emptyArrayCell.data).toBe('')
       expect(emptyArrayCell.displayData).toBe('')
+    }
+
+    // Array with all items shown
+    const manyItemsCell = getRelationCell(['id1', 'id2', 'id3', 'id4', 'id5'])
+    expect(manyItemsCell.kind).toBe(GridCellKind.Bubble)
+    if (manyItemsCell.kind === GridCellKind.Bubble) {
+      expect(manyItemsCell.data).toEqual(['id1', 'id2', 'id3', 'id4', 'id5'])
+    }
+
+    // Array with entity names provided
+    const withNamesCell = getRelationCell(['id1', 'id2', 'id3'], {
+      id1: 'John Doe',
+      id2: 'Jane Smith',
+      id3: 'Bob Johnson',
+    })
+    expect(withNamesCell.kind).toBe(GridCellKind.Bubble)
+    if (withNamesCell.kind === GridCellKind.Bubble) {
+      expect(withNamesCell.data).toEqual(['John Doe', 'Jane Smith', 'Bob Johnson'])
     }
   }),
 )

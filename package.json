@@ -11,17 +11,20 @@
     "tailwind-merge": "3.3.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.1.3",
+    "@biomejs/biome": "2.2.0",
     "@testcontainers/postgresql": "11.3.2",
     "@turbo/gen": "2.5.5",
     "@types/bun": "latest",
-    "@typescript/native-preview": "7.0.0-dev.20250805.1",
+    "@typescript/native-preview": "7.0.0-dev.20250821.1",
     "jest": "^30.0.5",
     "jscodeshift": "^17.3.0",
     "turbo": "2.5.5"
   },
   "name": "openfaith",
-  "packageManager": "bun@1.2.19",
+  "packageManager": "bun@1.2.20",
+  "patchedDependencies": {
+    "@rocicorp/zero@0.22.2025080200": "patches/@rocicorp%2Fzero@0.22.2025080200.patch"
+  },
   "private": true,
   "resolutions": {
     "@effect/cluster": "0.46.0",
@@ -100,8 +103,5 @@
       "packages/*",
       "tooling/*"
     ]
-  },
-  "patchedDependencies": {
-    "@rocicorp/zero@0.22.2025080200": "patches/@rocicorp%2Fzero@0.22.2025080200.patch"
   }
 }

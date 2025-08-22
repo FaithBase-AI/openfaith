@@ -4,10 +4,15 @@ import { useOrgUsers } from '@openfaith/openfaith/data/orgs/orgData.app'
 import { displayOrgRole, type OrgRole } from '@openfaith/openfaith/data/orgs/orgsShared'
 import { InviteMemberButton } from '@openfaith/openfaith/features/settings/inviteMemberButton'
 import { nullOp } from '@openfaith/shared'
-import { Collection, ColumnHeader, getIdColumn, UserAvatar } from '@openfaith/ui'
-import { createColumnConfigHelper } from '@openfaith/ui/components/data-table-filter/core/filters'
-import type { Card } from '@openfaith/ui/components/ui/card'
-import type { OrgUserClientShape } from '@openfaith/zero/clientShapes'
+import type { Card } from '@openfaith/ui'
+import {
+  Collection,
+  ColumnHeader,
+  createColumnConfigHelper,
+  getIdColumn,
+  UserAvatar,
+} from '@openfaith/ui'
+import type { OrgUserClientShape } from '@openfaith/zero'
 import type { ColumnDef } from '@tanstack/react-table'
 import { SearchIcon, UserCircleIcon } from 'lucide-react'
 import type { FC } from 'react'

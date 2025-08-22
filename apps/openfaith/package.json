@@ -16,7 +16,7 @@
     "@standard-schema/spec": "1.0.0",
     "@tailwindcss/postcss": "4.1.11",
     "@tailwindcss/vite": "4.1.11",
-    "@tanstack/react-form": "1.14.1",
+    "@tanstack/react-form": "1.19.2",
     "@tanstack/react-query": "5.81.5",
     "@tanstack/react-query-devtools": "5.81.5",
     "@tanstack/react-router": "1.125.6",

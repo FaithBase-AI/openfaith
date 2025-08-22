@@ -1,5 +1,5 @@
 import { discoverUiEntities } from '@openfaith/schema'
-import { loadAllEntityIcons, useEntityIcons } from '@openfaith/ui/shared/entityIconHooks'
+import { loadAllEntityIcons, useEntityIcons } from '@openfaith/ui'
 import { Array, pipe } from 'effect'
 
 // Re-export for backward compatibility

@@ -252,7 +252,10 @@ effect('generateFilterConfig should detect option filter type for enum fields', 
 
       const options = config.options!
       expect(options).toContainEqual({ label: 'Active', value: 'active' })
-      expect(options).toContainEqual({ label: 'Inactive', value: 'inactive' })
+      expect(options).toContainEqual({
+        label: 'Inactive',
+        value: 'inactive',
+      })
       expect(options).toContainEqual({ label: 'Pending', value: 'pending' })
     }
   }),
@@ -449,7 +452,7 @@ effect('generateSimpleFilterConfig should create text filters for all fields', (
     // All configs should be text type with SearchIcon
     pipe(
       configs,
-      Array.forEach((config) => {
+      Array.map((config) => {
         expect(config.type).toBe('text')
         expect(config.icon).toBeDefined()
         expect(config.displayName).toBeDefined()
@@ -639,7 +642,7 @@ effect('Integration: generated filters should work with real data processing', (
 
         pipe(
           configs,
-          Array.forEach((config) => {
+          Array.map((config) => {
             results[config.id] = config.accessor(person)
             return Effect.void
           }),
@@ -650,10 +653,10 @@ effect('Integration: generated filters should work with real data processing', (
     )
 
     expect(processedData.length).toBe(2)
-    expect(processedData[0]!.firstName).toBe('John')
-    expect(processedData[0]!.age).toBe(30)
-    expect(processedData[1]!.firstName).toBe('Jane')
-    expect(processedData[1]!.age).toBe(25)
+    expect(processedData[0]?.firstName).toBe('John')
+    expect(processedData[0]?.age).toBe(30)
+    expect(processedData[1]?.firstName).toBe('Jane')
+    expect(processedData[1]?.age).toBe(25)
   }),
 )
 

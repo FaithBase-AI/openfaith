@@ -78,7 +78,7 @@ const createPcoEntityPaginatedStream = <Client extends EntityClient>(
   return Stream.paginateChunkEffect(0, (currentOffset) => {
     const finalParams = params ? { ...params, offset: currentOffset } : { offset: currentOffset }
 
-    return client.list!({ urlParams: finalParams }).pipe(
+    return client.list?.({ urlParams: finalParams }).pipe(
       Effect.map((response: any) => {
         const nextOffset = response.meta?.next?.offset
         return [
@@ -185,7 +185,7 @@ const mkUpdateEffect = <ClientKey extends PcoEntityClientKeys>(
   const updatePayload = {
     data: {
       attributes: attributesWithoutId,
-      id: id,
+      id,
       type: entityName,
     },
   }

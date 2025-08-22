@@ -1,7 +1,7 @@
 import { DefaultCatchBoundary } from '@openfaith/openfaith/components/defaultCatchBoundary'
 import { NotFound } from '@openfaith/openfaith/components/notFound'
 import type { SessionContextType } from '@openfaith/openfaith/shared/auth/sessionInit'
-import { Loader2Icon } from '@openfaith/ui/icons/loader2Icon'
+import { Loader2Icon } from '@openfaith/ui'
 import type { Mutators, ZSchema } from '@openfaith/zero'
 import type { Zero } from '@rocicorp/zero'
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'

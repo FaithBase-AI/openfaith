@@ -229,7 +229,7 @@ export function getColumnValues<TData, TType extends ColumnDataType, TVal>(
     const memoizedTransform = memo(
       () => [raw],
       // @ts-expect-error - deps[0] is not undefined
-      (deps) => deps[0].map((v) => column.transformOptionFn!(v) as ElementType<NonNullable<TVal>>),
+      (deps) => deps[0].map((v) => column.transformOptionFn?.(v) as ElementType<NonNullable<TVal>>),
       { key: `transform-values-${column.id}` },
     )
     return memoizedTransform()

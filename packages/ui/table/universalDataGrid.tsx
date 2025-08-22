@@ -2,13 +2,15 @@
 
 import '@glideapps/glide-data-grid/dist/index.css'
 
-import type { GridCell, Item } from '@glideapps/glide-data-grid'
+import type { GridCell, Item, Rectangle } from '@glideapps/glide-data-grid'
 import { GridCellKind } from '@glideapps/glide-data-grid'
+import type { Edge } from '@openfaith/db'
 import { extractEntityInfo } from '@openfaith/schema'
 import { CollectionDataGrid } from '@openfaith/ui/components/collections/collectionDataGrid'
 import { Button } from '@openfaith/ui/components/ui/button'
 import {
   buildEntityRelationshipsForTable,
+  useEntityNamesFetcher,
   useSchemaCollection,
   useSchemaUpdate,
 } from '@openfaith/ui/shared/hooks/schemaHooks'
@@ -23,12 +25,13 @@ import {
   generateDataGridRelationColumns,
 } from '@openfaith/ui/table/dataGridRelationColumnGenerator'
 import { generateFilterConfig } from '@openfaith/ui/table/filterGenerator'
+import { getRelatedEntityIds } from '@openfaith/ui/table/relationColumnGenerator'
 import { getBaseEntityRelationshipsQuery } from '@openfaith/zero/baseQueries'
 import { useZero } from '@openfaith/zero/useZero'
 import { useQuery } from '@rocicorp/zero/react'
 import { Array, pipe, type Schema, String } from 'effect'
 import type { ReactNode } from 'react'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 
 export interface UniversalDataGridProps<T> {
   schema: Schema.Schema<T>
@@ -39,8 +42,8 @@ export interface UniversalDataGridProps<T> {
   className?: string
   showRowNumbers?: boolean
   Actions?: ReactNode
-  showRelations?: boolean // Show relation columns (default: true)
-  editable?: boolean // Enable cell editing (default: true)
+  showRelations?: boolean
+  editable?: boolean
   filtering?: {
     filterPlaceHolder?: string
     filterColumnId?: string
@@ -74,7 +77,7 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     return extractEntityInfo(schema)
   }, [schema])
 
-  const { collection } = useSchemaCollection({ schema })
+  const { collection, nextPage, loading } = useSchemaCollection({ schema })
 
   // Use the schema update hook for mutations
   const { mutate: updateEntity } = useSchemaUpdate(schema, {
@@ -83,8 +86,17 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     },
   })
 
+  // Use the entity names fetcher hook for managing entity name lookups
+  const { fetchEntityNames, getEntityNames, clearFetchedCache } = useEntityNamesFetcher()
+
   // Fetch entity relationships for this entity type
   const z = useZero()
+
+  // Clear fetched cache when collection changes
+  useEffect(() => {
+    clearFetchedCache()
+  }, [clearFetchedCache])
+
   const entityRelationshipsQuery = useMemo(() => {
     if (!showRelations || !entityInfo.entityName) {
       return null
@@ -166,8 +178,27 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
 
       // Handle relation columns
       if (pipe(column.id, String.startsWith('relation_'))) {
-        // For now, show placeholder for relation columns
-        return getRelationCell()
+        // Extract the target entity type from the column id
+        const targetEntityType = pipe(column.id, String.replace('relation_', ''))
+
+        // Get edges from the data row
+        const entityId = (dataRow as any).id as string
+        const sourceEdges = ((dataRow as any).sourceEdges || []) as Array<Edge>
+        const targetEdges = ((dataRow as any).targetEdges || []) as Array<Edge>
+
+        // Get related entity IDs using the helper function
+        const relatedIds = getRelatedEntityIds(entityId, targetEntityType, sourceEdges, targetEdges)
+
+        // Fetch entity names if we don't have them yet
+        if (relatedIds.length > 0) {
+          fetchEntityNames(targetEntityType, relatedIds)
+        }
+
+        // Get cached names for this entity type
+        const entityNames = getEntityNames(targetEntityType)
+
+        // Return cell with badges for related entities
+        return getRelationCell(relatedIds, entityNames) // Show all badges with names
       }
 
       // Get the field using the column id
@@ -184,7 +215,7 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
       const value = dataRow[field.key as keyof T]
       return getGridCellContent(field, value, editable)
     },
-    [collection, columns, columnIdToField, editable],
+    [collection, columns, columnIdToField, editable, fetchEntityNames, getEntityNames],
   )
 
   // Handle cell edit
@@ -289,6 +320,25 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     </Button>
   )
 
+  const handleVisibleRegionChanged = useCallback(
+    (range: Rectangle) => {
+      // Rectangle has x, y, width, height
+      // y is the row index, height is the number of visible rows
+      const visibleEndRow = range.y + range.height
+
+      // Check if we're near the bottom (within 5 rows)
+      const threshold = 5
+      const nearBottom = visibleEndRow >= collection.length - threshold
+
+      // Trigger loading more data if we're near the bottom and not already loading
+      if (nearBottom && !loading) {
+        // Call nextPage to load more data
+        nextPage()
+      }
+    },
+    [collection.length, nextPage, loading],
+  )
+
   // Merge className with flex layout classes
   const containerClassName = className
     ? `${className} flex flex-col h-full`
@@ -309,6 +359,7 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
         onCellEdited={editable ? handleCellEdited : undefined}
         onRowClick={handleRowClick}
         onRowsSelected={onRowsSelected}
+        onVisibleRegionChanged={handleVisibleRegionChanged}
         showRowNumbers={showRowNumbers}
       />
     </div>

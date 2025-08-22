@@ -52,5 +52,8 @@ export const PcoConnectedPerson = mkPcoEntity({
     }),
   }),
   type: 'ConnectedPerson',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-connected-person' })
+}).annotations({
+  [OfSkipEntity]: true,
+  [OfIdentifier]: 'pco-connected-person',
+})
 export type PcoConnectedPerson = typeof PcoConnectedPerson.Type

@@ -1,7 +1,10 @@
 import { formatLabel } from '@openfaith/shared'
 import { IconWrapper } from '@openfaith/ui/components/icons/iconWrapper'
-import { useEntityIcon } from '@openfaith/ui/shared/entityIconHooks'
-import { useEntitySchema, useSchemaEntity } from '@openfaith/ui/shared/hooks/schemaHooks'
+import {
+  useEntityIcon,
+  useEntitySchema,
+  useSchemaEntity,
+} from '@openfaith/ui/shared/hooks/schemaHooks'
 import { Option, Schema } from 'effect'
 import type { FC } from 'react'
 

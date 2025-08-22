@@ -19,9 +19,7 @@ export const PostCodeMessage: FC<PostCodeMessageProps> = (props) => {
     pipe(
       window.opener as typeof window | undefined | null,
       Option.fromNullable,
-      Option.map((x) => {
-        x.postMessage(code, '*')
-      }),
+      Option.map((x) => x.postMessage(code, '*')),
     )
 
     window.close()

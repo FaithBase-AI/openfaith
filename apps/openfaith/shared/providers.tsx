@@ -2,7 +2,7 @@
 
 import { SessionInit } from '@openfaith/openfaith/shared/auth/sessionInit'
 import { ZeroInit } from '@openfaith/openfaith/shared/zero/zeroInit'
-import { GlobalMediaQueries, Toaster } from '@openfaith/ui'
+import { EntityUiCacheProvider, GlobalMediaQueries, Toaster } from '@openfaith/ui'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { ThemeProvider } from 'next-themes'
 import { NuqsAdapter } from 'nuqs/adapters/react'
@@ -24,6 +24,7 @@ export const Providers: FC<ProvidersProps> = (props) => {
             <ZeroInit>
               {children}
 
+              <EntityUiCacheProvider />
               <GlobalMediaQueries />
               <TanStackRouterDevtools position='bottom-right' />
               <Toaster />

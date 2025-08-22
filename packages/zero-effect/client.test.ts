@@ -63,7 +63,6 @@ const createMockTransaction = (shouldFail = false) =>
 // ===== ERROR CLASS TESTS =====
 
 effect('ZeroMutatorAuthError should be properly constructed', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const error = new ZeroMutatorAuthError({
       message: 'User not authenticated',
@@ -76,7 +75,6 @@ effect('ZeroMutatorAuthError should be properly constructed', () =>
 )
 
 effect('ZeroMutatorValidationError should be properly constructed', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const error = new ZeroMutatorValidationError({
       field: 'email',
@@ -91,7 +89,6 @@ effect('ZeroMutatorValidationError should be properly constructed', () =>
 )
 
 effect('ZeroMutatorValidationError should handle optional field', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const error = new ZeroMutatorValidationError({
       message: 'General validation error',
@@ -104,7 +101,6 @@ effect('ZeroMutatorValidationError should handle optional field', () =>
 )
 
 effect('ZeroMutatorDatabaseError should be properly constructed', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const originalError = new Error('Connection timeout')
     const error = new ZeroMutatorDatabaseError({
@@ -120,7 +116,6 @@ effect('ZeroMutatorDatabaseError should be properly constructed', () =>
 )
 
 effect('ZeroMutationProcessingError should be properly constructed', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const originalError = new Error('Processing failed')
     const error = new ZeroMutationProcessingError({
@@ -138,7 +133,6 @@ effect('ZeroMutationProcessingError should be properly constructed', () =>
 // ===== EFFECT TRANSACTION TESTS =====
 
 effect('createEffectTransaction should create EffectTransaction instance', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = createMockTransaction()
     const effectTx = createEffectTransaction(mockTx)
@@ -150,7 +144,7 @@ effect('createEffectTransaction should create EffectTransaction instance', () =>
 )
 
 effect('EffectTransaction mutate operations should return Effects', () =>
-  // @ts-ignore - Effect type inference issue with test framework
+  // @ts-expect-error - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = createMockTransaction()
     const effectTx = createEffectTransaction(mockTx)
@@ -181,8 +175,7 @@ effect('EffectTransaction mutate operations should return Effects', () =>
 )
 
 effect('EffectTransaction query operations should return Effects', () =>
-  // @ts-ignore - Effect type inference issue with test framework
-  // @ts-ignore - Effect type inference issue with test framework
+  // @ts-expect-error - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = createMockTransaction()
     const effectTx = createEffectTransaction(mockTx)
@@ -195,7 +188,7 @@ effect('EffectTransaction query operations should return Effects', () =>
 )
 
 effect('EffectTransaction should handle mutation errors', () =>
-  // @ts-ignore - Effect type inference issue with test framework
+  // @ts-expect-error - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = createMockTransaction(true) // shouldFail = true
     const effectTx = createEffectTransaction(mockTx)
@@ -217,7 +210,7 @@ effect('EffectTransaction should handle mutation errors', () =>
 )
 
 effect('EffectTransaction should handle query errors', () =>
-  // @ts-ignore - Effect type inference issue with test framework
+  // @ts-expect-error - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = createMockTransaction(true) // shouldFail = true
     const effectTx = createEffectTransaction(mockTx)
@@ -235,7 +228,6 @@ effect('EffectTransaction should handle query errors', () =>
 )
 
 effect('EffectTransaction should handle nested object access', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = createMockTransaction()
     const effectTx = createEffectTransaction(mockTx)
@@ -258,7 +250,6 @@ effect('EffectTransaction should handle nested object access', () =>
 // ===== MUTATOR CONVERSION TESTS =====
 
 effect('convertEffectMutatorsToPromise should handle empty mutators', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const effectMutators: CustomMutatorEfDefs<any> = {}
     const runtime = Runtime.defaultRuntime
@@ -269,7 +260,6 @@ effect('convertEffectMutatorsToPromise should handle empty mutators', () =>
 )
 
 effect('convertEffectMutatorsToPromise should handle undefined table mutators', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const effectMutators: CustomMutatorEfDefs<any> = {
       groups: {
@@ -289,7 +279,7 @@ effect('convertEffectMutatorsToPromise should handle undefined table mutators', 
 // ===== INTEGRATION TESTS =====
 
 effect('Full mutator workflow should work end-to-end', () =>
-  // @ts-ignore - Effect type inference issue with test framework
+  // @ts-expect-error - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = createMockTransaction()
     const effectTx = createEffectTransaction(mockTx)
@@ -317,7 +307,7 @@ effect('Full mutator workflow should work end-to-end', () =>
 )
 
 effect('Error handling should work throughout the workflow', () =>
-  // @ts-ignore - Effect type inference issue with test framework
+  // @ts-expect-error - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = createMockTransaction(true) // shouldFail = true
     const effectTx = createEffectTransaction(mockTx)
@@ -346,7 +336,7 @@ effect('Error handling should work throughout the workflow', () =>
 // ===== TYPE SAFETY TESTS =====
 
 effect('Type safety should be maintained', () =>
-  // @ts-ignore - Effect type inference issue with test framework
+  // @ts-expect-error - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = createMockTransaction()
     const effectTx = createEffectTransaction(mockTx)
@@ -376,7 +366,6 @@ effect('Type safety should be maintained', () =>
 // ===== PROXY BEHAVIOR TESTS =====
 
 effect('EffectTransaction proxy should handle deep nesting', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = createMockTransaction()
     const effectTx = createEffectTransaction(mockTx)
@@ -397,7 +386,7 @@ effect('EffectTransaction proxy should handle deep nesting', () =>
 // ===== ERROR PROPAGATION TESTS =====
 
 effect('Error propagation should work correctly', () =>
-  // @ts-ignore - Effect type inference issue with test framework
+  // @ts-expect-error - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = createMockTransaction(true)
     const effectTx = createEffectTransaction(mockTx)
@@ -417,7 +406,7 @@ effect('Error propagation should work correctly', () =>
 )
 
 effect('Query error propagation should work correctly', () =>
-  // @ts-ignore - Effect type inference issue with test framework
+  // @ts-expect-error - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = createMockTransaction(true)
     const effectTx = createEffectTransaction(mockTx)
@@ -439,7 +428,7 @@ effect('Query error propagation should work correctly', () =>
 // ===== PROXY EDGE CASES =====
 
 effect('EffectTransaction proxy should handle non-function properties', () =>
-  // @ts-ignore - Effect type inference issue with test framework
+  // @ts-expect-error - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = {
       mutate: {
@@ -469,7 +458,6 @@ effect('EffectTransaction proxy should handle non-function properties', () =>
 )
 
 effect('EffectTransaction proxy should handle null values', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = {
       mutate: {
@@ -495,7 +483,6 @@ effect('EffectTransaction proxy should handle null values', () =>
 )
 
 effect('EffectTransaction proxy should handle primitive values', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const mockTx = {
       mutate: {
@@ -531,7 +518,6 @@ effect('EffectTransaction proxy should handle primitive values', () =>
 // ===== MUTATOR CONVERSION EDGE CASES =====
 
 effect('convertEffectMutatorsToPromise should handle non-function values', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const effectMutators: any = {
       people: {
@@ -554,7 +540,6 @@ effect('convertEffectMutatorsToPromise should handle non-function values', () =>
 )
 
 effect('convertEffectMutatorsToPromise should handle complex nested structures', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const effectMutators: any = {
       groups: {
@@ -579,7 +564,6 @@ effect('convertEffectMutatorsToPromise should handle complex nested structures',
 )
 
 effect('convertEffectMutatorsToPromise should handle runtime failures', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const effectMutators: CustomMutatorEfDefs<any> = {
       people: {
@@ -611,7 +595,6 @@ effect('convertEffectMutatorsToPromise should handle runtime failures', () =>
 // ===== ERROR OPTIONAL FIELDS TESTS =====
 
 effect('ZeroMutatorDatabaseError should handle optional cause', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const error = new ZeroMutatorDatabaseError({
       message: 'Database operation failed',
@@ -625,7 +608,6 @@ effect('ZeroMutatorDatabaseError should handle optional cause', () =>
 )
 
 effect('ZeroMutationProcessingError should handle optional cause', () =>
-  // @ts-ignore - Effect type inference issue with test framework
   Effect.gen(function* () {
     const error = new ZeroMutationProcessingError({
       message: 'Processing failed',

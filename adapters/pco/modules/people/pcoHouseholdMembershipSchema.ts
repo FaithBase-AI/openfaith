@@ -28,5 +28,8 @@ export const PcoHouseholdMembership = mkPcoEntity({
     }),
   }),
   type: 'HouseholdMembership',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-household-membership' })
+}).annotations({
+  [OfSkipEntity]: true,
+  [OfIdentifier]: 'pco-household-membership',
+})
 export type PcoHouseholdMembership = typeof PcoHouseholdMembership.Type

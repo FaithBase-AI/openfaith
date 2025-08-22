@@ -6,13 +6,23 @@ export const PcoWorkflowCardActivityAttributes = Schema.Struct({
   automation_url: Schema.String.annotations({ [OfFieldName]: 'automationUrl' }),
   comment: Schema.String.annotations({ [OfFieldName]: 'comment' }),
   content: Schema.String.annotations({ [OfFieldName]: 'content' }),
-  content_is_html: Schema.Boolean.annotations({ [OfFieldName]: 'contentIsHtml' }),
+  content_is_html: Schema.Boolean.annotations({
+    [OfFieldName]: 'contentIsHtml',
+  }),
   created_at: Schema.String.annotations({ [OfFieldName]: 'createdAt' }),
-  form_submission_url: Schema.String.annotations({ [OfFieldName]: 'formSubmissionUrl' }),
-  person_avatar_url: Schema.String.annotations({ [OfFieldName]: 'personAvatarUrl' }),
+  form_submission_url: Schema.String.annotations({
+    [OfFieldName]: 'formSubmissionUrl',
+  }),
+  person_avatar_url: Schema.String.annotations({
+    [OfFieldName]: 'personAvatarUrl',
+  }),
   person_name: Schema.String.annotations({ [OfFieldName]: 'personName' }),
-  reassigned_to_avatar_url: Schema.String.annotations({ [OfFieldName]: 'reassignedToAvatarUrl' }),
-  reassigned_to_name: Schema.String.annotations({ [OfFieldName]: 'reassignedToName' }),
+  reassigned_to_avatar_url: Schema.String.annotations({
+    [OfFieldName]: 'reassignedToAvatarUrl',
+  }),
+  reassigned_to_name: Schema.String.annotations({
+    [OfFieldName]: 'reassignedToName',
+  }),
   subject: Schema.String.annotations({ [OfFieldName]: 'subject' }),
   type: Schema.String.annotations({ [OfFieldName]: 'type' }),
 })
@@ -24,12 +34,18 @@ export const PcoWorkflowCardActivity = mkPcoEntity({
   relationships: Schema.Struct({
     workflow_card: Schema.Struct({
       data: Schema.NullOr(
-        Schema.Struct({ id: Schema.String, type: Schema.Literal('WorkflowCard') }),
+        Schema.Struct({
+          id: Schema.String,
+          type: Schema.Literal('WorkflowCard'),
+        }),
       ),
     }),
     workflow_step: Schema.Struct({
       data: Schema.NullOr(
-        Schema.Struct({ id: Schema.String, type: Schema.Literal('WorkflowStep') }),
+        Schema.Struct({
+          id: Schema.String,
+          type: Schema.Literal('WorkflowStep'),
+        }),
       ),
     }),
   }),

@@ -3,10 +3,16 @@ import { SessionError, SessionHttpMiddleware } from '@openfaith/domain/contexts/
 import { Schema } from 'effect'
 
 // CRUD operation schemas
-export const PrimaryKey = Schema.Record({ key: Schema.String, value: Schema.Unknown })
+export const PrimaryKey = Schema.Record({
+  key: Schema.String,
+  value: Schema.Unknown,
+})
 export type PrimaryKey = typeof PrimaryKey.Type
 
-export const RowValue = Schema.Record({ key: Schema.String, value: Schema.Unknown })
+export const RowValue = Schema.Record({
+  key: Schema.String,
+  value: Schema.Unknown,
+})
 export type RowValue = typeof RowValue.Type
 
 export const InsertOp = Schema.Struct({

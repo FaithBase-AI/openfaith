@@ -10,6 +10,7 @@ import {
   type GridColumn,
   type GridSelection,
   type Item,
+  type Rectangle,
 } from '@glideapps/glide-data-grid'
 
 import { CollectionToolbarDataGrid } from '@openfaith/ui/components/collections/collectionToolbarDataGrid'
@@ -42,6 +43,7 @@ type CollectionDataGridProps<
   onRowClick?: (row: TData) => void
   onRowsSelected?: (rows: Array<TData>) => void
   onCellEdited?: (cell: Item, newValue: GridCell) => void
+  onVisibleRegionChanged?: (visibleRange: Rectangle) => void
   showRowNumbers?: boolean
   filtersDef: TColumns
   filterKey: string
@@ -67,6 +69,7 @@ export const CollectionDataGrid = <
     onRowClick,
     onRowsSelected,
     onCellEdited,
+    onVisibleRegionChanged,
     showRowNumbers = true,
     filtersDef,
     filterKey,
@@ -204,6 +207,7 @@ export const CollectionDataGrid = <
               onCellEdited={onCellEdited}
               onColumnResize={onColumnResize}
               onGridSelectionChange={onSelectionChange}
+              onVisibleRegionChanged={onVisibleRegionChanged}
               rowMarkers={showRowNumbers ? 'both' : 'none'}
               rows={data.length}
               smoothScrollX={true}

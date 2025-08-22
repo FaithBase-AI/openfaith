@@ -119,7 +119,7 @@ effect('AdapterRpc should handle AdapterConnectError', () =>
       adapterConnect: ({ adapter }) =>
         Effect.fail(
           new AdapterConnectError({
-            adapter: adapter,
+            adapter,
             cause: 'Network error',
             message: 'Connection failed',
           }),

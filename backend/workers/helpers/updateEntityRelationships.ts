@@ -52,7 +52,7 @@ export const updateEntityRelationshipsForOrgE = Effect.fn('updateEntityRelations
       Array.map((rel) => {
         const targetEntityTypesJson = JSON.stringify(rel.targetEntityTypes)
         const escapedJson = pipe(targetEntityTypesJson, String.replace(/'/g, "''"))
-        return sql`(${rel.orgId}, ${rel.sourceEntityType}, ${sql.raw("'" + escapedJson + "'::jsonb")}, ${rel.updatedAt})`
+        return sql`(${rel.orgId}, ${rel.sourceEntityType}, ${sql.raw(`'${escapedJson}'::jsonb`)}, ${rel.updatedAt})`
       }),
       Array.reduce(sql`` as ReturnType<typeof sql>, (acc, curr, index) =>
         index === 0 ? curr : sql`${acc}, ${curr}`,
