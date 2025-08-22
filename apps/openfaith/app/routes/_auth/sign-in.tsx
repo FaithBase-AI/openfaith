@@ -18,12 +18,12 @@ export const Route = createFileRoute('/_auth/sign-in')({
         search: {
           redirect: '/dashboard',
         },
-        to: '/create-org',
+        to: '/onboarding',
       })
     }
   },
   component: RouteComponent,
-  validateSearch: Schema.decodeUnknownSync(SignInSearch),
+  validateSearch: Schema.standardSchemaV1(SignInSearch),
 })
 
 function RouteComponent() {
