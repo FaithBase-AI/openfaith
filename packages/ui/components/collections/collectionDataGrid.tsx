@@ -48,6 +48,8 @@ type CollectionDataGridProps<
   filtersDef: TColumns
   filterKey: string
   filtersOptions?: Partial<Record<OptionColumnIds<TColumns>, Array<ColumnOption> | undefined>>
+  totalRows?: number // Optional total row count for virtual scrolling
+  enableVirtualScrolling?: boolean // Whether to enable virtual scrolling
 }
 
 export const CollectionDataGrid = <
@@ -74,6 +76,8 @@ export const CollectionDataGrid = <
     filtersDef,
     filterKey,
     filtersOptions,
+    totalRows,
+    enableVirtualScrolling = false,
   } = props
 
   const [collectionViews] = useAtom(collectionViewsAtom)
@@ -179,7 +183,12 @@ export const CollectionDataGrid = <
   // Don't render grid until we have dimensions
   const shouldRenderGrid = bounds.width > 0 && bounds.height > 0
 
-  const { theme } = useTheme()
+  const { resolvedTheme } = useTheme()
+
+  // Determine the actual row count for the grid
+  // If virtual scrolling is enabled and totalRows is provided, use that
+  // Otherwise fall back to the actual data length
+  const gridRowCount = enableVirtualScrolling && totalRows ? totalRows : data.length
 
   return (
     <div className='flex h-full flex-col'>
@@ -209,10 +218,10 @@ export const CollectionDataGrid = <
               onGridSelectionChange={onSelectionChange}
               onVisibleRegionChanged={onVisibleRegionChanged}
               rowMarkers={showRowNumbers ? 'both' : 'none'}
-              rows={data.length}
+              rows={gridRowCount}
               smoothScrollX={true}
               smoothScrollY={true}
-              theme={theme === 'dark' ? _darkTheme : undefined}
+              theme={resolvedTheme === 'dark' ? _darkTheme : undefined}
               width={gridWidth}
             />
           )}

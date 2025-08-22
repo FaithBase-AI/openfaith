@@ -1,8 +1,8 @@
-import { testFunctionRx } from '@openfaith/openfaith/data/rpcState'
+import { useAtomSet } from '@effect-atom/atom-react'
+import { testFunctionAtom } from '@openfaith/openfaith/data/rpcState'
 import type { CommandMenuType } from '@openfaith/openfaith/features/quickActions/quickActionsTypes'
 import { useSchemaQuickActions } from '@openfaith/openfaith/features/quickActions/schemaQuickActions'
 import { useSignOut } from '@openfaith/openfaith/shared/auth/useSignOut'
-import { useRxMutation } from '@openfaith/openfaith/shared/hooks/rxHooks'
 import { GroupIcon, SignOutIcon, TerminalIcon, UserPlusIcon } from '@openfaith/ui'
 import { Boolean, HashMap, Option, pipe } from 'effect'
 import { atom, useSetAtom } from 'jotai'
@@ -63,7 +63,7 @@ export function useCommandMenuOptions() {
   const setInviteMemberIsOpen = useSetAtom(inviteMemberIsOpenAtom)
   const setCreateOrgIsOpen = useSetAtom(createOrgIsOpenAtom)
   const signOut = useSignOut()
-  const { mutate: testFunction } = useRxMutation(testFunctionRx)
+  const testFunction = useAtomSet(testFunctionAtom)
   const { commandMenuItems: schemaQuickActions } = useSchemaQuickActions()
 
   return useMemo(

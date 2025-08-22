@@ -4,7 +4,7 @@ import { useTheme } from 'next-themes'
 import { Toaster as Sonner, type ToasterProps, toast } from 'sonner'
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = 'system' } = useTheme()
+  const { resolvedTheme } = useTheme()
 
   return (
     <Sonner
@@ -16,7 +16,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           '--normal-text': 'var(--popover-foreground)',
         } as React.CSSProperties
       }
-      theme={theme as 'light' | 'dark' | 'system'}
+      theme={resolvedTheme as 'light' | 'dark' | 'system'}
       {...props}
     />
   )
