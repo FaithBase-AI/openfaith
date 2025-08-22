@@ -1,5 +1,4 @@
-import type { SessionContextType } from '@openfaith/openfaith/shared/auth/sessionInit'
-import { env, noOp } from '@openfaith/shared'
+import { env } from '@openfaith/shared'
 import { createClientMutators, type Mutators, schema, type ZSchema } from '@openfaith/zero'
 import type { Zero } from '@rocicorp/zero'
 import { ZeroProvider } from '@rocicorp/zero/react'
@@ -9,6 +8,7 @@ import { useMemo } from 'react'
 
 export function ZeroInit({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const initialSession = router.options.context.session
 
   const session = useRouterState({
     select: (state) =>
@@ -16,14 +16,7 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
         state.matches,
         Array.head,
         Option.flatMapNullable((x) => x.context.session),
-        Option.getOrElse(
-          (): SessionContextType => ({
-            data: undefined,
-            login: noOp,
-            logout: noOp,
-            zeroAuth: async () => undefined,
-          }),
-        ),
+        Option.getOrElse(() => initialSession),
       ),
   })
 
