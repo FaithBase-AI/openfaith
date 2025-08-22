@@ -10,7 +10,7 @@ import {
   OfTransformer,
   Person,
 } from '@openfaith/schema'
-import { Schema } from 'effect'
+import { type Option, Schema, SchemaAST } from 'effect'
 
 export const PcoPersonAttributes = Schema.Struct({
   accounting_administrator: Schema.Boolean.annotations({
