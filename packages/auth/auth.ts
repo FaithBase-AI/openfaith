@@ -301,8 +301,15 @@ export const auth = betterAuth({
       },
     }),
     organization({
+      // We have to do this casting due to a bug in tsgo. Works fine with tsc.
       organizationCreation: {
-        afterCreate: async ({ organization, user }) => {
+        afterCreate: async ({
+          organization,
+          user,
+        }: {
+          organization: { name: string; id: string; slug: string }
+          user: { id: string }
+        }) => {
           await Effect.runPromise(
             Effect.gen(function* () {
               const workflowClient = yield* WorkflowClient
@@ -338,7 +345,20 @@ export const auth = betterAuth({
           modelName: getTableName('orgs'),
         },
       },
-      async sendInvitationEmail(data) {
+      // We have to do this casting due to a bug in tsgo. Works fine with tsc.
+      async sendInvitationEmail(data: {
+        inviter: {
+          user: {
+            email: string
+            name: string
+          }
+        }
+        organization: {
+          name: string
+        }
+        email: string
+        id: string
+      }) {
         await resend.emails.send({
           from,
           react: reactInvitationEmail({

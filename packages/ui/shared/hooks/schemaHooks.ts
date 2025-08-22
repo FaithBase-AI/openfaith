@@ -1,5 +1,4 @@
-import { Rx } from '@effect-rx/rx-react'
-import { useRxMutation, useRxQuery } from '@openfaith/openfaith/shared/hooks/rxHooks'
+import { Atom, Result, useAtom as useAtomE, useAtomValue } from '@effect-atom/atom-react'
 import {
   discoverUiEntities,
   type EntityUiConfig,
@@ -94,18 +93,23 @@ export const loadAllEntityIcons = Effect.fn('loadAllEntityIcons')(function* (
 })
 
 export const useEntityIcons = (entities: Array<EntityUiConfig>) => {
-  const entityIconsRx = useMemo(() => Rx.make(() => loadAllEntityIcons(entities)), [entities])
+  const entityIconsAtom = useMemo(() => Atom.make(loadAllEntityIcons(entities)), [entities])
 
-  const query = useRxQuery(entityIconsRx)
+  const result = useAtomValue(entityIconsAtom)
+
+  // Handle Result type from @effect-atom
+  const iconComponents = Result.match(result, {
+    onFailure: () => HashMap.empty<string, ComponentType>(),
+    onInitial: () => HashMap.empty<string, ComponentType>(),
+    onSuccess: (value) => value.value,
+  })
 
   return {
-    iconComponents: pipe(
-      query.dataOpt,
-      Option.getOrElse(() => HashMap.empty<string, ComponentType>()),
-    ),
-    isError: query.isError,
-    isSuccess: query.isSuccess,
-    loading: query.isPending || query.isIdle,
+    iconComponents,
+    isError: result._tag === 'Failure',
+    isIdle: result._tag === 'Initial',
+    isPending: result.waiting === true,
+    isSuccess: result._tag === 'Success',
   }
 }
 
@@ -127,17 +131,18 @@ export const useEntityIcon = (entityType: string) => {
     Option.getOrElse(() => 'circleIcon'),
   )
 
-  const iconRx = useMemo(() => Rx.make(() => getIconComponent(iconName)), [iconName])
-  const query = useRxQuery(iconRx)
+  const iconAtom = useMemo(() => Atom.make(getIconComponent(iconName)), [iconName])
+  const result = useAtomValue(iconAtom)
 
   return {
-    IconComponent: pipe(
-      query.dataOpt,
-      Option.getOrElse(() => CircleIcon),
-    ),
-    isError: query.isError,
-    isSuccess: query.isSuccess,
-    loading: query.isPending || query.isIdle,
+    IconComponent: Result.match(result, {
+      onFailure: () => CircleIcon,
+      onInitial: () => CircleIcon,
+      onSuccess: (value) => value.value,
+    }),
+    isError: result._tag === 'Failure',
+    isSuccess: result._tag === 'Success',
+    loading: result.waiting === true || result._tag === 'Initial',
   }
 }
 
@@ -693,7 +698,7 @@ export const useSchemaInsert = <T>(
   const { onSuccess, onError } = options
   const z = useZero()
 
-  const insertRx = Rx.fn((data: T) => {
+  const insertAtom = Atom.fn((data: T) => {
     return createSchemaMutationEffect({
       data,
       onError,
@@ -704,9 +709,12 @@ export const useSchemaInsert = <T>(
     })
   })
 
-  const mutation = useRxMutation(insertRx)
+  const [result, mutateAtom] = useAtomE(insertAtom)
 
-  return mutation
+  return {
+    isPending: Result.isWaiting(result),
+    mutate: mutateAtom,
+  }
 }
 
 /**
@@ -723,7 +731,7 @@ export const useSchemaUpdate = <T>(
   const { onSuccess, onError, showToast = true } = options
   const z = useZero()
 
-  const updateRx = Rx.fn((data: T & { id: string }) => {
+  const updateAtom = Atom.fn((data: T & { id: string }) => {
     return createSchemaMutationEffect({
       data: data as T & { id?: string },
       onError,
@@ -735,9 +743,12 @@ export const useSchemaUpdate = <T>(
     })
   })
 
-  const mutation = useRxMutation(updateRx)
+  const [result, mutateAtom] = useAtomE(updateAtom)
 
-  return mutation
+  return {
+    isPending: Result.isWaiting(result),
+    mutate: mutateAtom,
+  }
 }
 
 /**
@@ -753,9 +764,9 @@ export const useSchemaDelete = <T>(
   const { onSuccess, onError } = options
   const z = useZero()
 
-  const deleteRx = Rx.fn((id: string) => {
+  const deleteAtom = Atom.fn((id: string) => {
     return createSchemaMutationEffect({
-      id,
+      data: { id } as T & { id?: string },
       onError,
       onSuccess,
       operation: 'delete',
@@ -764,9 +775,12 @@ export const useSchemaDelete = <T>(
     })
   })
 
-  const mutation = useRxMutation(deleteRx)
+  const [result, mutateAtom] = useAtomE(deleteAtom)
 
-  return mutation
+  return {
+    isPending: Result.isWaiting(result),
+    mutate: mutateAtom,
+  }
 }
 
 /**
@@ -782,7 +796,7 @@ export const useSchemaUpsert = <T>(
   const { onSuccess, onError } = options
   const z = useZero()
 
-  const upsertRx = Rx.fn((data: T & { id?: string }) => {
+  const upsertAtom = Atom.fn((data: T & { id?: string }) => {
     return createSchemaMutationEffect({
       data,
       onError,
@@ -793,9 +807,12 @@ export const useSchemaUpsert = <T>(
     })
   })
 
-  const mutation = useRxMutation(upsertRx)
+  const [result, mutateAtom] = useAtomE(upsertAtom)
 
-  return mutation
+  return {
+    isPending: Result.isWaiting(result),
+    mutate: mutateAtom,
+  }
 }
 
 /**
@@ -812,24 +829,24 @@ export const useSchemaCellUpdate = <T>(
   const { onSuccess, onError } = options
   const z = useZero()
 
-  const updateCellRx = Rx.fn((params: { id: string; field: string; value: any }) => {
-    const { id, field, value } = params
-    const data = { id, [field]: value } as T & { id: string }
-
+  const updateCellAtom = Atom.fn((params: { id: string; field: string; value: any }) => {
     return createSchemaMutationEffect({
-      data: data as T & { id?: string },
+      data: { id: params.id, [params.field]: params.value } as T & { id?: string },
       onError,
       onSuccess,
       operation: 'update',
       schema,
-      showToast: false, // Suppress toast for cell updates
+      showToast: false,
       z,
     })
   })
 
-  const mutation = useRxMutation(updateCellRx)
+  const [result, mutateAtom] = useAtomE(updateCellAtom)
 
-  return mutation
+  return {
+    isPending: Result.isWaiting(result),
+    mutate: mutateAtom,
+  }
 }
 
 /**

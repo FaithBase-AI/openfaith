@@ -1,6 +1,6 @@
+import { Result, useAtom } from '@effect-atom/atom-react'
 import { usePlanningCenterConnect } from '@openfaith/openfaith/adapters/pcoClient'
-import { adapterConnectRx, testFunctionRx } from '@openfaith/openfaith/data/rpcState'
-import { useRxMutation } from '@openfaith/openfaith/shared/hooks/rxHooks'
+import { adapterConnectAtom, testFunctionAtom } from '@openfaith/openfaith/data/rpcState'
 import {
   BoxOption,
   Button,
@@ -72,12 +72,14 @@ const givingOptions = [
 ]
 
 export function IntegrationsComponent() {
-  const { mutate: testFunction, isPending, status } = useRxMutation(testFunctionRx)
-  const { mutate: adapterConnect } = useRxMutation(adapterConnectRx)
+  const [testFunctionResult, testFunctionSet] = useAtom(testFunctionAtom)
+  const [, adapterConnectSet] = useAtom(adapterConnectAtom, {
+    mode: 'promiseExit',
+  })
 
   const { onClick, loading } = usePlanningCenterConnect({
     onConnect: (params) => {
-      adapterConnect({
+      adapterConnectSet({
         adapter: 'pco',
         code: params.code,
         redirectUri: params.redirectUri,
@@ -85,16 +87,13 @@ export function IntegrationsComponent() {
     },
   })
 
-  // console.log(connectResult)
-  console.log(status)
-
   const z = useZero()
 
   const [person] = useQuery(z.query.people.where('id', 'person_01k2dcnqhte038a2yfnbvk0ccx').one())
 
   return (
     <div className={'mx-auto flex max-w-3xl flex-col gap-4 p-4'}>
-      <Button loading={isPending} onClick={() => testFunction()}>
+      <Button loading={Result.isWaiting(testFunctionResult)} onClick={() => testFunctionSet()}>
         Test Function
       </Button>
       <Button
