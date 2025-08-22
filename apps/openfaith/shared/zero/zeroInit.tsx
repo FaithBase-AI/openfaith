@@ -2,13 +2,23 @@ import { env } from '@openfaith/shared'
 import { createClientMutators, type Mutators, schema, type ZSchema } from '@openfaith/zero'
 import type { Zero } from '@rocicorp/zero'
 import { ZeroProvider } from '@rocicorp/zero/react'
-import { useRouter } from '@tanstack/react-router'
-import { Option, pipe } from 'effect'
+import { useRouter, useRouterState } from '@tanstack/react-router'
+import { Array, Option, pipe } from 'effect'
 import { useMemo } from 'react'
 
 export function ZeroInit({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { session } = router.options.context
+  const initialSession = router.options.context.session
+
+  const session = useRouterState({
+    select: (state) =>
+      pipe(
+        state.matches,
+        Array.head,
+        Option.flatMapNullable((x) => x.context.session),
+        Option.getOrElse(() => initialSession),
+      ),
+  })
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: We only want to refresh for session.data.userID
   const opts = useMemo(() => {
@@ -48,7 +58,7 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
         }),
       ),
     }
-  }, [session.data?.userID, router])
+  }, [session.data, router])
 
   return <ZeroProvider {...opts}>{children}</ZeroProvider>
 }

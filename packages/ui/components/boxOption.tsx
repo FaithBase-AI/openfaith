@@ -7,7 +7,7 @@ import { isNotNullable } from 'effect/Predicate'
 import type { FC, HTMLAttributes, ReactNode } from 'react'
 
 const boxEnumVariants = cva(
-  'flex w-[calc(50%-8px)] select-none flex-col items-center overflow-hidden rounded-2xl border px-8 pt-6 pb-8',
+  'flex w-[calc(50%-8px)] select-none flex-col items-center gap-0 overflow-hidden rounded-2xl border px-8 pt-6 pb-8',
   {
     variants: {
       disabled: {
@@ -26,7 +26,7 @@ export type BoxOptionProps = {
   disabled?: boolean
   selected?: boolean
   name: string
-  description?: string
+  description?: ReactNode
   children?: ReactNode
   icon: string | ReactNode
 } & HTMLAttributes<HTMLDivElement>
@@ -75,11 +75,7 @@ export const BoxOption: FC<BoxOptionProps> = (props) => {
         Option.fromNullable,
         Option.match({
           onNone: nullOp,
-          onSome: (x) => (
-            <p className={'text-center font-medium'} key={x}>
-              {x}
-            </p>
-          ),
+          onSome: (x) => <p className={'text-center font-medium'}>{x}</p>,
         }),
       )}
 

@@ -25,7 +25,7 @@ import {
   useSidebar,
 } from '@openfaith/ui'
 import type { OrgClientShape } from '@openfaith/zero'
-import { Array, Boolean, Option, pipe, String } from 'effect'
+import { Array, Boolean, Effect, Option, pipe, String } from 'effect'
 import { useAtom } from 'jotai'
 import { type FC, useState } from 'react'
 
@@ -187,7 +187,7 @@ const OrgDropDownItem: FC<OrgDropDownItemProps> = (props) => {
 
         changeOrg({
           orgId: org.id,
-        })
+        }).pipe(Effect.runPromise)
       }}
       onPointerEnter={() => preloadOrg(org.id)}
     >

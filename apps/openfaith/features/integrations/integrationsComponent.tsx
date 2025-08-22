@@ -1,9 +1,10 @@
-import { Result, useAtom } from '@effect-atom/atom-react'
+import { useAtom } from '@effect-atom/atom-react'
 import { usePlanningCenterConnect } from '@openfaith/openfaith/adapters/pcoClient'
-import { adapterConnectAtom, testFunctionAtom } from '@openfaith/openfaith/data/rpcState'
+import { useAdaptersDetailsCollection } from '@openfaith/openfaith/data/adapterDetails/adapterDetailsData.app'
+import { adapterConnectAtom } from '@openfaith/openfaith/data/rpcState'
 import {
   BoxOption,
-  Button,
+  CheckIcon,
   Label,
   OverflowIcon,
   PlanningCenterIcon,
@@ -12,9 +13,7 @@ import {
   SubsplashIcon,
   TithelyIcon,
 } from '@openfaith/ui'
-import { useZero } from '@openfaith/zero'
-import { useQuery } from '@rocicorp/zero/react'
-import { Array, pipe } from 'effect'
+import { Array, Option, pipe } from 'effect'
 
 const chmsOptions = [
   {
@@ -72,10 +71,11 @@ const givingOptions = [
 ]
 
 export function IntegrationsComponent() {
-  const [testFunctionResult, testFunctionSet] = useAtom(testFunctionAtom)
   const [, adapterConnectSet] = useAtom(adapterConnectAtom, {
     mode: 'promiseExit',
   })
+
+  const { adapterDetailsCollection } = useAdaptersDetailsCollection()
 
   const { onClick, loading } = usePlanningCenterConnect({
     onConnect: (params) => {
@@ -87,32 +87,24 @@ export function IntegrationsComponent() {
     },
   })
 
-  const z = useZero()
-
-  const [person] = useQuery(z.query.people.where('id', 'person_01k2dcnqhte038a2yfnbvk0ccx').one())
-
   return (
-    <div className={'mx-auto flex max-w-3xl flex-col gap-4 p-4'}>
-      <Button loading={Result.isWaiting(testFunctionResult)} onClick={() => testFunctionSet()}>
-        Test Function
-      </Button>
-      <Button
-        onClick={() =>
-          z.mutate.people.update({
-            firstName: `Yeeeeeet ${new Date().toISOString()}`,
-            id: 'person_01k2dcnqhte038a2yfnbvk0ccx',
-          })
-        }
-        variant={'secondary'}
-      >
-        Test Mutator
-      </Button>
-
-      <pre>{JSON.stringify(person, null, 2)}</pre>
+    <div className={'mx-auto flex max-w-2xl flex-col gap-4 p-4'}>
       <Label className={'font-semibold'}>ChMS</Label>
 
       <div className={'flew-row mt-2 mb-4 flex flex-wrap gap-4'}>
         <BoxOption
+          description={pipe(
+            adapterDetailsCollection,
+            Array.findFirst((x) => x.adapter === 'pco'),
+            Option.match({
+              onNone: () => 'Not connected',
+              onSome: () => (
+                <span className={'flex flex-row items-center gap-2'}>
+                  <CheckIcon /> Connected
+                </span>
+              ),
+            }),
+          )}
           disabled={loading}
           icon={<PlanningCenterIcon className={'size-12'} />}
           name={'Planning Center'}

@@ -1,24 +1,33 @@
 'use client'
 
-import { authClient } from '@openfaith/auth/authClient'
+import { createOrganizationE, updateOrganizationE } from '@openfaith/auth/authClientE'
 import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
 import { createOrgIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import { useChangeOrg } from '@openfaith/openfaith/shared/auth/useChangeOrg'
-import { asyncNoOp } from '@openfaith/shared'
 import { ArrowRightIcon, Button, QuickActionForm, useAppForm } from '@openfaith/ui'
 import type { OrgClientShape } from '@openfaith/zero'
 import { revalidateLogic } from '@tanstack/react-form'
 import { useRouter } from '@tanstack/react-router'
-import { Match, Option, pipe, Schema, String } from 'effect'
+import { Effect, Match, Option, pipe, Schema, String } from 'effect'
 import { useAtom } from 'jotai'
 import type { FC } from 'react'
 
 const OrgSchema = Schema.Struct({
-  name: Schema.String.pipe(Schema.minLength(3)),
-  slug: Schema.String.pipe(Schema.minLength(3)),
+  name: Schema.String.pipe(
+    Schema.minLength(3),
+    Schema.annotations({
+      message: () => 'Name must have a length of at least 3',
+    }),
+  ),
+  slug: Schema.String.pipe(
+    Schema.minLength(3),
+    Schema.annotations({
+      message: () => 'Slug must have a length of at least 3',
+    }),
+  ),
 })
 
-type OrgFromProps =
+type OrgFormProps =
   | {
       _tag: 'create'
     }
@@ -31,7 +40,7 @@ type OrgFromProps =
       org: OrgClientShape
     }
 
-export const OrgForm: FC<OrgFromProps> = (props) => {
+export const OrgForm: FC<OrgFormProps> = (props) => {
   const [, setCreateOrgIsOpen] = useAtom(createOrgIsOpenAtom)
 
   const router = useRouter()
@@ -56,69 +65,106 @@ export const OrgForm: FC<OrgFromProps> = (props) => {
         slug: '',
       })),
     )(props),
-    onSubmit: async ({ value }) => {
-      await pipe(
-        Match.type<typeof props>(),
-        Match.tag('create', async () => {
-          const { data } = await authClient.organization.create({
-            name: pipe(value.name, String.trim),
-            slug: pipe(value.slug, String.trim),
-            userId,
-          })
-
-          await pipe(
-            data,
-            Option.fromNullable,
-            Option.match({
-              onNone: asyncNoOp,
-              onSome: async (x) => changeOrg({ orgId: x.id }),
-            }),
-          )
-
-          setTimeout(() => {
-            router.history.push('/dashboard')
-          }, 0)
-        }),
-        Match.tag('onboarding', async ({ redirect = '/dashboard' }) => {
-          const { data } = await authClient.organization.create({
-            name: pipe(value.name, String.trim),
-            slug: pipe(value.slug, String.trim),
-            userId,
-          })
-
-          await pipe(
-            data,
-            Option.fromNullable,
-            Option.match({
-              onNone: asyncNoOp,
-              onSome: async (x) => changeOrg({ orgId: x.id }),
-            }),
-          )
-
-          setTimeout(() => {
-            router.history.push(redirect)
-          }, 0)
-        }),
-        Match.tag('edit', async (x) => {
-          await authClient.organization.update({
-            data: {
-              name: pipe(value.name, String.trim),
-              slug: pipe(value.slug, String.trim),
-            },
-            organizationId: x.org.id,
-          })
-        }),
-        Match.exhaustive,
-      )(props)
-
-      setCreateOrgIsOpen(false)
-    },
     validationLogic: revalidateLogic({
       mode: 'submit',
       modeAfterSubmission: 'blur',
     }),
     validators: {
       onDynamic: Schema.standardSchemaV1(OrgSchema),
+      onSubmitAsync: async ({ value }) =>
+        await Effect.gen(function* () {
+          yield* pipe(
+            Match.type<typeof props>(),
+            Match.tag('create', () =>
+              Effect.gen(function* () {
+                const result = yield* createOrganizationE({
+                  name: pipe(value.name, String.trim),
+                  slug: pipe(value.slug, String.trim),
+                  userId,
+                })
+
+                yield* changeOrg({ orgId: result.id })
+
+                setTimeout(() => {
+                  router.navigate({ replace: true, to: '/dashboard' })
+                }, 0)
+              }),
+            ),
+            Match.tag('onboarding', ({ redirect = '/dashboard' }) =>
+              Effect.gen(function* () {
+                const trimmedName = pipe(value.name, String.trim)
+                const trimmedSlug = pipe(value.slug, String.trim)
+
+                const result = yield* createOrganizationE({
+                  name: trimmedName,
+                  slug: trimmedSlug,
+                  userId,
+                })
+
+                yield* changeOrg({ orgId: result.id })
+
+                // For onboarding, pass org data in the URL if redirecting to onboarding flow
+                const finalRedirect = redirect.includes('/onboarding')
+                  ? `/onboarding?step=${encodeURIComponent(
+                      JSON.stringify({
+                        _tag: 'integrations',
+                        orgName: trimmedName,
+                        orgSlug: trimmedSlug,
+                      }),
+                    )}`
+                  : redirect
+
+                setTimeout(() => {
+                  router.navigate({ replace: true, to: finalRedirect })
+                }, 0)
+              }),
+            ),
+            Match.tag('edit', (x) =>
+              Effect.gen(function* () {
+                yield* updateOrganizationE({
+                  data: {
+                    name: pipe(value.name, String.trim),
+                    slug: pipe(value.slug, String.trim),
+                  },
+                  organizationId: x.org.id,
+                })
+              }),
+            ),
+            Match.exhaustive,
+          )(props)
+
+          setCreateOrgIsOpen(false)
+          return
+        }).pipe(
+          Effect.catchTags({
+            OrganizationCreateError: (error) =>
+              Effect.gen(function* () {
+                yield* Effect.logError('Failed to create organization', { error })
+                return {
+                  fields: {},
+                  form: error.message || 'Failed to create organization',
+                }
+              }),
+            OrganizationUpdateError: (error) =>
+              Effect.gen(function* () {
+                yield* Effect.logError('Failed to update organization', { error })
+                return {
+                  fields: {},
+                  form: error.message || 'Failed to update organization',
+                }
+              }),
+          }),
+          Effect.catchAll((error) =>
+            Effect.gen(function* () {
+              yield* Effect.logError('Organization operation failed', { error })
+              return {
+                fields: {},
+                form: 'Something went wrong',
+              }
+            }),
+          ),
+          Effect.runPromise,
+        ),
     },
   })
 

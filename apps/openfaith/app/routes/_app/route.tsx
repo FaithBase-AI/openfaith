@@ -5,9 +5,6 @@ export const Route = createFileRoute('/_app')({
   beforeLoad: (ctx) => {
     if (!ctx.context.session.data) {
       throw redirect({
-        search: {
-          redirect: ctx.location.href,
-        },
         to: '/sign-in',
       })
     }
@@ -15,9 +12,11 @@ export const Route = createFileRoute('/_app')({
     if (!ctx.context.session.data.activeOrganizationId) {
       throw redirect({
         search: {
-          redirect: ctx.location.href,
+          step: {
+            _tag: 'organization',
+          },
         },
-        to: '/create-org',
+        to: '/onboarding',
       })
     }
   },

@@ -16,7 +16,7 @@ import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OauthProviderRouteImport } from './routes/oauth/$provider'
-import { Route as OnboardingCreateOrgRouteImport } from './routes/_onboarding/create-org'
+import { Route as OnboardingOnboardingRouteImport } from './routes/_onboarding/onboarding'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppGroupRouteRouteImport } from './routes/_app/$group/route'
@@ -58,9 +58,9 @@ const OauthProviderRoute = OauthProviderRouteImport.update({
   path: '/oauth/$provider',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OnboardingCreateOrgRoute = OnboardingCreateOrgRouteImport.update({
-  id: '/create-org',
-  path: '/create-org',
+const OnboardingOnboardingRoute = OnboardingOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => OnboardingRouteRoute,
 } as any)
 const AuthSignInRoute = AuthSignInRouteImport.update({
@@ -149,7 +149,7 @@ export interface FileRoutesByFullPath {
   '/$group': typeof AppGroupRouteRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
-  '/create-org': typeof OnboardingCreateOrgRoute
+  '/onboarding': typeof OnboardingOnboardingRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/$group/$entity': typeof AppGroupEntityRouteRouteWithChildren
   '/admin/orgs': typeof AppAdminOrgsRoute
@@ -167,7 +167,7 @@ export interface FileRoutesByTo {
   '/$group': typeof AppGroupRouteRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
-  '/create-org': typeof OnboardingCreateOrgRoute
+  '/onboarding': typeof OnboardingOnboardingRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/admin/orgs': typeof AppAdminOrgsRoute
   '/admin/users': typeof AppAdminUsersRoute
@@ -188,7 +188,7 @@ export interface FileRoutesById {
   '/_app/$group': typeof AppGroupRouteRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/_auth/sign-in': typeof AuthSignInRoute
-  '/_onboarding/create-org': typeof OnboardingCreateOrgRoute
+  '/_onboarding/onboarding': typeof OnboardingOnboardingRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/_app/$group/$entity': typeof AppGroupEntityRouteRouteWithChildren
   '/_app/admin/orgs': typeof AppAdminOrgsRoute
@@ -208,7 +208,7 @@ export interface FileRouteTypes {
     | '/$group'
     | '/dashboard'
     | '/sign-in'
-    | '/create-org'
+    | '/onboarding'
     | '/oauth/$provider'
     | '/$group/$entity'
     | '/admin/orgs'
@@ -226,7 +226,7 @@ export interface FileRouteTypes {
     | '/$group'
     | '/dashboard'
     | '/sign-in'
-    | '/create-org'
+    | '/onboarding'
     | '/oauth/$provider'
     | '/admin/orgs'
     | '/admin/users'
@@ -246,7 +246,7 @@ export interface FileRouteTypes {
     | '/_app/$group'
     | '/_app/dashboard'
     | '/_auth/sign-in'
-    | '/_onboarding/create-org'
+    | '/_onboarding/onboarding'
     | '/oauth/$provider'
     | '/_app/$group/$entity'
     | '/_app/admin/orgs'
@@ -334,11 +334,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OauthProviderRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_onboarding/create-org': {
-      id: '/_onboarding/create-org'
-      path: '/create-org'
-      fullPath: '/create-org'
-      preLoaderRoute: typeof OnboardingCreateOrgRouteImport
+    '/_onboarding/onboarding': {
+      id: '/_onboarding/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingOnboardingRouteImport
       parentRoute: typeof OnboardingRouteRoute
     }
     '/_auth/sign-in': {
@@ -526,11 +526,11 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 )
 
 interface OnboardingRouteRouteChildren {
-  OnboardingCreateOrgRoute: typeof OnboardingCreateOrgRoute
+  OnboardingOnboardingRoute: typeof OnboardingOnboardingRoute
 }
 
 const OnboardingRouteRouteChildren: OnboardingRouteRouteChildren = {
-  OnboardingCreateOrgRoute: OnboardingCreateOrgRoute,
+  OnboardingOnboardingRoute: OnboardingOnboardingRoute,
 }
 
 const OnboardingRouteRouteWithChildren = OnboardingRouteRoute._addFileChildren(
