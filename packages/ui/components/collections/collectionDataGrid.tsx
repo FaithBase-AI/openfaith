@@ -179,7 +179,7 @@ export const CollectionDataGrid = <
   // Don't render grid until we have dimensions
   const shouldRenderGrid = bounds.width > 0 && bounds.height > 0
 
-  const { theme } = useTheme()
+  const { resolvedTheme } = useTheme()
 
   return (
     <div className='flex h-full flex-col'>
@@ -212,7 +212,7 @@ export const CollectionDataGrid = <
               rows={data.length}
               smoothScrollX={true}
               smoothScrollY={true}
-              theme={theme === 'dark' ? _darkTheme : undefined}
+              theme={resolvedTheme === 'dark' ? _darkTheme : undefined}
               width={gridWidth}
             />
           )}

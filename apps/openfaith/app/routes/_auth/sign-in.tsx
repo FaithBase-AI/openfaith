@@ -9,8 +9,16 @@ const SignInSearch = Schema.Struct({
 export const Route = createFileRoute('/_auth/sign-in')({
   beforeLoad: (ctx) => {
     if (ctx.context.session.data) {
+      if (ctx.context.session.data.activeOrganizationId) {
+        throw redirect({
+          to: '/dashboard',
+        })
+      }
       throw redirect({
-        to: '/dashboard',
+        search: {
+          redirect: '/dashboard',
+        },
+        to: '/create-org',
       })
     }
   },
