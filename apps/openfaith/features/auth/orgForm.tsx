@@ -27,7 +27,7 @@ const OrgSchema = Schema.Struct({
   ),
 })
 
-type OrgFromProps =
+type OrgFormProps =
   | {
       _tag: 'create'
     }
@@ -40,7 +40,7 @@ type OrgFromProps =
       org: OrgClientShape
     }
 
-export const OrgForm: FC<OrgFromProps> = (props) => {
+export const OrgForm: FC<OrgFormProps> = (props) => {
   const [, setCreateOrgIsOpen] = useAtom(createOrgIsOpenAtom)
 
   const router = useRouter()

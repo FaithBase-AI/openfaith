@@ -64,7 +64,7 @@ export const VerifyEmailOtpDialog = (props: VerifyEmailOtpDialogProps) => {
           })
 
           // Wait for the deferred to complete
-          return yield* Deferred.await(deferred)
+          return yield* deferred
         }),
     }),
     [],

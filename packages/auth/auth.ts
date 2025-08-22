@@ -182,8 +182,26 @@ export const auth = betterAuth({
                 jwt: {
                   definePayload: ({ user, session }) => ({
                     ...user,
-                    activeOrganizationId: session.activeOrganizationId,
-                    impersonatedBy: session.impersonatedBy,
+                    ...pipe(
+                      session.activeOrganizationId,
+                      Option.fromNullable,
+                      Option.match({
+                        onNone: () => ({}),
+                        onSome: (x) => ({
+                          activeOrganizationId: x,
+                        }),
+                      }),
+                    ),
+                    ...pipe(
+                      session.impersonatedBy,
+                      Option.fromNullable,
+                      Option.match({
+                        onNone: () => ({}),
+                        onSome: (x) => ({
+                          impersonatedBy: x,
+                        }),
+                      }),
+                    ),
                     orgRole: session.orgRole,
                     userRole: session.userRole,
                   }),
