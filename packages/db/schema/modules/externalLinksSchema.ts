@@ -13,7 +13,7 @@ export const externalLinksTable = pgTable(
       .notNull(),
 
     // External system information
-    adapter: d.text().notNull(),
+    adapter: d.text().notNull(), // e.g., "pco", "ccb", "breeze"
 
     // Standard audit fields
     createdAt: d.timestamp().notNull(),
@@ -23,7 +23,7 @@ export const externalLinksTable = pgTable(
     deletedBy: d.text(), // e.g., "person", "group"
 
     // OpenFaith entity being linked
-    entityId: d.text().notNull(), // e.g., "pco", "ccb", "breeze"
+    entityId: d.text().notNull(),
     entityType: d.text().notNull(),
     externalId: d.text().notNull(),
 
