@@ -151,6 +151,11 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
         select: [allowIfOrg],
       },
     },
+    externalLinks: {
+      row: {
+        select: [allowIfOrg],
+      },
+    },
     folders: {
       row: {
         insert: [allowIfAdmin],
