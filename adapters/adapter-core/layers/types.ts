@@ -1,11 +1,12 @@
+import type { ExternalLink } from '@openfaith/db'
 import type { CRUDOp } from '@openfaith/domain'
-import type { ExternalLink } from '@openfaith/schema'
+import type { EntityUnion } from '@openfaith/schema/shared/entityDiscovery'
 import type { Effect } from 'effect'
 
 // Shared callback interfaces for consistency across operations
 export interface ExternalLinkInput {
   adapter: string // pco, ccb, breeze, etc.
-  internalId?: string // Internal ID for linking (required for create operations)
+  entityId?: string // Internal ID for linking (required for create operations)
   externalId: string
   entityType: string // The OF entity type (e.g., "person", "campus")
 
@@ -21,18 +22,32 @@ export type ProcessExternalLinks<AE, AR> = (
   externalLinks: Array<ExternalLinkInput>,
 ) => Effect.Effect<Array<ExternalLink>, AE, AR>
 
-export interface EntityData {
-  id: string
-  [key: string]: unknown
-}
+// EntityData is now a union of all canonical OpenFaith entity types
+export type EntityData = EntityUnion
 
 export type ProcessEntities<BE, BR> = (data: Array<EntityData>) => Effect.Effect<void, BE, BR>
 
 export interface RelationshipInput {
-  sourceEntityId: string // Internal ID from external links
-  targetExternalId: string // External ID of target
-  targetType: string // Type of target entity
-  relationshipKey: string // Relationship name
+  // Entity identifiers (internal OpenFaith IDs)
+  sourceEntityId: string
+  targetEntityId: string
+
+  // Entity type tags for proper edge creation
+  sourceEntityTypeTag: string
+  targetEntityTypeTag: string
+
+  // Relationship metadata
+  relationshipType: string // Full relationship type (e.g., "Person_has_Address")
+  createdAt: Date
+
+  // Audit and system fields (typically null for new relationships)
+  createdBy: string | null
+  deletedAt: Date | null
+  deletedBy: string | null
+  updatedAt: Date | null
+  updatedBy: string | null
+
+  // Optional metadata for additional relationship data
   metadata?: Record<string, unknown>
 }
 

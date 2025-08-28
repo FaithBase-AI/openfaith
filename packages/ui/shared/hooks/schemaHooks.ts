@@ -4,6 +4,7 @@ import {
   type EntityUiConfig,
   extractEntityInfo,
   extractEntityTag,
+  getSchemaByEntityType as getSchemaByEntityTypeBase,
   OfForeignKey,
   OfRelations,
   type RelationConfig,
@@ -366,19 +367,9 @@ export const useEntityCacheInitializer = () => {
 // ===== Schema Lookups (Updated to use Registry) =====
 
 /**
- * Get schema for an entity type using the entity registry
+ * Get schema for an entity type using the shared function
  */
-export const getSchemaByEntityType = (entityType: string) => {
-  const entities = discoverUiEntities()
-
-  return pipe(
-    entities,
-    Array.findFirst(
-      (entity) => pipe(entity.tag, String.toLowerCase) === pipe(entityType, String.toLowerCase),
-    ),
-    Option.map((entity) => entity.schema),
-  )
-}
+export const getSchemaByEntityType = getSchemaByEntityTypeBase
 
 /**
  * Hook to get schema for an entity type

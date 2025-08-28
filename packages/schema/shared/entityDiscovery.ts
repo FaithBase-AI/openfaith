@@ -1,7 +1,72 @@
 import * as OfSchemas from '@openfaith/schema'
-import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { pluralize } from '@openfaith/shared'
 import { Array, Option, Order, pipe, Record, Schema, SchemaAST, String } from 'effect'
+
+// Dynamic union type that includes all schemas with _tag field that represent business entities
+// This mirrors the logic in discoverEntitySchemas() but at the type level
+export type EntityUnion = {
+  [K in keyof typeof OfSchemas]: (typeof OfSchemas)[K] extends Schema.Schema<infer A, any, any>
+    ? A extends { _tag: string; id: string; orgId: string }
+      ? IsBusinessEntity<A> extends true
+        ? A
+        : never
+      : never
+    : never
+}[keyof typeof OfSchemas]
+
+// Helper type to determine if a type is a business entity (not a system entity)
+// This excludes system entities like Edge, ExternalLink, Field types, etc.
+type IsBusinessEntity<T> = T extends { _tag: infer Tag }
+  ? Tag extends
+      | 'edge'
+      | 'externalLink'
+      | 'string'
+      | 'number'
+      | 'boolean'
+      | 'date'
+      | 'field'
+      | 'fieldOption'
+    ? false
+    : true
+  : false
+
+// Runtime utility to get all entity schemas that have both _tag and OfTable (final entity classes)
+export const discoverEntitySchemas = () => {
+  return pipe(
+    OfSchemas,
+    Record.toEntries,
+    Array.filterMap(([name, schema]) => {
+      if (!Schema.isSchema(schema)) {
+        return Option.none()
+      }
+
+      const schemaObj = schema as Schema.Schema<any, any, never>
+
+      // Check if it has a _tag field
+      const tagOpt = extractEntityTagOpt(schemaObj)
+      if (Option.isNone(tagOpt)) {
+        return Option.none()
+      }
+
+      // Check if it has OfTable annotation (indicates it's a final entity class)
+      const hasTableAnnotation = pipe(
+        getAnnotationFromSchema(OfTable, schemaObj.ast),
+        Option.isSome,
+      )
+
+      if (!hasTableAnnotation) {
+        return Option.none()
+      }
+
+      return Option.some({
+        name,
+        schema: schemaObj,
+        tag: tagOpt.value,
+      })
+    }),
+  )
+}
 
 // Helper function to get annotations from schema, handling class-based schemas
 const getAnnotationFromSchema = <A>(annotationId: symbol, ast: SchemaAST.AST): Option.Option<A> => {
@@ -24,6 +89,24 @@ const getAnnotationFromSchema = <A>(annotationId: symbol, ast: SchemaAST.AST): O
   return Option.none()
 }
 
+/**
+ * Get schema for an entity type by tag (case-insensitive)
+ * This function can be used on both frontend and backend
+ */
+export const getSchemaByEntityType = (
+  entityType: string,
+): Option.Option<Schema.Schema<any, any, never>> => {
+  const entities = discoverEntitySchemas()
+
+  return pipe(
+    entities,
+    Array.findFirst(
+      (entity) => pipe(entity.tag, String.toLowerCase) === pipe(entityType, String.toLowerCase),
+    ),
+    Option.map((entity) => entity.schema),
+  )
+}
+
 export interface EntityUiConfig {
   schema: Schema.Schema<any, any, never>
   tag: string
@@ -36,17 +119,13 @@ export interface EntityUiConfig {
 }
 
 export const discoverUiEntities = (): Array<EntityUiConfig> => {
+  // Start with all entity schemas (those with _tag + OfTable)
+  const entitySchemas = discoverEntitySchemas()
+
   return pipe(
-    OfSchemas,
-    Record.toEntries,
-    Array.filterMap(([, schema]) => {
-      if (!Schema.isSchema(schema)) {
-        return Option.none()
-      }
-
-      const schemaObj = schema
-
-      const uiConfigOpt = getAnnotationFromSchema<FieldConfig>(OfUiConfig, schemaObj.ast)
+    entitySchemas,
+    Array.filterMap((entitySchema) => {
+      const uiConfigOpt = getAnnotationFromSchema<FieldConfig>(OfUiConfig, entitySchema.schema.ast)
       const navConfigOpt = pipe(
         uiConfigOpt,
         Option.flatMap((config) => Option.fromNullable(config.navigation)),
@@ -59,24 +138,19 @@ export const discoverUiEntities = (): Array<EntityUiConfig> => {
 
       const navConfig = navConfigOpt.value
 
-      const tagOpt = extractEntityTagOpt(schemaObj)
-      if (Option.isNone(tagOpt)) {
-        return Option.none()
-      }
-
-      const tag = tagOpt.value
-
       const navItem = {
         iconName: navConfig.icon,
         title: navConfig.title,
-        url: navConfig.url || `/${navConfig.module}/${pluralize(pipe(tag, String.toLowerCase))}`,
+        url:
+          navConfig.url ||
+          `/${navConfig.module}/${pluralize(pipe(entitySchema.tag, String.toLowerCase))}`,
       }
 
       return Option.some({
         navConfig,
         navItem,
-        schema: schemaObj as Schema.Schema<any, any, never>,
-        tag,
+        schema: entitySchema.schema,
+        tag: entitySchema.tag,
       })
     }),
     Array.sort(Order.mapInput(Order.number, (item: EntityUiConfig) => item.navConfig.order ?? 999)),
