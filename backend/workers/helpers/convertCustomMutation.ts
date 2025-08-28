@@ -49,6 +49,7 @@ const createCrudOperation = (
         return {
           op: 'update' as const,
           primaryKey,
+          source: 'internal',
           tableName,
           value: dataRecord,
         }
@@ -57,6 +58,7 @@ const createCrudOperation = (
         return {
           op: 'insert' as const,
           primaryKey,
+          source: 'internal',
           tableName,
           value: dataRecord,
         }
@@ -64,6 +66,7 @@ const createCrudOperation = (
         return {
           op: 'delete' as const,
           primaryKey,
+          source: 'internal',
           tableName,
           value: primaryKey, // For delete, value is the primary key
         }
@@ -71,6 +74,7 @@ const createCrudOperation = (
         return {
           op: 'upsert' as const,
           primaryKey,
+          source: 'internal',
           tableName,
           value: dataRecord,
         }

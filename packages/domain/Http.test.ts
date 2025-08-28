@@ -66,6 +66,7 @@ effect('InsertOp should validate correctly', () =>
     const validInsertOp = {
       op: 'insert' as const,
       primaryKey: { key: 'id', value: '123' },
+      source: 'internal',
       tableName: 'users',
       value: { key: 'name', value: 'John' },
     }
@@ -79,6 +80,7 @@ effect('UpsertOp should validate correctly', () =>
     const validUpsertOp = {
       op: 'upsert' as const,
       primaryKey: { key: 'id', value: '123' },
+      source: 'internal',
       tableName: 'users',
       value: { key: 'name', value: 'John' },
     }
@@ -92,6 +94,7 @@ effect('UpdateOp should validate correctly', () =>
     const validUpdateOp = {
       op: 'update' as const,
       primaryKey: { key: 'id', value: '123' },
+      source: 'internal',
       tableName: 'users',
       value: { key: 'name', value: 'Jane' },
     }
@@ -105,6 +108,7 @@ effect('DeleteOp should validate correctly', () =>
     const validDeleteOp = {
       op: 'delete' as const,
       primaryKey: { key: 'id', value: '123' },
+      source: 'internal',
       tableName: 'users',
       value: { key: 'id', value: '123' },
     }
@@ -118,12 +122,14 @@ effect('CRUDOp union should accept all operation types', () =>
     const insertOp = {
       op: 'insert' as const,
       primaryKey: { key: 'id', value: '123' },
+      source: 'internal',
       tableName: 'users',
       value: { key: 'name', value: 'John' },
     }
     const deleteOp = {
       op: 'delete' as const,
       primaryKey: { key: 'id', value: '123' },
+      source: 'internal',
       tableName: 'users',
       value: { key: 'id', value: '123' },
     }
@@ -146,6 +152,7 @@ effect('CRUDMutation should validate correctly', () =>
             {
               op: 'insert' as const,
               primaryKey: { key: 'id', value: '123' },
+              source: 'internal',
               tableName: 'users',
               value: { key: 'name', value: 'John' },
             },

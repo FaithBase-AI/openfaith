@@ -18,6 +18,9 @@ export type RowValue = typeof RowValue.Type
 export const InsertOp = Schema.Struct({
   op: Schema.Literal('insert'),
   primaryKey: PrimaryKey,
+  source: Schema.optionalWith(Schema.String, {
+    default: () => 'internal',
+  }),
   tableName: Schema.String,
   value: RowValue,
 })
@@ -26,6 +29,9 @@ export type InsertOp = typeof InsertOp.Type
 export const UpsertOp = Schema.Struct({
   op: Schema.Literal('upsert'),
   primaryKey: PrimaryKey,
+  source: Schema.optionalWith(Schema.String, {
+    default: () => 'internal',
+  }),
   tableName: Schema.String,
   value: RowValue,
 })
@@ -34,6 +40,9 @@ export type UpsertOp = typeof UpsertOp.Type
 export const UpdateOp = Schema.Struct({
   op: Schema.Literal('update'),
   primaryKey: PrimaryKey,
+  source: Schema.optionalWith(Schema.String, {
+    default: () => 'internal',
+  }),
   tableName: Schema.String,
   value: RowValue,
 })
@@ -42,6 +51,9 @@ export type UpdateOp = typeof UpdateOp.Type
 export const DeleteOp = Schema.Struct({
   op: Schema.Literal('delete'),
   primaryKey: PrimaryKey,
+  source: Schema.optionalWith(Schema.String, {
+    default: () => 'internal',
+  }),
   tableName: Schema.String,
   value: PrimaryKey, // For delete ops, value represents the primary key
 })

@@ -117,6 +117,7 @@ const createCrudOperation = (
 ): CrudOperation => ({
   op,
   primaryKey: { id: entityId },
+  source: 'internal',
   tableName,
   value,
 })
@@ -593,6 +594,7 @@ effect('All types are properly exported', () =>
     const operation: CrudOperation = {
       op: 'insert',
       primaryKey: { id: 'test_123' },
+      source: 'internal',
       tableName: 'test_entities',
       value: { name: 'Test User' },
     }
