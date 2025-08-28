@@ -103,6 +103,7 @@ layer(TestLayer)('PcoOperationsLive', (it) => {
         {
           op: 'insert' as const,
           primaryKey: { id: 'test-id' },
+          source: 'internal',
           tableName: 'person',
           value: { email: 'john@example.com', name: 'John Doe' },
         },
@@ -128,6 +129,7 @@ layer(TestLayer)('PcoOperationsLive', (it) => {
         {
           op: 'insert' as const,
           primaryKey: { id: 'test-id' },
+          source: 'internal',
           tableName: 'unsupported',
           value: { name: 'Test' },
         },

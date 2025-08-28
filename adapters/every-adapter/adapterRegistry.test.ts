@@ -197,6 +197,7 @@ layer(TestRegistryLayer)('AdapterRegistry', (it) => {
         {
           op: 'insert' as const,
           primaryKey: { id: '1' },
+          source: 'internal',
           tableName: 'person',
           value: { name: 'John Doe' },
         },

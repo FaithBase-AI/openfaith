@@ -170,6 +170,7 @@ effect('makeAdapterRegistry should handle operations correctly', () =>
       {
         op: 'insert',
         primaryKey: { id: '1' },
+        source: 'internal',
         tableName: 'person',
         value: { name: 'John' },
       },
