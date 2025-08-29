@@ -9,7 +9,7 @@ export const Route = createFileRoute('/_app/settings/profile')({
 function RouteComponent() {
   return (
     <ScrollArea viewportClassName='px-6 pb-6'>
-      <ProfileForm _tag='standalone' />
+      <ProfileForm display='card' />
     </ScrollArea>
   )
 }

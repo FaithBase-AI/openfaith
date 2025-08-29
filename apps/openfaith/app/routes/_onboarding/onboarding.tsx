@@ -87,7 +87,7 @@ function OnboardingPage() {
         {pipe(
           Match.type<OnboardingStep>(),
           Match.tag('organization', () => (
-            <OrgForm _tag='onboarding' redirect='/onboarding?step=integrations' />
+            <OrgForm _tag='onboarding' display='card' redirect='/onboarding?step=integrations' />
           )),
           Match.tag('integrations', () => (
             <>

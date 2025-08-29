@@ -25,7 +25,7 @@ export const CreateOrgQuickAction: FC = () => {
         </QuickActionsTitle>
       </QuickActionsHeader>
 
-      <OrgForm _tag={'create'} />
+      <OrgForm _tag={'create'} display='quickAction' />
     </QuickActionsWrapper>
   )
 }

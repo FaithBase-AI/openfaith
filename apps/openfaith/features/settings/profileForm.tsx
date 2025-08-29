@@ -45,16 +45,11 @@ const ProfileSchema = Schema.Struct({
   personId: Schema.Union(Schema.String, Schema.Null),
 })
 
-type ProfileFormProps =
-  | {
-      _tag: 'standalone'
-    }
-  | {
-      _tag: 'embedded'
-      onSuccess?: () => void
-    }
+interface ProfileFormProps {
+  display: 'quickAction' | 'card'
+}
 
-type InnerProfileFormProps = ProfileFormProps & {
+interface InnerProfileFormProps extends ProfileFormProps {
   user: UserClientShape
 }
 
@@ -198,12 +193,6 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
             // We don't need to manually update the email in the database here
           }
 
-          yield* pipe(
-            Match.type<typeof props>(),
-            Match.tag('embedded', (p) => Effect.sync(() => p.onSuccess?.())),
-            Match.orElse(() => Effect.succeed(null)),
-          )(props)
-
           yield* Effect.sync(() => toast.success('Profile updated successfully!'))
         }).pipe(
           Effect.catchTags({
@@ -306,19 +295,19 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
   const submitButton = (
     <form.Subscribe
       selector={(state) => ({
-        isDirty: state.isDirty,
+        isDefaultValue: state.isDefaultValue,
         isSubmitting: state.isSubmitting,
       })}
     >
-      {({ isDirty, isSubmitting }) => (
+      {({ isDefaultValue, isSubmitting }) => (
         <Button
           className={pipe(
             Match.type<typeof props>(),
-            Match.tag('standalone', () => 'mr-auto'),
-            Match.tag('embedded', () => 'ml-auto'),
+            Match.when({ display: 'quickAction' }, () => 'ml-auto'),
+            Match.when({ display: 'card' }, () => 'mr-auto'),
             Match.exhaustive,
           )(props)}
-          disabled={!isDirty}
+          disabled={isDefaultValue}
           loading={isSubmitting}
           type='submit'
         >
@@ -333,7 +322,7 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
     <>
       {pipe(
         Match.type<typeof props>(),
-        Match.tag('standalone', () => (
+        Match.when({ display: 'card' }, () => (
           <Card>
             <CardHeader>
               <CardTitle>Profile Settings</CardTitle>
@@ -346,7 +335,7 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
             </CardContent>
           </Card>
         )),
-        Match.tag('embedded', () => (
+        Match.when({ display: 'quickAction' }, () => (
           <CardForm Actions={submitButton} form={form} Primary={formContent} />
         )),
         Match.exhaustive,

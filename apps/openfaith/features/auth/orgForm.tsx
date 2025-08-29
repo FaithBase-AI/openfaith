@@ -4,7 +4,18 @@ import { createOrganizationE, updateOrganizationE } from '@openfaith/auth/authCl
 import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
 import { createOrgIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import { useChangeOrg } from '@openfaith/openfaith/shared/auth/useChangeOrg'
-import { ArrowRightIcon, Button, CardForm, QuickActionForm, useAppForm } from '@openfaith/ui'
+import {
+  ArrowRightIcon,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardForm,
+  CardHeader,
+  CardTitle,
+  QuickActionForm,
+  useAppForm,
+} from '@openfaith/ui'
 import type { OrgClientShape } from '@openfaith/zero'
 import { revalidateLogic } from '@tanstack/react-form'
 import { useRouter } from '@tanstack/react-router'
@@ -27,21 +38,25 @@ const OrgSchema = Schema.Struct({
   ),
 })
 
-type OrgFormProps = {
-  display?: 'quickAction' | 'card'
-} & (
-  | {
-      _tag: 'create'
-    }
-  | {
-      _tag: 'onboarding'
-      redirect?: string
-    }
-  | {
-      _tag: 'edit'
-      org: OrgClientShape
-    }
-)
+interface OrgFormBaseProps {
+  display: 'quickAction' | 'card'
+}
+
+interface OrgFormCreateProps extends OrgFormBaseProps {
+  _tag: 'create'
+}
+
+interface OrgFormOnboardingProps extends OrgFormBaseProps {
+  _tag: 'onboarding'
+  redirect?: string
+}
+
+interface OrgFormEditProps extends OrgFormBaseProps {
+  _tag: 'edit'
+  org: OrgClientShape
+}
+
+type OrgFormProps = OrgFormCreateProps | OrgFormOnboardingProps | OrgFormEditProps
 
 export const OrgForm: FC<OrgFormProps> = (props) => {
   const { display = 'quickAction' } = props
@@ -124,14 +139,12 @@ export const OrgForm: FC<OrgFormProps> = (props) => {
               }),
             ),
             Match.tag('edit', (x) =>
-              Effect.gen(function* () {
-                yield* updateOrganizationE({
-                  data: {
-                    name: pipe(value.name, String.trim),
-                    slug: pipe(value.slug, String.trim),
-                  },
-                  organizationId: x.org.id,
-                })
+              updateOrganizationE({
+                data: {
+                  name: pipe(value.name, String.trim),
+                  slug: pipe(value.slug, String.trim),
+                },
+                organizationId: x.org.id,
               }),
             ),
             Match.exhaustive,
@@ -203,8 +216,13 @@ export const OrgForm: FC<OrgFormProps> = (props) => {
   )
 
   const submitButton = (
-    <form.Subscribe selector={(x) => x.isSubmitting}>
-      {(x) => (
+    <form.Subscribe
+      selector={(state) => ({
+        isDefaultValue: state.isDefaultValue,
+        isSubmitting: state.isSubmitting,
+      })}
+    >
+      {({ isSubmitting, isDefaultValue }) => (
         <Button
           className={pipe(
             Match.type<typeof props>(),
@@ -213,7 +231,8 @@ export const OrgForm: FC<OrgFormProps> = (props) => {
             Match.tag('edit', () => 'mr-auto'),
             Match.exhaustive,
           )(props)}
-          loading={x}
+          disabled={isDefaultValue}
+          loading={isSubmitting}
           type='submit'
         >
           {pipe(
@@ -236,7 +255,19 @@ export const OrgForm: FC<OrgFormProps> = (props) => {
     Match.when('quickAction', () => (
       <QuickActionForm Actions={submitButton} form={form} Primary={formContent} />
     )),
-    Match.when('card', () => <CardForm Actions={submitButton} form={form} Primary={formContent} />),
+    Match.when('card', () => (
+      <Card>
+        <CardHeader>
+          <CardTitle>General Settings</CardTitle>
+          <CardDescription>
+            Manage your organization's basic information and settings
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CardForm Actions={submitButton} form={form} Primary={formContent} />
+        </CardContent>
+      </Card>
+    )),
     Match.exhaustive,
   )
 }
