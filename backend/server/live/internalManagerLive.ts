@@ -6,20 +6,15 @@ import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import {
   DetectionError,
   EntityProcessingError,
+  type ExternalLinkInput,
   ExternalLinkRetrievalError,
   ExternalLinkUpsertError,
   InternalManager,
   RelationshipProcessingError,
-} from '@openfaith/adapter-core/layers/internalManager'
-import type {
-  EntityData,
-  ExternalLinkInput,
-  RelationshipInput,
-} from '@openfaith/adapter-core/layers/types'
-import { TokenKey } from '@openfaith/adapter-core/server'
+  TokenKey,
+} from '@openfaith/adapter-core'
 import { type ExternalLink, edgesTable, externalLinksTable } from '@openfaith/db'
-import { type CustomFieldSchema, OfTable } from '@openfaith/schema'
-import { getSchemaByEntityType } from '@openfaith/schema/shared/entityDiscovery'
+import { type CustomFieldSchema, getSchemaByEntityType, OfTable } from '@openfaith/schema'
 import { getEntityId } from '@openfaith/shared'
 import { getProperEntityName } from '@openfaith/workers/helpers/saveDataE'
 import { getAnnotationFromSchema } from '@openfaith/workers/helpers/schemaRegistry'
@@ -239,7 +234,7 @@ export const InternalManagerLive = Layer.effect(
       /**
        * Processes entity data by upserting entities into their respective tables.
        */
-      processEntityData: (data: Array<EntityData>) =>
+      processEntities: (data) =>
         Effect.gen(function* () {
           if (data.length === 0) {
             yield* Effect.annotateLogs(Effect.log('No entity data to process'), {
@@ -385,150 +380,12 @@ export const InternalManagerLive = Layer.effect(
         ),
 
       /**
-       * Processes relationship inputs by creating edges.
-       */
-      processEntityEdges: (edges: Array<RelationshipInput>) =>
-        Effect.gen(function* () {
-          if (edges.length === 0) {
-            yield* Effect.annotateLogs(Effect.log('No relationship edges to process'), {
-              edgeCount: 0,
-              orgId,
-            })
-            return
-          }
-
-          yield* Effect.annotateLogs(Effect.log('Processing relationship edges'), {
-            edgeCount: edges.length,
-            orgId,
-          })
-
-          // Create edge values using the RelationshipInput structure
-          const edgeValues = pipe(
-            edges,
-            Array.map((edge) => ({
-              _tag: 'edge' as const,
-              createdAt: edge.createdAt,
-              createdBy: edge.createdBy,
-              deletedAt: edge.deletedAt,
-              deletedBy: edge.deletedBy,
-              metadata: edge.metadata || {},
-              orgId,
-              relationshipType: edge.relationshipType,
-              sourceEntityId: edge.sourceEntityId,
-              sourceEntityTypeTag: edge.sourceEntityTypeTag,
-              targetEntityId: edge.targetEntityId,
-              targetEntityTypeTag: edge.targetEntityTypeTag,
-              updatedAt: edge.updatedAt,
-              updatedBy: edge.updatedBy,
-            })),
-          )
-
-          if (edgeValues.length > 0) {
-            yield* Effect.annotateLogs(Effect.log('Creating edges from relationships'), {
-              edgeCount: edgeValues.length,
-              orgId,
-            })
-
-            // Insert edges with conflict handling (based on insertEdgesE pattern)
-            yield* db
-              .insert(edgesTable)
-              .values(pipe(edgeValues, Array.fromIterable))
-              .onConflictDoUpdate({
-                set: {
-                  metadata: sql`EXCLUDED."metadata"`,
-                  updatedAt: sql`EXCLUDED."updatedAt"`,
-                },
-                target: [
-                  edgesTable.orgId,
-                  edgesTable.sourceEntityId,
-                  edgesTable.targetEntityId,
-                  edgesTable.relationshipType,
-                ],
-              })
-
-            yield* Effect.annotateLogs(Effect.log('Edges created successfully'), {
-              edgeCount: edgeValues.length,
-              orgId,
-            })
-
-            // Update entity relationships registry inline
-            const relationshipValues = pipe(
-              edgeValues,
-              Array.groupBy((edge) => edge.sourceEntityTypeTag),
-              Record.mapEntries((edges, sourceEntityType) => [
-                sourceEntityType,
-                {
-                  _tag: 'entityRelationships' as const,
-                  orgId,
-                  sourceEntityType,
-                  targetEntityTypes: pipe(
-                    edges,
-                    Array.map((edge) => edge.targetEntityTypeTag),
-                    Array.dedupe,
-                  ),
-                  updatedAt: new Date(),
-                },
-              ]),
-              Record.values,
-            )
-
-            if (relationshipValues.length > 0) {
-              const valuesClause = pipe(
-                relationshipValues,
-                Array.map((rel) => {
-                  const targetEntityTypesJson = JSON.stringify(rel.targetEntityTypes)
-                  const escapedJson = targetEntityTypesJson.replace(/'/g, "''")
-                  return sql`(${rel.orgId}, ${rel.sourceEntityType}, ${sql.raw(`'${escapedJson}'::jsonb`)}, ${rel.updatedAt})`
-                }),
-                Array.reduce(sql`` as ReturnType<typeof sql>, (acc, curr, index) =>
-                  index === 0 ? curr : sql`${acc}, ${curr}`,
-                ),
-              )
-
-              const query = sql`
-                INSERT INTO "openfaith_entityRelationships" ("orgId", "sourceEntityType", "targetEntityTypes", "updatedAt")
-                VALUES ${valuesClause}
-                ON CONFLICT ("orgId", "sourceEntityType") DO UPDATE
-                SET "targetEntityTypes" = (
-                  SELECT jsonb_agg(DISTINCT elem.value ORDER BY elem.value)
-                  FROM jsonb_array_elements_text(
-                    "openfaith_entityRelationships"."targetEntityTypes" || EXCLUDED."targetEntityTypes"
-                  ) AS elem(value)
-                ),
-                "updatedAt" = EXCLUDED."updatedAt"
-              `
-
-              yield* db.execute(query)
-              yield* Effect.annotateLogs(Effect.log('Entity relationships registry updated'), {
-                orgId,
-                updateCount: relationshipValues.length,
-              })
-            }
-          }
-
-          yield* Effect.annotateLogs(Effect.log('Relationship edge processing complete'), {
-            edgeCount: edges.length,
-            orgId,
-          })
-        }).pipe(
-          Effect.mapError(
-            (cause) =>
-              new RelationshipProcessingError({
-                cause,
-                message: `Failed to process relationship edges: ${cause}`,
-                orgId,
-                relationshipCount: edges.length,
-              }),
-          ),
-        ),
-
-      /**
        * Upserts multiple external links with conflict resolution.
        * Supports two patterns:
        * 1. Main entity sync (with conditional updates and filtering)
        * 2. Target entity creation (with do-nothing conflict resolution)
        */
-      upsertExternalLinks: (externalLinks) =>
+      processExternalLinks: (externalLinks) =>
         Effect.gen(function* () {
           if (externalLinks.length === 0) {
             yield* Effect.annotateLogs(Effect.log('No external links to upsert'), {
@@ -741,6 +598,144 @@ export const InternalManagerLive = Layer.effect(
                 linkCount: externalLinks.length,
                 message: `Failed to upsert external links: ${cause}`,
                 orgId,
+              }),
+          ),
+        ),
+
+      /**
+       * Processes relationship inputs by creating edges.
+       */
+      processRelationships: (edges) =>
+        Effect.gen(function* () {
+          if (edges.length === 0) {
+            yield* Effect.annotateLogs(Effect.log('No relationship edges to process'), {
+              edgeCount: 0,
+              orgId,
+            })
+            return
+          }
+
+          yield* Effect.annotateLogs(Effect.log('Processing relationship edges'), {
+            edgeCount: edges.length,
+            orgId,
+          })
+
+          // Create edge values using the RelationshipInput structure
+          const edgeValues = pipe(
+            edges,
+            Array.map((edge) => ({
+              _tag: 'edge' as const,
+              createdAt: edge.createdAt,
+              createdBy: edge.createdBy,
+              deletedAt: edge.deletedAt,
+              deletedBy: edge.deletedBy,
+              metadata: edge.metadata || {},
+              orgId,
+              relationshipType: edge.relationshipType,
+              sourceEntityId: edge.sourceEntityId,
+              sourceEntityTypeTag: edge.sourceEntityTypeTag,
+              targetEntityId: edge.targetEntityId,
+              targetEntityTypeTag: edge.targetEntityTypeTag,
+              updatedAt: edge.updatedAt,
+              updatedBy: edge.updatedBy,
+            })),
+          )
+
+          if (edgeValues.length > 0) {
+            yield* Effect.annotateLogs(Effect.log('Creating edges from relationships'), {
+              edgeCount: edgeValues.length,
+              orgId,
+            })
+
+            // Insert edges with conflict handling (based on insertEdgesE pattern)
+            yield* db
+              .insert(edgesTable)
+              .values(pipe(edgeValues, Array.fromIterable))
+              .onConflictDoUpdate({
+                set: {
+                  metadata: sql`EXCLUDED."metadata"`,
+                  updatedAt: sql`EXCLUDED."updatedAt"`,
+                },
+                target: [
+                  edgesTable.orgId,
+                  edgesTable.sourceEntityId,
+                  edgesTable.targetEntityId,
+                  edgesTable.relationshipType,
+                ],
+              })
+
+            yield* Effect.annotateLogs(Effect.log('Edges created successfully'), {
+              edgeCount: edgeValues.length,
+              orgId,
+            })
+
+            // Update entity relationships registry inline
+            const relationshipValues = pipe(
+              edgeValues,
+              Array.groupBy((edge) => edge.sourceEntityTypeTag),
+              Record.mapEntries((edges, sourceEntityType) => [
+                sourceEntityType,
+                {
+                  _tag: 'entityRelationships' as const,
+                  orgId,
+                  sourceEntityType,
+                  targetEntityTypes: pipe(
+                    edges,
+                    Array.map((edge) => edge.targetEntityTypeTag),
+                    Array.dedupe,
+                  ),
+                  updatedAt: new Date(),
+                },
+              ]),
+              Record.values,
+            )
+
+            if (relationshipValues.length > 0) {
+              const valuesClause = pipe(
+                relationshipValues,
+                Array.map((rel) => {
+                  const targetEntityTypesJson = JSON.stringify(rel.targetEntityTypes)
+                  const escapedJson = targetEntityTypesJson.replace(/'/g, "''")
+                  return sql`(${rel.orgId}, ${rel.sourceEntityType}, ${sql.raw(`'${escapedJson}'::jsonb`)}, ${rel.updatedAt})`
+                }),
+                Array.reduce(sql`` as ReturnType<typeof sql>, (acc, curr, index) =>
+                  index === 0 ? curr : sql`${acc}, ${curr}`,
+                ),
+              )
+
+              const query = sql`
+                INSERT INTO "openfaith_entityRelationships" ("orgId", "sourceEntityType", "targetEntityTypes", "updatedAt")
+                VALUES ${valuesClause}
+                ON CONFLICT ("orgId", "sourceEntityType") DO UPDATE
+                SET "targetEntityTypes" = (
+                  SELECT jsonb_agg(DISTINCT elem.value ORDER BY elem.value)
+                  FROM jsonb_array_elements_text(
+                    "openfaith_entityRelationships"."targetEntityTypes" || EXCLUDED."targetEntityTypes"
+                  ) AS elem(value)
+                ),
+                "updatedAt" = EXCLUDED."updatedAt"
+              `
+
+              yield* db.execute(query)
+              yield* Effect.annotateLogs(Effect.log('Entity relationships registry updated'), {
+                orgId,
+                updateCount: relationshipValues.length,
+              })
+            }
+          }
+
+          yield* Effect.annotateLogs(Effect.log('Relationship edge processing complete'), {
+            edgeCount: edges.length,
+            orgId,
+          })
+        }).pipe(
+          Effect.mapError(
+            (cause) =>
+              new RelationshipProcessingError({
+                cause,
+                message: `Failed to process relationship edges: ${cause}`,
+                orgId,
+                relationshipCount: edges.length,
               }),
           ),
         ),

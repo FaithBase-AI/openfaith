@@ -1,7 +1,88 @@
 import type { ExternalLink } from '@openfaith/db'
 import type { CRUDOp } from '@openfaith/domain'
 import type { EntityUnion } from '@openfaith/schema/shared/entityDiscovery'
-import type { Effect } from 'effect'
+import { type Effect, Schema } from 'effect'
+
+export class AdapterFetchError extends Schema.TaggedError<AdapterFetchError>()(
+  'AdapterFetchError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    entityId: Schema.optional(Schema.String),
+    entityType: Schema.String,
+    message: Schema.String,
+    operation: Schema.String,
+  },
+) {}
+
+export class AdapterTransformError extends Schema.TaggedError<AdapterTransformError>()(
+  'AdapterTransformError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    entityType: Schema.String,
+    message: Schema.String,
+  },
+) {}
+
+export class AdapterEntityNotFoundError extends Schema.TaggedError<AdapterEntityNotFoundError>()(
+  'AdapterEntityNotFoundError',
+  {
+    adapter: Schema.String,
+    entityType: Schema.String,
+    message: Schema.String,
+  },
+) {}
+
+export class EntityProcessingError extends Schema.TaggedError<EntityProcessingError>()(
+  'EntityProcessingError',
+  {
+    cause: Schema.optional(Schema.Unknown),
+    entityCount: Schema.optional(Schema.Number),
+    entityType: Schema.optional(Schema.String),
+    message: Schema.String,
+    orgId: Schema.String,
+  },
+) {}
+
+export class RelationshipProcessingError extends Schema.TaggedError<RelationshipProcessingError>()(
+  'RelationshipProcessingError',
+  {
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+    orgId: Schema.String,
+    relationshipCount: Schema.optional(Schema.Number),
+  },
+) {}
+
+export class DetectionError extends Schema.TaggedError<DetectionError>()('DetectionError', {
+  adapter: Schema.String,
+  cause: Schema.optional(Schema.Unknown),
+  entityType: Schema.String,
+  message: Schema.String,
+  orgId: Schema.String,
+}) {}
+
+export class ExternalLinkUpsertError extends Schema.TaggedError<ExternalLinkUpsertError>()(
+  'ExternalLinkUpsertError',
+  {
+    cause: Schema.optional(Schema.Unknown),
+    linkCount: Schema.optional(Schema.Number),
+    message: Schema.String,
+    orgId: Schema.String,
+  },
+) {}
+
+export class ExternalLinkRetrievalError extends Schema.TaggedError<ExternalLinkRetrievalError>()(
+  'ExternalLinkRetrievalError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    internalId: Schema.String,
+    message: Schema.String,
+    orgId: Schema.String,
+  },
+) {}
 
 // Shared callback interfaces for consistency across operations
 export interface ExternalLinkInput {
@@ -18,14 +99,16 @@ export interface ExternalLinkInput {
   attributes?: Record<string, unknown> // Raw external attributes if needed
 }
 
-export type ProcessExternalLinks<AE, AR> = (
+export type ProcessExternalLinks = (
   externalLinks: Array<ExternalLinkInput>,
-) => Effect.Effect<Array<ExternalLink>, AE, AR>
+) => Effect.Effect<Array<ExternalLink>, ExternalLinkUpsertError>
 
 // EntityData is now a union of all canonical OpenFaith entity types
 export type EntityData = EntityUnion
 
-export type ProcessEntities<BE, BR> = (data: Array<EntityData>) => Effect.Effect<void, BE, BR>
+export type ProcessEntities = (
+  data: Array<EntityData>,
+) => Effect.Effect<void, EntityProcessingError>
 
 export interface RelationshipInput {
   // Entity identifiers (internal OpenFaith IDs)
@@ -51,8 +134,8 @@ export interface RelationshipInput {
   metadata?: Record<string, unknown>
 }
 
-export type ProcessRelationships<CE, CR> = (
+export type ProcessRelationships = (
   relationships: Array<RelationshipInput>,
-) => Effect.Effect<void, CE, CR>
+) => Effect.Effect<void, RelationshipProcessingError>
 
-export type ProcessMutations<DE, DR> = (mutations: Array<CRUDOp>) => Effect.Effect<void, DE, DR>
+export type ProcessMutations = (mutations: Array<CRUDOp>) => Effect.Effect<void>

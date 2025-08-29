@@ -15,15 +15,13 @@ import { SqlClient } from '@effect/sql'
 import * as Pg from '@effect/sql-drizzle/Pg'
 import {
   DetectionError,
+  type EntityData,
+  type ExternalLinkInput,
   ExternalLinkUpsertError,
   InternalManager,
-} from '@openfaith/adapter-core/layers/internalManager'
-import type {
-  EntityData,
-  ExternalLinkInput,
-  RelationshipInput,
-} from '@openfaith/adapter-core/layers/types'
-import { TokenKey } from '@openfaith/adapter-core/server'
+  type RelationshipInput,
+  TokenKey,
+} from '@openfaith/adapter-core'
 import { effect, layer } from '@openfaith/bun-test'
 import { getEntityId } from '@openfaith/shared'
 import { createTestTables } from '@openfaith/workers/helpers/test-utils/test-schema'
@@ -117,9 +115,9 @@ layer(TestLayer)('InternalManager Tests', (it) => {
         // Verify the service has all expected methods
         expect(typeof internalManager.detectAndMarkDeleted).toBe('function')
         expect(typeof internalManager.getExternalLink).toBe('function')
-        expect(typeof internalManager.processEntityData).toBe('function')
-        expect(typeof internalManager.processEntityEdges).toBe('function')
-        expect(typeof internalManager.upsertExternalLinks).toBe('function')
+        expect(typeof internalManager.processEntities).toBe('function')
+        expect(typeof internalManager.processRelationships).toBe('function')
+        expect(typeof internalManager.processExternalLinks).toBe('function')
       }),
     { timeout: 120000 },
   )
@@ -133,7 +131,7 @@ layer(TestLayer)('InternalManager Tests', (it) => {
         yield* createTestTables
         const internalManager = yield* InternalManager
 
-        const result = yield* internalManager.upsertExternalLinks([])
+        const result = yield* internalManager.processExternalLinks([])
 
         expect(result).toEqual([])
       }),
@@ -153,7 +151,7 @@ layer(TestLayer)('InternalManager Tests', (it) => {
           externalId: 'pco_new_main',
         })
 
-        const result = yield* internalManager.upsertExternalLinks([linkInput])
+        const result = yield* internalManager.processExternalLinks([linkInput])
 
         // Should return the newly created link
         expect(result.length).toBe(1)
@@ -187,7 +185,7 @@ layer(TestLayer)('InternalManager Tests', (it) => {
           updatedAt: undefined, // No entity data
         })
 
-        const result = yield* internalManager.upsertExternalLinks([targetLinkInput])
+        const result = yield* internalManager.processExternalLinks([targetLinkInput])
 
         // Should return the target link
         expect(result.length).toBe(1)
@@ -222,7 +220,7 @@ layer(TestLayer)('InternalManager Tests', (it) => {
           externalId: 'pco_generated_id',
         })
 
-        const result = yield* internalManager.upsertExternalLinks([linkInput])
+        const result = yield* internalManager.processExternalLinks([linkInput])
 
         expect(result.length).toBe(1)
         expect(result[0]?.externalId).toBe('pco_generated_id')
@@ -302,7 +300,7 @@ layer(TestLayer)('InternalManager Tests', (it) => {
         const internalManager = yield* InternalManager
 
         // Should not throw error with empty data
-        yield* internalManager.processEntityData([])
+        yield* internalManager.processEntities([])
 
         // Test passes if no error is thrown
         expect(true).toBe(true)
@@ -327,7 +325,7 @@ layer(TestLayer)('InternalManager Tests', (it) => {
           name: 'Test Person',
         })
 
-        yield* internalManager.processEntityData([personData])
+        yield* internalManager.processEntities([personData])
 
         // Verify the entity was inserted into the people table
         const sql = yield* SqlClient.SqlClient
@@ -354,7 +352,7 @@ layer(TestLayer)('InternalManager Tests', (it) => {
         const internalManager = yield* InternalManager
 
         // Should not throw error with empty edges
-        yield* internalManager.processEntityEdges([])
+        yield* internalManager.processRelationships([])
 
         // Test passes if no error is thrown
         expect(true).toBe(true)
@@ -381,7 +379,7 @@ layer(TestLayer)('InternalManager Tests', (it) => {
           targetEntityTypeTag: 'address',
         })
 
-        yield* internalManager.processEntityEdges([relationshipInput])
+        yield* internalManager.processRelationships([relationshipInput])
 
         // Verify edge was created
         const sql = yield* SqlClient.SqlClient
@@ -479,7 +477,9 @@ layer(TestLayer)('InternalManager Tests', (it) => {
           externalId: '', // Empty string should cause error
         })
 
-        const result = yield* Effect.either(internalManager.upsertExternalLinks([invalidLinkInput]))
+        const result = yield* Effect.either(
+          internalManager.processExternalLinks([invalidLinkInput]),
+        )
 
         expect(result._tag).toBe('Left')
         if (result._tag === 'Left') {
@@ -537,7 +537,7 @@ layer(TestLayer)('InternalManager Tests', (it) => {
           externalId: 'pco_integration_person',
         })
 
-        const externalLinks = yield* internalManager.upsertExternalLinks([personLinkInput])
+        const externalLinks = yield* internalManager.processExternalLinks([personLinkInput])
 
         expect(externalLinks.length).toBe(1)
 
@@ -556,7 +556,7 @@ layer(TestLayer)('InternalManager Tests', (it) => {
             name: 'Integration Test Person',
           })
 
-          yield* internalManager.processEntityData([personEntityData])
+          yield* internalManager.processEntities([personEntityData])
 
           // Verify the complete workflow
           const sql = yield* SqlClient.SqlClient
@@ -601,13 +601,13 @@ layer(TestLayer)('InternalManager Tests', (it) => {
         const retrievalResult = internalManager.getExternalLink('test_id', 'pco')
 
         // processEntityData should accept Array<EntityData> and return Effect<void, EntityProcessingError>
-        const entityProcessingResult = internalManager.processEntityData([])
+        const entityProcessingResult = internalManager.processEntities([])
 
         // processEntityEdges should accept Array<RelationshipInput> and return Effect<void, RelationshipProcessingError>
-        const edgeProcessingResult = internalManager.processEntityEdges([])
+        const edgeProcessingResult = internalManager.processRelationships([])
 
         // upsertExternalLinks should accept Array<ExternalLinkInput> and return Effect<Array<ExternalLink>, ExternalLinkUpsertError>
-        const upsertResult = internalManager.upsertExternalLinks([])
+        const upsertResult = internalManager.processExternalLinks([])
 
         // These should all compile correctly - we just need to verify the types exist
         expect(typeof detectionResult).toBe('object')

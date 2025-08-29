@@ -11,6 +11,8 @@ import { ExternalPushEntityWorkflowLayer } from '@openfaith/workers/workflows/ex
 import { ExternalPushWorkflowLayer } from '@openfaith/workers/workflows/externalPushWorkflow'
 import { ExternalSyncEntityWorkflowLayer } from '@openfaith/workers/workflows/externalSyncEntityWorkflow'
 import { ExternalSyncWorkflowLayer } from '@openfaith/workers/workflows/externalSyncWorkflow'
+import { InternalSyncEntityWorkflowLayer } from '@openfaith/workers/workflows/internalSyncEntityWorkflow'
+import { InternalSyncWorkflowLayer } from '@openfaith/workers/workflows/internalSyncWorkflow'
 import { TestWorkflowLayer } from '@openfaith/workers/workflows/testWorkflow'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
@@ -44,6 +46,8 @@ const EnvLayer = Layer.mergeAll(
   ExternalSyncEntityWorkflowLayer,
   ExternalPushWorkflowLayer,
   ExternalPushEntityWorkflowLayer,
+  InternalSyncWorkflowLayer,
+  InternalSyncEntityWorkflowLayer,
   CreateOrgWorkflowLayer,
   TestWorkflowLayer,
 ).pipe(
@@ -53,7 +57,7 @@ const EnvLayer = Layer.mergeAll(
 )
 
 // Set up the server using NodeHttpServer on port 3000
-HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
+const ServerLayer = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(WorkflowApiLive),
   Layer.provide(HealthLive),
   Layer.provide(EnvLayer),
@@ -61,6 +65,6 @@ HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(NodeHttpServer.layer(createServer, { port })),
   Layer.provide(FetchHttpClient.layer),
   Layer.provide(NodeSdkLive),
-  Layer.launch,
-  NodeRuntime.runMain,
 )
+
+NodeRuntime.runMain(ServerLayer.pipe(Layer.launch))

@@ -13,10 +13,10 @@ export const externalSyncEntity = Effect.fn('externalSyncEntity')(function* (ent
 
   yield* adapterManager.syncEntityType({
     entityType,
-    processEntities: internalManager.processEntityData,
-    processExternalLinks: internalManager.upsertExternalLinks,
+    processEntities: internalManager.processEntities,
+    processExternalLinks: internalManager.processExternalLinks,
     processMutations: () => Effect.succeed(undefined),
-    processRelationships: internalManager.processEntityEdges,
+    processRelationships: internalManager.processRelationships,
   })
 
   yield* internalManager.detectAndMarkDeleted(adapterManager.adapter, entityType, syncStartTime)
@@ -36,10 +36,10 @@ export const webhookSyncEntity = Effect.fn('webhookSyncEntity')(function* (
     entityAlt: payload,
     entityId: payload.id,
     entityType,
-    processEntities: internalManager.processEntityData,
-    processExternalLinks: internalManager.upsertExternalLinks,
+    processEntities: internalManager.processEntities,
+    processExternalLinks: internalManager.processExternalLinks,
     processMutations: () => Effect.succeed(undefined),
-    processRelationships: internalManager.processEntityEdges,
+    processRelationships: internalManager.processRelationships,
   })
 })
 
@@ -68,7 +68,7 @@ export const processMutation = Effect.fn('processMutation')(function* (op: CRUDO
               data: op.value,
               entityType,
               internalId,
-              processExternalLinks: internalManager.upsertExternalLinks,
+              processExternalLinks: internalManager.processExternalLinks,
             }),
           onSome: (externalLink) =>
             adapterManager.updateEntity({
@@ -76,7 +76,7 @@ export const processMutation = Effect.fn('processMutation')(function* (op: CRUDO
               entityType,
               externalId: externalLink.externalId,
               internalId,
-              processExternalLinks: internalManager.upsertExternalLinks,
+              processExternalLinks: internalManager.processExternalLinks,
             }),
         }),
       )
@@ -105,7 +105,7 @@ export const processMutation = Effect.fn('processMutation')(function* (op: CRUDO
               entityType,
               externalId: externalLink.externalId,
               internalId,
-              processExternalLinks: internalManager.upsertExternalLinks,
+              processExternalLinks: internalManager.processExternalLinks,
             }),
         }),
       )

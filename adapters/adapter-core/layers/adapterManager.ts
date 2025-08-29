@@ -1,41 +1,13 @@
 import type {
+  AdapterEntityNotFoundError,
+  AdapterFetchError,
+  AdapterTransformError,
   ProcessEntities,
   ProcessExternalLinks,
   ProcessMutations,
   ProcessRelationships,
 } from '@openfaith/adapter-core/layers/types'
-import { Context, type Effect, Schema } from 'effect'
-
-export class AdapterFetchError extends Schema.TaggedError<AdapterFetchError>()(
-  'AdapterFetchError',
-  {
-    adapter: Schema.String,
-    cause: Schema.optional(Schema.Unknown),
-    entityId: Schema.optional(Schema.String),
-    entityType: Schema.String,
-    message: Schema.String,
-    operation: Schema.String,
-  },
-) {}
-
-export class AdapterTransformError extends Schema.TaggedError<AdapterTransformError>()(
-  'AdapterTransformError',
-  {
-    adapter: Schema.String,
-    cause: Schema.optional(Schema.Unknown),
-    entityType: Schema.String,
-    message: Schema.String,
-  },
-) {}
-
-export class AdapterEntityNotFoundError extends Schema.TaggedError<AdapterEntityNotFoundError>()(
-  'AdapterEntityNotFoundError',
-  {
-    adapter: Schema.String,
-    entityType: Schema.String,
-    message: Schema.String,
-  },
-) {}
+import { Context, type Effect } from 'effect'
 
 export class AdapterManager extends Context.Tag('AdapterManager')<
   AdapterManager,
@@ -50,60 +22,58 @@ export class AdapterManager extends Context.Tag('AdapterManager')<
     // TODO: private shared method for syncEntityId and syncEntityType that runs the logic.
 
     // Get an entity from the adapter
-    readonly syncEntityId: <AR, AE, BR, BE, CR, CE, DR, DE, ER, EE>(params: {
+    readonly syncEntityId: (params: {
       entityType: string
       entityId: string
 
       entityAlt?: { id: string } & Record<string, unknown>
 
-      processExternalLinks: ProcessExternalLinks<AE, AR>
-      processEntities: ProcessEntities<BE, BR>
-      processRelationships: ProcessRelationships<CE, CR>
-      processMutations: ProcessMutations<EE, ER>
+      processExternalLinks: ProcessExternalLinks
+      processEntities: ProcessEntities
+      processRelationships: ProcessRelationships
+      processMutations: ProcessMutations
     }) => Effect.Effect<
       void,
-      DE | AdapterFetchError | AdapterTransformError | AdapterEntityNotFoundError,
-      DR
+      AdapterFetchError | AdapterTransformError | AdapterEntityNotFoundError
     >
 
     // readonly upsertEntity: (entityType: string, entity: unknown) => Effect.Effect<void>
 
-    readonly syncEntityType: <AR, AE, BR, BE, CR, CE, DR, DE, ER, EE>(params: {
+    readonly syncEntityType: (params: {
       entityType: string
 
-      processExternalLinks: ProcessExternalLinks<AE, AR>
-      processEntities: ProcessEntities<BE, BR>
-      processRelationships: ProcessRelationships<CE, CR>
-      processMutations: ProcessMutations<EE, ER>
+      processExternalLinks: ProcessExternalLinks
+      processEntities: ProcessEntities
+      processRelationships: ProcessRelationships
+      processMutations: ProcessMutations
     }) => Effect.Effect<
       void,
-      DE | AdapterFetchError | AdapterTransformError | AdapterEntityNotFoundError,
-      DR
+      AdapterFetchError | AdapterTransformError | AdapterEntityNotFoundError
     >
 
-    readonly createEntity: <AE, AR>(params: {
+    readonly createEntity: (params: {
       internalId: string
       entityType: string
       data: Record<string, unknown>
 
-      processExternalLinks: ProcessExternalLinks<AE, AR>
+      processExternalLinks: ProcessExternalLinks
     }) => Effect.Effect<void, AdapterFetchError | AdapterTransformError>
 
-    readonly updateEntity: <AE, AR>(params: {
+    readonly updateEntity: (params: {
       internalId: string
       entityType: string
       externalId: string
       data: Record<string, unknown>
 
-      processExternalLinks: ProcessExternalLinks<AE, AR>
+      processExternalLinks: ProcessExternalLinks
     }) => Effect.Effect<void, AdapterFetchError | AdapterTransformError>
 
-    readonly deleteEntity: <AE, AR>(params: {
+    readonly deleteEntity: (params: {
       internalId: string
       entityType: string
       externalId: string
 
-      processExternalLinks: ProcessExternalLinks<AE, AR>
+      processExternalLinks: ProcessExternalLinks
     }) => Effect.Effect<void, AdapterFetchError | AdapterEntityNotFoundError>
   }
 >() {}
