@@ -416,11 +416,11 @@ type ListMethod = PcoHttpClient['Person']['list']
 type GetMethodReturnWhenFalse = ReturnType<GetMethod> extends Effect.Effect<
   infer Success,
   infer Error,
-  infer _Deps
+  infer Deps
 >
   ? Success extends readonly [infer Data, any]
-    ? Effect.Effect<Data, Error>
-    : Effect.Effect<Success, Error>
+    ? Effect.Effect<Data, Error, Deps>
+    : Effect.Effect<Success, Error, Deps>
   : never
 
 type PureGetMethod = (request: Parameters<GetMethod>[0]) => GetMethodReturnWhenFalse
@@ -428,11 +428,11 @@ type PureGetMethod = (request: Parameters<GetMethod>[0]) => GetMethodReturnWhenF
 type ListMethodReturnWhenFalse = ReturnType<ListMethod> extends Effect.Effect<
   infer Success,
   infer Error,
-  infer _Deps
+  infer Deps
 >
   ? Success extends readonly [infer Data, any]
-    ? Effect.Effect<Data, Error>
-    : Effect.Effect<Success, Error>
+    ? Effect.Effect<Data, Error, Deps>
+    : Effect.Effect<Success, Error, Deps>
   : never
 type PureListMethod = (request: Parameters<ListMethod>[0]) => ListMethodReturnWhenFalse
 

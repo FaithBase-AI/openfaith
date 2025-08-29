@@ -1,4 +1,4 @@
-import { type FieldConfig, OfEntity, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { Array, Option, pipe, type Schema, SchemaAST, String } from 'effect'
 
 /**
@@ -114,10 +114,53 @@ const getUiConfigFromASTOption = (ast: SchemaAST.AST): Option.Option<FieldConfig
 }
 
 /**
- * Helper function to extract the AST from a PropertySignature or return the AST as-is
+ * Extracts literal values from a union of literals with proper capitalization
  */
-export const extractAST = (schema: SchemaAST.AST | SchemaAST.PropertySignature): SchemaAST.AST => {
-  return 'type' in schema ? schema.type : schema
+export const extractLiteralOptions = (ast: SchemaAST.AST): Array<{ value: any; label: string }> => {
+  if (SchemaAST.isUnion(ast)) {
+    const literalValues: Array<{ value: any; label: string }> = []
+
+    for (const type of ast.types) {
+      if (type._tag === 'Literal') {
+        const literal = type.literal
+        if (typeof literal === 'string') {
+          literalValues.push({
+            label: pipe(literal, String.capitalize),
+            value: literal,
+          })
+        } else if (typeof literal === 'number' || typeof literal === 'boolean') {
+          literalValues.push({
+            label: `${literal}`,
+            value: literal,
+          })
+        }
+      }
+    }
+
+    return literalValues
+  }
+
+  if (ast._tag === 'Literal') {
+    const literal = ast.literal
+    if (typeof literal === 'string') {
+      return [
+        {
+          label: pipe(literal, String.capitalize),
+          value: literal,
+        },
+      ]
+    }
+    if (typeof literal === 'number' || typeof literal === 'boolean') {
+      return [
+        {
+          label: `${literal}`,
+          value: literal,
+        },
+      ]
+    }
+  }
+
+  return []
 }
 
 /**
@@ -162,41 +205,6 @@ export const hasEmailPattern = (ast: SchemaAST.AST): boolean => {
 }
 
 /**
- * Extracts literal values from a union of literals with proper capitalization
- */
-export const extractLiteralOptions = (
-  ast: SchemaAST.AST,
-): Array<{ value: string; label: string }> => {
-  if (SchemaAST.isUnion(ast)) {
-    const literalValues = pipe(
-      ast.types,
-      Array.filterMap((type) => {
-        if (type._tag === 'Literal' && typeof type.literal === 'string') {
-          return Option.some({
-            label: pipe(type.literal, String.capitalize),
-            value: type.literal,
-          })
-        }
-        return Option.none()
-      }),
-    )
-
-    return literalValues
-  }
-
-  if (ast._tag === 'Literal' && typeof ast.literal === 'string') {
-    return [
-      {
-        label: pipe(ast.literal, String.capitalize),
-        value: ast.literal,
-      },
-    ]
-  }
-
-  return []
-}
-
-/**
  * Extracts the entity tag from a schema AST
  * Handles both TypeLiteral (old Schema.Struct) and Transformation (class-based) ASTs
  */
@@ -236,34 +244,32 @@ export const extractEntityTag = (ast: SchemaAST.AST): Option.Option<string> => {
 }
 
 /**
- * Extracts entity information from a schema including entity name and tag
+ * Helper function to extract the AST from a PropertySignature or return the AST as-is
  */
-export const extractEntityInfo = <T>(schema: Schema.Schema<T>) => {
-  const ast = schema.ast
+export const extractAST = (schema: SchemaAST.AST | SchemaAST.PropertySignature): SchemaAST.AST => {
+  return 'type' in schema ? schema.type : schema
+}
 
-  // First try to get entity name from OfEntity annotation
-  const entityAnnotation = SchemaAST.getAnnotation<string>(OfEntity)(ast)
+/**
+ * Extracts entity information from a schema, including entity name and tag
+ */
+export const extractEntityInfo = (
+  schema: Schema.Schema.AnyNoContext,
+): { entityName: string; entityTag?: string } => {
+  // Import OfEntity symbol
+  const OfEntity = Symbol.for('@openfaith/schema/entity')
 
-  // If no OfEntity annotation, try to extract from _tag field
-  const tagFromField = extractEntityTag(ast)
-
-  const entityName = pipe(
-    entityAnnotation,
-    Option.orElse(() => tagFromField),
-    Option.match({
-      onNone: () => 'item',
-      onSome: (entity) => entity,
-    }),
-  )
-
-  const entityTag = pipe(
-    entityAnnotation,
-    Option.orElse(() => tagFromField),
+  // Get entity annotation if present
+  const entityAnnotation = pipe(
+    SchemaAST.getAnnotation<string>(OfEntity)(schema.ast),
     Option.getOrUndefined,
   )
 
+  // Get entity tag from _tag field if present
+  const entityTag = pipe(extractEntityTag(schema.ast), Option.getOrUndefined)
+
   return {
-    entityName,
-    entityTag,
+    entityName: entityAnnotation || 'item',
+    entityTag: entityAnnotation || entityTag,
   }
 }

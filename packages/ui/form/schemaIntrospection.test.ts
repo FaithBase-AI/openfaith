@@ -125,9 +125,9 @@ effect('extractLiteralOptions - extracts options from union of literals', () =>
     const options = extractLiteralOptions(unionAST)
 
     expect(options).toHaveLength(3)
-    expect(options).toContainEqual({ label: 'active', value: 'active' })
-    expect(options).toContainEqual({ label: 'inactive', value: 'inactive' })
-    expect(options).toContainEqual({ label: 'pending', value: 'pending' })
+    expect(options).toContainEqual({ label: 'Active', value: 'active' })
+    expect(options).toContainEqual({ label: 'Inactive', value: 'inactive' })
+    expect(options).toContainEqual({ label: 'Pending', value: 'pending' })
   }),
 )
 
@@ -142,8 +142,8 @@ effect('extractLiteralOptions - handles mixed union types', () =>
 
     // Should only extract literal values
     expect(options).toHaveLength(2)
-    expect(options).toContainEqual({ label: 'option1', value: 'option1' })
-    expect(options).toContainEqual({ label: 'option2', value: 'option2' })
+    expect(options).toContainEqual({ label: 'Option1', value: 'option1' })
+    expect(options).toContainEqual({ label: 'Option2', value: 'option2' })
   }),
 )
 
@@ -249,9 +249,9 @@ effect('extractLiteralOptions - handles numeric literals', () =>
     const options = extractLiteralOptions(numericUnion.ast)
 
     expect(options).toHaveLength(3)
-    expect(options).toContainEqual({ label: '1', value: '1' })
-    expect(options).toContainEqual({ label: '2', value: '2' })
-    expect(options).toContainEqual({ label: '3', value: '3' })
+    expect(options).toContainEqual({ label: '1', value: 1 })
+    expect(options).toContainEqual({ label: '2', value: 2 })
+    expect(options).toContainEqual({ label: '3', value: 3 })
   }),
 )
 
@@ -261,8 +261,8 @@ effect('extractLiteralOptions - handles boolean literals', () =>
     const options = extractLiteralOptions(booleanUnion.ast)
 
     expect(options).toHaveLength(2)
-    expect(options).toContainEqual({ label: 'true', value: 'true' })
-    expect(options).toContainEqual({ label: 'false', value: 'false' })
+    expect(options).toContainEqual({ label: 'true', value: true })
+    expect(options).toContainEqual({ label: 'false', value: false })
   }),
 )
 

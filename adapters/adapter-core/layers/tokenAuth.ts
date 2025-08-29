@@ -1,5 +1,4 @@
-import type { HttpClient, HttpClientError } from '@effect/platform'
-import type { TokenKey, TokenManager } from '@openfaith/adapter-core/layers/tokenManager'
+import type { HttpClientError } from '@effect/platform'
 import { Context, type Effect, type Redacted } from 'effect'
 
 export class TokenAuth extends Context.Tag('@openfaith/adapter-core/layers/tokenAuth')<
@@ -7,8 +6,7 @@ export class TokenAuth extends Context.Tag('@openfaith/adapter-core/layers/token
   {
     readonly getValidAccessToken: Effect.Effect<
       Redacted.Redacted<string>,
-      HttpClientError.HttpClientError,
-      HttpClient.HttpClient | TokenKey | TokenManager
+      HttpClientError.HttpClientError
     >
   }
 >() {}
