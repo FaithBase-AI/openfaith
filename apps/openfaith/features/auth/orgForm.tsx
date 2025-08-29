@@ -4,7 +4,7 @@ import { createOrganizationE, updateOrganizationE } from '@openfaith/auth/authCl
 import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
 import { createOrgIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import { useChangeOrg } from '@openfaith/openfaith/shared/auth/useChangeOrg'
-import { ArrowRightIcon, Button, QuickActionForm, useAppForm } from '@openfaith/ui'
+import { ArrowRightIcon, Button, CardForm, QuickActionForm, useAppForm } from '@openfaith/ui'
 import type { OrgClientShape } from '@openfaith/zero'
 import { revalidateLogic } from '@tanstack/react-form'
 import { useRouter } from '@tanstack/react-router'
@@ -27,7 +27,9 @@ const OrgSchema = Schema.Struct({
   ),
 })
 
-type OrgFormProps =
+type OrgFormProps = {
+  display?: 'quickAction' | 'card'
+} & (
   | {
       _tag: 'create'
     }
@@ -39,8 +41,10 @@ type OrgFormProps =
       _tag: 'edit'
       org: OrgClientShape
     }
+)
 
 export const OrgForm: FC<OrgFormProps> = (props) => {
+  const { display = 'quickAction' } = props
   const [, setCreateOrgIsOpen] = useAtom(createOrgIsOpenAtom)
 
   const router = useRouter()
@@ -168,65 +172,71 @@ export const OrgForm: FC<OrgFormProps> = (props) => {
     },
   })
 
-  return (
-    <QuickActionForm
-      Actions={
-        <form.Subscribe selector={(x) => x.isSubmitting}>
-          {(x) => (
-            <Button
-              className={pipe(
-                Match.type<typeof props>(),
-                Match.tag('create', () => 'ml-auto'),
-                Match.tag('onboarding', () => 'mr-auto'),
-                Match.tag('edit', () => 'mr-auto'),
-                Match.exhaustive,
-              )(props)}
-              loading={x}
-              type='submit'
-            >
-              {pipe(
-                Match.type<typeof props>(),
-                Match.tag('create', () => 'Continue'),
-                Match.tag('onboarding', () => 'Continue'),
-                Match.tag('edit', () => 'Update'),
-                Match.exhaustive,
-              )(props)}
-
-              <ArrowRightIcon />
-            </Button>
-          )}
-        </form.Subscribe>
-      }
-      form={form}
-      Primary={
-        <>
-          <form.AppField
-            children={(field) => (
-              <field.InputField
-                autoCapitalize='none'
-                autoComplete='name'
-                label='Name'
-                placeholder='My Org'
-                required
-              />
-            )}
-            name='name'
+  const formContent = (
+    <>
+      <form.AppField
+        children={(field) => (
+          <field.InputField
+            autoCapitalize='none'
+            autoComplete='name'
+            label='Name'
+            placeholder='My Org'
+            required
           />
+        )}
+        name='name'
+      />
 
-          <form.AppField
-            children={(field) => (
-              <field.SlugInputField
-                autoCapitalize='none'
-                autoComplete='slug'
-                label='Slug'
-                placeholder='my-org'
-                required
-              />
-            )}
-            name='slug'
+      <form.AppField
+        children={(field) => (
+          <field.SlugInputField
+            autoCapitalize='none'
+            autoComplete='slug'
+            label='Slug'
+            placeholder='my-org'
+            required
           />
-        </>
-      }
-    />
+        )}
+        name='slug'
+      />
+    </>
+  )
+
+  const submitButton = (
+    <form.Subscribe selector={(x) => x.isSubmitting}>
+      {(x) => (
+        <Button
+          className={pipe(
+            Match.type<typeof props>(),
+            Match.tag('create', () => (display === 'card' ? 'mr-auto' : 'ml-auto')),
+            Match.tag('onboarding', () => 'mr-auto'),
+            Match.tag('edit', () => 'mr-auto'),
+            Match.exhaustive,
+          )(props)}
+          loading={x}
+          type='submit'
+        >
+          {pipe(
+            Match.type<typeof props>(),
+            Match.tag('create', () => 'Continue'),
+            Match.tag('onboarding', () => 'Continue'),
+            Match.tag('edit', () => 'Update'),
+            Match.exhaustive,
+          )(props)}
+
+          <ArrowRightIcon />
+        </Button>
+      )}
+    </form.Subscribe>
+  )
+
+  return pipe(
+    display,
+    Match.value,
+    Match.when('quickAction', () => (
+      <QuickActionForm Actions={submitButton} form={form} Primary={formContent} />
+    )),
+    Match.when('card', () => <CardForm Actions={submitButton} form={form} Primary={formContent} />),
+    Match.exhaustive,
   )
 }
