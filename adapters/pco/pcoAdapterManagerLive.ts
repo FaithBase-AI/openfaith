@@ -14,6 +14,8 @@ import {
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import type { PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import type { pcoPersonTransformer } from '@openfaith/pco/modules/people/pcoPersonSchema'
+import { pcoEntityManifest } from '@openfaith/pco/server'
+import { OfSkipEntity } from '@openfaith/schema'
 import { getEntityId } from '@openfaith/shared'
 import {
   getAnnotationFromSchema,
@@ -356,6 +358,8 @@ const processPcoData = Effect.fn('processPcoData')(function* (params: {
 }) {
   const { data, processExternalLinks, processEntities, processRelationships, tokenKey } = params
 
+  console.log('Processing PCO data', data)
+
   // Transform main entities
   const mainEntityOptions = yield* Effect.all(
     pipe(
@@ -435,78 +439,6 @@ type ListMethodReturnWhenFalse = ReturnType<ListMethod> extends Effect.Effect<
     : Effect.Effect<Success, Error, Deps>
   : never
 type PureListMethod = (request: Parameters<ListMethod>[0]) => ListMethodReturnWhenFalse
-
-// const syncEntityIdPco = (pcoClient: PcoHttpClient, tokenKey: string) =>
-//   Effect.fn('syncEntityIdPco')(function* (params: {
-//     entityType: string
-//     entityId: string
-
-//     entityAlt?: { id: string } & Record<string, unknown>
-
-//     processExternalLinks: ProcessExternalLinks
-//     processEntities: ProcessEntities
-//     processRelationships: ProcessRelationships
-//     processMutations: ProcessMutations
-//   }) {
-//     const { entityId, entityType, processEntities, processExternalLinks, processRelationships } =
-//       params
-
-//     yield* Effect.annotateLogs(Effect.log('🔄 Starting PCO single entity sync'), {
-//       adapter: 'pco',
-//       entityId: params.entityId,
-//       entityType: params.entityType,
-//     })
-
-//     // Get the PCO client method for this entity using the new type-safe accessor
-//     const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
-
-//     const method = entityClient.get as PureGetMethod
-
-//     // Fetch single entity from PCO with aggressive type casting (following pcoMkEntityManifest.ts pattern)
-//     const singletonResponse = yield* method({
-//       path: { [`${entityType.toLowerCase()}Id`]: entityId },
-//     } as Parameters<typeof method>[0])
-//       // TODO: We need to map this error.
-//       .pipe(
-//         Effect.mapError(
-//           (cause: any) =>
-//             new AdapterFetchError({
-//               adapter: 'pco',
-//               cause,
-//               entityId,
-//               entityType,
-//               message: `Failed to fetch ${entityType} ${entityId} from PCO`,
-//               operation: 'get',
-//             }),
-//         ),
-//       )
-
-//     const normalizedResponse = normalizeSingletonResponse(singletonResponse)
-
-//     yield* processPcoData({
-//       data: normalizedResponse,
-//       processEntities,
-//       processExternalLinks,
-//       processRelationships,
-//       tokenKey,
-//     }).pipe(
-//       Effect.mapError(
-//         (cause) =>
-//           new AdapterTransformError({
-//             adapter: 'pco',
-//             cause,
-//             entityType,
-//             message: `Failed to transform ${entityType} data`,
-//           }),
-//       ),
-//     )
-
-//     yield* Effect.annotateLogs(Effect.log('✅ Completed PCO single entity sync'), {
-//       adapter: 'pco',
-//       entityId,
-//       entityType,
-//     })
-//   })
 
 export const PcoAdapterManagerLive = Layer.effect(
   AdapterManager,
@@ -602,14 +534,30 @@ export const PcoAdapterManagerLive = Layer.effect(
 
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
 
+          const entityOpt = pipe(
+            pcoEntityManifest,
+            Record.findFirst((x) => x.entity === entityType),
+            Option.filter(([, x]) => {
+              return !SchemaAST.getAnnotation<boolean>(OfSkipEntity)(x.apiSchema.ast).pipe(
+                Option.getOrElse(() => false),
+              )
+            }),
+          )
+
+          const urlParams = pipe(
+            entityOpt,
+            Option.flatMapNullable(([, x]) => x.endpoints.list.defaultQuery),
+            Option.getOrElse(() => ({})),
+          ) as Object
+
           const method = entityClient.list as PureListMethod
 
           // Use the shared PCO streaming utility
           yield* Stream.runForEach(
             Stream.paginateChunkEffect(0, (currentOffset) => {
               const finalParams = params
-                ? { ...params, offset: currentOffset }
-                : { offset: currentOffset }
+                ? { ...params, ...urlParams, offset: currentOffset }
+                : { ...urlParams, offset: currentOffset }
 
               return method({ urlParams: finalParams }).pipe(
                 Effect.map((response: any) => {

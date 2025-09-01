@@ -12,10 +12,10 @@ export const CoreHandlerLive = CoreRpc.toLayer(
           // Simulate some work
           const workflowClient = yield* WorkflowClient
 
-          const result = yield* workflowClient.workflows.ExternalSyncWorkflow({
+          const result = yield* workflowClient.workflows.InternalSyncWorkflow({
             payload: {
               adapter: 'pco',
-              tokenKey: 'org_01jww7zkeyfzvsxd20nfjzc21z',
+              tokenKey: 'org_01k39802sbfapb2t6jfystch7s',
             },
           })
 

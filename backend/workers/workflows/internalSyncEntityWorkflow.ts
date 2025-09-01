@@ -1,9 +1,9 @@
 import { Activity, Workflow } from '@effect/workflow'
-import { AdapterOperations } from '@openfaith/adapter-core/layers/adapterOperations'
-import { TokenKey } from '@openfaith/adapter-core/server'
+import { externalSyncEntity, TokenKey } from '@openfaith/adapter-core/server'
 import { PcoAdapterOperationsLayer } from '@openfaith/pco/pcoAdapterLayer'
-import { saveDataE } from '@openfaith/workers/helpers/saveDataE'
-import { Effect, Schema } from 'effect'
+import { PcoAdapterManagerLayer } from '@openfaith/pco/server'
+import { InternalManagerLive } from '@openfaith/server'
+import { Effect, Layer, Schema } from 'effect'
 
 // Define the Internal sync entity error
 class InternalSyncEntityError extends Schema.TaggedError<InternalSyncEntityError>()(
@@ -88,8 +88,8 @@ export const InternalSyncEntityWorkflowLayer = InternalSyncEntityWorkflow.toLaye
         })
 
         // Core internal sync logic using adapter operations like external workflows
-        yield* internalSyncEntity(entity, tokenKey).pipe(
-          Effect.provide(PcoAdapterOperationsLayer),
+        yield* externalSyncEntity(entity).pipe(
+          Effect.provide(Layer.mergeAll(PcoAdapterManagerLayer, InternalManagerLive)),
           Effect.provideService(TokenKey, tokenKey),
           Effect.mapError(
             (cause) =>
