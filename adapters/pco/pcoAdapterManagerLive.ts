@@ -142,10 +142,11 @@ const createExternalLinks = (entities: ReadonlyArray<PcoBaseEntity>): Array<Exte
 /**
  * Transforms a single PCO entity using the transformer pipeline
  */
-const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (
-  entity: PcoBaseEntity,
-  orgId: string,
-) {
+const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (params: {
+  entity: PcoBaseEntity
+  tokenKey: string
+}) {
+  const { entity, tokenKey } = params
   const entityMetadataOpt = getPcoEntityMetadata(entity.type)
 
   if (Option.isNone(entityMetadataOpt)) {
@@ -187,7 +188,7 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (
               onSome: (x) => new Date(x),
             }),
           ),
-          orgId,
+          orgId: tokenKey,
           updatedAt: pipe(
             updatedAt,
             Option.fromNullable,
@@ -360,36 +361,30 @@ const processPcoData = Effect.fn('processPcoData')(function* (params: {
 
   console.log('Processing PCO data', data)
 
+  // Create external links for root entities
+  const rootExternalLinks = createExternalLinks(data.data)
+
   // Transform main entities
   const mainEntityOptions = yield* Effect.all(
     pipe(
       data.data,
-      Array.map((entity) => transformSingleEntity(entity, tokenKey)),
+      Array.map((entity) => transformSingleEntity({ entity, tokenKey })),
     ),
     { concurrency: 'unbounded' },
   )
 
-  const mainEntities = pipe(
-    mainEntityOptions,
-    Array.filterMap((opt) => opt),
-  )
+  const mainEntities = pipe(mainEntityOptions, Array.getSomes)
 
   // Transform included entities
   const includedEntityOptions = yield* Effect.all(
     pipe(
       data.included,
-      Array.map((entity) => transformSingleEntity(entity, tokenKey)),
+      Array.map((entity) => transformSingleEntity({ entity, tokenKey })),
     ),
     { concurrency: 'unbounded' },
   )
 
-  const includedEntities = pipe(
-    includedEntityOptions,
-    Array.filterMap((opt) => opt),
-  )
-
-  // Create external links for root entities
-  const rootExternalLinks = createExternalLinks(data.data)
+  const includedEntities = pipe(includedEntityOptions, Array.getSomes)
 
   // Create external links for included entities
   const includedExternalLinks = createExternalLinks(data.included)
