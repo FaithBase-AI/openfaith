@@ -20,7 +20,7 @@ import { getProperEntityName } from '@openfaith/workers/helpers/saveDataE'
 import { getAnnotationFromSchema } from '@openfaith/workers/helpers/schemaRegistry'
 import { and, type BuildColumns, eq, getTableColumns, inArray, isNull, lt, sql } from 'drizzle-orm'
 import { jsonb, type PgTableWithColumns, text } from 'drizzle-orm/pg-core'
-import { Array, Effect, Layer, Option, pipe, Record } from 'effect'
+import { Array, Effect, Layer, Option, pipe, Record, String } from 'effect'
 
 const baseColumns = {
   _tag: text().notNull(),
@@ -39,18 +39,20 @@ type BaseTable = PgTableWithColumns<{
 // ===== EXTERNAL LINKS HELPER FUNCTIONS =====
 
 /**
- * Partitions external links into main entity and target entity categories
+ * Partitions external links into reference-only links and links with full entity data
  */
-const partitionExternalLinksByType = (
-  externalLinks: Array<ExternalLinkInput>,
-): [targetEntityLinks: Array<ExternalLinkInput>, mainEntityLinks: Array<ExternalLinkInput>] =>
+const partitionExternalLinksByDataPresence = (externalLinks: Array<ExternalLinkInput>) =>
   pipe(
     externalLinks,
     Array.partition(
       (link) =>
-        // Target entity links have NO createdAt/updatedAt (missing entity data)
+        // Reference links have NO createdAt/updatedAt (missing entity data)
         !link.createdAt && !link.updatedAt,
     ),
+    ([referenceLinks, entityLinks]) => ({
+      entityLinks,
+      referenceLinks,
+    }),
   )
 
 /**
@@ -74,6 +76,210 @@ const filterChangedMainEntityLinks = (
     }),
   )
 
+const getProcessEntityExternalLinks = Effect.fn('getProcessEntityExternalLinks')(function* () {
+  const db = yield* PgDrizzle.PgDrizzle
+  const tokenKey = yield* TokenKey
+
+  return Effect.fn(function* (params: {
+    entityLinks: Array<ExternalLinkInput>
+    lastProcessedAt: Date
+  }) {
+    const { entityLinks, lastProcessedAt } = params
+
+    if (entityLinks.length === 0) {
+      yield* Effect.annotateLogs(Effect.log('No entity links to process'), {
+        orgId: tokenKey,
+      })
+      return {
+        changedEntityLinks: [],
+        entityResults: [],
+      }
+    }
+
+    yield* Effect.annotateLogs(Effect.log('Processing entity external links'), {
+      linkCount: entityLinks.length,
+      orgId: tokenKey,
+    })
+
+    const entityResults = yield* db
+      .insert(externalLinksTable)
+      .values(
+        pipe(
+          entityLinks,
+          Array.map((link) => ({
+            _tag: 'externalLink' as const,
+            adapter: link.adapter,
+            createdAt: pipe(
+              link.createdAt,
+              Option.fromNullable,
+              Option.match({
+                onNone: () => lastProcessedAt,
+                onSome: (x) => new Date(x),
+              }),
+            ),
+            entityId: pipe(
+              link.entityId,
+              Option.fromNullable,
+              Option.getOrElse(() => getEntityId(link.entityType)),
+            ),
+            entityType: link.entityType,
+            externalId: link.externalId,
+            lastProcessedAt,
+            orgId: tokenKey,
+            syncing: false,
+            updatedAt: pipe(
+              link.updatedAt,
+              Option.fromNullable,
+              Option.match({
+                onNone: () => lastProcessedAt,
+                onSome: (x) => new Date(x),
+              }),
+            ),
+          })),
+        ),
+      )
+      .onConflictDoUpdate({
+        set: {
+          // Only update lastProcessedAt when updatedAt changes (mkExternalLinksE pattern)
+          lastProcessedAt: sql`
+          CASE
+            WHEN EXCLUDED."updatedAt" IS DISTINCT FROM ${externalLinksTable}."updatedAt"
+            THEN EXCLUDED."lastProcessedAt"
+            ELSE ${externalLinksTable}."lastProcessedAt"
+          END
+        `,
+          updatedAt: sql`EXCLUDED."updatedAt"`,
+        },
+        target: [
+          externalLinksTable.orgId,
+          externalLinksTable.adapter,
+          externalLinksTable.externalId,
+        ],
+      })
+      .returning({
+        // Include all fields needed for complete ExternalLink
+        _tag: externalLinksTable._tag,
+        adapter: externalLinksTable.adapter,
+        createdAt: externalLinksTable.createdAt,
+        deletedAt: externalLinksTable.deletedAt,
+        deletedBy: externalLinksTable.deletedBy,
+        entityId: externalLinksTable.entityId,
+        entityType: externalLinksTable.entityType,
+        externalId: externalLinksTable.externalId,
+        // For some reason when you just return externalLinksTable.lastProcessedAt, the milliseconds are truncated
+        lastProcessedAt: sql<Date>`${externalLinksTable.lastProcessedAt}`,
+        orgId: externalLinksTable.orgId,
+        syncing: externalLinksTable.syncing,
+        updatedAt: externalLinksTable.updatedAt,
+      })
+
+    // Filter to only return external links that were newly inserted or had their updatedAt changed
+    const changedEntityLinks = filterChangedMainEntityLinks(entityResults, lastProcessedAt)
+
+    yield* Effect.annotateLogs(Effect.log('Entity external links processed'), {
+      changedCount: changedEntityLinks.length,
+      insertedCount: entityResults.length,
+      orgId: tokenKey,
+    })
+
+    return {
+      changedEntityLinks,
+      entityResults,
+    }
+  })
+})
+
+const getProcessReferenceExternalLinks = Effect.fn('getProcessReferenceExternalLinks')(
+  function* () {
+    const db = yield* PgDrizzle.PgDrizzle
+    const tokenKey = yield* TokenKey
+
+    return Effect.fn(function* (params: {
+      referenceLinks: Array<ExternalLinkInput>
+      lastProcessedAt: Date
+    }) {
+      const { referenceLinks, lastProcessedAt } = params
+
+      if (referenceLinks.length === 0) {
+        yield* Effect.annotateLogs(Effect.log('No reference links to process'), {
+          linkCount: 0,
+          orgId: tokenKey,
+        })
+        return {
+          changedReferenceLinks: [],
+          referenceResults: [],
+        }
+      }
+
+      yield* Effect.annotateLogs(Effect.log('Processing reference external links'), {
+        linkCount: referenceLinks.length,
+        orgId: tokenKey,
+      })
+
+      const referenceResults = yield* db
+        .insert(externalLinksTable)
+        .values(
+          pipe(
+            referenceLinks,
+            Array.map((link) => ({
+              _tag: 'externalLink' as const,
+              adapter: link.adapter,
+              createdAt: lastProcessedAt,
+              entityId: link.entityId || getEntityId(link.entityType),
+              entityType: link.entityType,
+              externalId: link.externalId,
+              lastProcessedAt,
+              orgId: tokenKey,
+              syncing: false,
+              updatedAt: lastProcessedAt,
+            })),
+          ),
+        )
+        .onConflictDoUpdate({
+          set: {
+            // Minimal update - just set _tag to itself
+            // This ensures we get all rows back in .returning()
+            _tag: sql`${externalLinksTable}._tag`,
+          },
+          target: [
+            externalLinksTable.orgId,
+            externalLinksTable.adapter,
+            externalLinksTable.externalId,
+          ],
+        })
+        .returning({
+          // Include all fields needed for complete ExternalLink
+          _tag: externalLinksTable._tag,
+          adapter: externalLinksTable.adapter,
+          createdAt: externalLinksTable.createdAt,
+          deletedAt: externalLinksTable.deletedAt,
+          deletedBy: externalLinksTable.deletedBy,
+          entityId: externalLinksTable.entityId,
+          entityType: externalLinksTable.entityType,
+          externalId: externalLinksTable.externalId,
+          // For some reason when you just return externalLinksTable.lastProcessedAt, the milliseconds are truncated
+          lastProcessedAt: sql<Date>`${externalLinksTable.lastProcessedAt}`,
+          orgId: externalLinksTable.orgId,
+          syncing: externalLinksTable.syncing,
+          updatedAt: externalLinksTable.updatedAt,
+        })
+
+      const changedReferenceLinks = filterChangedMainEntityLinks(referenceResults, lastProcessedAt)
+
+      yield* Effect.annotateLogs(Effect.log('Reference external links processed'), {
+        changedCount: changedReferenceLinks.length,
+        insertedCount: referenceResults.length,
+        orgId: tokenKey,
+      })
+
+      return {
+        changedReferenceLinks,
+        referenceResults,
+      }
+    })
+  },
+)
+
 /**
  * PostgreSQL implementation of the InternalManager service.
  *
@@ -85,6 +291,9 @@ export const InternalManagerLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* PgDrizzle.PgDrizzle
     const orgId = yield* TokenKey
+
+    const processEntityExternalLinks = yield* getProcessEntityExternalLinks()
+    const processReferenceExternalLinks = yield* getProcessReferenceExternalLinks()
 
     return InternalManager.of({
       /**
@@ -382,214 +591,50 @@ export const InternalManagerLive = Layer.effect(
       /**
        * Upserts multiple external links with conflict resolution.
        * Supports two patterns:
-       * 1. Main entity sync (with conditional updates and filtering)
-       * 2. Target entity creation (with do-nothing conflict resolution)
+       * 1. Entity sync with full data (with conditional updates and filtering)
+       * 2. Reference link creation (with do-nothing conflict resolution)
        */
       processExternalLinks: (externalLinks) =>
         Effect.gen(function* () {
-          if (externalLinks.length === 0) {
-            yield* Effect.annotateLogs(Effect.log('No external links to upsert'), {
-              linkCount: 0,
-              orgId,
-            })
-            return []
-          }
-
-          yield* Effect.annotateLogs(Effect.log('Upserting external links'), {
-            linkCount: externalLinks.length,
-            orgId,
-          })
-
           const lastProcessedAt = new Date()
 
-          // Separate links into two categories based on whether they have full entity data
-          const [targetEntityLinks, mainEntityLinks] = partitionExternalLinksByType(externalLinks)
-          const results: Array<ExternalLink> = []
+          const { referenceLinks, entityLinks } =
+            partitionExternalLinksByDataPresence(externalLinks)
 
-          // Handle main entity links (mkExternalLinksE pattern)
-          if (mainEntityLinks.length > 0) {
-            yield* Effect.annotateLogs(Effect.log('Processing main entity external links'), {
-              linkCount: mainEntityLinks.length,
-              orgId,
-            })
+          const {
+            entityLinkResults: { entityResults, changedEntityLinks },
+            referenceLinkResults: { changedReferenceLinks, referenceResults },
+          } = yield* Effect.all(
+            {
+              entityLinkResults: processEntityExternalLinks({
+                entityLinks,
+                lastProcessedAt,
+              }),
+              referenceLinkResults: processReferenceExternalLinks({
+                lastProcessedAt,
+                referenceLinks,
+              }),
+            },
+            {
+              concurrency: 'unbounded',
+            },
+          )
 
-            const mainEntityResults = yield* db
-              .insert(externalLinksTable)
-              .values(
-                pipe(
-                  mainEntityLinks,
-                  Array.map((link) => ({
-                    _tag: 'externalLink' as const,
-                    adapter: link.adapter,
-                    createdAt: pipe(
-                      link.createdAt,
-                      Option.fromNullable,
-                      Option.match({
-                        onNone: () => lastProcessedAt,
-                        onSome: (x) => new Date(x),
-                      }),
-                    ),
-                    entityId: pipe(
-                      link.entityId,
-                      Option.fromNullable,
-                      Option.getOrElse(() => getEntityId(link.entityType)),
-                    ),
-                    entityType: link.entityType,
-                    externalId: link.externalId,
-                    lastProcessedAt,
-                    orgId,
-                    syncing: false,
-                    updatedAt: pipe(
-                      link.updatedAt,
-                      Option.fromNullable,
-                      Option.match({
-                        onNone: () => lastProcessedAt,
-                        onSome: (x) => new Date(x),
-                      }),
-                    ),
-                  })),
-                ),
-              )
-              .onConflictDoUpdate({
-                set: {
-                  // Only update lastProcessedAt when updatedAt changes (mkExternalLinksE pattern)
-                  lastProcessedAt: sql`
-                     CASE
-                       WHEN EXCLUDED."updatedAt" IS DISTINCT FROM ${externalLinksTable}."updatedAt"
-                       THEN EXCLUDED."lastProcessedAt"
-                       ELSE ${externalLinksTable}."lastProcessedAt"
-                     END
-                   `,
-                  updatedAt: sql`EXCLUDED."updatedAt"`,
-                },
-                target: [
-                  externalLinksTable.orgId,
-                  externalLinksTable.adapter,
-                  externalLinksTable.externalId,
-                ],
-              })
-              .returning({
-                // Include all fields needed for complete ExternalLink
-                _tag: externalLinksTable._tag,
-                adapter: externalLinksTable.adapter,
-                createdAt: externalLinksTable.createdAt,
-                deletedAt: externalLinksTable.deletedAt,
-                deletedBy: externalLinksTable.deletedBy,
-                entityId: externalLinksTable.entityId,
-                entityType: externalLinksTable.entityType,
-                externalId: externalLinksTable.externalId,
-                // For some reason when you just return externalLinksTable.lastProcessedAt, the milliseconds are truncated
-                lastProcessedAt: sql<Date>`${externalLinksTable.lastProcessedAt}`,
-                orgId: externalLinksTable.orgId,
-                syncing: externalLinksTable.syncing,
-                updatedAt: externalLinksTable.updatedAt,
-              })
-
-            // Filter to only return external links that were newly inserted or had their updatedAt changed
-            const changedMainEntityLinks = filterChangedMainEntityLinks(
-              mainEntityResults,
-              lastProcessedAt,
-            )
-
-            yield* Effect.annotateLogs(Effect.log('Main entity external links processed'), {
-              changedCount: changedMainEntityLinks.length,
-              insertedCount: mainEntityResults.length,
-              orgId,
-            })
-
-            results.push(...changedMainEntityLinks)
-          }
-
-          // Handle target entity links (createTargetExternalLinksE pattern)
-          if (targetEntityLinks.length > 0) {
-            yield* Effect.annotateLogs(Effect.log('Processing target entity external links'), {
-              linkCount: targetEntityLinks.length,
-              orgId,
-            })
-
-            // First, check which ones already exist
-            const existingLinks = yield* db
-              .select()
-              .from(externalLinksTable)
-              .where(
-                and(
-                  inArray(
-                    externalLinksTable.externalId,
-                    pipe(
-                      targetEntityLinks,
-                      Array.map((link) => link.externalId),
-                    ),
-                  ),
-                  eq(externalLinksTable.orgId, orgId),
-                ),
-              )
-
-            // Create missing external links only
-            const missingLinks = pipe(
-              targetEntityLinks,
-              Array.filter((link) =>
-                pipe(
-                  existingLinks,
-                  Array.findFirst((existing) => existing.externalId === link.externalId),
-                  Option.isNone,
-                ),
-              ),
-            )
-
-            if (missingLinks.length > 0) {
-              const newTargetLinks = pipe(
-                missingLinks,
-                Array.map((link) => ({
-                  _tag: 'externalLink' as const,
-                  adapter: link.adapter,
-                  createdAt: lastProcessedAt,
-                  entityId: link.entityId || getEntityId(link.entityType),
-                  entityType: link.entityType,
-                  externalId: link.externalId,
-                  lastProcessedAt,
-                  orgId,
-                  syncing: false,
-                  updatedAt: lastProcessedAt,
-                })),
-              )
-
-              yield* db.insert(externalLinksTable).values(newTargetLinks).onConflictDoNothing()
-
-              yield* Effect.annotateLogs(Effect.log('Target entity external links created'), {
-                createdCount: missingLinks.length,
-                orgId,
-              })
-            }
-
-            // Return all target links (existing + new) - this matches createTargetExternalLinksE behavior
-            const allTargetLinks = yield* db
-              .select()
-              .from(externalLinksTable)
-              .where(
-                and(
-                  inArray(
-                    externalLinksTable.externalId,
-                    pipe(
-                      targetEntityLinks,
-                      Array.map((link) => link.externalId),
-                    ),
-                  ),
-                  eq(externalLinksTable.orgId, orgId),
-                ),
-              )
-
-            results.push(...allTargetLinks)
-          }
+          const all = [...entityResults, ...referenceResults]
+          const changed = [...changedEntityLinks, ...changedReferenceLinks]
 
           yield* Effect.annotateLogs(Effect.log('External links upserted successfully'), {
+            allCount: all.length,
+            changedCount: changed.length,
+            entityCount: entityLinks.length,
             linkCount: externalLinks.length,
-            mainEntityCount: mainEntityLinks.length,
             orgId,
-            returnedCount: results.length,
-            targetEntityCount: targetEntityLinks.length,
           })
 
-          return results
+          return {
+            all,
+            changed,
+          }
         }).pipe(
           Effect.mapError(
             (cause) =>
@@ -629,7 +674,11 @@ export const InternalManagerLive = Layer.effect(
               createdBy: edge.createdBy,
               deletedAt: edge.deletedAt,
               deletedBy: edge.deletedBy,
-              metadata: edge.metadata || {},
+              metadata: pipe(
+                edge.metadata,
+                Option.fromNullable,
+                Option.getOrElse(() => ({})),
+              ),
               orgId,
               relationshipType: edge.relationshipType,
               sourceEntityId: edge.sourceEntityId,
@@ -650,7 +699,7 @@ export const InternalManagerLive = Layer.effect(
             // Insert edges with conflict handling (based on insertEdgesE pattern)
             yield* db
               .insert(edgesTable)
-              .values(pipe(edgeValues, Array.fromIterable))
+              .values(edgeValues)
               .onConflictDoUpdate({
                 set: {
                   metadata: sql`EXCLUDED."metadata"`,
@@ -695,7 +744,7 @@ export const InternalManagerLive = Layer.effect(
                 relationshipValues,
                 Array.map((rel) => {
                   const targetEntityTypesJson = JSON.stringify(rel.targetEntityTypes)
-                  const escapedJson = targetEntityTypesJson.replace(/'/g, "''")
+                  const escapedJson = pipe(targetEntityTypesJson, String.replace(/'/g, "''"))
                   return sql`(${rel.orgId}, ${rel.sourceEntityType}, ${sql.raw(`'${escapedJson}'::jsonb`)}, ${rel.updatedAt})`
                 }),
                 Array.reduce(sql`` as ReturnType<typeof sql>, (acc, curr, index) =>

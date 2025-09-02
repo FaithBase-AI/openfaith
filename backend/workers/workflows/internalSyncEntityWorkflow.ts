@@ -1,6 +1,5 @@
 import { Activity, Workflow } from '@effect/workflow'
 import { externalSyncEntity, TokenKey } from '@openfaith/adapter-core/server'
-import { PcoAdapterOperationsLayer } from '@openfaith/pco/pcoAdapterLayer'
 import { PcoAdapterManagerLayer } from '@openfaith/pco/server'
 import { InternalManagerLive } from '@openfaith/server'
 import { Effect, Layer, Schema } from 'effect'
@@ -31,26 +30,6 @@ export const InternalSyncEntityWorkflow = Workflow.make({
   name: 'InternalSyncEntityWorkflow',
   payload: InternalSyncEntityPayload,
   success: Schema.Void,
-})
-
-// Internal sync entity function - follows external workflow pattern
-const internalSyncEntity = Effect.fn('internalSyncEntity')(function* (
-  entityType: string,
-  tokenKey: string,
-) {
-  yield* Effect.logInfo(`Starting internal sync for entity: ${entityType}`)
-
-  // Use AdapterOperations to process entity data, similar to external workflows
-  const adapterOps = yield* AdapterOperations.pipe(
-    Effect.provide(PcoAdapterOperationsLayer),
-    Effect.provideService(TokenKey, tokenKey),
-  )
-
-  // Process entity data using saveDataE (same as external workflows)
-  // This handles the database operations directly
-  yield* adapterOps.processEntityData(entityType, (data) => saveDataE(data as any))
-
-  yield* Effect.logInfo(`Completed internal sync for entity: ${entityType}`)
 })
 
 // Create the workflow implementation layer

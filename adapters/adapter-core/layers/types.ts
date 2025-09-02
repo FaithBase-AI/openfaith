@@ -101,7 +101,10 @@ export interface ExternalLinkInput {
 
 export type ProcessExternalLinks = (
   externalLinks: Array<ExternalLinkInput>,
-) => Effect.Effect<Array<ExternalLink>, ExternalLinkUpsertError>
+) => Effect.Effect<
+  { all: Array<ExternalLink>; changed: Array<ExternalLink> },
+  ExternalLinkUpsertError
+>
 
 // EntityData is now a union of all canonical OpenFaith entity types
 export type EntityData = EntityUnion
