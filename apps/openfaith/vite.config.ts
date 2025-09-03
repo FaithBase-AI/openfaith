@@ -1,25 +1,30 @@
-import tailwindcss from '@tailwindcss/vite'
-import { tanstackStart } from '@tanstack/react-start/plugin/vite'
-import { defineConfig } from 'vite'
-import tsconfigPaths from 'vite-tsconfig-paths'
+import tailwindcss from "@tailwindcss/vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import { defineConfig } from "vite";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   plugins: [
     tsconfigPaths({
-      projects: ['./tsconfig.json'],
+      projects: ["./tsconfig.json"],
     }),
     tanstackStart({
       spa: {
         enabled: true,
       },
-      target: 'bun',
+      target: "bun",
       tsr: {
-        srcDirectory: 'app',
+        srcDirectory: "app",
       },
     }),
     tailwindcss(),
   ],
+  build: {
+    rollupOptions: {
+      external: ["@effect/experimental/Reactivity"],
+    },
+  },
   server: {
     port: 3000,
   },
-})
+});
