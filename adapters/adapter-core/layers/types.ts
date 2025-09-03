@@ -102,7 +102,7 @@ export interface ExternalLinkInput {
 export type ProcessExternalLinks = (
   externalLinks: Array<ExternalLinkInput>,
 ) => Effect.Effect<
-  { all: Array<ExternalLink>; changed: Array<ExternalLink> },
+  { allExternalLinks: Array<ExternalLink>; changedExternalLinks: Array<ExternalLink> },
   ExternalLinkUpsertError
 >
 

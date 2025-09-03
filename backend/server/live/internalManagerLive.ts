@@ -620,20 +620,20 @@ export const InternalManagerLive = Layer.effect(
             },
           )
 
-          const all = [...entityResults, ...referenceResults]
-          const changed = [...changedEntityLinks, ...changedReferenceLinks]
+          const allExternalLinks = [...entityResults, ...referenceResults]
+          const changedExternalLinks = [...changedEntityLinks, ...changedReferenceLinks]
 
           yield* Effect.annotateLogs(Effect.log('External links upserted successfully'), {
-            allCount: all.length,
-            changedCount: changed.length,
+            allCount: allExternalLinks.length,
+            changedCount: changedExternalLinks.length,
             entityCount: entityLinks.length,
             linkCount: externalLinks.length,
             orgId,
           })
 
           return {
-            all,
-            changed,
+            allExternalLinks,
+            changedExternalLinks,
           }
         }).pipe(
           Effect.mapError(

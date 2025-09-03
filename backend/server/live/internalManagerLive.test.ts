@@ -133,7 +133,10 @@ layer(TestLayer)('InternalManager Tests', (it) => {
 
         const result = yield* internalManager.processExternalLinks([])
 
-        expect(result).toEqual([])
+        expect(result).toEqual({
+          allExternalLinks: [],
+          changedExternalLinks: [],
+        })
       }),
     { timeout: 120000 },
   )
@@ -153,11 +156,15 @@ layer(TestLayer)('InternalManager Tests', (it) => {
 
         const result = yield* internalManager.processExternalLinks([linkInput])
 
-        // Should return the newly created link
-        expect(result.length).toBe(1)
-        expect(result[0]?.externalId).toBe('pco_new_main')
-        expect(result[0]?.entityType).toBe('person')
-        expect(result[0]?.adapter).toBe('pco')
+        // Should return the newly created link in changedExternalLinks
+        expect(result.changedExternalLinks.length).toBe(1)
+        expect(result.changedExternalLinks[0]?.externalId).toBe('pco_new_main')
+        expect(result.changedExternalLinks[0]?.entityType).toBe('person')
+        expect(result.changedExternalLinks[0]?.adapter).toBe('pco')
+
+        // allExternalLinks should also contain the link
+        expect(result.allExternalLinks.length).toBe(1)
+        expect(result.allExternalLinks[0]?.externalId).toBe('pco_new_main')
 
         // Verify it was created in the database
         const sql = yield* SqlClient.SqlClient
@@ -187,10 +194,13 @@ layer(TestLayer)('InternalManager Tests', (it) => {
 
         const result = yield* internalManager.processExternalLinks([targetLinkInput])
 
-        // Should return the target link
-        expect(result.length).toBe(1)
-        expect(result[0]?.externalId).toBe('pco_target_123')
-        expect(result[0]?.entityType).toBe('campus')
+        // Reference links without data go to changedReferenceLinks
+        expect(result.changedExternalLinks.length).toBe(1)
+        expect(result.changedExternalLinks[0]?.externalId).toBe('pco_target_123')
+        expect(result.changedExternalLinks[0]?.entityType).toBe('campus')
+
+        // Also in allExternalLinks
+        expect(result.allExternalLinks.length).toBe(1)
 
         // Verify it was created in the database
         const sql = yield* SqlClient.SqlClient
@@ -222,11 +232,11 @@ layer(TestLayer)('InternalManager Tests', (it) => {
 
         const result = yield* internalManager.processExternalLinks([linkInput])
 
-        expect(result.length).toBe(1)
-        expect(result[0]?.externalId).toBe('pco_generated_id')
+        expect(result.changedExternalLinks.length).toBe(1)
+        expect(result.changedExternalLinks[0]?.externalId).toBe('pco_generated_id')
 
         // Should have generated a proper entityId
-        const entityId = result[0]?.entityId
+        const entityId = result.changedExternalLinks[0]?.entityId
         expect(entityId).toBeTruthy()
         expect(entityId?.startsWith('person_')).toBe(true) // ULID format for person
       }).pipe(
@@ -537,12 +547,12 @@ layer(TestLayer)('InternalManager Tests', (it) => {
           externalId: 'pco_integration_person',
         })
 
-        const externalLinks = yield* internalManager.processExternalLinks([personLinkInput])
+        const result = yield* internalManager.processExternalLinks([personLinkInput])
 
-        expect(externalLinks.length).toBe(1)
+        expect(result.allExternalLinks.length).toBe(1)
 
         const personLink = pipe(
-          externalLinks,
+          result.allExternalLinks,
           Array.findFirst((link) => link.externalId === 'pco_integration_person'),
         )
 

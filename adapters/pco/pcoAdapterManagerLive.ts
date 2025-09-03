@@ -15,8 +15,8 @@ import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import type { PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import type { pcoPersonTransformer } from '@openfaith/pco/modules/people/pcoPersonSchema'
 import { pcoEntityManifest } from '@openfaith/pco/server'
-import { OfSkipEntity } from '@openfaith/schema'
-import { getEntityId } from '@openfaith/shared'
+import { OfEntity, OfSkipEntity } from '@openfaith/schema'
+import { EdgeDirectionSchema } from '@openfaith/shared'
 import {
   getAnnotationFromSchema,
   getPcoEntityMetadata,
@@ -142,11 +142,12 @@ const createExternalLinks = (entities: ReadonlyArray<PcoBaseEntity>): Array<Exte
 /**
  * Transforms a single PCO entity using the transformer pipeline
  */
-const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (params: {
+const transformSingleEntity = (params: {
+  entityId: string
   entity: PcoBaseEntity
   tokenKey: string
-}) {
-  const { entity, tokenKey } = params
+}) => {
+  const { entity, entityId, tokenKey } = params
   const entityMetadataOpt = getPcoEntityMetadata(entity.type)
 
   if (Option.isNone(entityMetadataOpt)) {
@@ -162,11 +163,12 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
 
   const transformer = entityMetadata.transformer.value
 
-  const transformedData = yield* Schema.decodeUnknown(
-    transformer as unknown as typeof pcoPersonTransformer,
-    { errors: 'all' },
-  )(entity.attributes).pipe(
-    Effect.map(
+  return pipe(
+    entity.attributes,
+    Schema.decodeUnknownOption(transformer as unknown as typeof pcoPersonTransformer, {
+      errors: 'all',
+    }),
+    Option.map(
       ({ createdAt, deletedAt, inactivatedAt, updatedAt, customFields, ...canonicalAttrs }) => {
         const baseEntity = {
           createdAt: new Date(createdAt),
@@ -179,7 +181,7 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
               onSome: (x) => new Date(x),
             }),
           ),
-          id: getEntityId(entityName),
+          id: entityId,
           inactivatedAt: pipe(
             inactivatedAt,
             Option.fromNullable,
@@ -203,145 +205,7 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
       },
     ),
   )
-
-  return Option.some(transformedData)
-})
-
-/**
- * Extracts relationships from PCO entity data
- */
-const extractRelationships = Effect.fn('extractRelationships')(function* (
-  rootData: ReadonlyArray<PcoBaseEntity>,
-  includedData: ReadonlyArray<PcoBaseEntity>,
-  rootExternalLinks: ReadonlyArray<ExternalLinkInput>,
-  includedExternalLinks: ReadonlyArray<ExternalLinkInput>,
-) {
-  // Create lookup maps for faster searching using Effect's HashMap
-  const rootLinkMap = pipe(
-    rootExternalLinks,
-    Array.map((link) => [link.externalId, link] as const),
-    HashMap.fromIterable,
-  )
-
-  const includedLinkMap = pipe(
-    includedExternalLinks,
-    Array.map((link) => [link.externalId, link] as const),
-    HashMap.fromIterable,
-  )
-
-  const relationships: Array<RelationshipInput> = []
-
-  // Extract direct relationships from root entity data
-  // (e.g., person -> primary_campus relationship)
-  pipe(
-    rootData,
-    Array.forEach((entity) => {
-      const entityLinkOpt = pipe(rootLinkMap, HashMap.get(entity.id))
-      if (Option.isNone(entityLinkOpt) || !entity.relationships) {
-        return
-      }
-
-      const entityLink = entityLinkOpt.value
-
-      // Process all relationships in the entity
-      pipe(
-        entity.relationships,
-        Record.toEntries,
-        Array.forEach(([relationshipKey, relationshipValue]) => {
-          const relData = relationshipValue?.data
-          if (!relData?.id) {
-            return
-          }
-
-          // Check if target exists in our external links
-          const rootTargetOpt = pipe(rootLinkMap, HashMap.get(relData.id))
-          const includedTargetOpt = pipe(includedLinkMap, HashMap.get(relData.id))
-          const targetLinkOpt = Option.orElse(rootTargetOpt, () => includedTargetOpt)
-
-          if (Option.isNone(targetLinkOpt)) {
-            return
-          }
-
-          const targetLink = targetLinkOpt.value
-
-          // Create relationship
-          const sourceEntityName = getProperEntityName(entity.type)
-          const targetEntityName = getProperEntityName(relData.type)
-
-          relationships.push({
-            createdAt: new Date(entity.attributes.created_at || entityLink.createdAt!),
-            createdBy: null,
-            deletedAt: null,
-            deletedBy: null,
-            metadata: { relationshipKey, source: 'pco_direct' },
-            relationshipType: `${sourceEntityName}_${relationshipKey}_${targetEntityName}`,
-            sourceEntityId: entityLink.entityId!,
-            sourceEntityTypeTag: sourceEntityName,
-            targetEntityId: targetLink.entityId!,
-            targetEntityTypeTag: targetEntityName,
-            updatedAt: null,
-            updatedBy: null,
-          })
-        }),
-      )
-    }),
-  )
-
-  // Extract relationships from included entities back to root entities
-  // (e.g., address -> person relationship)
-  pipe(
-    includedData,
-    Array.forEach((entity) => {
-      const entityLinkOpt = pipe(includedLinkMap, HashMap.get(entity.id))
-      if (Option.isNone(entityLinkOpt) || !entity.relationships) {
-        return
-      }
-
-      const entityLink = entityLinkOpt.value
-
-      // Look for relationships that point back to root entities
-      pipe(
-        entity.relationships,
-        Record.toEntries,
-        Array.forEach(([relationshipKey, relationshipValue]) => {
-          const relData = relationshipValue?.data
-          if (!relData?.id) {
-            return
-          }
-
-          // Check if this relationship points to a root entity
-          const rootTargetLinkOpt = pipe(rootLinkMap, HashMap.get(relData.id))
-          if (Option.isNone(rootTargetLinkOpt)) {
-            return
-          }
-
-          const rootTargetLink = rootTargetLinkOpt.value
-
-          // Create relationship from included entity to root entity
-          const sourceEntityName = getProperEntityName(entity.type)
-          const targetEntityName = getProperEntityName(relData.type)
-
-          relationships.push({
-            createdAt: new Date(entity.attributes.created_at || entityLink.createdAt!),
-            createdBy: null,
-            deletedAt: null,
-            deletedBy: null,
-            metadata: { relationshipKey, source: 'pco_included' },
-            relationshipType: `${sourceEntityName}_${relationshipKey}_${targetEntityName}`,
-            sourceEntityId: entityLink.entityId!,
-            sourceEntityTypeTag: sourceEntityName,
-            targetEntityId: rootTargetLink.entityId!,
-            targetEntityTypeTag: targetEntityName,
-            updatedAt: null,
-            updatedBy: null,
-          })
-        }),
-      )
-    }),
-  )
-
-  return relationships
-})
+}
 
 /**
  * Private method to process PCO collection data and call callbacks
@@ -359,53 +223,46 @@ const processPcoData = Effect.fn('processPcoData')(function* (params: {
 }) {
   const { data, processExternalLinks, processEntities, processRelationships, tokenKey } = params
 
-  console.log('Processing PCO data', data)
+  // Create external links for all entities
+  const { allExternalLinks, changedExternalLinks } = yield* processExternalLinks([
+    ...createExternalLinks(data.data),
+    ...createExternalLinks(data.included),
+  ])
 
-  // Create external links for root entities
-  const rootExternalLinks = createExternalLinks(data.data)
-
-  // Transform main entities
-  const mainEntityOptions = yield* Effect.all(
-    pipe(
-      data.data,
-      Array.map((entity) => transformSingleEntity({ entity, tokenKey })),
+  const entityData = pipe(
+    changedExternalLinks,
+    Array.filterMap((x) =>
+      pipe(
+        data.data,
+        Array.findFirst((y) => y.id === x.externalId),
+        Option.map((y) => [x.entityId, y] as const),
+      ),
     ),
-    { concurrency: 'unbounded' },
+    Array.map(([entityId, entity]) => transformSingleEntity({ entity, entityId, tokenKey })),
+    Array.getSomes,
   )
 
-  const mainEntities = pipe(mainEntityOptions, Array.getSomes)
-
-  // Transform included entities
-  const includedEntityOptions = yield* Effect.all(
-    pipe(
-      data.included,
-      Array.map((entity) => transformSingleEntity({ entity, tokenKey })),
+  const includedEntityData = pipe(
+    changedExternalLinks,
+    Array.filterMap((x) =>
+      pipe(
+        data.included,
+        Array.findFirst((y) => y.id === x.externalId),
+        Option.map((y) => [x.entityId, y] as const),
+      ),
     ),
-    { concurrency: 'unbounded' },
+    Array.map(([entityId, entity]) => transformSingleEntity({ entity, entityId, tokenKey })),
+    Array.getSomes,
   )
-
-  const includedEntities = pipe(includedEntityOptions, Array.getSomes)
-
-  // Create external links for included entities
-  const includedExternalLinks = createExternalLinks(data.included)
-
-  // First, process external links for root entities
-  yield* processExternalLinks(rootExternalLinks)
-
-  // Then, process external links for included entities (needed for relationships)
-  yield* processExternalLinks(includedExternalLinks)
 
   // Process entities (both root and included)
-  const allEntities = [...mainEntities, ...includedEntities]
-  yield* processEntities(allEntities)
+  yield* processEntities([...entityData, ...includedEntityData])
 
   // Extract and process relationships
-  const relationships = yield* extractRelationships(
-    data.data,
-    data.included,
-    rootExternalLinks,
-    includedExternalLinks,
-  )
+  const relationships = extractRelationships({
+    entities: [...data.data, ...data.included],
+    externalLinks: allExternalLinks,
+  })
   yield* processRelationships(relationships)
 })
 
@@ -604,3 +461,191 @@ export const PcoAdapterManagerLive = Layer.effect(
     })
   }),
 )
+
+const extractRelationships = (params: {
+  entities: ReadonlyArray<PcoBaseEntity>
+  externalLinks: ReadonlyArray<{
+    readonly entityId: string
+    readonly externalId: string
+    readonly lastProcessedAt: Date
+  }>
+}): Array<RelationshipInput> => {
+  const { entities, externalLinks } = params
+
+  const entitiesByType = pipe(
+    entities,
+    Array.groupBy((entity) => entity.type),
+  )
+
+  const externalLinkMap = pipe(
+    externalLinks,
+    Array.map((link) => [link.externalId, link] as const),
+    HashMap.fromIterable,
+  )
+
+  return pipe(
+    entitiesByType,
+    Record.toEntries,
+    Array.filterMap(([entityType, entities]) => {
+      const entityMetadataOpt = getPcoEntityMetadata(entityType)
+
+      if (Option.isNone(entityMetadataOpt)) {
+        // return Option.none()
+        return Option.none()
+      }
+
+      const entityMetadata = entityMetadataOpt.value
+
+      // Extract relationship annotations from the schema
+
+      const apiSchema = entityMetadata.schema
+      const ast = apiSchema.ast
+
+      const relationshipAnnotations: Record<string, string> =
+        ast._tag === 'TypeLiteral'
+          ? pipe(
+              ast.propertySignatures,
+              Array.findFirst((prop) => prop.name === 'relationships'),
+              Option.filterMap((relationshipsField) => {
+                const relType = relationshipsField.type
+
+                if (relType._tag === 'TypeLiteral') {
+                  return pipe(
+                    relType.propertySignatures,
+                    Array.filterMap((relProp) => {
+                      const relKey = relProp.name
+
+                      if (typeof relKey !== 'string') {
+                        return Option.none()
+                      }
+
+                      const ofEntityOpt = getAnnotationFromSchema<any>(OfEntity, relProp.type)
+
+                      return pipe(
+                        ofEntityOpt,
+                        Option.map((ofEntity) => {
+                          const titleOpt = getAnnotationFromSchema<string>(
+                            SchemaAST.TitleAnnotationId,
+                            ofEntity.ast,
+                          )
+
+                          return pipe(
+                            titleOpt,
+                            Option.match({
+                              onNone: () => {
+                                const constructorName = ofEntity.constructor?.name
+                                return [
+                                  relKey,
+                                  (constructorName
+                                    ? constructorName.toLowerCase()
+                                    : 'unknown') as string,
+                                ] as const
+                              },
+                              onSome: (title) => [relKey, title] as const,
+                            }),
+                          )
+                        }),
+                      )
+                    }),
+                    Option.some,
+                  )
+                }
+
+                return Option.none()
+              }),
+              Option.getOrElse(() => []),
+              Record.fromEntries,
+            )
+          : {}
+
+      return pipe(
+        entities,
+        Array.filterMap((entity) => {
+          return pipe(
+            externalLinkMap,
+            HashMap.get(entity.id),
+            Option.flatMap((entityLink) =>
+              pipe(
+                relationshipAnnotations,
+                Record.toEntries,
+                Array.filterMap(([relKey]) => {
+                  return pipe(
+                    entity.relationships,
+                    Option.fromNullable,
+                    Option.flatMap((relationships) =>
+                      pipe(
+                        relationships,
+                        Record.get(relKey),
+                        Option.flatMapNullable((x) => x.data),
+                      ),
+                    ),
+                    Option.flatMap((relData) =>
+                      pipe(
+                        externalLinkMap,
+                        HashMap.get(relData.id),
+                        Option.map((targetLink) => {
+                          // This is an id since we are passing in ids.
+                          const { source, target } = Schema.decodeUnknownSync(EdgeDirectionSchema)({
+                            idA: entityLink.entityId,
+                            idB: targetLink.entityId,
+                          })
+
+                          // We need to get the entity type for the id.
+                          const originalSourceEntityName = getProperEntityName(entityType)
+                          const originalTargetEntityName = getProperEntityName(relData.type)
+
+                          // Determine actual source/target entity types based on normalized IDs
+                          const sourceEntityTypeTag =
+                            source === entityLink.entityId
+                              ? originalSourceEntityName
+                              : originalTargetEntityName
+                          const targetEntityTypeTag =
+                            target === targetLink.entityId
+                              ? originalTargetEntityName
+                              : originalSourceEntityName
+
+                          return {
+                            createdAt: pipe(
+                              entity.attributes.created_at,
+                              Option.fromNullable,
+                              Option.map((date) => new Date(date)),
+                              Option.getOrElse(() => entityLink.lastProcessedAt),
+                            ),
+                            createdBy: null,
+                            deletedAt: null,
+                            deletedBy: null,
+                            metadata: { relationshipKey: relKey, source: 'pco_direct' },
+                            relationshipType: relKey.includes('_')
+                              ? `${sourceEntityTypeTag}_${relKey}_${targetEntityTypeTag}`
+                              : `${sourceEntityTypeTag}_has_${targetEntityTypeTag}`,
+                            sourceEntityId: source,
+                            sourceEntityTypeTag,
+                            targetEntityId: target,
+                            targetEntityTypeTag,
+                            updatedAt: pipe(
+                              entity.attributes.updated_at,
+                              Option.fromNullable,
+                              Option.match({
+                                onNone: () => entityLink.lastProcessedAt,
+                                onSome: (x) => new Date(x),
+                              }),
+                            ),
+                            updatedBy: null,
+                          } satisfies RelationshipInput
+                        }),
+                      ),
+                    ),
+                  )
+                }),
+                Option.some,
+              ),
+            ),
+          )
+        }),
+        Array.flatten,
+        Option.some,
+      )
+    }),
+    Array.flatten,
+  )
+}
