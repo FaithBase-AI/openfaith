@@ -4,25 +4,39 @@ import { Array, Option, pipe, type Schema, SchemaAST, String } from 'effect'
 /**
  * Helper function to get annotation from schema, handling both old and new formats
  */
-export const getAnnotationFromSchema = <A>(annotation: any, schema: any): Option.Option<A> => {
-  if (!schema) {
+export const getAnnotationFromSchema = <A>(
+  annotationId: symbol | any,
+  ast: SchemaAST.AST | any,
+): Option.Option<A> => {
+  if (!ast) {
     return Option.none()
   }
 
   // Try direct annotation access first
-  const directAnnotation = SchemaAST.getAnnotation<A>(annotation)(schema)
+  const directAnnotation = SchemaAST.getAnnotation<A>(annotationId)(ast)
   if (Option.isSome(directAnnotation)) {
     return directAnnotation
   }
 
   // For PropertySignature, try the type
-  if (schema.type) {
-    return SchemaAST.getAnnotation<A>(annotation)(schema.type)
+  if (ast.type) {
+    return SchemaAST.getAnnotation<A>(annotationId)(ast.type)
+  }
+
+  // For Transformation AST, check the Surrogate annotation
+  // This handles branded types, refined types, and other transformations
+  if (ast._tag === 'Transformation') {
+    const surrogateOpt = SchemaAST.getAnnotation<SchemaAST.AST>(SchemaAST.SurrogateAnnotationId)(
+      ast,
+    )
+    if (Option.isSome(surrogateOpt)) {
+      return SchemaAST.getAnnotation<A>(annotationId)(surrogateOpt.value)
+    }
   }
 
   // For class-based schemas, try to get from the constructor or prototype
-  if (schema.constructor?.ast) {
-    return SchemaAST.getAnnotation<A>(annotation)(schema.constructor.ast)
+  if (ast.constructor?.ast) {
+    return SchemaAST.getAnnotation<A>(annotationId)(ast.constructor.ast)
   }
 
   return Option.none()

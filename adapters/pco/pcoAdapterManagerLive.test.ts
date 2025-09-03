@@ -1,5 +1,5 @@
-import { effect } from '@openfaith/bun-test'
 import { describe, expect } from 'bun:test'
+import { effect } from '@openfaith/bun-test'
 import { Effect, HashMap, pipe } from 'effect'
 
 describe('pcoAdapterManagerLive - relationship extraction', () => {
@@ -8,40 +8,40 @@ describe('pcoAdapterManagerLive - relationship extraction', () => {
       // Simulate PCO response data structure
       const entities = [
         {
-          type: 'Person',
-          id: '76201466',
           attributes: {
+            created_at: '2020-05-03T12:20:47Z',
             first_name: 'Amy',
             last_name: 'Filmalter',
-            created_at: '2020-05-03T12:20:47Z',
             updated_at: '2022-12-14T21:10:27Z',
           },
+          id: '76201466',
           relationships: {
             primary_campus: {
               data: {
-                type: 'PrimaryCampus',
                 id: '46838',
+                type: 'PrimaryCampus',
               },
             },
           },
+          type: 'Person',
         },
         {
-          type: 'Person',
-          id: '80245565',
           attributes: {
+            created_at: '2020-08-06T10:57:40Z',
             first_name: 'Yeet test',
             last_name: 'Person',
-            created_at: '2020-08-06T10:57:40Z',
             updated_at: '2025-08-11T20:47:59Z',
           },
+          id: '80245565',
           relationships: {
             primary_campus: {
               data: {
-                type: 'PrimaryCampus',
                 id: '46838', // Same campus ID
+                type: 'PrimaryCampus',
               },
             },
           },
+          type: 'Person',
         },
       ]
 
@@ -97,43 +97,43 @@ describe('pcoAdapterManagerLive - relationship extraction', () => {
     Effect.gen(function* () {
       const entities = [
         {
-          type: 'Person',
+          attributes: {
+            created_at: '2020-01-01T00:00:00Z',
+            updated_at: '2020-01-01T00:00:00Z',
+          },
           id: '1',
+          relationships: {
+            primary_campus: {
+              data: { id: 'campus1', type: 'PrimaryCampus' },
+            },
+          },
+          type: 'Person',
+        },
+        {
           attributes: {
             created_at: '2020-01-01T00:00:00Z',
             updated_at: '2020-01-01T00:00:00Z',
           },
-          relationships: {
-            primary_campus: {
-              data: { type: 'PrimaryCampus', id: 'campus1' },
-            },
-          },
-        },
-        {
-          type: 'Person',
           id: '2',
-          attributes: {
-            created_at: '2020-01-01T00:00:00Z',
-            updated_at: '2020-01-01T00:00:00Z',
-          },
           relationships: {
             primary_campus: {
-              data: { type: 'PrimaryCampus', id: 'campus1' }, // Same campus
+              data: { id: 'campus1', type: 'PrimaryCampus' }, // Same campus
             },
           },
+          type: 'Person',
         },
         {
-          type: 'Person',
-          id: '3',
           attributes: {
             created_at: '2020-01-01T00:00:00Z',
             updated_at: '2020-01-01T00:00:00Z',
           },
+          id: '3',
           relationships: {
             primary_campus: {
-              data: { type: 'PrimaryCampus', id: 'campus2' }, // Different campus
+              data: { id: 'campus2', type: 'PrimaryCampus' }, // Different campus
             },
           },
+          type: 'Person',
         },
       ]
 
