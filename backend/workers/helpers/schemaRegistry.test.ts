@@ -19,8 +19,7 @@ import {
   Person,
   PhoneNumber,
 } from '@openfaith/schema'
-// Import getProperEntityName to test the full integration
-import { getProperEntityName } from '@openfaith/workers/helpers/saveDataE'
+import { getProperEntityName } from '@openfaith/server'
 import {
   getEntityMetadata,
   getPcoEntityMetadata,

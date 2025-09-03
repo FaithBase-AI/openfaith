@@ -21,10 +21,20 @@ import {
   OfTable,
 } from '@openfaith/schema'
 import { getEntityId } from '@openfaith/shared'
-import { getProperEntityName } from '@openfaith/workers/helpers/saveDataE'
+import { getPcoEntityMetadata } from '@openfaith/workers/helpers/schemaRegistry'
 import { and, type BuildColumns, eq, getTableColumns, inArray, isNull, lt, sql } from 'drizzle-orm'
 import { jsonb, type PgTableWithColumns, text } from 'drizzle-orm/pg-core'
-import { Array, Effect, Layer, Option, pipe, Record, String } from 'effect'
+import { Array, Effect, Layer, Option, pipe, Record, SchemaAST, String } from 'effect'
+
+export const getProperEntityName = (entityType: string): string =>
+  pipe(
+    getPcoEntityMetadata(entityType),
+    Option.flatMap((metadata) => metadata.ofEntity),
+    Option.flatMap((entity) =>
+      getAnnotationFromSchema<string>(SchemaAST.TitleAnnotationId, entity.ast),
+    ),
+    Option.getOrElse(() => entityType.toLowerCase()),
+  )
 
 const baseColumns = {
   _tag: text().notNull(),
