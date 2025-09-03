@@ -18,6 +18,7 @@ COPY packages/ ./packages/
 COPY patches/ ./patches/
 COPY backend/ ./backend/
 COPY adapters/ ./adapters/
+COPY tooling/ ./tooling/
 COPY apps/openfaith/package.json ./apps/openfaith/
 
 # Install dependencies
