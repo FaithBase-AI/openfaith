@@ -223,6 +223,11 @@ const processPcoData = Effect.fn('processPcoData')(function* (params: {
 }) {
   const { data, processExternalLinks, processEntities, processRelationships, tokenKey } = params
 
+  // yield* Effect.annotateLogs(Effect.log('Processing PCO data'), {
+  //   data,
+  //   orgId: tokenKey,
+  // })
+
   // Create external links for all entities
   const { allExternalLinks, changedExternalLinks } = yield* processExternalLinks([
     ...createExternalLinks(data.data),
@@ -497,7 +502,6 @@ const extractRelationships = (params: {
       const entityMetadata = entityMetadataOpt.value
 
       // Extract relationship annotations from the schema
-
       const apiSchema = entityMetadata.schema
       const ast = apiSchema.ast
 
@@ -523,27 +527,68 @@ const extractRelationships = (params: {
 
                       return pipe(
                         ofEntityOpt,
-                        Option.map((ofEntity) => {
-                          const titleOpt = getAnnotationFromSchema<string>(
-                            SchemaAST.TitleAnnotationId,
-                            ofEntity.ast,
-                          )
+                        Option.match({
+                          // Fallback: Extract type from schema structure (e.g., PhoneNumber -> Person)
+                          onNone: () => {
+                            // Navigate to the 'data.type' field if it exists
+                            // Structure: { person: { data: { type: 'Person' } } }
+                            if (relProp.type._tag === 'TypeLiteral') {
+                              const dataFieldOpt = pipe(
+                                relProp.type.propertySignatures,
+                                Array.findFirst((prop) => prop.name === 'data'),
+                              )
 
-                          return pipe(
-                            titleOpt,
-                            Option.match({
-                              onNone: () => {
-                                const constructorName = ofEntity.constructor?.name
-                                return [
-                                  relKey,
-                                  (constructorName
-                                    ? constructorName.toLowerCase()
-                                    : 'unknown') as string,
-                                ] as const
-                              },
-                              onSome: (title) => [relKey, title] as const,
-                            }),
-                          )
+                              if (Option.isSome(dataFieldOpt)) {
+                                const dataField = dataFieldOpt.value
+                                if (dataField.type._tag === 'TypeLiteral') {
+                                  const typeFieldOpt = pipe(
+                                    dataField.type.propertySignatures,
+                                    Array.findFirst((prop) => prop.name === 'type'),
+                                  )
+
+                                  if (Option.isSome(typeFieldOpt)) {
+                                    const typeField = typeFieldOpt.value
+                                    // Check if it's a literal type
+                                    if (
+                                      typeField.type._tag === 'Literal' &&
+                                      typeof typeField.type.literal === 'string'
+                                    ) {
+                                      const targetType = typeField.type.literal.toLowerCase()
+
+                                      return Option.some([relKey, targetType] as const)
+                                    }
+                                  }
+                                }
+                              }
+                            }
+
+                            return Option.none()
+                          },
+                          // When OfEntity annotation exists (e.g., Person -> Campus)
+                          onSome: (ofEntity) => {
+                            const titleOpt = getAnnotationFromSchema<string>(
+                              SchemaAST.TitleAnnotationId,
+                              ofEntity.ast,
+                            )
+
+                            return pipe(
+                              titleOpt,
+                              Option.match({
+                                onNone: () => {
+                                  const constructorName = ofEntity.constructor?.name
+                                  return Option.some([
+                                    relKey,
+                                    (constructorName
+                                      ? constructorName.toLowerCase()
+                                      : 'unknown') as string,
+                                  ] as const)
+                                },
+                                onSome: (title) => {
+                                  return Option.some([relKey, title] as const)
+                                },
+                              }),
+                            )
+                          },
                         }),
                       )
                     }),

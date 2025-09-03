@@ -4,6 +4,7 @@
     "@effect/rpc": "catalog:",
     "@openfaith/db": "workspace:*",
     "@openfaith/domain": "workspace:*",
+    "date-fns": "catalog:",
     "effect": "catalog:"
   },
   "devDependencies": {
