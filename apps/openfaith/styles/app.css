@@ -119,7 +119,7 @@
 @layer base {
   * {
     /* biome-ignore lint/suspicious/noUnknownAtRules: this is the way */
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring outline-offset-2;
   }
   body {
     /* biome-ignore lint/suspicious/noUnknownAtRules: this is the way */
