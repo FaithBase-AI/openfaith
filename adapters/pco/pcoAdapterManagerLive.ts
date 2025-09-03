@@ -309,6 +309,18 @@ export const PcoAdapterManagerLive = Layer.effect(
 
       deleteEntity: (_params) => Effect.log('TODO: Implement deleteEntity for PCO'),
 
+      getEntityManifest: () =>
+        pipe(
+          pcoEntityManifest,
+          Record.map((manifest) => ({
+            endpoint: '',
+            endpoints: manifest.endpoints,
+            entity: manifest.entity,
+            skipSync: manifest.skipSync,
+            transformer: undefined,
+          })),
+        ),
+
       getEntityTypeForWebhookEvent: (_webhookEvent) => Effect.succeed('Person'), // TODO: Implement webhook event mapping
 
       syncEntityId: (params) =>

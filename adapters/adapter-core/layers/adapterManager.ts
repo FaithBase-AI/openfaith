@@ -7,13 +7,30 @@ import type {
   ProcessMutations,
   ProcessRelationships,
 } from '@openfaith/adapter-core/layers/types'
-import { Context, type Effect } from 'effect'
+import { Context, type Effect, Schema } from 'effect'
+
+export const AdapterEntityManifest = Schema.Record({
+  key: Schema.String,
+  value: Schema.Struct({
+    endpoint: Schema.String,
+    endpoints: Schema.Record({
+      key: Schema.String,
+      value: Schema.Unknown,
+    }),
+    entity: Schema.String,
+    skipSync: Schema.Boolean,
+    transformer: Schema.optional(Schema.Unknown),
+  }),
+})
+export type AdapterEntityManifest = typeof AdapterEntityManifest.Type
 
 export class AdapterManager extends Context.Tag('AdapterManager')<
   AdapterManager,
   {
     // Name of the adapter, e.g. "pco", "ccb", "breeze"
     readonly adapter: string
+
+    readonly getEntityManifest: () => AdapterEntityManifest
 
     readonly getEntityTypeForWebhookEvent: (
       webhookEvent: string,

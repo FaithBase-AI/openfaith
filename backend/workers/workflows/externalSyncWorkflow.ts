@@ -1,7 +1,6 @@
 import { Workflow } from '@effect/workflow'
-import { AdapterOperations } from '@openfaith/adapter-core/layers/adapterOperations'
-import { TokenKey } from '@openfaith/adapter-core/server'
-import { PcoAdapterOperationsLayer } from '@openfaith/pco/pcoAdapterLayer'
+import { AdapterManager, TokenKey } from '@openfaith/adapter-core/server'
+import { PcoAdapterManagerLayer } from '@openfaith/pco/server'
 import { ExternalSyncEntityWorkflow } from '@openfaith/workers/workflows/externalSyncEntityWorkflow'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
 
@@ -44,13 +43,12 @@ export const ExternalSyncWorkflowLayer = ExternalSyncWorkflow.toLayer(
       )
     }
 
-    // Get adapter operations to discover entities
-    const adapterOps = yield* AdapterOperations.pipe(
-      Effect.provide(PcoAdapterOperationsLayer),
+    const adapterManager = yield* AdapterManager.pipe(
+      Effect.provide(PcoAdapterManagerLayer),
       Effect.provideService(TokenKey, tokenKey),
     )
 
-    const entityManifest = adapterOps.getEntityManifest()
+    const entityManifest = adapterManager.getEntityManifest()
 
     // Filter entities that support sync (have list endpoints and skipSync is false)
     const syncEntities = pipe(
