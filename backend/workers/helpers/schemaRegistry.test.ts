@@ -12,6 +12,7 @@ import {
 import {
   Address,
   Campus,
+  getAnnotationFromSchema,
   OfEntity,
   OfTable,
   OfTransformer,
@@ -21,7 +22,6 @@ import {
 // Import getProperEntityName to test the full integration
 import { getProperEntityName } from '@openfaith/workers/helpers/saveDataE'
 import {
-  getAnnotationFromSchema,
   getEntityMetadata,
   getPcoEntityMetadata,
   getPcoEntityTypes,

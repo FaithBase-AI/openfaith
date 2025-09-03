@@ -14,10 +14,14 @@ import {
   TokenKey,
 } from '@openfaith/adapter-core'
 import { type ExternalLink, edgesTable, externalLinksTable } from '@openfaith/db'
-import { type CustomFieldSchema, getSchemaByEntityType, OfTable } from '@openfaith/schema'
+import {
+  type CustomFieldSchema,
+  getAnnotationFromSchema,
+  getSchemaByEntityType,
+  OfTable,
+} from '@openfaith/schema'
 import { getEntityId } from '@openfaith/shared'
 import { getProperEntityName } from '@openfaith/workers/helpers/saveDataE'
-import { getAnnotationFromSchema } from '@openfaith/workers/helpers/schemaRegistry'
 import { and, type BuildColumns, eq, getTableColumns, inArray, isNull, lt, sql } from 'drizzle-orm'
 import { jsonb, type PgTableWithColumns, text } from 'drizzle-orm/pg-core'
 import { Array, Effect, Layer, Option, pipe, Record, String } from 'effect'

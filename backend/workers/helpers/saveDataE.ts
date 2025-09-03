@@ -3,12 +3,9 @@ import { TokenKey } from '@openfaith/adapter-core/server'
 import { edgesTable, externalLinksTable } from '@openfaith/db'
 import type { mkPcoCollectionSchema, PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import type { pcoPersonTransformer } from '@openfaith/pco/server'
-import { OfEntity } from '@openfaith/schema'
+import { getAnnotationFromSchema, OfEntity } from '@openfaith/schema'
 import { EdgeDirectionSchema, getEntityId } from '@openfaith/shared'
-import {
-  getAnnotationFromSchema,
-  getPcoEntityMetadata,
-} from '@openfaith/workers/helpers/schemaRegistry'
+import { getPcoEntityMetadata } from '@openfaith/workers/helpers/schemaRegistry'
 import { and, eq, getTableColumns, getTableName, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { Array, Effect, HashSet, Option, pipe, Record, Schema, SchemaAST, String } from 'effect'
 

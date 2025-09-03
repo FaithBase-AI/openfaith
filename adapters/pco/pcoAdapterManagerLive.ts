@@ -16,12 +16,9 @@ import type { PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import { discoverPcoRelationships } from '@openfaith/pco/helpers/relationshipDiscovery'
 import type { pcoPersonTransformer } from '@openfaith/pco/modules/people/pcoPersonSchema'
 import { pcoEntityManifest } from '@openfaith/pco/server'
-import { OfEntity, OfSkipEntity } from '@openfaith/schema'
+import { getAnnotationFromSchema, OfEntity, OfSkipEntity } from '@openfaith/schema'
 import { EdgeDirectionSchema } from '@openfaith/shared'
-import {
-  getAnnotationFromSchema,
-  getPcoEntityMetadata,
-} from '@openfaith/workers/helpers/schemaRegistry'
+import { getPcoEntityMetadata } from '@openfaith/workers/helpers/schemaRegistry'
 import {
   Array,
   Chunk,
