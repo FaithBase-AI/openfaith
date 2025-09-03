@@ -2,8 +2,8 @@ import { PcoAddress } from '@openfaith/pco/modules/people/pcoAddressSchema'
 import { PcoCampus } from '@openfaith/pco/modules/people/pcoCampusSchema'
 import { PcoPerson } from '@openfaith/pco/modules/people/pcoPersonSchema'
 import { PcoPhoneNumber } from '@openfaith/pco/modules/people/pcoPhoneNumberSchema'
-import { OfEntity, OfTable, OfTransformer } from '@openfaith/schema'
-import { Array, Option, type Schema, SchemaAST } from 'effect'
+import { getAnnotationFromSchema, OfEntity, OfTable, OfTransformer } from '@openfaith/schema'
+import { Array, Option, type Schema } from 'effect'
 
 // Registry of PCO schemas mapped by their type
 const pcoSchemas = {
@@ -14,30 +14,6 @@ const pcoSchemas = {
 }
 
 export type PcoEntityType = keyof typeof pcoSchemas
-
-// Helper function to get annotations from schema, handling Surrogate wrapping
-export const getAnnotationFromSchema = <A>(
-  annotationId: symbol,
-  ast: SchemaAST.AST,
-): Option.Option<A> => {
-  // First try direct annotation
-  const directOpt = SchemaAST.getAnnotation<A>(annotationId)(ast)
-  if (Option.isSome(directOpt)) {
-    return directOpt
-  }
-
-  // If not found and this is a Transformation, check the Surrogate
-  if (ast._tag === 'Transformation') {
-    const surrogateOpt = SchemaAST.getAnnotation<SchemaAST.AST>(SchemaAST.SurrogateAnnotationId)(
-      ast,
-    )
-    if (Option.isSome(surrogateOpt)) {
-      return SchemaAST.getAnnotation<A>(annotationId)(surrogateOpt.value)
-    }
-  }
-
-  return Option.none()
-}
 
 // Helper function to get entity metadata from schema annotations
 export const getEntityMetadata = (schema: Schema.Schema<any, any, any>) => {

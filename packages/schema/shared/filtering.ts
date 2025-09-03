@@ -1,29 +1,7 @@
 import type { ExtractedField } from '@openfaith/schema/shared/introspection'
-import { getUiConfigFromAST } from '@openfaith/schema/shared/introspection'
+import { getAnnotationFromSchema, getUiConfigFromAST } from '@openfaith/schema/shared/introspection'
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
 import { Array, Option, pipe, SchemaAST } from 'effect'
-
-/**
- * Helper function to get annotation from schema, handling both old and new formats
- */
-const getAnnotationFromSchema = <A>(annotation: any, schema: any): Option.Option<A> => {
-  if (!schema) {
-    return Option.none()
-  }
-
-  // Try direct annotation access first
-  const directAnnotation = SchemaAST.getAnnotation<A>(annotation)(schema)
-  if (Option.isSome(directAnnotation)) {
-    return directAnnotation
-  }
-
-  // For PropertySignature, try the type
-  if (schema.type) {
-    return SchemaAST.getAnnotation<A>(annotation)(schema.type)
-  }
-
-  return Option.none()
-}
 
 const getFieldDescription = (field: ExtractedField): string | undefined => {
   // Try to get description from the property signature first

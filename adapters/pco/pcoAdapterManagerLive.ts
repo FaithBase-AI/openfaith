@@ -13,6 +13,7 @@ import {
 } from '@openfaith/adapter-core'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import type { PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
+import { discoverPcoRelationships } from '@openfaith/pco/helpers/relationshipDiscovery'
 import type { pcoPersonTransformer } from '@openfaith/pco/modules/people/pcoPersonSchema'
 import { pcoEntityManifest } from '@openfaith/pco/server'
 import { OfEntity, OfSkipEntity } from '@openfaith/schema'
@@ -263,10 +264,11 @@ const processPcoData = Effect.fn('processPcoData')(function* (params: {
   // Process entities (both root and included)
   yield* processEntities([...entityData, ...includedEntityData])
 
-  // Extract and process relationships
-  const relationships = extractRelationships({
+  // Extract and process relationships (now handles missing targets)
+  const relationships = yield* extractRelationshipsEnhanced({
     entities: [...data.data, ...data.included],
     externalLinks: allExternalLinks,
+    processExternalLinks,
   })
   yield* processRelationships(relationships)
 })
@@ -467,6 +469,103 @@ export const PcoAdapterManagerLive = Layer.effect(
   }),
 )
 
+// Enhanced version that handles missing external links
+const extractRelationshipsEnhanced = (params: {
+  entities: ReadonlyArray<PcoBaseEntity>
+  externalLinks: ReadonlyArray<{
+    readonly entityId: string
+    readonly externalId: string
+    readonly lastProcessedAt: Date
+  }>
+  processExternalLinks: ProcessExternalLinks
+}): Effect.Effect<Array<RelationshipInput>, any, never> =>
+  Effect.gen(function* () {
+    const { entities, externalLinks, processExternalLinks } = params
+
+    const entitiesByType = pipe(
+      entities,
+      Array.groupBy((entity) => entity.type),
+    )
+
+    let externalLinkMap = pipe(
+      externalLinks,
+      Array.map((link) => [link.externalId, link] as const),
+      HashMap.fromIterable,
+    )
+
+    // First, identify missing external links
+    const missingLinks: Array<ExternalLinkInput> = []
+    const seenExternalIds = new Set<string>()
+
+    pipe(
+      entitiesByType,
+      Record.toEntries,
+      Array.forEach(([entityType, entitiesOfType]) => {
+        const relationshipAnnotations = discoverPcoRelationships(entityType)
+
+        if (Record.isEmptyRecord(relationshipAnnotations)) {
+          return
+        }
+
+        pipe(
+          entitiesOfType,
+          Array.forEach((entity) => {
+            if (!entity.relationships) return
+
+            // Check each relationship for missing external links
+            pipe(
+              relationshipAnnotations,
+              Record.toEntries,
+              Array.forEach(([relKey, targetType]) => {
+                const relData = entity.relationships?.[relKey]?.data
+                if (relData?.id) {
+                  const hasLink = pipe(externalLinkMap, HashMap.has(relData.id))
+
+                  if (!hasLink && !seenExternalIds.has(relData.id)) {
+                    // Use the discovered target type (e.g., 'campus' not 'primarycampus')
+                    seenExternalIds.add(relData.id)
+                    missingLinks.push({
+                      adapter: 'pco' as const,
+                      createdAt: undefined,
+                      entityType: targetType,
+                      externalId: relData.id,
+                      updatedAt: undefined,
+                    })
+                  }
+                }
+              }),
+            )
+          }),
+        )
+      }),
+    )
+
+    // Create missing links
+    if (missingLinks.length > 0) {
+      const { allExternalLinks: newLinks } = yield* processExternalLinks(missingLinks)
+      // Update our map with new links
+      pipe(
+        newLinks,
+        Array.forEach((link) => {
+          externalLinkMap = pipe(
+            externalLinkMap,
+            HashMap.set(link.externalId, {
+              entityId: link.entityId,
+              externalId: link.externalId,
+              lastProcessedAt: link.lastProcessedAt,
+            }),
+          )
+        }),
+      )
+    }
+
+    // Now extract relationships with complete map
+    return extractRelationships({
+      entities,
+      externalLinks: pipe(externalLinkMap, HashMap.values, Array.fromIterable),
+    })
+  })
+
 const extractRelationships = (params: {
   entities: ReadonlyArray<PcoBaseEntity>
   externalLinks: ReadonlyArray<{
@@ -613,7 +712,7 @@ const extractRelationships = (params: {
               pipe(
                 relationshipAnnotations,
                 Record.toEntries,
-                Array.filterMap(([relKey]) => {
+                Array.filterMap(([relKey, targetType]) => {
                   return pipe(
                     entity.relationships,
                     Option.fromNullable,
@@ -637,7 +736,7 @@ const extractRelationships = (params: {
 
                           // We need to get the entity type for the id.
                           const originalSourceEntityName = getProperEntityName(entityType)
-                          const originalTargetEntityName = getProperEntityName(relData.type)
+                          const originalTargetEntityName = targetType // Use the discovered target type
 
                           // Determine actual source/target entity types based on normalized IDs
                           const sourceEntityTypeTag =
