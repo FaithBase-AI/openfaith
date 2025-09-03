@@ -133,6 +133,20 @@
       "tag": "0018_odd_wild_pack",
       "version": "7",
       "when": 1754937895017
+    },
+    {
+      "breakpoints": true,
+      "idx": 19,
+      "tag": "0019_kind_shotgun",
+      "version": "7",
+      "when": 1756914107014
+    },
+    {
+      "breakpoints": true,
+      "idx": 20,
+      "tag": "0020_rare_sersi",
+      "version": "7",
+      "when": 1756914447330
     }
   ],
   "version": "7"

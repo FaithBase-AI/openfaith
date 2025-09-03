@@ -11,7 +11,7 @@ export const adapterDetailsTable = pgTable(
       .$type<'adapterDetails'>()
       .notNull(),
     adapter: d.text().notNull(),
-    createdAt: d.timestamp().notNull(),
+    createdAt: d.timestamp({ withTimezone: true }).notNull(),
     enabled: d.boolean().notNull(),
     orgId: d.varchar({ length: 128 }).notNull(),
     syncStatus: d.jsonb().$type<Array<AdapterSyncItem>>().notNull(),
@@ -34,7 +34,7 @@ export const adapterTokensTable = pgTable(
       .notNull(),
     accessToken: d.text().notNull(),
     adapter: d.text().notNull(),
-    createdAt: d.timestamp().notNull(),
+    createdAt: d.timestamp({ withTimezone: true }).notNull(),
     expiresIn: d.integer().notNull(),
     orgId: d.varchar({ length: 128 }).notNull(),
     refreshToken: d.text().notNull(),

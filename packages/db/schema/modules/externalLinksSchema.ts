@@ -16,10 +16,10 @@ export const externalLinksTable = pgTable(
     adapter: d.text().notNull(), // e.g., "pco", "ccb", "breeze"
 
     // Standard audit fields
-    createdAt: d.timestamp().notNull(),
+    createdAt: d.timestamp({ withTimezone: true }).notNull(),
 
     // Soft delete fields
-    deletedAt: d.timestamp(),
+    deletedAt: d.timestamp({ withTimezone: true }),
     deletedBy: d.text(), // e.g., "person", "group"
 
     // OpenFaith entity being linked
@@ -28,12 +28,12 @@ export const externalLinksTable = pgTable(
     externalId: d.text().notNull(),
 
     // Sync tracking
-    lastProcessedAt: d.timestamp().notNull(),
+    lastProcessedAt: d.timestamp({ withTimezone: true }).notNull(),
 
     // Organization this link belongs to
     orgId: d.text().notNull(),
     syncing: d.boolean().notNull().default(false),
-    updatedAt: d.timestamp(),
+    updatedAt: d.timestamp({ withTimezone: true }),
   }),
   (x) => ({
     adapterExternalIdIdx: index('adapterExternalIdIdx').on(x.adapter, x.externalId),

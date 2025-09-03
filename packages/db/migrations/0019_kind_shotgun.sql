@@ -1,0 +1,1 @@
+ALTER TABLE "openfaith_externalLinks" ALTER COLUMN "lastProcessedAt" SET DATA TYPE timestamp with time zone;

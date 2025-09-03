@@ -20,11 +20,11 @@ export const edgesTable = pgTable(
       .default('edge')
       .$type<'edge'>()
       .notNull(),
-    createdAt: d.timestamp().notNull(),
+    createdAt: d.timestamp({ withTimezone: true }).notNull(),
     createdBy: d.text(),
 
     // Soft delete fields
-    deletedAt: d.timestamp(),
+    deletedAt: d.timestamp({ withTimezone: true }),
     deletedBy: d.text(),
 
     // Metadata about the relationship
@@ -43,7 +43,7 @@ export const edgesTable = pgTable(
     // Target entity
     targetEntityId: d.text().notNull(),
     targetEntityTypeTag: d.text().notNull(),
-    updatedAt: d.timestamp(),
+    updatedAt: d.timestamp({ withTimezone: true }),
     updatedBy: d.text(),
   }),
   (x) => ({
@@ -80,7 +80,7 @@ export const entityRelationshipsTable = pgTable(
 
     targetEntityTypes: d.jsonb().$type<Array<string>>().notNull().default([]),
 
-    updatedAt: d.timestamp().notNull().defaultNow(),
+    updatedAt: d.timestamp({ withTimezone: true }).notNull().defaultNow(),
   }),
   (x) => ({
     orgIdx: index('entityRelationshipsOrgIdx').on(x.orgId),

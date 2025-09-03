@@ -40,9 +40,9 @@ export const journeysTable = pgTable(
     ...dbBaseEntityFields(d, 'journey'),
 
     assimilationComplete: d.boolean().notNull().default(false),
-    completedAt: d.timestamp(),
+    completedAt: d.timestamp({ withTimezone: true }),
     currentStage: d.text(),
-    lastActivityAt: d.timestamp(),
+    lastActivityAt: d.timestamp({ withTimezone: true }),
     pathwayId: d.text().notNull(),
     state: d.text().notNull().default('active'), // pending | active | completed | archived
     subjectId: d.text().notNull(),

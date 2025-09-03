@@ -9,18 +9,18 @@ import type { PgColumnsBuilders } from 'drizzle-orm/pg-core/columns/all'
  */
 export const dbSystemFields = (d: PgColumnsBuilders) => ({
   // Timestamp and user tracking fields
-  createdAt: d.timestamp().notNull(),
+  createdAt: d.timestamp({ withTimezone: true }).notNull(),
   createdBy: d.text(),
 
   // Custom fields for extensibility
   customFields: d.jsonb().$type<ReadonlyArray<CustomFieldSchema>>().notNull().default([]),
 
   // Soft delete fields
-  deletedAt: d.timestamp(),
+  deletedAt: d.timestamp({ withTimezone: true }),
   deletedBy: d.text(),
 
   // Inactivation fields (for entities that can be inactive)
-  inactivatedAt: d.timestamp(),
+  inactivatedAt: d.timestamp({ withTimezone: true }),
   inactivatedBy: d.text(),
 
   // Status field
@@ -31,7 +31,7 @@ export const dbSystemFields = (d: PgColumnsBuilders) => ({
 
   // Tags for categorization
   tags: d.jsonb().$type<ReadonlyArray<string>>().notNull().default([]),
-  updatedAt: d.timestamp(),
+  updatedAt: d.timestamp({ withTimezone: true }),
   updatedBy: d.text(),
 })
 

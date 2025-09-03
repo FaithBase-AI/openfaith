@@ -11,10 +11,10 @@ export const usersTable = pgTable(
       .default('user')
       .$type<'user'>()
       .notNull(),
-    banExpires: d.timestamp(),
+    banExpires: d.timestamp({ withTimezone: true }),
     banned: d.boolean(),
     banReason: d.text(),
-    createdAt: d.timestamp().notNull(),
+    createdAt: d.timestamp({ withTimezone: true }).notNull(),
     email: d.text().notNull().unique(),
     emailVerified: d.boolean().notNull(),
     id: d.text().primaryKey(),
@@ -23,7 +23,7 @@ export const usersTable = pgTable(
     name: d.text().notNull(),
     role: d.text(),
     stripeCustomerId: d.text(),
-    updatedAt: d.timestamp().notNull(),
+    updatedAt: d.timestamp({ withTimezone: true }).notNull(),
   }),
   (x) => ({
     emailIdx: index('userEmailIdx').on(x.email),
@@ -38,11 +38,11 @@ export type NewUser = typeof NewUser.Type
 export const verificationsTable = pgTable(
   'verifications',
   (d) => ({
-    createdAt: d.timestamp(),
-    expiresAt: d.timestamp().notNull(),
+    createdAt: d.timestamp({ withTimezone: true }),
+    expiresAt: d.timestamp({ withTimezone: true }).notNull(),
     id: d.text().primaryKey(),
     identifier: d.text().notNull(),
-    updatedAt: d.timestamp(),
+    updatedAt: d.timestamp({ withTimezone: true }),
     value: d.text().notNull(),
   }),
   (x) => ({
@@ -55,7 +55,7 @@ export const NewVerification = createInsertSchema(verificationsTable)
 export type NewVerification = typeof NewVerification.Type
 
 export const jwksTable = pgTable('jwks', (d) => ({
-  createdAt: d.timestamp().notNull(),
+  createdAt: d.timestamp({ withTimezone: true }).notNull(),
   id: d.text().primaryKey(),
   privateKey: d.text().notNull(),
   publicKey: d.text().notNull(),

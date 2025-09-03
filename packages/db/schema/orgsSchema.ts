@@ -11,7 +11,7 @@ export const orgsTable = pgTable(
       .default('org')
       .$type<'org'>()
       .notNull(),
-    createdAt: d.timestamp().notNull(),
+    createdAt: d.timestamp({ withTimezone: true }).notNull(),
     id: d.text().primaryKey(),
     logo: d.text(),
     metadata: d.text(),
@@ -37,7 +37,7 @@ export const orgUsersTable = pgTable(
       .default('orgUser')
       .$type<'orgUser'>()
       .notNull(),
-    createdAt: d.timestamp().notNull(),
+    createdAt: d.timestamp({ withTimezone: true }).notNull(),
     id: d.text().primaryKey(),
     orgId: d.text().notNull(),
     role: d.text().$type<'admin' | 'member' | 'owner'>().notNull(),
@@ -63,7 +63,7 @@ export const invitationsTable = pgTable(
       .$type<'invitation'>()
       .notNull(),
     email: d.text().notNull(),
-    expiresAt: d.timestamp().notNull(),
+    expiresAt: d.timestamp({ withTimezone: true }).notNull(),
     id: d.text().primaryKey(),
     inviterId: d.text().notNull(),
     orgId: d.text().notNull(),
