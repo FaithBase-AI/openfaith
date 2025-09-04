@@ -4,7 +4,9 @@ import { Option, pipe } from "effect";
 import { z } from "zod";
 
 // Conditional server schema - only validate server variables in server environment (not frontend SSR)
-const serverSchema = typeof window === "undefined" && !process.env.VITE_APP_NAME ? {
+const serverSchema =
+  typeof window === "undefined" && !process.env.VITE_APP_NAME
+    ? {
         // DB
         DB_HOST_PRIMARY: z.string(),
         DB_NAME: z.string(),
