@@ -3,45 +3,53 @@ import { createEnv } from "@t3-oss/env-core";
 import { Option, pipe } from "effect";
 import { z } from "zod";
 
+// Conditional server schema - only validate server variables in proper server environment
+const serverSchema =
+  typeof window === "undefined" && process.env.DB_HOST_PRIMARY
+    ? {
+        // DB
+        DB_HOST_PRIMARY: z.string(),
+        DB_NAME: z.string(),
+        DB_PASSWORD: z.string(),
+        DB_PORT: z.string().transform((x) => Number.parseInt(x, 10)),
+        DB_USERNAME: z.string(),
+        DB_SSL: z
+          .string()
+          .transform((x) => x === "true")
+          .default("true"),
+
+        // Zero
+        ZERO_UPSTREAM_DB: z.string(),
+        ZERO_CVR_DB: z.string(),
+        ZERO_CHANGE_DB: z.string(),
+        ZERO_REPLICA_FILE: z.string(),
+        ZERO_AUTH_JWKS_URL: z.string(),
+        ZERO_APP_ID: z.string(),
+        ZERO_NUM_SYNC_WORKERS: z
+          .string()
+          .transform((x) => Number.parseInt(x, 10)),
+        ZERO_LOG_LEVEL: z.string(),
+        ZERO_ADMIN_PASSWORD: z.string(),
+        ZERO_PUSH_URL: z.string(),
+
+        // Config
+        NODE_ENV: z
+          .enum(["development", "production", "test"])
+          .default("development"),
+
+        // Auth
+        BETTER_AUTH_SECRET: z.string(),
+
+        // Email
+        RESEND_API_KEY: z.string(),
+
+        // Planning Center
+        PLANNING_CENTER_SECRET: z.string(),
+      }
+    : {};
+
 export const env = createEnv({
-  server: {
-    // DB
-    DB_HOST_PRIMARY: z.string(),
-    DB_NAME: z.string(),
-    DB_PASSWORD: z.string(),
-    DB_PORT: z.string().transform((x) => Number.parseInt(x, 10)),
-    DB_USERNAME: z.string(),
-    DB_SSL: z
-      .string()
-      .transform((x) => x === "true")
-      .default("true"),
-
-    // Zero
-    ZERO_UPSTREAM_DB: z.string(),
-    ZERO_CVR_DB: z.string(),
-    ZERO_CHANGE_DB: z.string(),
-    ZERO_REPLICA_FILE: z.string(),
-    ZERO_AUTH_JWKS_URL: z.string(),
-    ZERO_APP_ID: z.string(),
-    ZERO_NUM_SYNC_WORKERS: z.string().transform((x) => Number.parseInt(x, 10)),
-    ZERO_LOG_LEVEL: z.string(),
-    ZERO_ADMIN_PASSWORD: z.string(),
-    ZERO_PUSH_URL: z.string(),
-
-    // Config
-    NODE_ENV: z
-      .enum(["development", "production", "test"])
-      .default("development"),
-
-    // Auth
-    BETTER_AUTH_SECRET: z.string(),
-
-    // Email
-    RESEND_API_KEY: z.string(),
-
-    // Planning Center
-    PLANNING_CENTER_SECRET: z.string(),
-  },
+  server: serverSchema,
 
   /**
    * The prefix that client-side variables must have. This is enforced both at
@@ -95,5 +103,8 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 
-  skipValidation: process.env.NODE_ENV === "test",
+  skipValidation:
+    process.env.NODE_ENV === "test" ||
+    process.env.NODE_ENV === "prerender" ||
+    !!process.env.NITRO_PRESET,
 });
