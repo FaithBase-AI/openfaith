@@ -19,6 +19,11 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
+  build: {
+    rollupOptions: {
+      external: ["@effect/experimental"],
+    },
+  },
   server: {
     port: 3000,
   },
