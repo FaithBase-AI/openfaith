@@ -22,6 +22,7 @@ services:
       -c max_replication_slots=5 
       -c hot_standby=on 
       -c hot_standby_feedback=on
+      -c max_connections=200
     volumes:
       - openfaith_pgdata:/var/lib/postgresql/data
       - ./:/docker-entrypoint-initdb.d

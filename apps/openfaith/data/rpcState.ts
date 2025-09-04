@@ -11,6 +11,14 @@ export const adapterConnectAtom = runtime.fn(
   }),
 )
 
+export const adapterReSyncAtom = runtime.fn(
+  Effect.fnUntraced(function* (params: { adapter: string }) {
+    const client = yield* AdapterRpcClient
+
+    return yield* client.adapterReSync(params)
+  }),
+)
+
 export const testFunctionAtom = runtime.fn(
   Effect.fnUntraced(function* () {
     const client = yield* CoreRpcClient

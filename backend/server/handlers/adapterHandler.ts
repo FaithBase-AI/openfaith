@@ -1,6 +1,11 @@
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { adapterDetailsTable, adapterTokensTable } from '@openfaith/db'
-import { AdapterConnectError, AdapterRpc, SessionContext } from '@openfaith/domain'
+import {
+  AdapterConnectError,
+  AdapterReSyncError,
+  AdapterRpc,
+  SessionContext,
+} from '@openfaith/domain'
 import { adaptersApi } from '@openfaith/server/adapters/adaptersApi'
 import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
 import { fromUnixTime } from 'date-fns/fp'
@@ -11,7 +16,7 @@ export const AdapterHandlerLive = AdapterRpc.toLayer(
     return {
       adapterConnect: ({ adapter, code, redirectUri }) =>
         Effect.gen(function* () {
-          console.log('🔌 Adapter connect start:', adapter)
+          yield* Effect.log('🔌 Adapter connect start:', adapter)
 
           // Get authenticated user and org from session context
           const session = yield* SessionContext
@@ -115,32 +120,74 @@ export const AdapterHandlerLive = AdapterRpc.toLayer(
             ),
           )
 
-          console.log('✅ Adapter connect completed:', adapter)
+          yield* Effect.log('✅ Adapter connect completed:', adapter)
 
-          // Kick off sync workflow for PCO adapter
-          if (adapterImpl._tag === 'pco') {
-            const workflowClient = yield* WorkflowClient
-            console.log('🚀 Starting PCO sync workflow for org:', orgId)
+          const workflowClient = yield* WorkflowClient
+          yield* Effect.log('🚀 Starting PCO sync workflow for org:', orgId)
 
-            const result = yield* workflowClient.workflows
-              .ExternalSyncWorkflow({
-                payload: {
-                  adapter: adapterImpl._tag,
-                  tokenKey: orgId,
-                },
-              })
-              .pipe(
-                Effect.catchAll((error) => {
-                  console.error('❌ Failed to start PCO sync workflow:', error)
-                  // Don't fail the adapter connection if workflow fails to start
-                  return Effect.succeed(undefined)
-                }),
-              )
+          const result = yield* workflowClient.workflows
+            .ExternalSyncWorkflow({
+              payload: {
+                adapter: adapterImpl._tag,
+                tokenKey: orgId,
+              },
+            })
+            .pipe(
+              Effect.catchAll((error) => {
+                console.error('❌ Failed to start PCO sync workflow:', error)
+                // Don't fail the adapter connection if workflow fails to start
+                return Effect.succeed(undefined)
+              }),
+            )
 
-            console.log('✅ PCO sync workflow started:', result)
+          yield* Effect.log('✅ PCO sync workflow started:', result)
+
+          return {
+            message: 'Adapter connect completed',
+          }
+        }),
+      adapterReSync: ({ adapter }) =>
+        Effect.gen(function* () {
+          yield* Effect.log('🔄 Adapter re-sync start:', adapter)
+
+          const session = yield* SessionContext
+
+          const orgId = session.activeOrganizationIdOpt.pipe(Option.getOrNull)
+
+          if (!orgId) {
+            return yield* Effect.fail(
+              new AdapterReSyncError({
+                adapter,
+                message: 'No organization found',
+              }),
+            )
           }
 
-          return 'success' as const
+          const workflowClient = yield* WorkflowClient
+
+          const result = yield* workflowClient.workflows
+            .ExternalSyncWorkflow({
+              payload: {
+                adapter,
+                tokenKey: orgId,
+              },
+            })
+            .pipe(
+              Effect.mapError(
+                (error) =>
+                  new AdapterReSyncError({
+                    adapter,
+                    cause: String(error),
+                    message: 'Failed to start sync workflow',
+                  }),
+              ),
+            )
+
+          yield* Effect.log('✅ Adapter re-sync completed:', result)
+
+          return {
+            message: 'Adapter re-sync completed',
+          }
         }),
     }
   }),
