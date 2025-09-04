@@ -3,10 +3,8 @@ import { createEnv } from "@t3-oss/env-core";
 import { Option, pipe } from "effect";
 import { z } from "zod";
 
-// Conditional server schema - only validate server variables in proper server environment
-const serverSchema =
-  typeof window === "undefined" && process.env.DB_HOST_PRIMARY
-    ? {
+// Conditional server schema - only validate server variables in server environment (not frontend SSR)
+const serverSchema = typeof window === "undefined" && !process.env.VITE_APP_NAME ? {
         // DB
         DB_HOST_PRIMARY: z.string(),
         DB_NAME: z.string(),
