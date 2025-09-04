@@ -9,11 +9,19 @@ export const getOfEntityNameForPcoEntityType = (entityType: string): string => {
     const schema = pcoEntityManifest[entityType as keyof typeof pcoEntityManifest].apiSchema
 
     return pipe(
-      getAnnotationFromSchema<Schema.Schema<any, any, any>>(OfEntity, schema.ast),
-      Option.flatMap(extractEntityName),
+      schema,
+      getOfEntityNameForPcoEntitySchemaOpt,
       Option.getOrElse(() => normalizedEntityType),
     )
   }
 
   return normalizedEntityType
 }
+
+export const getOfEntityNameForPcoEntitySchemaOpt = (
+  schema: Schema.Schema<any, any, any>,
+): Option.Option<string> =>
+  pipe(
+    getAnnotationFromSchema<Schema.Schema<any, any, any>>(OfEntity, schema.ast),
+    Option.flatMap(extractEntityName),
+  )

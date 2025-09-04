@@ -63,6 +63,7 @@ export const discoverPcoRelationships = (entityType: string): Record<string, str
           if (Option.isSome(ofEntityOpt)) {
             // Has OfEntity annotation - extract the target entity name
             const targetEntityOpt = extractEntityName(ofEntityOpt.value)
+
             return pipe(
               targetEntityOpt,
               Option.map((targetEntity) => [relKey, targetEntity] as const),

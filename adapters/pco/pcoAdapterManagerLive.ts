@@ -13,17 +13,14 @@ import {
 } from '@openfaith/adapter-core/server'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import type { PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
-import { getOfEntityNameForPcoEntityType } from '@openfaith/pco/helpers/pcoEntityNames'
+import {
+  getOfEntityNameForPcoEntitySchemaOpt,
+  getOfEntityNameForPcoEntityType,
+} from '@openfaith/pco/helpers/pcoEntityNames'
 import { discoverPcoRelationships } from '@openfaith/pco/helpers/relationshipDiscovery'
 import type { pcoPersonTransformer } from '@openfaith/pco/modules/people/pcoPersonSchema'
 import { pcoEntityManifest } from '@openfaith/pco/server'
-import {
-  extractEntityName,
-  getAnnotationFromSchema,
-  OfEntity,
-  OfSkipEntity,
-  OfTransformer,
-} from '@openfaith/schema'
+import { getAnnotationFromSchema, OfEntity, OfSkipEntity, OfTransformer } from '@openfaith/schema'
 import { EdgeDirectionSchema } from '@openfaith/shared'
 import {
   Array,
@@ -749,7 +746,7 @@ const extractRelationships = (params: {
                           // We need to get the entity type for the id.
                           const originalSourceEntityName = pipe(
                             apiSchema,
-                            extractEntityName,
+                            getOfEntityNameForPcoEntitySchemaOpt,
                             Option.getOrElse(() => entityType),
                           )
                           const originalTargetEntityName = targetType // Use the discovered target type
