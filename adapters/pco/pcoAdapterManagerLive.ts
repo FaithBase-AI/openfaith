@@ -10,7 +10,7 @@ import {
   type ProcessRelationships,
   type RelationshipInput,
   TokenKey,
-} from '@openfaith/adapter-core'
+} from '@openfaith/adapter-core/server'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import type { PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import { discoverPcoRelationships } from '@openfaith/pco/helpers/relationshipDiscovery'

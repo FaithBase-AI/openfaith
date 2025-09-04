@@ -1,6 +1,6 @@
 import { expect } from 'bun:test'
-import { AdapterManager, InternalManager, TokenKey } from '@openfaith/adapter-core'
 import { processMutation } from '@openfaith/adapter-core/chains/syncEngine.chain'
+import { AdapterManager, InternalManager, TokenKey } from '@openfaith/adapter-core/server'
 import { effect } from '@openfaith/bun-test'
 import type { CRUDOp } from '@openfaith/domain'
 import { Effect, Layer, Option } from 'effect'

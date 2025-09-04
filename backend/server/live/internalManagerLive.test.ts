@@ -21,7 +21,7 @@ import {
   InternalManager,
   type RelationshipInput,
   TokenKey,
-} from '@openfaith/adapter-core'
+} from '@openfaith/adapter-core/server'
 import { effect, layer } from '@openfaith/bun-test'
 import { getEntityId } from '@openfaith/shared'
 import { createTestTables } from '@openfaith/workers/helpers/test-utils/test-schema'

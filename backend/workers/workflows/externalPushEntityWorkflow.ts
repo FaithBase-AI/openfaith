@@ -1,4 +1,5 @@
 import { Activity, Workflow } from '@effect/workflow'
+import { processMutation } from '@openfaith/adapter-core/chains/syncEngine.chain'
 import {
   AdapterEntityNotFoundError,
   AdapterFetchError,
@@ -9,8 +10,7 @@ import {
   ExternalLinkUpsertError,
   RelationshipProcessingError,
   TokenKey,
-} from '@openfaith/adapter-core'
-import { processMutation } from '@openfaith/adapter-core/chains/syncEngine.chain'
+} from '@openfaith/adapter-core/server'
 import { CRUDMutation, CRUDOp } from '@openfaith/domain'
 import { PcoAdapterManagerLayer } from '@openfaith/pco/server'
 import { InternalManagerLive } from '@openfaith/server/live/internalManagerLive'

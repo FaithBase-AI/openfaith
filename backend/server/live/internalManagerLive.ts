@@ -12,7 +12,7 @@ import {
   InternalManager,
   RelationshipProcessingError,
   TokenKey,
-} from '@openfaith/adapter-core'
+} from '@openfaith/adapter-core/server'
 import { type ExternalLink, edgesTable, externalLinksTable } from '@openfaith/db'
 import {
   type CustomFieldSchema,
