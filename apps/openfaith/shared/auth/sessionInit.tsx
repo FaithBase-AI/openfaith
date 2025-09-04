@@ -1,53 +1,57 @@
-import { authClient } from '@openfaith/auth/authClient'
-import { RouterContextProvider, useRouter } from '@tanstack/react-router'
-import { Option, pipe } from 'effect'
-import { useMemo } from 'react'
-import { Cookies, useCookies } from 'react-cookie'
+import { authClient } from "@openfaith/auth/authClient";
+import { RouterContextProvider, useRouter } from "@tanstack/react-router";
+import { Option, pipe } from "effect";
+import { useMemo } from "react";
+import { Cookies, useCookies } from "react-cookie";
 
 export type SessionContextType = {
   data:
     | {
-        userID: string
-        email: string
-        activeOrganizationId: string | null
-        userRole: string | null
-        orgRole: string | null
-        impersonatedBy: string | null
+        userID: string;
+        email: string;
+        activeOrganizationId: string | null;
+        userRole: string | null;
+        orgRole: string | null;
+        impersonatedBy: string | null;
       }
-    | undefined
-  login: () => void
-  logout: () => void
-  zeroAuth: () => Promise<string | undefined>
-}
+    | undefined;
+  login: () => void;
+  logout: () => void;
+  zeroAuth: () => Promise<string | undefined>;
+};
 
 export function SessionInit({ children }: { children: React.ReactNode }) {
   const [cookies] = useCookies([
-    'userid',
-    'email',
-    'jwt',
-    'activeOrganizationId',
-    'userRole',
-    'orgRole',
-    'impersonatedBy',
-  ])
+    "userid",
+    "email",
+    "jwt",
+    "activeOrganizationId",
+    "userRole",
+    "orgRole",
+    "impersonatedBy",
+  ]);
 
   const data = useMemo(() => {
     if (!cookies.userid || !cookies.email) {
-      return undefined
+      return undefined;
     }
 
     return {
       activeOrganizationId: pipe(
         cookies.activeOrganizationId,
         Option.fromNullable,
-        Option.getOrNull,
+        Option.getOrNull
       ),
       email: cookies.email,
-      impersonatedBy: pipe(cookies.impersonatedBy, Option.fromNullable, Option.getOrNull),
+      impersonatedBy: pipe(
+        cookies.impersonatedBy,
+        Option.fromNullable,
+        Option.getOrNull
+      ),
       orgRole: pipe(cookies.orgRole, Option.fromNullable, Option.getOrNull),
       userID: cookies.userid,
       userRole: pipe(cookies.userRole, Option.fromNullable, Option.getOrNull),
-    }
+    };
   }, [
     cookies.userid,
     cookies.email,
@@ -55,7 +59,7 @@ export function SessionInit({ children }: { children: React.ReactNode }) {
     cookies.userRole,
     cookies.orgRole,
     cookies.impersonatedBy,
-  ])
+  ]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: We want to refresh the session when the cookies change
   const session = useMemo(() => {
@@ -64,10 +68,10 @@ export function SessionInit({ children }: { children: React.ReactNode }) {
       login,
       logout,
       zeroAuth,
-    }
-  }, [data, cookies.jwt])
+    };
+  }, [data, cookies.jwt]);
 
-  const router = useRouter()
+  const router = useRouter();
   return (
     <RouterContextProvider
       /**
@@ -80,28 +84,28 @@ export function SessionInit({ children }: { children: React.ReactNode }) {
     >
       {children}
     </RouterContextProvider>
-  )
+  );
 }
 
 function login() {
-  const callbackURL = location.href
+  const callbackURL = location.href;
   authClient.signIn.social({
     callbackURL,
     errorCallbackURL: callbackURL,
     newUserCallbackURL: callbackURL,
-    provider: 'github',
-  })
+    provider: "github",
+  });
 }
 
 function logout() {
-  authClient.signOut()
+  authClient.signOut();
 }
 
-async function zeroAuth(error?: 'invalid-token') {
+async function zeroAuth(error?: "invalid-token") {
   if (error) {
-    await fetch('/api/auth/refresh', {
-      credentials: 'include',
-    })
+    await fetch(`${import.meta.env.VITE_ZERO_SERVER}/api/auth/refresh`, {
+      credentials: "include",
+    });
   }
-  return new Cookies().get('jwt') as string | undefined
+  return new Cookies().get("jwt") as string | undefined;
 }
