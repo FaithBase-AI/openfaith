@@ -2,6 +2,7 @@ import type {
   AdapterEntityNotFoundError,
   AdapterFetchError,
   AdapterTransformError,
+  AdapterWebhookSubscriptionError,
   ProcessEntities,
   ProcessExternalLinks,
   ProcessMutations,
@@ -35,6 +36,8 @@ export class AdapterManager extends Context.Tag('@openfaith/adapter-core/layers/
     readonly getEntityTypeForWebhookEvent: (
       webhookEvent: string,
     ) => Effect.Effect<string, AdapterTransformError>
+
+    readonly subscribeToWebhooks: () => Effect.Effect<void, AdapterWebhookSubscriptionError>
 
     // TODO: private shared method for syncEntityId and syncEntityType that runs the logic.
 

@@ -323,6 +323,8 @@ export const PcoAdapterManagerLive = Layer.effect(
 
       getEntityTypeForWebhookEvent: (_webhookEvent) => Effect.succeed('Person'), // TODO: Implement webhook event mapping
 
+      subscribeToWebhooks: () => Effect.log('TODO: Implement subscribeToWebhooks for PCO'),
+
       syncEntityId: (params) =>
         Effect.gen(function* () {
           const {

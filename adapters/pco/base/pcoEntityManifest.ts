@@ -44,6 +44,13 @@ import {
   listPhoneNumbersDefinition,
   updatePhoneNumberDefinition,
 } from '@openfaith/pco/modules/people/pcoPhoneNumberEndpoints'
+import {
+  createWebhookSubscriptionDefinition,
+  deleteWebhookSubscriptionDefinition,
+  getWebhookSubscriptionByIdDefinition,
+  listWebhookSubscriptionsDefinition,
+  updateWebhookSubscriptionDefinition,
+} from '@openfaith/pco/modules/webhooks/pcoWebhookEndpoints'
 import { mkTableName } from '@openfaith/shared'
 import { Array, pipe, Record, Schema } from 'effect'
 
@@ -78,6 +85,13 @@ export const pcoEntityManifest = mkPcoEntityManifest({
     createPersonDefinition,
     updatePersonDefinition,
     deletePersonDefinition,
+
+    // Webhook Subscriptions
+    listWebhookSubscriptionsDefinition,
+    getWebhookSubscriptionByIdDefinition,
+    createWebhookSubscriptionDefinition,
+    updateWebhookSubscriptionDefinition,
+    deleteWebhookSubscriptionDefinition,
   ],
   errors: {
     400: PcoBadRequestError,

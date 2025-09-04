@@ -15,6 +15,16 @@ export class AdapterFetchError extends Schema.TaggedError<AdapterFetchError>()(
   },
 ) {}
 
+export class AdapterWebhookSubscriptionError extends Schema.TaggedError<AdapterWebhookSubscriptionError>()(
+  'AdapterWebhookSubscriptionError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+    orgId: Schema.String,
+  },
+) {}
+
 export class AdapterTransformError extends Schema.TaggedError<AdapterTransformError>()(
   'AdapterTransformError',
   {
