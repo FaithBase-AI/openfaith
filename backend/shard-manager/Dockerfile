@@ -46,7 +46,7 @@ RUN addgroup -g 1001 -S nodejs
 RUN adduser -S bun -u 1001
 USER bun
 
-EXPOSE 3002
+EXPOSE 8080
 
 # Run TypeScript directly with Bun
 CMD ["bun", "run", "backend/shard-manager/index.ts"]

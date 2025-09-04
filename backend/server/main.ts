@@ -1,4 +1,5 @@
 import { HttpLayerRouter } from "@effect/platform";
+import { auth } from "@openfaith/auth/auth";
 import { ServerLive } from "@openfaith/server";
 
 const port = 4000;
@@ -20,7 +21,12 @@ const server = Bun.serve({
         });
       }
 
-      // Handle the request with Effect handler
+      // Handle Better Auth routes
+      if (url.pathname.startsWith("/api/auth")) {
+        return await auth.handler(request);
+      }
+
+      // Handle other requests with Effect handler
       return await handler(request);
     } catch (error) {
       console.error("Server error:", error);
