@@ -27,6 +27,14 @@ RUN bun install
 # Copy all source code
 COPY . .
 
+# Build arguments for VITE environment variables
+ARG VITE_ZERO_SERVER
+ARG VITE_APP_NAME
+ARG VITE_BASE_URL
+ARG VITE_PROD_ROOT_DOMAIN
+ARG VITE_PROD_EMAIL_DOMAIN
+ARG VITE_PLANNING_CENTER_CLIENT_ID
+
 # Build the frontend using Turbo (creates both public static files and server)
 RUN bun run build --filter=@openfaith/openfaith
 

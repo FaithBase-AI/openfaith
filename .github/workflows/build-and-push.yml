@@ -68,3 +68,10 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        build-args: |
+          ${{ matrix.service.name == 'frontend' && format('VITE_ZERO_SERVER={0}', vars.VITE_ZERO_SERVER) || '' }}
+          ${{ matrix.service.name == 'frontend' && format('VITE_APP_NAME={0}', vars.VITE_APP_NAME) || '' }}
+          ${{ matrix.service.name == 'frontend' && format('VITE_BASE_URL={0}', vars.VITE_BASE_URL) || '' }}
+          ${{ matrix.service.name == 'frontend' && format('VITE_PROD_ROOT_DOMAIN={0}', vars.VITE_PROD_ROOT_DOMAIN) || '' }}
+          ${{ matrix.service.name == 'frontend' && format('VITE_PROD_EMAIL_DOMAIN={0}', vars.VITE_PROD_EMAIL_DOMAIN) || '' }}
+          ${{ matrix.service.name == 'frontend' && format('VITE_PLANNING_CENTER_CLIENT_ID={0}', vars.VITE_PLANNING_CENTER_CLIENT_ID) || '' }}
