@@ -32,12 +32,14 @@ RUN npm install -g bun@1.2.21
 
 WORKDIR /app
 
-# Copy source code and dependencies (no build step needed)
-COPY --from=builder /app/backend/server ./backend/server
+# Copy complete workspace structure with unified dependency resolution
+COPY --from=builder /app/package.json /app/bun.lock ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/adapters ./adapters
 COPY --from=builder /app/backend ./backend
+COPY --from=builder /app/apps ./apps
+COPY --from=builder /app/tooling ./tooling
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
