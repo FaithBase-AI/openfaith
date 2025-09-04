@@ -110,21 +110,9 @@ export const mkExternalLinksE = Effect.fn('mkExternalLinksE')(function* <
     returnedCount: externalLinks.length,
   })
 
-  // Return external links that were newly inserted or had their updatedAt changed
-  // The SQL CASE statement only updates lastProcessedAt when updatedAt changes
-  return pipe(
-    externalLinks,
-    Array.filter((x) => {
-      // Check if lastProcessedAt equals the current batch time
-      // If it does, it means the SQL updated it (because updatedAt changed)
-      // If it doesn't, it means the SQL kept the old value (because updatedAt was the same)
-      const diffMs = Math.abs(x.lastProcessedAt.getTime() - lastProcessedAt.getTime())
-
-      // Allow very small timing difference (up to 1ms) for database round-trip
-      // This ensures we only include rows that were JUST updated in this batch
-      return diffMs <= 1
-    }),
-  )
+  // Return all external links (both newly inserted and existing ones)
+  // Callers need all links to properly map entities
+  return externalLinks
 })
 
 // Helper to extract relationships from direct data using schema annotations
@@ -443,31 +431,8 @@ export const saveDataE = Effect.fn('saveDataE')(function* (
     return
   }
 
-  // Create/update external links and get ALL external links (not just filtered ones)
-  yield* mkExternalLinksE(data.data)
-
-  // Query the database to get ALL external links for the entities we're processing
-  // This includes both newly created and existing external links
-  const db = yield* PgDrizzle.PgDrizzle
-  const allExternalLinks = yield* db
-    .select({
-      entityId: externalLinksTable.entityId,
-      externalId: externalLinksTable.externalId,
-      lastProcessedAt: externalLinksTable.lastProcessedAt,
-    })
-    .from(externalLinksTable)
-    .where(
-      and(
-        inArray(
-          externalLinksTable.externalId,
-          pipe(
-            data.data,
-            Array.map((x) => x.id),
-          ),
-        ),
-        eq(externalLinksTable.orgId, orgId),
-      ),
-    )
+  // Create/update external links and get ALL external links (both new and existing)
+  const allExternalLinks = yield* mkExternalLinksE(data.data)
 
   yield* mkEntityUpsertE(
     pipe(
@@ -510,32 +475,8 @@ export const saveIncludesE = Effect.fn('saveIncludesE')(function* <
       Record.values,
       Array.map((x) =>
         Effect.gen(function* () {
-          // Create/update external links for included entities
-          yield* mkExternalLinksE(x)
-
-          // Query the database to get ALL external links for these included entities
-          // (not just the ones that were newly created or updated)
-          const db = yield* PgDrizzle.PgDrizzle
-          const orgId = yield* TokenKey
-          const allIncludedExternalLinks = yield* db
-            .select({
-              entityId: externalLinksTable.entityId,
-              externalId: externalLinksTable.externalId,
-              lastProcessedAt: externalLinksTable.lastProcessedAt,
-            })
-            .from(externalLinksTable)
-            .where(
-              and(
-                inArray(
-                  externalLinksTable.externalId,
-                  pipe(
-                    x,
-                    Array.map((entity) => entity.id),
-                  ),
-                ),
-                eq(externalLinksTable.orgId, orgId),
-              ),
-            )
+          // Create/update external links for included entities and get ALL links back
+          const allIncludedExternalLinks = yield* mkExternalLinksE(x)
 
           // Now upsert the included entities using ALL their external links
           yield* mkEntityUpsertE(

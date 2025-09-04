@@ -299,6 +299,89 @@ export const PcoOperationsLive = Layer.effect(
     const pcoClient = yield* PcoHttpClient
 
     return AdapterOperations.of({
+      createEntity: (entityName: string, data: unknown) =>
+        Effect.gen(function* () {
+          // Special handling for webhook subscriptions
+          if (entityName === 'webhooks' || entityName === 'WebhookSubscription') {
+            const webhookData = data as {
+              name: string
+              url: string
+              event_types: ReadonlyArray<string>
+              active?: boolean
+            }
+
+            const result = yield* pcoClient.webhooks.createSubscription({
+              payload: {
+                data: {
+                  attributes: {
+                    active: webhookData.active ?? true,
+                    name: webhookData.name,
+                    url: webhookData.url,
+                  },
+                  relationships: {
+                    webhook_events: {
+                      data: pipe(
+                        webhookData.event_types,
+                        Array.map((eventType) => ({
+                          id: eventType,
+                          type: 'WebhookEvent' as const,
+                        })),
+                      ),
+                    },
+                  },
+                  type: 'Subscription',
+                },
+              },
+            })
+
+            // Return the created webhook subscription in a format that matches WebhookSubscription schema
+            return {
+              active: result.data.attributes.active,
+              authenticity_secret: result.data.attributes.authenticity_secret,
+              id: result.data.id,
+              name: result.data.attributes.name,
+              url: result.data.attributes.url,
+            }
+          }
+
+          const entityClient = getEntityClient(pcoClient, entityName)
+
+          if (!entityClient || !entityClient.create) {
+            return yield* Effect.fail(
+              new AdapterSyncError({
+                adapter: 'pco',
+                entityName,
+                message: `Entity ${entityName} not found in PCO client or does not support create`,
+                operation: 'create',
+              }),
+            )
+          }
+
+          const encodedData = yield* transformEntityDataE(entityName, data)
+
+          // For create operations, we need to extract the ID from the data if it exists
+          const dataWithId = encodedData as Record<string, unknown> & { id?: string }
+          const externalId = dataWithId.id || ''
+
+          return yield* mkCrudEffect(
+            'insert',
+            entityClient,
+            entityName as PcoEntityClientKeys,
+            encodedData as Record<string, unknown>,
+            externalId,
+          )
+        }).pipe(
+          Effect.mapError(
+            (error) =>
+              new AdapterSyncError({
+                adapter: 'pco',
+                cause: error,
+                entityName,
+                message: `Failed to create entity ${entityName}`,
+                operation: 'create',
+              }),
+          ),
+        ) as any,
       extractUpdatedAt: extractPcoUpdatedAt,
 
       fetchEntityById: (entityType: string, entityId: string) => {
@@ -346,6 +429,12 @@ export const PcoOperationsLive = Layer.effect(
             transformer: undefined,
           })),
         )
+      },
+
+      getWebhookEventTypes: () => {
+        // Return the webhook event types that PCO should subscribe to
+        // These match the event names from the PCO webhooks documentation
+        return pipe(pcoEntityManifest.webhooks, Record.keys)
       },
 
       listEntityData: (entityName: string, params?: Record<string, unknown>) => {
@@ -668,6 +757,73 @@ export const PcoOperationsLive = Layer.effect(
               }),
           ),
         ),
+
+      updateEntity: (entityName: string, entityId: string, data: unknown) =>
+        Effect.gen(function* () {
+          // Special handling for webhook subscriptions
+          if (entityName === 'webhooks' || entityName === 'WebhookSubscription') {
+            const webhookData = data as {
+              active?: boolean
+              name?: string
+            }
+
+            const result = yield* pcoClient.webhooks.updateSubscription({
+              payload: {
+                data: {
+                  attributes: webhookData,
+                  id: entityId,
+                  type: 'Subscription',
+                },
+              },
+              urlParams: { id: entityId },
+            })
+
+            // Return the updated webhook subscription
+            return {
+              active: result.data.attributes.active,
+              id: result.data.id,
+              name: result.data.attributes.name,
+              url: result.data.attributes.url,
+            }
+          }
+
+          const entityClient = getEntityClient(pcoClient, entityName)
+
+          if (!entityClient || !entityClient.update) {
+            return yield* Effect.fail(
+              new AdapterSyncError({
+                adapter: 'pco',
+                entityName,
+                message: `Entity ${entityName} not found in PCO client or does not support update`,
+                operation: 'update',
+              }),
+            )
+          }
+
+          const encodedData = yield* transformPartialEntityDataE(
+            entityName,
+            data as Record<string, unknown>,
+          )
+
+          return yield* mkCrudEffect(
+            'update',
+            entityClient,
+            entityName as PcoEntityClientKeys,
+            encodedData as Record<string, unknown>,
+            entityId,
+          )
+        }).pipe(
+          Effect.mapError(
+            (error) =>
+              new AdapterSyncError({
+                adapter: 'pco',
+                cause: error,
+                entityName,
+                message: `Failed to update entity ${entityName} with id ${entityId}`,
+                operation: 'update',
+              }),
+          ),
+        ) as any,
     })
   }),
 )

@@ -8,6 +8,11 @@ import { Effect, Layer, Option, Stream } from 'effect'
 // Mock adapter operations for testing
 const createMockAdapterOperations = (tag: string) =>
   AdapterOperations.of({
+    createEntity: (_entityName, data) =>
+      Effect.succeed({
+        id: `created-${tag}`,
+        ...(data as Record<string, unknown>),
+      }),
     extractUpdatedAt: () => Option.some('2023-01-01T00:00:00Z'),
 
     fetchEntityById: (entityType, entityId) =>
@@ -37,6 +42,8 @@ const createMockAdapterOperations = (tag: string) =>
       },
     }),
 
+    getWebhookEventTypes: () => [],
+
     listEntityData: (entityName) => Stream.make({ id: '1', name: `mock-${entityName}` }),
 
     processEntityData: () => Effect.void,
@@ -55,6 +62,12 @@ const createMockAdapterOperations = (tag: string) =>
       ),
 
     transformEntityData: (_, data) => Effect.succeed(data),
+
+    updateEntity: (_entityName, entityId, data) =>
+      Effect.succeed({
+        id: entityId,
+        ...(data as Record<string, unknown>),
+      }),
   })
 
 // Create mock adapter layers

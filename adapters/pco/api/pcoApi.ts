@@ -9,7 +9,6 @@ import {
 import { RateLimiter, TokenAuth, TokenKey } from '@openfaith/adapter-core/server'
 import { toPcoHttpApiGroup } from '@openfaith/pco/api/pcoMkEntityManifest'
 import { tokenApiGroup } from '@openfaith/pco/api/pcoTokenApi'
-import { webhookApiGroup } from '@openfaith/pco/api/pcoWebhookApi'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { Duration, Effect, Layer, Number, Option, pipe, Schedule } from 'effect'
 
@@ -17,14 +16,15 @@ const peopleApiGroup = toPcoHttpApiGroup(pcoEntityManifest.Person)
 const addressApiGroup = toPcoHttpApiGroup(pcoEntityManifest.Address)
 const campusApiGroup = toPcoHttpApiGroup(pcoEntityManifest.Campus)
 const phoneNumberApiGroup = toPcoHttpApiGroup(pcoEntityManifest.PhoneNumber)
+const webhookApiGroup = toPcoHttpApiGroup(pcoEntityManifest.WebhookSubscription)
 
 export const PcoApi = HttpApi.make('PCO')
   .add(peopleApiGroup)
   .add(addressApiGroup)
   .add(campusApiGroup)
   .add(phoneNumberApiGroup)
-  .add(tokenApiGroup)
   .add(webhookApiGroup)
+  .add(tokenApiGroup)
 
 const calculateRateLimitDelay = (
   response: HttpClientResponse.HttpClientResponse,

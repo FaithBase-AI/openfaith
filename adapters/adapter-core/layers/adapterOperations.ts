@@ -49,6 +49,27 @@ export const WebhookSyncRequest = Schema.Struct({
 })
 export type WebhookSyncRequest = typeof WebhookSyncRequest.Type
 
+/**
+ * Webhook subscription information returned from external systems
+ */
+export const WebhookSubscription = Schema.Struct({
+  active: Schema.Boolean,
+  authenticitySecret: Schema.String,
+  id: Schema.String,
+  name: Schema.String,
+  url: Schema.String,
+})
+export type WebhookSubscription = typeof WebhookSubscription.Type
+
+/**
+ * Result of creating a webhook subscription
+ */
+export const WebhookSubscriptionResult = Schema.Struct({
+  authenticitySecret: Schema.String,
+  id: Schema.String,
+})
+export type WebhookSubscriptionResult = typeof WebhookSubscriptionResult.Type
+
 export class AdapterOperations extends Context.Tag('@openfaith/adapter-core/AdapterOperations')<
   AdapterOperations,
   {
@@ -87,13 +108,41 @@ export class AdapterOperations extends Context.Tag('@openfaith/adapter-core/Adap
 
     readonly getAdapterTag: () => string
 
-    readonly processWebhook: (
-      webhookData: unknown,
-    ) => Effect.Effect<ReadonlyArray<WebhookSyncRequest>, AdapterValidationError>
-
     readonly fetchEntityById: (
       entityType: string,
       entityId: string,
     ) => Effect.Effect<unknown, AdapterSyncError>
+
+    /**
+     * Create a new entity in the external system
+     */
+    readonly createEntity: (
+      entityName: string,
+      data: unknown,
+    ) => Effect.Effect<unknown, AdapterSyncError | AdapterValidationError>
+
+    /**
+     * Update an existing entity in the external system
+     */
+    readonly updateEntity: (
+      entityName: string,
+      entityId: string,
+      data: unknown,
+    ) => Effect.Effect<unknown, AdapterSyncError | AdapterValidationError>
+
+    // Optional webhook-specific methods - adapters that support webhooks should implement these
+
+    /**
+     * Get the list of webhook event types this adapter wants to subscribe to
+     * These should match the event names from the external system (e.g., "people.v2.events.person.created")
+     */
+    readonly getWebhookEventTypes: () => ReadonlyArray<string>
+
+    /**
+     * Process an incoming webhook payload and return sync requests
+     */
+    readonly processWebhook: (
+      webhookData: unknown,
+    ) => Effect.Effect<ReadonlyArray<WebhookSyncRequest>, AdapterValidationError>
   }
 >() {}

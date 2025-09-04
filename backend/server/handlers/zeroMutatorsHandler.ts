@@ -4,7 +4,6 @@ import { MainApi, MutatorError, SessionContext } from '@openfaith/domain'
 import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
 import { AppZeroStore, ZeroLive } from '@openfaith/server/live/zeroLive'
 import { mutationSideEffects } from '@openfaith/server/services/externalPushTrigger'
-
 import { createMutators } from '@openfaith/zero'
 import type { ReadonlyJSONObject } from '@rocicorp/zero'
 import { Effect, Layer, Option, pipe } from 'effect'
