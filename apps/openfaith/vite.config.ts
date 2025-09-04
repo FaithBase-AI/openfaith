@@ -21,7 +21,9 @@ export default defineConfig({
   ],
   build: {
     rollupOptions: {
-      external: ["@effect/experimental"],
+      external: (id) => {
+        return id.startsWith("@effect/experimental");
+      },
     },
   },
   server: {
