@@ -1,8 +1,5 @@
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
-import {
-  expandBidirectionalPairs,
-  groupPairsBySource,
-} from '@openfaith/workers/helpers/relationshipUtils'
+import { expandBidirectionalPairs, groupPairsBySource } from '@openfaith/schema'
 import { sql } from 'drizzle-orm'
 import { Array, Effect, pipe, String } from 'effect'
 
@@ -60,19 +57,20 @@ export const updateEntityRelationshipsForOrgE = Effect.fn('updateEntityRelations
     )
 
     const query = sql`
-    INSERT INTO "openfaith_entityRelationships" ("orgId", "sourceEntityType", "targetEntityTypes", "updatedAt")
-    VALUES ${valuesClause}
-    ON CONFLICT ("orgId", "sourceEntityType") DO UPDATE
-    SET "targetEntityTypes" = (
-      SELECT jsonb_agg(DISTINCT elem.value ORDER BY elem.value)
-      FROM jsonb_array_elements_text(
-        "openfaith_entityRelationships"."targetEntityTypes" || EXCLUDED."targetEntityTypes"
-      ) AS elem(value)
-    ),
-    "updatedAt" = EXCLUDED."updatedAt"
-  `
+      INSERT INTO "openfaith_entityRelationships" ("orgId", "sourceEntityType", "targetEntityTypes", "updatedAt")
+      VALUES ${valuesClause}
+      ON CONFLICT ("orgId", "sourceEntityType") DO UPDATE
+      SET "targetEntityTypes" = (
+        SELECT jsonb_agg(DISTINCT elem.value ORDER BY elem.value)
+        FROM jsonb_array_elements_text(
+          "openfaith_entityRelationships"."targetEntityTypes" || EXCLUDED."targetEntityTypes"
+        ) AS elem(value)
+      ),
+      "updatedAt" = EXCLUDED."updatedAt"
+    `
 
     yield* db.execute(query)
+
     yield* Effect.annotateLogs(Effect.log('Entity relationships registry batch updated'), {
       orgId,
       updateCount: relationshipValues.length,

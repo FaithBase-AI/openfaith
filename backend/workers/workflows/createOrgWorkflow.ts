@@ -1,8 +1,8 @@
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { Activity, Workflow } from '@effect/workflow'
 import { sacramentsTable } from '@openfaith/db'
+import { updateEntityRelationshipsForOrgE } from '@openfaith/server'
 import { getEntityId } from '@openfaith/shared'
-import { updateEntityRelationshipsForOrgE } from '@openfaith/workers/helpers/updateEntityRelationships'
 import { eq } from 'drizzle-orm'
 import { Array, Effect, Option, pipe, Schema } from 'effect'
 

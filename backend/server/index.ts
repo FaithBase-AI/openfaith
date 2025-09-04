@@ -1,6 +1,7 @@
 export * from '@openfaith/server/db'
 export * from '@openfaith/server/handlers/adapterHandler'
 export * from '@openfaith/server/handlers/coreHandler'
+export * from '@openfaith/server/helpers/updateEntityRelationships'
 export * from '@openfaith/server/live/dbLive'
 export * from '@openfaith/server/live/internalManagerLive'
 export * from '@openfaith/server/live/pcoApiLive'

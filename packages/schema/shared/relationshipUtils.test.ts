@@ -6,7 +6,7 @@ import {
   expandBidirectionalPairs,
   groupPairsBySource,
   type RelationshipInput,
-} from '@openfaith/workers/helpers/relationshipUtils'
+} from '@openfaith/schema/shared/relationshipUtils'
 import { Array, Effect, pipe } from 'effect'
 
 effect('expandBidirectionalPairs: handles simple one-to-one', () =>
