@@ -22,20 +22,9 @@ import {
 } from '@openfaith/schema'
 import { updateEntityRelationshipsForOrgE } from '@openfaith/server/helpers/updateEntityRelationships'
 import { getEntityId } from '@openfaith/shared'
-import { getPcoEntityMetadata } from '@openfaith/workers/helpers/schemaRegistry'
 import { and, type BuildColumns, eq, getTableColumns, inArray, isNull, lt, sql } from 'drizzle-orm'
 import { jsonb, type PgTableWithColumns, text } from 'drizzle-orm/pg-core'
-import { Array, Effect, Layer, Option, pipe, Record, SchemaAST } from 'effect'
-
-export const getProperEntityName = (entityType: string): string =>
-  pipe(
-    getPcoEntityMetadata(entityType),
-    Option.flatMap((metadata) => metadata.ofEntity),
-    Option.flatMap((entity) =>
-      getAnnotationFromSchema<string>(SchemaAST.TitleAnnotationId, entity.ast),
-    ),
-    Option.getOrElse(() => entityType.toLowerCase()),
-  )
+import { Array, Effect, Layer, Option, pipe, Record } from 'effect'
 
 const baseColumns = {
   _tag: text().notNull(),
@@ -316,11 +305,9 @@ export const InternalManagerLive = Layer.effect(
        */
       detectAndMarkDeleted: (adapter, entityType, syncStartTime) =>
         Effect.gen(function* () {
-          const properEntityName = getProperEntityName(entityType)
-
           yield* Effect.annotateLogs(Effect.log('Starting deletion detection'), {
             adapter,
-            entityType: properEntityName,
+            entityType,
             orgId,
             syncStartTime: syncStartTime.toISOString(),
           })
@@ -332,7 +319,7 @@ export const InternalManagerLive = Layer.effect(
               and(
                 eq(externalLinksTable.orgId, orgId),
                 eq(externalLinksTable.adapter, adapter),
-                eq(externalLinksTable.entityType, properEntityName),
+                eq(externalLinksTable.entityType, entityType),
                 lt(externalLinksTable.lastProcessedAt, syncStartTime),
                 isNull(externalLinksTable.deletedAt),
               ),
@@ -341,7 +328,7 @@ export const InternalManagerLive = Layer.effect(
           if (staleLinks.length === 0) {
             yield* Effect.annotateLogs(Effect.log('No stale entities detected'), {
               adapter,
-              entityType: properEntityName,
+              entityType,
               orgId,
             })
             return []
@@ -351,7 +338,7 @@ export const InternalManagerLive = Layer.effect(
             Effect.log('Detected stale entities that may have been deleted'),
             {
               adapter,
-              entityType: properEntityName,
+              entityType,
               orgId,
               staleCount: staleLinks.length,
               staleEntityIds: pipe(
@@ -373,7 +360,7 @@ export const InternalManagerLive = Layer.effect(
               and(
                 eq(externalLinksTable.orgId, orgId),
                 eq(externalLinksTable.adapter, adapter),
-                eq(externalLinksTable.entityType, properEntityName),
+                eq(externalLinksTable.entityType, entityType),
                 inArray(
                   externalLinksTable.externalId,
                   pipe(
@@ -387,7 +374,7 @@ export const InternalManagerLive = Layer.effect(
           yield* Effect.annotateLogs(Effect.log('Soft deleted external links'), {
             adapter,
             deletedCount: staleLinks.length,
-            entityType: properEntityName,
+            entityType,
             orgId,
           })
 

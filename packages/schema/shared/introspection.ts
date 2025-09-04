@@ -287,3 +287,20 @@ export const extractEntityInfo = (
     entityTag: entityAnnotation || entityTag,
   }
 }
+
+export const extractEntityName = (schema: Schema.Schema.Any): Option.Option<string> => {
+  // Try to get the title annotation from the schema
+  const titleOpt = getAnnotationFromSchema<string>(SchemaAST.TitleAnnotationId, schema.ast)
+
+  if (Option.isSome(titleOpt)) {
+    return titleOpt
+  }
+
+  // Fallback: try to get the constructor name
+  const constructorName = schema.constructor?.name
+  if (constructorName) {
+    return Option.some(constructorName.toLowerCase())
+  }
+
+  return Option.none()
+}

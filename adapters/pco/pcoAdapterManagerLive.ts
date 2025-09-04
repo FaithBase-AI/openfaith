@@ -13,12 +13,18 @@ import {
 } from '@openfaith/adapter-core/server'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import type { PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
+import { getOfEntityNameForPcoEntityType } from '@openfaith/pco/helpers/pcoEntityNames'
 import { discoverPcoRelationships } from '@openfaith/pco/helpers/relationshipDiscovery'
 import type { pcoPersonTransformer } from '@openfaith/pco/modules/people/pcoPersonSchema'
 import { pcoEntityManifest } from '@openfaith/pco/server'
-import { getAnnotationFromSchema, OfEntity, OfSkipEntity } from '@openfaith/schema'
+import {
+  extractEntityName,
+  getAnnotationFromSchema,
+  OfEntity,
+  OfSkipEntity,
+  OfTransformer,
+} from '@openfaith/schema'
 import { EdgeDirectionSchema } from '@openfaith/shared'
-import { getPcoEntityMetadata } from '@openfaith/workers/helpers/schemaRegistry'
 import {
   Array,
   Chunk,
@@ -110,19 +116,6 @@ const normalizeSingletonResponse = (response: {
 })
 
 /**
- * Helper function to get the proper entity name from adapter entity type
- */
-const getProperEntityName = (entityType: string): string =>
-  pipe(
-    getPcoEntityMetadata(entityType),
-    Option.flatMap((metadata) => metadata.ofEntity),
-    Option.flatMap((entity) =>
-      getAnnotationFromSchema<string>(SchemaAST.TitleAnnotationId, entity.ast),
-    ),
-    Option.getOrElse(() => entityType.toLowerCase()),
-  )
-
-/**
  * Creates external links from PCO entities
  */
 const createExternalLinks = (entities: ReadonlyArray<PcoBaseEntity>): Array<ExternalLinkInput> =>
@@ -131,7 +124,7 @@ const createExternalLinks = (entities: ReadonlyArray<PcoBaseEntity>): Array<Exte
     Array.map((entity) => ({
       adapter: 'pco' as const,
       createdAt: entity.attributes.created_at,
-      entityType: getProperEntityName(entity.type),
+      entityType: getOfEntityNameForPcoEntityType(entity.type),
       externalId: entity.id,
       updatedAt: entity.attributes.updated_at || undefined,
     })),
@@ -146,20 +139,30 @@ const transformSingleEntity = (params: {
   tokenKey: string
 }) => {
   const { entity, entityId, tokenKey } = params
-  const entityMetadataOpt = getPcoEntityMetadata(entity.type)
 
-  if (Option.isNone(entityMetadataOpt)) {
+  const entitySchemaOpt =
+    entity.type in pcoEntityManifest
+      ? Option.some(pcoEntityManifest[entity.type as keyof typeof pcoEntityManifest].apiSchema)
+      : Option.none()
+
+  if (Option.isNone(entitySchemaOpt)) {
     return Option.none()
   }
 
-  const entityMetadata = entityMetadataOpt.value
-  const entityName = getProperEntityName(entity.type)
+  const entitySchema = entitySchemaOpt.value
 
-  if (Option.isNone(entityMetadata.transformer)) {
+  const entityName = getOfEntityNameForPcoEntityType(entity.type)
+
+  const transformerOpt = getAnnotationFromSchema<Schema.transform<any, any>>(
+    OfTransformer,
+    entitySchema.ast,
+  )
+
+  if (Option.isNone(transformerOpt)) {
     return Option.none()
   }
 
-  const transformer = entityMetadata.transformer.value
+  const transformer = transformerOpt.value
 
   return pipe(
     entity.attributes,
@@ -600,17 +603,17 @@ const extractRelationships = (params: {
     entitiesByType,
     Record.toEntries,
     Array.filterMap(([entityType, entities]) => {
-      const entityMetadataOpt = getPcoEntityMetadata(entityType)
+      const apiSchemaOpt =
+        entityType in pcoEntityManifest
+          ? Option.some(pcoEntityManifest[entityType as keyof typeof pcoEntityManifest].apiSchema)
+          : Option.none()
 
-      if (Option.isNone(entityMetadataOpt)) {
-        // return Option.none()
+      if (Option.isNone(apiSchemaOpt)) {
         return Option.none()
       }
 
-      const entityMetadata = entityMetadataOpt.value
-
       // Extract relationship annotations from the schema
-      const apiSchema = entityMetadata.schema
+      const apiSchema = apiSchemaOpt.value
       const ast = apiSchema.ast
 
       const relationshipAnnotations: Record<string, string> =
@@ -744,7 +747,11 @@ const extractRelationships = (params: {
                           })
 
                           // We need to get the entity type for the id.
-                          const originalSourceEntityName = getProperEntityName(entityType)
+                          const originalSourceEntityName = pipe(
+                            apiSchema,
+                            extractEntityName,
+                            Option.getOrElse(() => entityType),
+                          )
                           const originalTargetEntityName = targetType // Use the discovered target type
 
                           // Determine actual source/target entity types based on normalized IDs

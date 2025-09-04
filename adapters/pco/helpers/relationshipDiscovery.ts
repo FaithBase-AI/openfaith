@@ -1,26 +1,6 @@
 import * as PcoSchemas from '@openfaith/pco/server'
-import { getAnnotationFromSchema, OfEntity } from '@openfaith/schema'
-import { Array, Option, pipe, Record, Schema, SchemaAST } from 'effect'
-
-/**
- * Extracts the entity name from an OfEntity schema annotation
- */
-const getEntityNameFromOfEntity = (ofEntity: any): Option.Option<string> => {
-  // Try to get the title annotation from the schema
-  const titleOpt = getAnnotationFromSchema<string>(SchemaAST.TitleAnnotationId, ofEntity.ast)
-
-  if (Option.isSome(titleOpt)) {
-    return titleOpt
-  }
-
-  // Fallback: try to get the constructor name
-  const constructorName = ofEntity.constructor?.name
-  if (constructorName) {
-    return Option.some(constructorName.toLowerCase())
-  }
-
-  return Option.none()
-}
+import { extractEntityName, getAnnotationFromSchema, OfEntity } from '@openfaith/schema'
+import { Array, Option, pipe, Record, Schema, type SchemaAST } from 'effect'
 
 /**
  * Discovers relationship annotations for a PCO entity type
@@ -82,7 +62,7 @@ export const discoverPcoRelationships = (entityType: string): Record<string, str
 
           if (Option.isSome(ofEntityOpt)) {
             // Has OfEntity annotation - extract the target entity name
-            const targetEntityOpt = getEntityNameFromOfEntity(ofEntityOpt.value)
+            const targetEntityOpt = extractEntityName(ofEntityOpt.value)
             return pipe(
               targetEntityOpt,
               Option.map((targetEntity) => [relKey, targetEntity] as const),
