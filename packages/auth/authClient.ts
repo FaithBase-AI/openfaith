@@ -3,6 +3,7 @@ import { adminClient, emailOTPClient, organizationClient } from 'better-auth/cli
 import { createAuthClient } from 'better-auth/react'
 
 export const authClient = createAuthClient({
+  baseURL: import.meta.env.VITE_ZERO_SERVER,
   plugins: [emailOTPClient(), adminClient(), organizationClient(), emailChangeOTPClient()],
 })
 

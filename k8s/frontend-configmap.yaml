@@ -5,7 +5,7 @@ metadata:
   namespace: openfaith
 data:
   # Client-side environment variables (VITE_ prefix)
-  VITE_ZERO_SERVER: "http://backend-service:4000"
+  VITE_ZERO_SERVER: "http://localhost:4000"
   VITE_APP_NAME: "OpenFaith"
   VITE_BASE_URL: "http://frontend-service:80"
   VITE_PROD_ROOT_DOMAIN: "openfaith.app"
