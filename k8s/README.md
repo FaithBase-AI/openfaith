@@ -3,12 +3,14 @@
 ## Quick Start
 
 1. **Setup Secrets** (REQUIRED):
+
    ```bash
    cp secrets.yaml.template secrets.yaml
    # Edit secrets.yaml with your actual values
    ```
 
 2. **Deploy Everything**:
+
    ```bash
    kubectl apply -f namespace.yaml
    kubectl apply -f secrets.yaml
@@ -26,6 +28,7 @@
    ```
 
 3. **Run Database Migration**:
+
    ```bash
    kubectl apply -f migrate-job.yaml
    ```
@@ -79,17 +82,20 @@ kubectl get ingress -n openfaith
 ## Troubleshooting
 
 ### Check Pod Status
+
 ```bash
 kubectl get pods -n openfaith
 kubectl logs -n openfaith deployment/backend
 ```
 
 ### Check Database
+
 ```bash
 kubectl exec -n openfaith deployment/postgres -- psql -U user postgres -c "\dt openfaith_*;"
 ```
 
 ### Check Ingress
+
 ```bash
 kubectl describe ingress -n openfaith
 ```
