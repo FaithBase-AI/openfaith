@@ -15,20 +15,6 @@ import { TokenAuthLive } from '@openfaith/server/live/tokenAuthLive'
 import { TokenManagerLive } from '@openfaith/server/live/tokenManagerLive'
 import { Layer } from 'effect'
 
-/**
- * Complete PCO AdapterManager Layer with all dependencies
- *
- * Usage:
- * ```typescript
- * const program = Effect.gen(function* () {
- *   const adapterManager = yield* AdapterManager
- *   // Use adapterManager...
- * }).pipe(
- *   Effect.provide(PcoAdapterManagerLayer),
- *   Effect.provideService(TokenKey, 'your-token-key')
- * )
- * ```
- */
 export const PcoAdapterManagerLayer = PcoAdapterManagerLive.pipe(
   Layer.provide(BasePcoApiLayer),
   Layer.provideMerge(TokenAuthLive),
