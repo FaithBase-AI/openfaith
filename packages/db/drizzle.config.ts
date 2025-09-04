@@ -1,6 +1,6 @@
-import { env } from '@openfaith/shared'
-import type { Config } from 'drizzle-kit'
-import { Boolean, pipe } from 'effect'
+import { env } from "@openfaith/shared";
+import type { Config } from "drizzle-kit";
+import { Boolean, pipe } from "effect";
 
 export default {
   dbCredentials: {
@@ -13,14 +13,14 @@ export default {
       Boolean.match({
         onFalse: () => false,
         onTrue: () => ({ rejectUnauthorized: false }),
-      }),
+      })
     ),
     user: env.DB_USERNAME,
     // ssl: { rejectUnauthorized: false },
   },
-  dialect: 'postgresql',
+  dialect: "postgresql",
   // Pick up all our schema files
-  out: './migrations',
-  schema: './schema/drizzleSchema.ts',
-  tablesFilter: ['openfaith_*'],
-} satisfies Config
+  out: "./migrations",
+  schema: "./schema/drizzleSchema.ts",
+  tablesFilter: ["openfaith_*"],
+} satisfies Config;
