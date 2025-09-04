@@ -48,23 +48,27 @@ const serverSchema =
       }
     : {};
 
-// Conditional client schema - only validate client variables in frontend environments
-const clientSchema =
-  typeof window !== "undefined" || !!process.env.VITE_APP_NAME
-    ? {
-        // Zero
-        VITE_ZERO_SERVER: z.string(),
+// Conditional client schema - only validate if VITE variables are actually available
+const hasViteVars = !!(
+  process.env.VITE_APP_NAME ||
+  (typeof window !== "undefined" && 
+   typeof import.meta.env !== "undefined" && 
+   import.meta.env.VITE_APP_NAME)
+);
 
-        // Config
-        VITE_APP_NAME: z.string(),
-        VITE_BASE_URL: z.string(),
-        VITE_PROD_ROOT_DOMAIN: z.string(),
-        VITE_PROD_EMAIL_DOMAIN: z.string(),
+const clientSchema = hasViteVars ? {
+    // Zero
+    VITE_ZERO_SERVER: z.string(),
 
-        // Planning Center
-        VITE_PLANNING_CENTER_CLIENT_ID: z.string(),
-      }
-    : {};
+    // Config
+    VITE_APP_NAME: z.string(),
+    VITE_BASE_URL: z.string(),
+    VITE_PROD_ROOT_DOMAIN: z.string(),
+    VITE_PROD_EMAIL_DOMAIN: z.string(),
+
+    // Planning Center
+    VITE_PLANNING_CENTER_CLIENT_ID: z.string(),
+  } : {};
 
 export const env = createEnv({
   server: serverSchema,
