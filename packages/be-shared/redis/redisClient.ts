@@ -1,5 +1,5 @@
-import { createClient } from 'redis'
+import { createClient } from "redis";
 
 export const redis = createClient({
-  url: 'redis://localhost:6379',
-})
+  url: process.env.REDIS_URL || "redis://localhost:6379",
+});
