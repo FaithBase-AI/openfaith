@@ -14,8 +14,8 @@ const server = Bun.serve({
     try {
       const url = new URL(request.url);
 
-      // Add health check endpoint
-      if (url.pathname === "/health" && request.method === "GET") {
+      // Add health check endpoint (both /health and /api/health)
+      if ((url.pathname === "/health" || url.pathname === "/api/health") && request.method === "GET") {
         return new Response(JSON.stringify({ status: "healthy" }), {
           headers: { "Content-Type": "application/json" },
         });
