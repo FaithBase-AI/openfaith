@@ -14,6 +14,7 @@ import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OauthProviderRouteImport } from './routes/oauth/$provider'
+import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as OnboardingOnboardingRouteImport } from './routes/_onboarding/onboarding'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
@@ -49,6 +50,11 @@ const IndexRoute = IndexRouteImport.update({
 const OauthProviderRoute = OauthProviderRouteImport.update({
   id: '/oauth/$provider',
   path: '/oauth/$provider',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSplatRoute = ApiSplatRouteImport.update({
+  id: '/api/$',
+  path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingOnboardingRoute = OnboardingOnboardingRouteImport.update({
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
   '/onboarding': typeof OnboardingOnboardingRoute
+  '/api/$': typeof ApiSplatRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/$group/$entity': typeof AppGroupEntityRouteRouteWithChildren
   '/admin/orgs': typeof AppAdminOrgsRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
   '/onboarding': typeof OnboardingOnboardingRoute
+  '/api/$': typeof ApiSplatRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/admin/orgs': typeof AppAdminOrgsRoute
   '/admin/users': typeof AppAdminUsersRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_onboarding/onboarding': typeof OnboardingOnboardingRoute
+  '/api/$': typeof ApiSplatRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/_app/$group/$entity': typeof AppGroupEntityRouteRouteWithChildren
   '/_app/admin/orgs': typeof AppAdminOrgsRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/sign-in'
     | '/onboarding'
+    | '/api/$'
     | '/oauth/$provider'
     | '/$group/$entity'
     | '/admin/orgs'
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/sign-in'
     | '/onboarding'
+    | '/api/$'
     | '/oauth/$provider'
     | '/admin/orgs'
     | '/admin/users'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_auth/sign-in'
     | '/_onboarding/onboarding'
+    | '/api/$'
     | '/oauth/$provider'
     | '/_app/$group/$entity'
     | '/_app/admin/orgs'
@@ -243,6 +255,7 @@ export interface RootRouteChildren {
   AppRouteRoute: typeof AppRouteRouteWithChildren
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   OnboardingRouteRoute: typeof OnboardingRouteRouteWithChildren
+  ApiSplatRoute: typeof ApiSplatRoute
   OauthProviderRoute: typeof OauthProviderRoute
 }
 
@@ -281,6 +294,13 @@ declare module '@tanstack/react-router' {
       path: '/oauth/$provider'
       fullPath: '/oauth/$provider'
       preLoaderRoute: typeof OauthProviderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/$': {
+      id: '/api/$'
+      path: '/api/$'
+      fullPath: '/api/$'
+      preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_onboarding/onboarding': {
@@ -466,6 +486,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRouteRoute: AppRouteRouteWithChildren,
   AuthRouteRoute: AuthRouteRouteWithChildren,
   OnboardingRouteRoute: OnboardingRouteRouteWithChildren,
+  ApiSplatRoute: ApiSplatRoute,
   OauthProviderRoute: OauthProviderRoute,
 }
 export const routeTree = rootRouteImport
