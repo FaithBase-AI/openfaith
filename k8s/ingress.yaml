@@ -4,7 +4,7 @@ metadata:
   name: openfaith-ingress
   namespace: openfaith
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    # Preserve original paths - backend expects full /api/auth/... paths
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
@@ -12,7 +12,7 @@ spec:
   - host: localhost
     http:
       paths:
-      # API routes go to backend
+      # API routes go to backend (preserve full path)
       - path: /api
         pathType: Prefix
         backend:
@@ -36,14 +36,14 @@ metadata:
   name: openfaith-ingress-ip
   namespace: openfaith
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    # Preserve original paths - backend expects full /api/auth/... paths
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
   - http:
       paths:
-      # API routes go to backend
+      # API routes go to backend (preserve full path)
       - path: /api
         pathType: Prefix
         backend:
