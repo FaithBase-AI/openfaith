@@ -1,7 +1,7 @@
 /** biome-ignore-all assist/source/useSortedKeys: Keep it organized by category */
-import { createEnv } from '@t3-oss/env-core'
-import { Option, pipe } from 'effect'
-import { z } from 'zod'
+import { createEnv } from "@t3-oss/env-core";
+import { Option, pipe } from "effect";
+import { z } from "zod";
 
 export const env = createEnv({
   server: {
@@ -11,6 +11,10 @@ export const env = createEnv({
     DB_PASSWORD: z.string(),
     DB_PORT: z.string().transform((x) => Number.parseInt(x, 10)),
     DB_USERNAME: z.string(),
+    DB_SSL: z
+      .string()
+      .transform((x) => x === "true")
+      .default("true"),
 
     // Zero
     ZERO_UPSTREAM_DB: z.string(),
@@ -25,7 +29,9 @@ export const env = createEnv({
     ZERO_PUSH_URL: z.string(),
 
     // Config
-    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
 
     // Auth
     BETTER_AUTH_SECRET: z.string(),
@@ -41,7 +47,7 @@ export const env = createEnv({
    * The prefix that client-side variables must have. This is enforced both at
    * a type-level and at runtime.
    */
-  clientPrefix: 'VITE_',
+  clientPrefix: "VITE_",
 
   client: {
     // Zero
@@ -66,11 +72,11 @@ export const env = createEnv({
     ...pipe(
       process.env.npm_lifecycle_script,
       Option.fromNullable,
-      Option.filter((x) => x === 'drizzle-kit studio'),
+      Option.filter((x) => x === "drizzle-kit studio"),
       Option.match({
         onNone: () => import.meta.env,
         onSome: () => ({}),
-      }),
+      })
     ),
   },
 
@@ -89,5 +95,5 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 
-  skipValidation: process.env.NODE_ENV === 'test',
-})
+  skipValidation: process.env.NODE_ENV === "test",
+});
