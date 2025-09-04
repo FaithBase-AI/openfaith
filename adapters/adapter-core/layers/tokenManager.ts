@@ -19,9 +19,7 @@ export interface TokenState {
 }
 
 // The service interface the user must implement.
-export class TokenManager extends Context.Tag(
-  '@openfaith/adapter-core/layers/tokenManager/TokenManager',
-)<
+export class TokenManager extends Context.Tag('@openfaith/adapter-core/layers/tokenManager')<
   TokenManager,
   {
     // How to load the initial token state from the user's storage.

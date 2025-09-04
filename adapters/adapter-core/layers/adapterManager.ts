@@ -24,7 +24,7 @@ export const AdapterEntityManifest = Schema.Record({
 })
 export type AdapterEntityManifest = typeof AdapterEntityManifest.Type
 
-export class AdapterManager extends Context.Tag('AdapterManager')<
+export class AdapterManager extends Context.Tag('@openfaith/adapter-core/layers/adapterManager')<
   AdapterManager,
   {
     // Name of the adapter, e.g. "pco", "ccb", "breeze"

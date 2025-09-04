@@ -8,7 +8,7 @@ import type {
 import type { ExternalLink } from '@openfaith/db'
 import { Context, type Effect, type Option } from 'effect'
 
-export class InternalManager extends Context.Tag('InternalManager')<
+export class InternalManager extends Context.Tag('@openfaith/adapter-core/layers/internalManager')<
   InternalManager,
   {
     readonly getExternalLink: (
