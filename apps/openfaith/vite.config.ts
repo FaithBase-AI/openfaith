@@ -19,13 +19,6 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
-  build: {
-    rollupOptions: {
-      external: (id) => {
-        return id.startsWith("@effect/experimental");
-      },
-    },
-  },
   server: {
     port: 3000,
   },
