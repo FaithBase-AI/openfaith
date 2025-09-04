@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "@effect-atom/atom-react": "^0.1.15",
+    "@effect/experimental": "0.56.4",
     "@effect/platform": "catalog:",
     "@effect/rpc": "catalog:",
     "@openfaith/auth": "workspace:*",
