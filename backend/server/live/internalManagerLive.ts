@@ -20,11 +20,12 @@ import {
   getSchemaByEntityType,
   OfTable,
 } from '@openfaith/schema'
+import { updateEntityRelationshipsForOrgE } from '@openfaith/server/helpers/updateEntityRelationships'
 import { getEntityId } from '@openfaith/shared'
 import { getPcoEntityMetadata } from '@openfaith/workers/helpers/schemaRegistry'
 import { and, type BuildColumns, eq, getTableColumns, inArray, isNull, lt, sql } from 'drizzle-orm'
 import { jsonb, type PgTableWithColumns, text } from 'drizzle-orm/pg-core'
-import { Array, Effect, Layer, Option, pipe, Record, SchemaAST, String } from 'effect'
+import { Array, Effect, Layer, Option, pipe, Record, SchemaAST } from 'effect'
 
 export const getProperEntityName = (entityType: string): string =>
   pipe(
@@ -732,59 +733,33 @@ export const InternalManagerLive = Layer.effect(
               orgId,
             })
 
-            // Update entity relationships registry inline
-            const relationshipValues = pipe(
+            // Extract unique relationships from edges
+            const relationships = pipe(
               edgeValues,
               Array.groupBy((edge) => edge.sourceEntityTypeTag),
-              Record.mapEntries((edges, sourceEntityType) => [
-                sourceEntityType,
+              Record.mapEntries((edges, sourceEntityTypeTag) => [
+                sourceEntityTypeTag,
                 {
-                  _tag: 'entityRelationships' as const,
-                  orgId,
-                  sourceEntityType,
-                  targetEntityTypes: pipe(
+                  sourceEntityTypeTag,
+                  targetEntityTypeTags: pipe(
                     edges,
                     Array.map((edge) => edge.targetEntityTypeTag),
                     Array.dedupe,
                   ),
-                  updatedAt: new Date(),
                 },
               ]),
               Record.values,
             )
 
-            if (relationshipValues.length > 0) {
-              const valuesClause = pipe(
-                relationshipValues,
-                Array.map((rel) => {
-                  const targetEntityTypesJson = JSON.stringify(rel.targetEntityTypes)
-                  const escapedJson = pipe(targetEntityTypesJson, String.replace(/'/g, "''"))
-                  return sql`(${rel.orgId}, ${rel.sourceEntityType}, ${sql.raw(`'${escapedJson}'::jsonb`)}, ${rel.updatedAt})`
-                }),
-                Array.reduce(sql`` as ReturnType<typeof sql>, (acc, curr, index) =>
-                  index === 0 ? curr : sql`${acc}, ${curr}`,
-                ),
-              )
-
-              const query = sql`
-                INSERT INTO "openfaith_entityRelationships" ("orgId", "sourceEntityType", "targetEntityTypes", "updatedAt")
-                VALUES ${valuesClause}
-                ON CONFLICT ("orgId", "sourceEntityType") DO UPDATE
-                SET "targetEntityTypes" = (
-                  SELECT jsonb_agg(DISTINCT elem.value ORDER BY elem.value)
-                  FROM jsonb_array_elements_text(
-                    "openfaith_entityRelationships"."targetEntityTypes" || EXCLUDED."targetEntityTypes"
-                  ) AS elem(value)
-                ),
-                "updatedAt" = EXCLUDED."updatedAt"
-              `
-
-              yield* db.execute(query)
-              yield* Effect.annotateLogs(Effect.log('Entity relationships registry updated'), {
+            // Use the helper function to update entity relationships
+            // The helper requires PgDrizzle in its context, which is available in the outer Layer
+            yield* pipe(
+              updateEntityRelationshipsForOrgE({
                 orgId,
-                updateCount: relationshipValues.length,
-              })
-            }
+                relationships,
+              }),
+              Effect.provideService(PgDrizzle.PgDrizzle, db),
+            )
           }
 
           yield* Effect.annotateLogs(Effect.log('Relationship edge processing complete'), {
