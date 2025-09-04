@@ -43,5 +43,9 @@ packages/zero/zero.db*
 .nitro
 .output
 
-scripts/
-k8s/
+# scripts/
+# k8s/# Kubernetes secrets - keep out of git
+k8s/secrets.yaml
+
+# Personal/local secrets
+*.local.yaml
