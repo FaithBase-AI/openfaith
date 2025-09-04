@@ -108,5 +108,5 @@ export const env = createEnv({
     process.env.NODE_ENV === "prerender" ||
     !!process.env.NITRO_PRESET ||
     // Skip validation in frontend SSR (backend handles server env validation)
-    !!(typeof window === "undefined" && process.env.VITE_APP_NAME),
+    (typeof window === "undefined" && !!process.env.VITE_APP_NAME),
 });
