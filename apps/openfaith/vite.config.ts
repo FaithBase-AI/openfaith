@@ -21,7 +21,7 @@ export default defineConfig({
   ],
   build: {
     rollupOptions: {
-      external: ["@effect/experimental/Reactivity"],
+      external: ["@effect/experimental"],
     },
   },
   server: {

@@ -36,6 +36,7 @@ COPY --from=builder /app/backend/shard-manager ./backend/shard-manager
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/adapters ./adapters
+COPY --from=builder /app/backend ./backend
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
