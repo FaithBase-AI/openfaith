@@ -19,6 +19,7 @@ COPY patches/ ./patches/
 COPY backend/ ./backend/
 COPY adapters/ ./adapters/
 COPY tooling/ ./tooling/
+COPY apps/ ./apps/
 
 # Install dependencies
 RUN bun install
