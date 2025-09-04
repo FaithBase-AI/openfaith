@@ -9,10 +9,10 @@ export default {
     password: env.DB_PASSWORD,
     port: env.DB_PORT,
     ssl: pipe(
-      env.DB_HOST_PRIMARY === '127.0.0.1',
+      env.DB_SSL,
       Boolean.match({
-        onFalse: () => ({ rejectUnauthorized: false }),
-        onTrue: () => false,
+        onFalse: () => false,
+        onTrue: () => ({ rejectUnauthorized: false }),
       }),
     ),
     user: env.DB_USERNAME,
