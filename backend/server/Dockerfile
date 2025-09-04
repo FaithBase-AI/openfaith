@@ -49,4 +49,4 @@ USER bun
 EXPOSE 4000
 
 # Run TypeScript directly with Bun
-CMD ["bun", "run", "backend/server/index.ts"]
+CMD ["bun", "run", "backend/server/main.ts"]
