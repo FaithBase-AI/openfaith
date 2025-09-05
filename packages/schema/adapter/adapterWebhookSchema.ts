@@ -1,3 +1,5 @@
+import { adapterWebhooksTable } from '@openfaith/db'
+import { OfTable } from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
 import { Schema } from 'effect'
 
@@ -14,6 +16,7 @@ export type WebhookVerificationMethod = typeof WebhookVerificationMethod.Type
 export class BaseAdapterWebhook extends BaseSystemFields.extend<BaseAdapterWebhook>(
   'BaseAdapterWebhook',
 )({
+  _tag: Schema.Literal('adapterWebhook'),
   adapter: Schema.String.annotations({
     description: 'The adapter name: pco, ccb, tithely, etc.',
   }),
@@ -23,11 +26,8 @@ export class BaseAdapterWebhook extends BaseSystemFields.extend<BaseAdapterWebho
   enabled: Schema.Boolean.annotations({
     description: 'Whether this webhook is active',
   }),
-  eventTypes: Schema.Array(Schema.String).annotations({
-    description: 'List of event types this webhook listens for',
-  }),
-  externalWebhookId: Schema.optional(Schema.String).annotations({
-    description: 'The webhook ID in the external system',
+  eventType: Schema.String.annotations({
+    description: 'The event type this webhook listens for',
   }),
   lastProcessedAt: Schema.optional(Schema.Date).annotations({
     description: 'Last time a webhook was successfully processed',
@@ -46,4 +46,10 @@ export class BaseAdapterWebhook extends BaseSystemFields.extend<BaseAdapterWebho
 // Full AdapterWebhook class that extends BaseAdapterWebhook and then extends BaseIdentifiedEntity
 export class AdapterWebhook extends BaseAdapterWebhook.extend<AdapterWebhook>('AdapterWebhook')(
   BaseIdentifiedEntity.fields,
+  [
+    {
+      title: 'adapterWebhook',
+      [OfTable]: adapterWebhooksTable,
+    },
+  ],
 ) {}
