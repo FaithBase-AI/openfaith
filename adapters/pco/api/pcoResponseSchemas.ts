@@ -270,12 +270,14 @@ export type PcoBuildPayloadSchemaType<
 }
 
 export type PcoBaseEntity = {
-  id: string
-  type: string
-  attributes: {
-    created_at: string
-    updated_at?: string | null | undefined
+  readonly id: string
+  readonly type: string
+  readonly attributes: {
+    readonly created_at?: string
+    readonly updated_at?: string | null | undefined
   }
 
-  relationships?: Record<string, { data: { id: string; type: string } | null }> | undefined
+  readonly relationships?:
+    | Record<string, { readonly data: { readonly id: string; readonly type: string } | null }>
+    | undefined
 }

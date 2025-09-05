@@ -1,4 +1,4 @@
-import { Schema, type SchemaAST } from 'effect'
+import { Option, pipe, Schema, type SchemaAST } from 'effect'
 import {
   Literal,
   type PropertySignature,
@@ -21,34 +21,44 @@ export const entityType = <EntityType extends SchemaAST.LiteralValue>(
 export type PcoEntity<
   EntityType extends SchemaAST.LiteralValue,
   Attributes extends Struct.Fields,
-  Relationships extends Struct.Fields,
   Links extends Struct.Fields,
-> = Struct<{
-  attributes: Schema.Struct<Attributes>
-  id: typeof Schema.String
-  type: entityType<EntityType>
-  relationships: Schema.Struct<Relationships>
-  links: Schema.Struct<Links>
-}>
+  Relationships extends Struct.Fields | undefined = undefined,
+> = Struct<
+  {
+    attributes: Schema.Struct<Attributes>
+    id: typeof Schema.String
+    type: entityType<EntityType>
+    links: Schema.Struct<Links>
+  } & (Relationships extends Struct.Fields ? { relationships: Schema.Struct<Relationships> } : {})
+>
 
 export const mkPcoEntity = <
   EntityType extends SchemaAST.LiteralValue,
   Attributes extends Struct.Fields,
-  Relationships extends Struct.Fields,
   Links extends Struct.Fields,
+  Relationships extends Struct.Fields | undefined = undefined,
 >(params: {
   type: EntityType
   attributes: Schema.Struct<Attributes>
-  relationships: Schema.Struct<Relationships>
+  relationships?: Relationships extends Struct.Fields ? Schema.Struct<Relationships> : undefined
   links: Schema.Struct<Links>
-}): PcoEntity<EntityType, Attributes, Relationships, Links> =>
+}): PcoEntity<EntityType, Attributes, Links, Relationships> =>
   Struct({
     attributes: params.attributes,
     id: Schema.String,
     links: params.links,
-    relationships: params.relationships,
     type: entityType(params.type),
-  })
+    ...pipe(
+      params.relationships,
+      Option.fromNullable,
+      Option.match({
+        onNone: () => ({}),
+        onSome: (x) => ({
+          relationships: x,
+        }),
+      }),
+    ),
+  }) as any
 
 export const mkPcoWebhookPayload = <TData extends Schema.Schema.Any>(data: TData) =>
   Schema.Struct({

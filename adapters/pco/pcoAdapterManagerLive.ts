@@ -19,22 +19,28 @@ import {
   getOfEntityNameForPcoEntityType,
 } from '@openfaith/pco/helpers/pcoEntityNames'
 import { discoverPcoRelationships } from '@openfaith/pco/helpers/relationshipDiscovery'
-import type { pcoPersonTransformer } from '@openfaith/pco/modules/people/pcoPersonSchema'
+import type {
+  PcoPersonSchema,
+  pcoPersonTransformer,
+} from '@openfaith/pco/modules/people/pcoPersonSchema'
 import { pcoEntityManifest } from '@openfaith/pco/server'
 import { getAnnotationFromSchema, OfEntity, OfSkipEntity, OfTransformer } from '@openfaith/schema'
-import { EdgeDirectionSchema } from '@openfaith/shared'
+import { EdgeDirectionSchema, env } from '@openfaith/shared'
 import {
   Array,
   Chunk,
+  Data,
   Effect,
   HashMap,
   Layer,
+  Match,
   Option,
   pipe,
   Record,
   Schema,
   SchemaAST,
   Stream,
+  Struct,
 } from 'effect'
 
 // Get the actual type from the service
@@ -99,14 +105,14 @@ const getEntityClient = <EntityName extends PcoEntityClientKeys | string>(
 /**
  * Normalizes a singleton PCO response to collection shape
  */
-const normalizeSingletonResponse = (response: {
-  data: PcoBaseEntity
-  included?: ReadonlyArray<PcoBaseEntity>
-  meta?: unknown
+const normalizeSingletonResponse = <D extends PcoBaseEntity, I extends PcoBaseEntity>(response: {
+  readonly data: D
+  readonly included?: ReadonlyArray<I>
+  readonly meta?: unknown
 }): {
-  data: ReadonlyArray<PcoBaseEntity>
-  included: ReadonlyArray<PcoBaseEntity>
-  meta?: unknown
+  readonly data: ReadonlyArray<D>
+  readonly included: ReadonlyArray<I>
+  readonly meta?: unknown
 } => ({
   data: [response.data],
   included: response.included || [],
@@ -131,11 +137,12 @@ const createExternalLinks = (entities: ReadonlyArray<PcoBaseEntity>): Array<Exte
 /**
  * Transforms a single PCO entity using the transformer pipeline
  */
-const transformSingleEntity = (params: {
+const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (params: {
   entityId: string
   entity: PcoBaseEntity
   tokenKey: string
-}) => {
+}) {
+  // We have to pretend that we are dealing with a Person to get this to type correctly.
   const { entity, entityId, tokenKey } = params
 
   const entitySchemaOpt =
@@ -147,10 +154,16 @@ const transformSingleEntity = (params: {
       : Option.none()
 
   if (Option.isNone(entitySchemaOpt)) {
-    return Option.none()
+    return yield* Effect.fail(
+      new AdapterTransformError({
+        adapter: 'pco',
+        entityType: entity.type,
+        message: `No entity schema found for ${entity.type}`,
+      }),
+    )
   }
 
-  const entitySchema = entitySchemaOpt.value
+  const entitySchema = entitySchemaOpt.value as PcoPersonSchema
 
   const entityName = getOfEntityNameForPcoEntityType(entity.type)
 
@@ -160,54 +173,90 @@ const transformSingleEntity = (params: {
   )
 
   if (Option.isNone(transformerOpt)) {
-    return Option.none()
+    return yield* Effect.fail(
+      new AdapterTransformError({
+        adapter: 'pco',
+        entityType: entity.type,
+        message: `No transformer found for ${entity.type}`,
+      }),
+    )
   }
 
   const transformer = transformerOpt.value
 
-  return pipe(
-    entity.attributes,
-    Schema.decodeUnknownOption(transformer as unknown as typeof pcoPersonTransformer, {
-      errors: 'all',
+  const attributesSchema = Schema.Struct({
+    ...entitySchema.fields.attributes.fields,
+  })
+
+  const processedAttributes = yield* Schema.decodeUnknown(attributesSchema)(entity.attributes).pipe(
+    Effect.mapError((error) => {
+      return new AdapterTransformError({
+        adapter: 'pco',
+        cause: error,
+        entityType: entity.type,
+        message: `Failed to decode attributes for ${entity.type}`,
+      })
     }),
-    Option.map(
-      ({ createdAt, deletedAt, inactivatedAt, updatedAt, customFields, ...canonicalAttrs }) => {
-        const baseEntity = {
-          createdAt: new Date(createdAt),
-          customFields,
-          deletedAt: pipe(
-            deletedAt,
-            Option.fromNullable,
-            Option.match({
-              onNone: () => null,
-              onSome: (x) => new Date(x),
-            }),
-          ),
-          id: entityId,
-          inactivatedAt: pipe(
-            inactivatedAt,
-            Option.fromNullable,
-            Option.match({
-              onNone: () => null,
-              onSome: (x) => new Date(x),
-            }),
-          ),
-          orgId: tokenKey,
-          updatedAt: pipe(
-            updatedAt,
-            Option.fromNullable,
-            Option.match({
-              onNone: () => null,
-              onSome: (x) => new Date(x),
-            }),
-          ),
-          ...canonicalAttrs,
-        }
-        return { ...baseEntity, _tag: entityName } as unknown as EntityData
-      },
-    ),
   )
-}
+
+  yield* Effect.annotateLogs(Effect.log('🔄 Processed attributes'), {
+    processedAttributes,
+  })
+
+  // For webhooks, we need to include the externalWebhookId
+  const attributesToTransform =
+    entity.type === 'WebhookSubscription'
+      ? { ...processedAttributes, externalWebhookId: entityId }
+      : processedAttributes
+
+  const { createdAt, deletedAt, inactivatedAt, updatedAt, customFields, ...canonicalAttrs } =
+    yield* Schema.decodeUnknown(transformer as unknown as typeof pcoPersonTransformer)(
+      attributesToTransform,
+    ).pipe(
+      Effect.mapError((error) => {
+        return new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entity.type,
+          message: `Failed to decode transformer for ${entity.type}`,
+        })
+      }),
+    )
+
+  const baseEntity = {
+    createdAt: new Date(createdAt),
+    customFields,
+    deletedAt: pipe(
+      deletedAt,
+      Option.fromNullable,
+      Option.match({
+        onNone: () => null,
+        onSome: (x) => new Date(x),
+      }),
+    ),
+    id: entityId,
+    inactivatedAt: pipe(
+      inactivatedAt,
+      Option.fromNullable,
+      Option.match({
+        onNone: () => null,
+        onSome: (x) => new Date(x),
+      }),
+    ),
+    orgId: tokenKey,
+    updatedAt: pipe(
+      updatedAt,
+      Option.fromNullable,
+      Option.match({
+        onNone: () => null,
+        onSome: (x) => new Date(x),
+      }),
+    ),
+    ...canonicalAttrs,
+  }
+
+  return { ...baseEntity, _tag: entityName } as unknown as EntityData
+})
 
 /**
  * Private method to process PCO collection data and call callbacks
@@ -236,30 +285,34 @@ const processPcoData = Effect.fn('processPcoData')(function* (params: {
     ...createExternalLinks(data.included),
   ])
 
-  const entityData = pipe(
-    changedExternalLinks,
-    Array.filterMap((x) =>
-      pipe(
-        data.data,
-        Array.findFirst((y) => y.id === x.externalId),
-        Option.map((y) => [x.entityId, y] as const),
+  const entityData = yield* Effect.all(
+    pipe(
+      changedExternalLinks,
+      Array.filterMap((x) =>
+        pipe(
+          data.data,
+          Array.findFirst((y) => y.id === x.externalId),
+          Option.map((y) => [x.entityId, y] as const),
+        ),
       ),
+      Array.map(([entityId, entity]) => transformSingleEntity({ entity, entityId, tokenKey })),
     ),
-    Array.map(([entityId, entity]) => transformSingleEntity({ entity, entityId, tokenKey })),
-    Array.getSomes,
+    { concurrency: 'unbounded' },
   )
 
-  const includedEntityData = pipe(
-    changedExternalLinks,
-    Array.filterMap((x) =>
-      pipe(
-        data.included,
-        Array.findFirst((y) => y.id === x.externalId),
-        Option.map((y) => [x.entityId, y] as const),
+  const includedEntityData = yield* Effect.all(
+    pipe(
+      changedExternalLinks,
+      Array.filterMap((x) =>
+        pipe(
+          data.included,
+          Array.findFirst((y) => y.id === x.externalId),
+          Option.map((y) => [x.entityId, y] as const),
+        ),
       ),
+      Array.map(([entityId, entity]) => transformSingleEntity({ entity, entityId, tokenKey })),
     ),
-    Array.map(([entityId, entity]) => transformSingleEntity({ entity, entityId, tokenKey })),
-    Array.getSomes,
+    { concurrency: 'unbounded' },
   )
 
   // Process entities (both root and included)
@@ -300,6 +353,17 @@ type ListMethodReturnWhenFalse = ReturnType<ListMethod> extends Effect.Effect<
   : never
 type PureListMethod = (request: Parameters<ListMethod>[0]) => ListMethodReturnWhenFalse
 
+type WebhookStatus = Data.TaggedEnum<{
+  active: {
+    id: string
+  }
+  inactive: {
+    id: string
+  }
+  unset: {}
+}>
+const WebhookStatus = Data.taggedEnum<WebhookStatus>()
+
 export const PcoAdapterManagerLive = Layer.effect(
   AdapterManager,
   Effect.gen(function* () {
@@ -327,8 +391,17 @@ export const PcoAdapterManagerLive = Layer.effect(
 
       getEntityTypeForWebhookEvent: (_webhookEvent) => Effect.succeed('Person'), // TODO: Implement webhook event mapping
 
-      subscribeToWebhooks: () =>
+      subscribeToWebhooks: (params) =>
         Effect.gen(function* () {
+          const { processEntities, processExternalLinks } = params
+
+          const webhookUrl = `${env.VITE_BASE_URL}/api/webhooks`
+
+          yield* Effect.annotateLogs(Effect.log('🔄 Starting PCO webhook subscription'), {
+            adapter: 'pco',
+            webhookUrl,
+          })
+
           const activeWebhookChunks = yield* Stream.runCollect(
             Stream.paginateChunkEffect(0, (currentOffset) => {
               return pcoClient.WebhookSubscription.list({
@@ -358,10 +431,127 @@ export const PcoAdapterManagerLive = Layer.effect(
             activeWebhookChunks,
             Chunk.map((x) => x.data),
             Chunk.toArray,
+            Array.flatten,
           )
 
-          console.log(activeWebhooks)
-        }),
+          yield* Effect.annotateLogs(Effect.log('🔄 Active webhooks'), {
+            activeWebhooks: pipe(
+              activeWebhooks,
+              Array.filter((x) => x.attributes.url === webhookUrl),
+              Array.map((x) => x.attributes.name),
+            ),
+          })
+
+          const supportedWebhooks = pipe(pcoEntityManifest.webhooks, Struct.keys)
+
+          yield* Effect.annotateLogs(Effect.log('🔄 Supported webhooks'), {
+            supportedWebhooks,
+          })
+
+          const webhookStatus = pipe(
+            supportedWebhooks,
+            Array.reduce<
+              Record<(typeof supportedWebhooks)[number], WebhookStatus>,
+              (typeof supportedWebhooks)[number]
+            >(
+              pipe(
+                supportedWebhooks,
+                Array.map((x) => [x, { _tag: 'unset' }] as const),
+                Record.fromEntries,
+              ),
+              (b, a) => {
+                const status = pipe(
+                  activeWebhooks,
+                  Array.findFirst(
+                    (pcoWebhook) =>
+                      pcoWebhook.attributes.name === a && pcoWebhook.attributes.url === webhookUrl,
+                  ),
+                  Option.match({
+                    onNone: () => WebhookStatus.unset(),
+                    onSome: (pcoWebhook) =>
+                      pcoWebhook.attributes.active
+                        ? WebhookStatus.active({ id: pcoWebhook.id })
+                        : WebhookStatus.inactive({ id: pcoWebhook.id }),
+                  }),
+                )
+
+                return {
+                  ...b,
+                  [a]: status,
+                }
+              },
+            ),
+          )
+
+          yield* Effect.annotateLogs(Effect.log('🔄 Webhook status'), {
+            webhookStatus,
+          })
+
+          yield* Effect.forEach(pipe(webhookStatus, Record.toEntries), ([webhook, status]) =>
+            Match.type<typeof status>().pipe(
+              Match.tag('inactive', (x) =>
+                pcoClient.WebhookSubscription.update({
+                  path: { webhookSubscriptionId: x.id },
+                  payload: {
+                    data: {
+                      attributes: {
+                        active: true,
+                      },
+                      id: x.id,
+                      type: 'WebhookSubscription',
+                    },
+                  },
+                }),
+              ),
+              Match.tag('active', () => Effect.succeed(undefined)),
+              Match.tag('unset', () =>
+                Effect.gen(function* () {
+                  // When it's unset, we walk through a similar flow as `syncEntityId`.
+                  const newWebhook = yield* pcoClient.WebhookSubscription.create({
+                    payload: {
+                      data: {
+                        attributes: {
+                          active: true,
+                          name: webhook,
+                          url: webhookUrl,
+                        },
+                        type: 'WebhookSubscription',
+                      },
+                    },
+                  })
+
+                  yield* Effect.annotateLogs(Effect.log('🔄 New webhook'), {
+                    newWebhook: newWebhook.data.attributes.name,
+                  })
+
+                  yield* processPcoData({
+                    data: normalizeSingletonResponse(newWebhook),
+                    processEntities,
+                    processExternalLinks,
+                    // Webhooks don't have relationships, so we can just return undefined.
+                    processRelationships: () => Effect.succeed(undefined),
+                    tokenKey,
+                  }).pipe(
+                    Effect.mapError(
+                      (cause) =>
+                        new AdapterWebhookSubscriptionError({
+                          adapter: 'pco',
+                          cause,
+                          message: `Failed to process new webhook subscription`,
+                          orgId: tokenKey,
+                        }),
+                    ),
+                  )
+
+                  yield* Effect.log(`✅ Completed PCO new webhook subscription for ${webhook}`)
+                }),
+              ),
+              Match.exhaustive,
+            )(status),
+          )
+        }).pipe(
+          Effect.tapError((error) => Effect.logError('Failed to subscribe to webhooks', { error })),
+        ),
 
       syncEntityId: (params) =>
         Effect.gen(function* () {
@@ -418,7 +608,7 @@ export const PcoAdapterManagerLive = Layer.effect(
                   adapter: 'pco',
                   cause,
                   entityType,
-                  message: `Failed to transform ${entityType} data`,
+                  message: `Failed to process ${entityType} data`,
                 }),
             ),
           )

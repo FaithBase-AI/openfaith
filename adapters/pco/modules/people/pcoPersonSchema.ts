@@ -152,6 +152,7 @@ export const PcoPerson = mkPcoEntity({
   [OfIdentifier]: 'pco-person',
   [OfTransformer]: pcoPersonTransformer,
 })
+export type PcoPersonSchema = typeof PcoPerson
 export type PcoPerson = typeof PcoPerson.Type
 
 export class PcoPersonCreatedWebhook extends Schema.Class<PcoPersonCreatedWebhook>(
