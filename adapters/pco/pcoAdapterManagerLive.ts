@@ -139,8 +139,11 @@ const transformSingleEntity = (params: {
   const { entity, entityId, tokenKey } = params
 
   const entitySchemaOpt =
-    entity.type in pcoEntityManifest
-      ? Option.some(pcoEntityManifest[entity.type as keyof typeof pcoEntityManifest].apiSchema)
+    entity.type in pcoEntityManifest.entities
+      ? Option.some(
+          pcoEntityManifest.entities[entity.type as keyof typeof pcoEntityManifest.entities]
+            .apiSchema,
+        )
       : Option.none()
 
   if (Option.isNone(entitySchemaOpt)) {
@@ -312,7 +315,7 @@ export const PcoAdapterManagerLive = Layer.effect(
 
       getEntityManifest: () =>
         pipe(
-          pcoEntityManifest,
+          pcoEntityManifest.entities,
           Record.map((manifest) => ({
             endpoint: '',
             endpoints: manifest.endpoints,
@@ -440,7 +443,7 @@ export const PcoAdapterManagerLive = Layer.effect(
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
 
           const entityOpt = pipe(
-            pcoEntityManifest,
+            pcoEntityManifest.entities,
             Record.findFirst((x) => x.entity === entityType),
             Option.filter(([, x]) => {
               return !SchemaAST.getAnnotation<boolean>(OfSkipEntity)(x.apiSchema.ast).pipe(
@@ -638,8 +641,11 @@ const extractRelationships = (params: {
     Record.toEntries,
     Array.filterMap(([entityType, entities]) => {
       const apiSchemaOpt =
-        entityType in pcoEntityManifest
-          ? Option.some(pcoEntityManifest[entityType as keyof typeof pcoEntityManifest].apiSchema)
+        entityType in pcoEntityManifest.entities
+          ? Option.some(
+              pcoEntityManifest.entities[entityType as keyof typeof pcoEntityManifest.entities]
+                .apiSchema,
+            )
           : Option.none()
 
       if (Option.isNone(apiSchemaOpt)) {

@@ -144,14 +144,14 @@ effect('mkPcoEntityManifest: creates manifest with single entity and all HTTP me
     })
 
     // Test manifest structure
-    expect('Person' in manifest).toBe(true)
-    expect(manifest.Person.entity).toBe('Person')
-    expect(manifest.Person.module).toBe('people')
-    expect(manifest.Person.errors).toEqual(testErrors)
-    expect(manifest.Person.skipSync).toBe(false)
+    expect('Person' in manifest.entities).toBe(true)
+    expect(manifest.entities.Person.entity).toBe('Person')
+    expect(manifest.entities.Person.module).toBe('people')
+    expect(manifest.entities.Person.errors).toEqual(testErrors)
+    expect(manifest.entities.Person.skipSync).toBe(false)
 
     // Test endpoints are present
-    const personEndpoints = manifest.Person.endpoints
+    const personEndpoints = manifest.entities.Person.endpoints
     expect('list' in personEndpoints).toBe(true)
     expect('get' in personEndpoints).toBe(true)
     expect('create' in personEndpoints).toBe(true)
@@ -181,14 +181,14 @@ effect('mkPcoEntityManifest: creates manifest with multiple entities', () =>
     expect('Address' in manifest).toBe(true)
 
     // Test entity properties
-    expect(manifest.Person.entity).toBe('Person')
-    expect(manifest.Person.module).toBe('people')
-    expect(manifest.Address.entity).toBe('Address')
-    expect(manifest.Address.module).toBe('people')
+    expect(manifest.entities.Person.entity).toBe('Person')
+    expect(manifest.entities.Person.module).toBe('people')
+    expect(manifest.entities.Address.entity).toBe('Address')
+    expect(manifest.entities.Address.module).toBe('people')
 
     // Test endpoints
-    expect('list' in manifest.Person.endpoints).toBe(true)
-    expect('list' in manifest.Address.endpoints).toBe(true)
+    expect('list' in manifest.entities.Person.endpoints).toBe(true)
+    expect('list' in manifest.entities.Address.endpoints).toBe(true)
   }),
 )
 
@@ -199,7 +199,7 @@ effect('mkPcoEntityManifest: handles GET endpoints with includes correctly', () 
       errors: testErrors,
     })
 
-    const listEndpoint = manifest.Person.endpoints.list
+    const listEndpoint = manifest.entities.Person.endpoints.list
 
     // Test that response schema is created
     expect('response' in listEndpoint).toBe(true)
@@ -221,7 +221,7 @@ effect('mkPcoEntityManifest: handles POST endpoints with payload schema', () =>
       errors: testErrors,
     })
 
-    const createEndpoint = manifest.Person.endpoints.create
+    const createEndpoint = manifest.entities.Person.endpoints.create
 
     // Test that payload schema is created
     expect('payload' in createEndpoint).toBe(true)
@@ -240,7 +240,7 @@ effect('mkPcoEntityManifest: handles PATCH endpoints with payload schema', () =>
       errors: testErrors,
     })
 
-    const updateEndpoint = manifest.Person.endpoints.update
+    const updateEndpoint = manifest.entities.Person.endpoints.update
 
     // Test that payload schema is created
     expect('payload' in updateEndpoint).toBe(true)
@@ -264,7 +264,7 @@ effect('mkPcoEntityManifest: handles DELETE endpoints correctly', () =>
       errors: testErrors,
     })
 
-    const deleteEndpoint = manifest.Person.endpoints.delete
+    const deleteEndpoint = manifest.entities.Person.endpoints.delete
 
     // Test that response schema is created
     expect('response' in deleteEndpoint).toBe(true)
@@ -281,12 +281,12 @@ effect('mkPcoEntityManifest: creates entity registry correctly', () =>
     })
 
     // Test that both entities have their schemas
-    expect(manifest.Person.apiSchema).toBeDefined()
-    expect(manifest.Address.apiSchema).toBeDefined()
+    expect(manifest.entities.Person.apiSchema).toBeDefined()
+    expect(manifest.entities.Address.apiSchema).toBeDefined()
 
     // Test schema types (basic structure check)
-    const personSchema = manifest.Person.apiSchema
-    const addressSchema = manifest.Address.apiSchema
+    const personSchema = manifest.entities.Person.apiSchema
+    const addressSchema = manifest.entities.Address.apiSchema
 
     expect('fields' in personSchema).toBe(true)
     expect('fields' in addressSchema).toBe(true)
@@ -306,7 +306,7 @@ effect('mkPcoEntityManifest: handles skipSync flag correctly', () =>
       errors: testErrors,
     })
 
-    expect(manifest.Person.skipSync).toBe(true)
+    expect(manifest.entities.Person.skipSync).toBe(true)
   }),
 )
 
@@ -317,7 +317,7 @@ effect('mkPcoEntityManifest: handles empty includes array', () =>
       errors: testErrors,
     })
 
-    const listEndpoint = manifest.Address.endpoints.list
+    const listEndpoint = manifest.entities.Address.endpoints.list
 
     expect(listEndpoint.includes).toEqual([])
     expect('response' in listEndpoint).toBe(true)
@@ -338,7 +338,7 @@ effect('toPcoHttpApiGroup: creates HttpApiGroup with all endpoints', () =>
       errors: testErrors,
     })
 
-    const apiGroup = toPcoHttpApiGroup(manifest.Person)
+    const apiGroup = toPcoHttpApiGroup(manifest.entities.Person)
 
     // Test that it's an HttpApiGroup (which is actually a function in Effect)
     expect(apiGroup).toBeDefined()
@@ -357,11 +357,11 @@ effect('toPcoHttpApiGroup: applies error configuration', () =>
       errors: testErrors,
     })
 
-    const apiGroup = toPcoHttpApiGroup(manifest.Person)
+    const apiGroup = toPcoHttpApiGroup(manifest.entities.Person)
 
     // Test that errors are applied (basic structure check)
     expect(apiGroup).toBeDefined()
-    expect(manifest.Person.errors).toEqual(testErrors)
+    expect(manifest.entities.Person.errors).toEqual(testErrors)
   }),
 )
 
@@ -373,7 +373,7 @@ effect('mkPcoEntityManifest: POST payload schema integration', () =>
       errors: testErrors,
     })
 
-    const createEndpoint = manifest.Person.endpoints.create
+    const createEndpoint = manifest.entities.Person.endpoints.create
 
     // Test that we can create a valid payload using the generated schema
     const testPayload = {
@@ -406,7 +406,7 @@ effect('mkPcoEntityManifest: PATCH payload schema integration', () =>
       errors: testErrors,
     })
 
-    const updateEndpoint = manifest.Person.endpoints.update
+    const updateEndpoint = manifest.entities.Person.endpoints.update
 
     // Test partial update payload (PATCH should allow optional fields)
     const testPayload = {
@@ -445,11 +445,11 @@ effect('mkPcoEntityManifest: handles complex endpoint combinations', () =>
       errors: testErrors,
     })
 
-    // Test that we have both entities
-    expect(Object.keys(manifest)).toEqual(['Person', 'Address'])
+    // Test that we have both entities and webhooks
+    expect(Object.keys(manifest)).toEqual(['Person', 'Address', 'webhooks'])
 
     // Test Person entity has all endpoints
-    const personEndpoints = Object.keys(manifest.Person.endpoints)
+    const personEndpoints = Object.keys(manifest.entities.Person.endpoints)
     expect(personEndpoints).toContain('list')
     expect(personEndpoints).toContain('get')
     expect(personEndpoints).toContain('create')
@@ -457,14 +457,14 @@ effect('mkPcoEntityManifest: handles complex endpoint combinations', () =>
     expect(personEndpoints).toContain('delete')
 
     // Test Address entity has list endpoint
-    const addressEndpoints = Object.keys(manifest.Address.endpoints)
+    const addressEndpoints = Object.keys(manifest.entities.Address.endpoints)
     expect(addressEndpoints).toContain('list')
 
     // Test that each entity maintains its own configuration
-    expect(manifest.Person.module).toBe('people')
-    expect(manifest.Address.module).toBe('people')
-    expect(manifest.Person.entity).toBe('Person')
-    expect(manifest.Address.entity).toBe('Address')
+    expect(manifest.entities.Person.module).toBe('people')
+    expect(manifest.entities.Address.module).toBe('people')
+    expect(manifest.entities.Person.entity).toBe('Person')
+    expect(manifest.entities.Address.entity).toBe('Address')
   }),
 )
 
@@ -488,9 +488,9 @@ effect('mkPcoEntityManifest: handles minimal endpoint configuration', () =>
       errors: testErrors,
     })
 
-    expect(manifest.Person).toBeDefined()
-    expect(manifest.Person.endpoints.minimal).toBeDefined()
-    expect(manifest.Person.endpoints.minimal.method).toBe('GET')
+    expect(manifest.entities.Person).toBeDefined()
+    expect(manifest.entities.Person.endpoints.minimal).toBeDefined()
+    expect(manifest.entities.Person.endpoints.minimal.method).toBe('GET')
   }),
 )
 
@@ -520,13 +520,13 @@ effect('mkPcoEntityManifest: handles large number of endpoints efficiently', () 
     })
 
     // Test that all endpoints are present
-    const endpointNames = Object.keys(manifest.Person.endpoints)
+    const endpointNames = Object.keys(manifest.entities.Person.endpoints)
     expect(endpointNames).toHaveLength(10)
 
     // Test that each endpoint is properly configured
     for (let i = 1; i <= 10; i++) {
       expect(endpointNames).toContain(`endpoint${i}`)
-      expect(manifest.Person.endpoints[`endpoint${i}`]?.method).toBe('GET')
+      expect(manifest.entities.Person.endpoints[`endpoint${i}`]?.method).toBe('GET')
     }
   }),
 )
@@ -538,7 +538,7 @@ effect('mkPcoEntityManifest: preserves endpoint metadata correctly', () =>
       errors: testErrors,
     })
 
-    const listEndpoint = manifest.Person.endpoints.list
+    const listEndpoint = manifest.entities.Person.endpoints.list
 
     // Test that all original endpoint properties are preserved
     expect(listEndpoint.entity).toBe('Person')
@@ -566,8 +566,8 @@ effect('mkPcoEntityManifest: type-level transformations compile correctly', () =
       errors: testErrors,
     })
 
-    expect(manifest.Person).toBeDefined()
-    expect(manifest.Person.entity).toBe('Person')
+    expect(manifest.entities.Person).toBeDefined()
+    expect(manifest.entities.Person.entity).toBe('Person')
   }),
 )
 
@@ -579,7 +579,7 @@ effect('mkPcoEntityManifest: generates correct payload schemas for POST', () =>
       errors: testErrors,
     })
 
-    const createEndpoint = manifest.Person.endpoints.create
+    const createEndpoint = manifest.entities.Person.endpoints.create
 
     // Test that the payload schema validates correctly
     const validPayload = {
@@ -608,7 +608,7 @@ effect('mkPcoEntityManifest: generates correct payload schemas for PATCH', () =>
       errors: testErrors,
     })
 
-    const updateEndpoint = manifest.Person.endpoints.update
+    const updateEndpoint = manifest.entities.Person.endpoints.update
 
     // Test that the payload schema allows partial updates
     const partialPayload = {
@@ -636,7 +636,7 @@ effect('mkPcoEntityManifest: handles special fields in payload schemas', () =>
       errors: testErrors,
     })
 
-    const createEndpoint = manifest.Person.endpoints.create
+    const createEndpoint = manifest.entities.Person.endpoints.create
 
     // Test payload with special fields
     const payloadWithSpecial = {

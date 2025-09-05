@@ -16,6 +16,7 @@ export const listWebhookSubscriptionsDefinition = pcoApiAdapter({
   module: 'webhooks',
   name: 'list',
   path: '/webhooks/v2/subscriptions',
+  skipSync: true,
 } as const)
 
 /**
