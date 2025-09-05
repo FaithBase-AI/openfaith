@@ -67,6 +67,7 @@ const peopleApiGroup = toPcoHttpApiGroup(pcoEntityManifest.Person)
 const addressApiGroup = toPcoHttpApiGroup(pcoEntityManifest.Address)
 const campusApiGroup = toPcoHttpApiGroup(pcoEntityManifest.Campus)
 const phoneNumberApiGroup = toPcoHttpApiGroup(pcoEntityManifest.PhoneNumber)
+const webhookApiGroup = toPcoHttpApiGroup(pcoEntityManifest.WebhookSubscription)
 
 export const PcoApi = HttpApi.make('PCO')
   .add(peopleApiGroup)
@@ -74,6 +75,7 @@ export const PcoApi = HttpApi.make('PCO')
   .add(campusApiGroup)
   .add(phoneNumberApiGroup)
   .add(tokenApiGroup)
+  .add(webhookApiGroup)
 
 const calculateRateLimitDelay = (
   response: HttpClientResponse.HttpClientResponse,

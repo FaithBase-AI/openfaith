@@ -3,6 +3,7 @@ import {
   AdapterFetchError,
   AdapterManager,
   AdapterTransformError,
+  AdapterWebhookSubscriptionError,
   type EntityData,
   type ExternalLinkInput,
   type ProcessEntities,
@@ -323,7 +324,41 @@ export const PcoAdapterManagerLive = Layer.effect(
 
       getEntityTypeForWebhookEvent: (_webhookEvent) => Effect.succeed('Person'), // TODO: Implement webhook event mapping
 
-      subscribeToWebhooks: () => Effect.log('TODO: Implement subscribeToWebhooks for PCO'),
+      subscribeToWebhooks: () =>
+        Effect.gen(function* () {
+          const activeWebhookChunks = yield* Stream.runCollect(
+            Stream.paginateChunkEffect(0, (currentOffset) => {
+              return pcoClient.WebhookSubscription.list({
+                urlParams: { offset: currentOffset },
+              }).pipe(
+                Effect.map((response) => {
+                  const nextOffset = response.meta?.next?.offset
+                  return [
+                    Chunk.make(response),
+                    nextOffset ? Option.some(nextOffset) : Option.none<number>(),
+                  ] as const
+                }),
+                Effect.mapError(
+                  (error) =>
+                    new AdapterWebhookSubscriptionError({
+                      adapter: 'pco',
+                      cause: error,
+                      message: `Failed to list webhook subscriptions`,
+                      orgId: tokenKey,
+                    }),
+                ),
+              )
+            }),
+          )
+
+          const activeWebhooks = pipe(
+            activeWebhookChunks,
+            Chunk.map((x) => x.data),
+            Chunk.toArray,
+          )
+
+          console.log(activeWebhooks)
+        }),
 
       syncEntityId: (params) =>
         Effect.gen(function* () {

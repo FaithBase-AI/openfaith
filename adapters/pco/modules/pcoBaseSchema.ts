@@ -49,3 +49,40 @@ export const mkPcoEntity = <
     relationships: params.relationships,
     type: entityType(params.type),
   })
+
+export const mkPcoWebhookPayload = <TData extends Schema.Schema.Any>(data: TData) =>
+  Schema.Struct({
+    data,
+    included: Schema.Array(Schema.Unknown),
+    meta: Schema.Struct({
+      can_include: Schema.Array(Schema.String),
+      parent: Schema.Struct({
+        id: Schema.String,
+        type: Schema.Literal('Organization'),
+      }),
+      public: Schema.optional(Schema.Unknown),
+    }),
+  })
+
+export const mkPcoWebhookDelivery = <TData extends Schema.Schema.Any>(
+  webhook: string,
+  data: TData,
+) =>
+  Schema.Struct({
+    attributes: Schema.Struct({
+      attempt: Schema.Number,
+      name: Schema.Literal(webhook),
+      // Parse the JSON string payload into a structured event
+      payload: Schema.parseJson(mkPcoWebhookPayload(data)),
+    }),
+    id: Schema.String,
+    relationships: Schema.Struct({
+      organization: Schema.Struct({
+        data: Schema.Struct({
+          id: Schema.String,
+          type: Schema.Literal('Organization'),
+        }),
+      }),
+    }),
+    type: Schema.Literal('EventDelivery'),
+  })
