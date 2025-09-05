@@ -60,7 +60,7 @@ export const adapterWebhooksTable = pgTable(
     authenticitySecret: d.text().notNull(),
     createdAt: d.timestamp({ withTimezone: true }).notNull(),
     enabled: d.boolean().notNull().default(true),
-    eventTypes: d.jsonb().$type<Array<string>>().notNull(),
+    eventType: d.text().notNull(),
     externalWebhookId: d.text(),
     id: d.text().primaryKey(),
     lastProcessedAt: d.timestamp({ withTimezone: true }),
