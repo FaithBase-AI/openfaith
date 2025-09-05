@@ -24,7 +24,7 @@ import {
 import { toPcoHttpApiGroup } from '@openfaith/pco/api/pcoMkEntityManifest'
 import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import { PcoRefreshToken, PcoToken } from '@openfaith/pco/modules/token/pcoTokenSchema'
-import { Duration, Effect, Layer, Number, Option, pipe, Schedule, Schema } from 'effect'
+import { Duration, Effect, Layer, Number, Option, pipe, Schedule, Schema, String } from 'effect'
 
 const tokenApiGroup = HttpApiGroup.make('token')
   .add(
@@ -147,8 +147,17 @@ export class PcoHttpClient extends Effect.Service<PcoHttpClient>()('PcoHttpClien
       HttpClient.mapRequestEffect(
         Effect.fn(function* (request) {
           const token = yield* getRateLimitedAccessToken
-          console.log('Using PCO token for request')
-          return HttpClientRequest.bearerToken(request, token)
+
+          const tokenResponse = HttpClientRequest.bearerToken(request, token)
+
+          // PCO doesn't let you set the API version for webhook subscriptions in the app config, so you have to set it with the header.
+          if (pipe(request.url, String.includes('webhook_subscriptions'))) {
+            return tokenResponse.pipe(
+              HttpClientRequest.setHeader('X-PCO-API-Version', '2022-10-20'),
+            )
+          }
+
+          return tokenResponse
         }),
       ),
       HttpClient.transformResponse((responseEffect) => {
