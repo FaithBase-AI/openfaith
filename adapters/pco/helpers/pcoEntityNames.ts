@@ -5,7 +5,7 @@ import { Option, pipe, type Schema, String } from 'effect'
 export const getOfEntityNameForPcoEntityType = (entityType: string): string => {
   const normalizedEntityType = pipe(entityType, String.pascalToSnake, String.snakeToCamel)
 
-  if (entityType in pcoEntityManifest) {
+  if (entityType in pcoEntityManifest.entities) {
     const schema =
       pcoEntityManifest.entities[entityType as keyof typeof pcoEntityManifest.entities].apiSchema
 
