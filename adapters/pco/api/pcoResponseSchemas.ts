@@ -259,11 +259,11 @@ export type PcoBuildPayloadSchemaType<
     attributes: MarkOptional extends true
       ? Partial<
           Pick<Fields, Keys[number] & keyof Fields> & {
-            [K in Special[number]]: string
+            [K in Special[number]]: any
           }
         >
       : Pick<Fields, Keys[number] & keyof Fields> & {
-          [K in Special[number]]?: string
+          [K in Special[number]]?: any
         }
     type: EntityType
   } & (Method extends 'POST' ? {} : { id: string })
