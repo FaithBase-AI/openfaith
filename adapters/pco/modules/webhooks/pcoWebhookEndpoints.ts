@@ -15,7 +15,7 @@ export const listWebhookSubscriptionsDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'webhooks',
   name: 'list',
-  path: '/webhooks/v2/subscriptions',
+  path: '/webhooks/v2/webhook_subscriptions',
   skipSync: true,
 } as const)
 
@@ -30,7 +30,7 @@ export const getWebhookSubscriptionByIdDefinition = pcoApiAdapter({
   method: 'GET',
   module: 'webhooks',
   name: 'get',
-  path: '/webhooks/v2/subscriptions/:webhookSubscriptionId',
+  path: '/webhooks/v2/webhook_subscriptions/:webhookSubscriptionId',
 } as const)
 
 /**
@@ -43,7 +43,7 @@ export const createWebhookSubscriptionDefinition = pcoApiAdapter({
   method: 'POST',
   module: 'webhooks',
   name: 'create',
-  path: '/webhooks/v2/subscriptions',
+  path: '/webhooks/v2/webhook_subscriptions',
 } as const)
 
 /**
@@ -55,7 +55,7 @@ export const updateWebhookSubscriptionDefinition = pcoApiAdapter({
   method: 'PATCH',
   module: 'webhooks',
   name: 'update',
-  path: '/webhooks/v2/subscriptions/:webhookSubscriptionId',
+  path: '/webhooks/v2/webhook_subscriptions/:webhookSubscriptionId',
   updatableFields: ['name', 'active'],
 } as const)
 
@@ -68,5 +68,5 @@ export const deleteWebhookSubscriptionDefinition = pcoApiAdapter({
   method: 'DELETE',
   module: 'webhooks',
   name: 'delete',
-  path: '/webhooks/v2/subscriptions/:webhookSubscriptionId',
+  path: '/webhooks/v2/webhook_subscriptions/:webhookSubscriptionId',
 } as const)
