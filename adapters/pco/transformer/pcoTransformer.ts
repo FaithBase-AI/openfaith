@@ -26,11 +26,41 @@ const extractFields = (schema: Schema.Schema.Any): Record<string, { ast: SchemaA
   }
 
   if (ast._tag === 'Transformation' && ast.from._tag === 'TypeLiteral') {
-    return pipe(
-      ast.from.propertySignatures,
-      Array.map((prop) => [prop.name as string, { ast: prop.type }] as const),
-      Record.fromEntries,
-    )
+    // For transformed schemas (like Schema.Struct with optionalWith fields),
+    // annotations might be on the property signatures themselves
+    const fields: Record<string, { ast: SchemaAST.AST }> = {}
+
+    ast.from.propertySignatures.forEach((prop) => {
+      const name = prop.name as string
+      // Create an AST that includes annotations from both the property and its type
+      const fieldAst = {
+        ...prop.type,
+        annotations: {
+          ...(prop.type.annotations || {}),
+          ...(prop.annotations || {}), // Property annotations override type annotations
+        },
+      } as SchemaAST.AST
+      fields[name] = { ast: fieldAst }
+    })
+
+    // Also check if there are annotations in the 'to' side for optionalWith fields
+    if (ast.to._tag === 'TypeLiteral') {
+      ast.to.propertySignatures.forEach((toProp) => {
+        const name = toProp.name as string
+        if (name in fields && fields[name]) {
+          // Merge annotations from the 'to' side
+          fields[name].ast = {
+            ...fields[name].ast,
+            annotations: {
+              ...(fields[name].ast?.annotations || {}),
+              ...(toProp.annotations || {}),
+            },
+          } as SchemaAST.AST
+        }
+      })
+    }
+
+    return fields
   }
 
   // Fallback for Schema.Struct types

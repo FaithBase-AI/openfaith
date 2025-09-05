@@ -13,7 +13,7 @@ import {
   OfFieldName,
   OfSkipField,
 } from '@openfaith/schema'
-import { Effect, Schema } from 'effect'
+import { Array, Effect, pipe, Record, Schema, SchemaAST } from 'effect'
 
 const PcoItem = Schema.Struct({
   first_name: Schema.NullOr(Schema.String).annotations({
@@ -461,3 +461,102 @@ effect('pcoToOf: transforms PCO phone number to BasePhoneNumber (integration tes
     })
   }),
 )
+
+effect('pcoToOf handles Schema.optionalWith with default values', () =>
+  Effect.gen(function* () {
+    // Test schema with optionalWith and default values
+    const PcoWithDefaults = Schema.Struct({
+      active: Schema.Boolean.annotations({
+        [OfFieldName]: 'enabled',
+      }),
+      adapter: Schema.optionalWith(Schema.String, {
+        default: () => 'pco',
+      }).annotations({
+        [OfFieldName]: 'adapter',
+      }),
+      name: Schema.String.annotations({
+        [OfFieldName]: 'name',
+      }),
+      verification_method: Schema.optionalWith(Schema.String, {
+        default: () => 'hmac-sha256',
+      }).annotations({
+        [OfFieldName]: 'verificationMethod',
+      }),
+    })
+
+    const OfWithDefaults = Schema.Struct({
+      adapter: Schema.String,
+      customFields: Schema.Array(CustomFieldSchema),
+      enabled: Schema.Boolean,
+      name: Schema.String,
+      verificationMethod: Schema.String,
+    })
+
+    // Debug: Let's check the AST structure
+    console.log('PcoWithDefaults AST fields:')
+    const fields = extractFields(PcoWithDefaults)
+    Object.entries(fields).forEach(([key, field]) => {
+      console.log(`Field: ${key}`)
+      console.log('  AST type:', field.ast._tag)
+      console.log('  AST:', JSON.stringify(field.ast, null, 2).slice(0, 200))
+      const annotation = SchemaAST.getAnnotation(OfFieldName)(field.ast as SchemaAST.Annotated)
+      console.log('  OfFieldName annotation:', annotation)
+    })
+
+    const transformer = pcoToOf(PcoWithDefaults, OfWithDefaults, 'itemWithDefaults')
+
+    // Test data without the optional fields (they should get defaults)
+    const pcoData = {
+      active: true,
+      name: 'test-webhook',
+      // adapter and verification_method are missing, should use defaults
+    }
+
+    const result = Schema.decodeSync(transformer)(pcoData)
+
+    expect(result).toEqual({
+      adapter: 'pco',
+      customFields: [],
+      enabled: true,
+      name: 'test-webhook',
+      verificationMethod: 'hmac-sha256',
+    })
+
+    // Test encode back
+    const encoded = Schema.encodeSync(transformer)(result)
+    expect(encoded).toEqual({
+      active: true,
+      adapter: 'pco',
+      name: 'test-webhook',
+      verification_method: 'hmac-sha256',
+    })
+  }),
+)
+
+// Helper function to extract fields (copied from pcoTransformer.ts for testing)
+const extractFields = (schema: Schema.Schema.Any): Record<string, { ast: SchemaAST.AST }> => {
+  const ast = schema.ast
+
+  if (ast._tag === 'TypeLiteral') {
+    return pipe(
+      ast.propertySignatures,
+      Array.map((prop) => [prop.name as string, { ast: prop.type }] as const),
+      Record.fromEntries,
+    )
+  }
+
+  if (ast._tag === 'Transformation' && ast.from._tag === 'TypeLiteral') {
+    return pipe(
+      ast.from.propertySignatures,
+      Array.map((prop) => [prop.name as string, { ast: prop.type }] as const),
+      Record.fromEntries,
+    )
+  }
+
+  // Fallback for Schema.Struct types
+  if ('fields' in schema) {
+    return (schema as any).fields
+  }
+
+  return {}
+}
