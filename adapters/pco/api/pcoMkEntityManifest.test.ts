@@ -177,8 +177,8 @@ effect('mkPcoEntityManifest: creates manifest with multiple entities', () =>
     })
 
     // Test both entities are present
-    expect('Person' in manifest).toBe(true)
-    expect('Address' in manifest).toBe(true)
+    expect('Person' in manifest.entities).toBe(true)
+    expect('Address' in manifest.entities).toBe(true)
 
     // Test entity properties
     expect(manifest.entities.Person.entity).toBe('Person')
@@ -446,7 +446,7 @@ effect('mkPcoEntityManifest: handles complex endpoint combinations', () =>
     })
 
     // Test that we have both entities and webhooks
-    expect(Object.keys(manifest)).toEqual(['Person', 'Address', 'webhooks'])
+    expect(Object.keys(manifest.entities)).toEqual(['Person', 'Address'])
 
     // Test Person entity has all endpoints
     const personEndpoints = Object.keys(manifest.entities.Person.endpoints)
