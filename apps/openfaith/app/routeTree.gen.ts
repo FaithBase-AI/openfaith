@@ -8,13 +8,14 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createServerRootRoute } from '@tanstack/react-start/server'
+
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OnboardingRouteRouteImport } from './routes/_onboarding/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OauthProviderRouteImport } from './routes/oauth/$provider'
-import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as OnboardingOnboardingRouteImport } from './routes/_onboarding/onboarding'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
@@ -29,6 +30,11 @@ import { Route as AppAdminOrgsRouteImport } from './routes/_app/admin/orgs'
 import { Route as AppGroupEntityRouteRouteImport } from './routes/_app/$group/$entity/route'
 import { Route as AppGroupEntityIndexRouteImport } from './routes/_app/$group/$entity/index'
 import { Route as AppGroupEntityEntityIdRouteImport } from './routes/_app/$group/$entity/$entityId'
+import { ServerRoute as ApiAuthRefreshServerRouteImport } from './routes/api/auth/refresh'
+import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
+import { ServerRoute as ApiApiSplatServerRouteImport } from './routes/api/api.$'
+
+const rootServerRouteImport = createServerRootRoute()
 
 const OnboardingRouteRoute = OnboardingRouteRouteImport.update({
   id: '/_onboarding',
@@ -50,11 +56,6 @@ const IndexRoute = IndexRouteImport.update({
 const OauthProviderRoute = OauthProviderRouteImport.update({
   id: '/oauth/$provider',
   path: '/oauth/$provider',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSplatRoute = ApiSplatRouteImport.update({
-  id: '/api/$',
-  path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingOnboardingRoute = OnboardingOnboardingRouteImport.update({
@@ -127,6 +128,21 @@ const AppGroupEntityEntityIdRoute = AppGroupEntityEntityIdRouteImport.update({
   path: '/$entityId',
   getParentRoute: () => AppGroupEntityRouteRoute,
 } as any)
+const ApiAuthRefreshServerRoute = ApiAuthRefreshServerRouteImport.update({
+  id: '/api/auth/refresh',
+  path: '/api/auth/refresh',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
+const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
+const ApiApiSplatServerRoute = ApiApiSplatServerRouteImport.update({
+  id: '/api/api/$',
+  path: '/api/api/$',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -134,7 +150,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
   '/onboarding': typeof OnboardingOnboardingRoute
-  '/api/$': typeof ApiSplatRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/$group/$entity': typeof AppGroupEntityRouteRouteWithChildren
   '/admin/orgs': typeof AppAdminOrgsRoute
@@ -153,7 +168,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
   '/onboarding': typeof OnboardingOnboardingRoute
-  '/api/$': typeof ApiSplatRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/admin/orgs': typeof AppAdminOrgsRoute
   '/admin/users': typeof AppAdminUsersRoute
@@ -175,7 +189,6 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_onboarding/onboarding': typeof OnboardingOnboardingRoute
-  '/api/$': typeof ApiSplatRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/_app/$group/$entity': typeof AppGroupEntityRouteRouteWithChildren
   '/_app/admin/orgs': typeof AppAdminOrgsRoute
@@ -196,7 +209,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/sign-in'
     | '/onboarding'
-    | '/api/$'
     | '/oauth/$provider'
     | '/$group/$entity'
     | '/admin/orgs'
@@ -215,7 +227,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/sign-in'
     | '/onboarding'
-    | '/api/$'
     | '/oauth/$provider'
     | '/admin/orgs'
     | '/admin/users'
@@ -236,7 +247,6 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_auth/sign-in'
     | '/_onboarding/onboarding'
-    | '/api/$'
     | '/oauth/$provider'
     | '/_app/$group/$entity'
     | '/_app/admin/orgs'
@@ -255,8 +265,36 @@ export interface RootRouteChildren {
   AppRouteRoute: typeof AppRouteRouteWithChildren
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   OnboardingRouteRoute: typeof OnboardingRouteRouteWithChildren
-  ApiSplatRoute: typeof ApiSplatRoute
   OauthProviderRoute: typeof OauthProviderRoute
+}
+export interface FileServerRoutesByFullPath {
+  '/api/api/$': typeof ApiApiSplatServerRoute
+  '/api/auth/$': typeof ApiAuthSplatServerRoute
+  '/api/auth/refresh': typeof ApiAuthRefreshServerRoute
+}
+export interface FileServerRoutesByTo {
+  '/api/api/$': typeof ApiApiSplatServerRoute
+  '/api/auth/$': typeof ApiAuthSplatServerRoute
+  '/api/auth/refresh': typeof ApiAuthRefreshServerRoute
+}
+export interface FileServerRoutesById {
+  __root__: typeof rootServerRouteImport
+  '/api/api/$': typeof ApiApiSplatServerRoute
+  '/api/auth/$': typeof ApiAuthSplatServerRoute
+  '/api/auth/refresh': typeof ApiAuthRefreshServerRoute
+}
+export interface FileServerRouteTypes {
+  fileServerRoutesByFullPath: FileServerRoutesByFullPath
+  fullPaths: '/api/api/$' | '/api/auth/$' | '/api/auth/refresh'
+  fileServerRoutesByTo: FileServerRoutesByTo
+  to: '/api/api/$' | '/api/auth/$' | '/api/auth/refresh'
+  id: '__root__' | '/api/api/$' | '/api/auth/$' | '/api/auth/refresh'
+  fileServerRoutesById: FileServerRoutesById
+}
+export interface RootServerRouteChildren {
+  ApiApiSplatServerRoute: typeof ApiApiSplatServerRoute
+  ApiAuthSplatServerRoute: typeof ApiAuthSplatServerRoute
+  ApiAuthRefreshServerRoute: typeof ApiAuthRefreshServerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -294,13 +332,6 @@ declare module '@tanstack/react-router' {
       path: '/oauth/$provider'
       fullPath: '/oauth/$provider'
       preLoaderRoute: typeof OauthProviderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/$': {
-      id: '/api/$'
-      path: '/api/$'
-      fullPath: '/api/$'
-      preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_onboarding/onboarding': {
@@ -403,6 +434,31 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+declare module '@tanstack/react-start/server' {
+  interface ServerFileRoutesByPath {
+    '/api/auth/refresh': {
+      id: '/api/auth/refresh'
+      path: '/api/auth/refresh'
+      fullPath: '/api/auth/refresh'
+      preLoaderRoute: typeof ApiAuthRefreshServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+    '/api/api/$': {
+      id: '/api/api/$'
+      path: '/api/api/$'
+      fullPath: '/api/api/$'
+      preLoaderRoute: typeof ApiApiSplatServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+  }
+}
 
 interface AppGroupEntityRouteRouteChildren {
   AppGroupEntityEntityIdRoute: typeof AppGroupEntityEntityIdRoute
@@ -486,9 +542,16 @@ const rootRouteChildren: RootRouteChildren = {
   AppRouteRoute: AppRouteRouteWithChildren,
   AuthRouteRoute: AuthRouteRouteWithChildren,
   OnboardingRouteRoute: OnboardingRouteRouteWithChildren,
-  ApiSplatRoute: ApiSplatRoute,
   OauthProviderRoute: OauthProviderRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+const rootServerRouteChildren: RootServerRouteChildren = {
+  ApiApiSplatServerRoute: ApiApiSplatServerRoute,
+  ApiAuthSplatServerRoute: ApiAuthSplatServerRoute,
+  ApiAuthRefreshServerRoute: ApiAuthRefreshServerRoute,
+}
+export const serverRouteTree = rootServerRouteImport
+  ._addFileChildren(rootServerRouteChildren)
+  ._addFileTypes<FileServerRouteTypes>()
