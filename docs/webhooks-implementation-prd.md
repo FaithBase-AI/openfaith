@@ -53,9 +53,9 @@ export const adapterWebhooksTable = pgTable(
       .notNull(),
 
     // Core fields
-    id: d.varchar({ length: 128 }).notNull().primaryKey(),
+    id: d.text().notNull().primaryKey(),
     adapter: d.text().notNull(), // 'pco', 'ccb', etc.
-    orgId: d.varchar({ length: 128 }).notNull(),
+    orgId: d.text().notNull(),
 
     // Webhook configuration
     webhookUrl: d.text().notNull(), // Our endpoint URL

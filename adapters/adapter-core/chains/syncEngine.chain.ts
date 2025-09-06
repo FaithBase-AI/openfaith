@@ -22,6 +22,16 @@ export const externalSyncEntity = Effect.fn('externalSyncEntity')(function* (ent
   yield* internalManager.detectAndMarkDeleted(adapterManager.adapter, entityType, syncStartTime)
 })
 
+export const subscribeToWebhooks = Effect.fn('subscribeToWebhooks')(function* () {
+  const adapterManager = yield* AdapterManager
+  const internalManager = yield* InternalManager
+
+  yield* adapterManager.subscribeToWebhooks({
+    processEntities: internalManager.processEntities,
+    processExternalLinks: internalManager.processExternalLinks,
+  })
+})
+
 // Webhook Event
 export const webhookSyncEntity = Effect.fn('webhookSyncEntity')(function* (
   webhookEvent: string,

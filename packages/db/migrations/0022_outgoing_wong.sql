@@ -1,0 +1,1 @@
+ALTER TABLE "openfaith_adapterWebhooks" RENAME COLUMN "eventTypes" TO "eventType";

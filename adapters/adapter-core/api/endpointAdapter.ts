@@ -395,7 +395,8 @@ export function toHttpApiEndpoint(definition: any) {
       return HttpApiEndpoint.post(definition.name, definition.path)
         .setPath(pathParamsSchema)
         .setPayload(definition.payload)
-        .addSuccess(definition.response) as any
+        .addSuccess(definition.response)
+        .addSuccess(definition.response, { status: 201 }) as any
     }
     case 'PATCH': {
       const pathParamsSchema = generatePathParamsSchema(definition.path)
@@ -409,13 +410,15 @@ export function toHttpApiEndpoint(definition: any) {
       return HttpApiEndpoint.patch(definition.name, definition.path)
         .setPath(pathParamsSchema)
         .setPayload(definition.payload)
-        .addSuccess(definition.response) as any
+        .addSuccess(definition.response)
+        .addSuccess(definition.response, { status: 201 }) as any
     }
     case 'DELETE': {
       const pathParamsSchema = generatePathParamsSchema(definition.path)
 
       return HttpApiEndpoint.del(definition.name, definition.path)
         .setPath(pathParamsSchema)
+        .addSuccess(Schema.Void)
         .addSuccess(Schema.Void, {
           status: 204,
         }) as any
