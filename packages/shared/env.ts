@@ -26,6 +26,7 @@ export const env = createEnv({
 
     // Config
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    TUNNEL_URL: z.string().optional(),
 
     // Auth
     BETTER_AUTH_SECRET: z.string(),
