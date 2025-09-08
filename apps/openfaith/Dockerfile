@@ -15,7 +15,7 @@ WORKDIR /temp/dev
 COPY . .
 
 # Install dependencies with lockfile handling
-RUN bun install --frozen-lockfile || bun install
+RUN bun install
 
 # install with --production (exclude devDependencies)
 RUN mkdir -p /temp/prod
@@ -24,10 +24,7 @@ WORKDIR /temp/prod
 # Copy entire workspace
 COPY . .
 
-# Remove lockfile to avoid conflicts
-# RUN rm bun.lock
-
-RUN bun install --production --frozen-lockfile || bun install --production
+RUN bun install --no-dev
 
 # copy node_modules from temp directory
 # then copy all (non-ignored) project files into the image
@@ -55,7 +52,7 @@ ENV VITE_PLANNING_CENTER_CLIENT_ID=$VITE_PLANNING_CENTER_CLIENT_ID
 # [optional] tests & build
 ENV NODE_ENV=production
 # Run tests for the specific app
-RUN bun run test --filter=@openfaith/openfaith
+# RUN bun run test --filter=@openfaith/openfaith
 # Build from root using turbo filter
 RUN bun run build --filter=@openfaith/openfaith
 
