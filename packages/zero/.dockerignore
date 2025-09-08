@@ -1,0 +1,42 @@
+# Zero cache service exclusions
+# Keep essential build files and dependencies
+!package.json
+!tsconfig.json
+!zeroSchema.mts
+!zero-schema.gen.ts
+!drizzle-zero.config.ts
+!README-effect-mutators.md
+
+# Exclude development and build artifacts
+node_modules/
+**/node_modules/
+.cache/
+.turbo/
+*.log
+*.db
+*.db-*
+*.db-wal*
+
+# Exclude frontend and documentation
+apps/
+docs/
+public/
+src/
+app/
+infra/
+k8s/
+scripts/
+.github/
+.vscode/
+.idea/
+
+# Exclude environment files (use env_file in docker-compose)
+.env*
+
+# Keep patches for bun install
+!../../../patches/
+
+# Allow necessary workspace packages
+!../../../packages/
+!../../../backend/
+!../../../adapters/
