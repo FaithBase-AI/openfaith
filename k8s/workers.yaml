@@ -26,6 +26,8 @@ spec:
         envFrom:
         - configMapRef:
             name: openfaith-config
+        - configMapRef:
+            name: openfaith-frontend-config
         - secretRef:
             name: openfaith-secrets
         livenessProbe:
