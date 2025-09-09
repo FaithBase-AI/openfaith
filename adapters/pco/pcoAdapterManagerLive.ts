@@ -395,7 +395,7 @@ export const PcoAdapterManagerLive = Layer.effect(
         Effect.gen(function* () {
           const { processEntities, processExternalLinks } = params
 
-          const webhookUrl = `${env.VITE_BASE_URL}/api/webhooks`
+          const webhookUrl = `${env.TUNNEL_URL ? env.TUNNEL_URL : env.VITE_BASE_URL}/api/webhooks`
 
           yield* Effect.annotateLogs(Effect.log('🔄 Starting PCO webhook subscription'), {
             adapter: 'pco',

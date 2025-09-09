@@ -214,9 +214,7 @@ export const ZeroMutatorsGroup = HttpApiGroup.make('zero')
   .middleware(SessionHttpMiddleware)
 
 // Define the complete HTTP API
-export class ZeroMutatorsApi extends HttpApi.make('zero')
-  .add(ZeroMutatorsGroup)
-  .prefix('/api/api') {}
+export class ZeroMutatorsApi extends HttpApi.make('api').add(ZeroMutatorsGroup).prefix('/api') {}
 
 // Type exports for convenience
 export type PushRequestType = typeof PushRequest.Type
