@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openfaith-config
+  namespace: openfaith
+data:
+  # Database Configuration
+  DB_HOST_PRIMARY: "postgres-service"
+  DB_NAME: "postgres"
+  DB_PORT: "5432"
+  DB_USERNAME: "user"
+  DB_SSL: "false"
+  
+  # Zero Configuration (Backend/Workers - Server-side)
+  ZERO_AUTH_JWKS_URL: "http://backend-service:4000/health"
+  ZERO_APP_ID: "openfaith_prod"
+  ZERO_NUM_SYNC_WORKERS: "4"
+  ZERO_LOG_LEVEL: "info"
+  ZERO_PUSH_URL: "http://backend-service:4000/api/zero/push"
+  ZERO_REPLICA_FILE: "/data/zero-replica.db"
+  
+  # Redis Configuration
+  REDIS_URL: "redis://redis-service.openfaith.svc.cluster.local:6379"
+  
+  # Application Configuration
+  NODE_ENV: "production"
+  
+
