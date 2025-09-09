@@ -19,7 +19,7 @@ spec:
       - name: ghcr-pull-secret
       containers:
       - name: frontend
-        image: ghcr.io/faithbase-ai/openfaith-frontend:k8s-support-31efb50
+        image: ghcr.io/faithbase-ai/openfaith-frontend:k8s-support-3-f798a86
         imagePullPolicy: Always
         ports:
         - containerPort: 3000

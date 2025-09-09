@@ -12,7 +12,7 @@ data:
   DB_SSL: "false"
   
   # Zero Configuration (Backend/Workers - Server-side)
-  ZERO_AUTH_JWKS_URL: "http://backend-service:4000/health"
+  ZERO_AUTH_JWKS_URL: "http://backend-service:4000/auth/jwks"
   ZERO_APP_ID: "openfaith_prod"
   ZERO_NUM_SYNC_WORKERS: "4"
   ZERO_LOG_LEVEL: "info"

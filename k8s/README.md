@@ -9,6 +9,16 @@
    # Edit secrets.yaml with your actual values
    ```
 
+   Create a github access token with registry pull permission scope
+
+   ```bash
+   kubectl -n openfaith create secret docker-registry ghcr-pull-secret\
+   --docker-server=ghcr.io \
+   --docker-username=your_username \
+   --docker-password=ghp_pull_secret \
+   --docker-email=your_email
+   ```
+
 2. **Deploy Everything**:
 
    ```bash
