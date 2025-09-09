@@ -50,6 +50,37 @@
    kubectl get ingress -n openfaith
    ```
 
+## Storage Configuration
+
+### Persistent Storage Setup
+
+This deployment uses **hostPath-based storage** for development environments:
+
+| Component      | Storage Type | Host Path                | Purpose                    |
+| -------------- | ------------ | ------------------------ | -------------------------- |
+| **PostgreSQL** | hostPath PV  | `/data/postgres`         | Database files & WAL logs  |
+| **Redis**      | hostPath PV  | `/tmp/redis-data`        | Cache & session data       |
+| **Zero Cache** | hostPath PV  | `/tmp/zero-replica-data` | Sync replica & permissions |
+
+#### How It Works:
+
+1. **PersistentVolumes (PVs)**: Pre-defined storage resources on the host
+2. **PersistentVolumeClaims (PVCs)**: Pod requests that bind to available PVs
+3. **hostPath**: Uses directories on the Kubernetes node's filesystem
+
+**⚠️ Note**: This setup is for **development/testing** only. Production requires:
+
+- Proper StorageClass (e.g., `local-path`, `nfs`, cloud storage)
+- Dynamic volume provisioning
+- Backup strategies
+
+### Check Storage Status:
+
+```bash
+kubectl get pv,pvc -n openfaith
+kubectl describe pvc postgres-pvc -n openfaith
+```
+
 ## Secrets Configuration
 
 **⚠️ CRITICAL**: Never commit `secrets.yaml` to git!

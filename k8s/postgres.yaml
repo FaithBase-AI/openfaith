@@ -1,3 +1,19 @@
+# Temporary: Use hostPath volumes instead of PVC for development
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-pv
+  namespace: openfaith
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/postgres
+    type: DirectoryOrCreate
+  storageClassName: manual
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -9,8 +25,7 @@ spec:
   resources:
     requests:
       storage: 20Gi
-  storageClassName: local-path
-
+  storageClassName: manual
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -30,9 +45,8 @@ spec:
         app: postgres
     spec:
       securityContext:
-        runAsUser: 999
-        runAsGroup: 999
-        fsGroup: 999
+        runAsUser: 0  # Run as root to create directories
+        runAsGroup: 0
       containers:
       - name: postgres
         image: postgres:16.2-alpine

@@ -1,3 +1,19 @@
+# Temporary: Use hostPath volumes instead of PVC for development
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-pv
+  namespace: openfaith
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /tmp/redis-data
+    type: DirectoryOrCreate
+  storageClassName: manual
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -9,8 +25,7 @@ spec:
   resources:
     requests:
       storage: 5Gi
-  storageClassName: local-path
-
+  storageClassName: manual
 ---
 apiVersion: apps/v1
 kind: Deployment
