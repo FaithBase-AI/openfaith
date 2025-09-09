@@ -10,7 +10,7 @@ ELAPSED=0
 
 # Database connection parameters (matching your shared env)
 DB_HOST=${DB_HOST_PRIMARY:-127.0.0.1}
-DB_PORT=${DB_PORT:-5430}
+DB_PORT=${DB_PORT:-5432}
 DB_NAME=${DB_NAME:-postgres}
 DB_USER=${DB_USERNAME:-user}
 

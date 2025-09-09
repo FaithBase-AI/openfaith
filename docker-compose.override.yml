@@ -92,6 +92,9 @@ services:
       - ZERO_UPSTREAM_DB=postgresql://user:password@postgres:5432/postgres
       - ZERO_CVR_DB=postgresql://user:password@postgres:5432/postgres
       - ZERO_CHANGE_DB=postgresql://user:password@postgres:5432/postgres
+      - ZERO_REPLICA_FILE=/data/zero-replica.db
+    volumes:
+      - zero_replica_data:/data
     depends_on:
       - postgres
     restart: unless-stopped
@@ -135,3 +138,7 @@ services:
     depends_on:
       - postgres
     restart: unless-stopped
+
+volumes:
+  zero_replica_data:
+    driver: local
