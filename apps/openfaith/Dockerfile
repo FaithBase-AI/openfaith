@@ -19,7 +19,7 @@ FROM base AS release
 COPY . .
 
 # Install production dependencies directly (excludes dev dependencies for faster builds)
-RUN bun install --no-dev
+RUN bun install --no-dev --ignore-scripts
 
 # Set environment variables for build
 ENV VITE_ZERO_SERVER=$VITE_ZERO_SERVER

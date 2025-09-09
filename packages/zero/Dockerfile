@@ -9,16 +9,26 @@ FROM base AS release
 COPY . .
 
 # Install production dependencies directly (excludes dev dependencies for faster builds)
-RUN bun install --no-dev
+# Ignore scripts to avoid running zero postinstall script
+RUN bun install --no-dev --ignore-scripts
 
 # Create /data directory for replica file persistence
 RUN mkdir -p /data && chmod 755 /data
 
-# Stay in root directory for Zero service
+# Stay in root directory - zero-cache-dev needs to run from project root
 WORKDIR /usr/src/app
+
+# Debug: Check file locations and permissions
+RUN echo "=== DEBUG: Current working directory ===" && pwd
+RUN echo "=== DEBUG: Root directory contents ===" && ls -la
+RUN echo "=== DEBUG: Zero package directory contents ===" && ls -la packages/zero/
+RUN echo "=== DEBUG: Zero schema file details ===" && ls -la packages/zero/zeroSchema.mts
+RUN echo "=== DEBUG: Zero package.json ===" && cat packages/zero/package.json | grep -E "(type|dev)"
+RUN echo "=== DEBUG: Node modules zero-cache-dev location ===" && find node_modules -name "zero-cache-dev" -type f 2>/dev/null | head -5
 
 # Expose port
 EXPOSE 4983
 
-# Run the zero cache service from the root
-CMD ["bun", "run", "--filter", "@openfaith/zero", "dev"]
+# Copy schema file to a location tsx can find, then run zero-cache-dev
+RUN mkdir -p /tmp/zero-schema && cp /usr/src/app/packages/zero/zeroSchema.mts /tmp/zero-schema/
+CMD ["sh", "-c", "cd /usr/src/app && /usr/src/app/node_modules/.bin/zero-cache-dev -p /tmp/zero-schema/zeroSchema.mts"]

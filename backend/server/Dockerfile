@@ -9,7 +9,7 @@ FROM base AS release
 COPY . .
 
 # Install production dependencies directly (excludes dev dependencies for faster builds)
-RUN bun install --no-dev
+RUN bun install --no-dev --ignore-scripts
 
 # Change to the server directory for running
 WORKDIR /usr/src/app/backend/server

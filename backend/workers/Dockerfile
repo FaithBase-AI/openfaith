@@ -9,7 +9,7 @@ FROM base AS release
 COPY . .
 
 # Install production dependencies directly (excludes dev dependencies for faster builds)
-RUN bun install --no-dev
+RUN bun install --no-dev --ignore-scripts
 
 # Stay in root directory
 WORKDIR /usr/src/app
