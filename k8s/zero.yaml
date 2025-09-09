@@ -28,7 +28,6 @@ spec:
             name: openfaith-config
         - secretRef:
             name: openfaith-secrets
-
         volumeMounts:
         - name: zero-replica-storage
           mountPath: /data
@@ -50,16 +49,6 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 3
           failureThreshold: 3
-
-        # Resource limits for Zero
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-
       volumes:
       - name: zero-replica-storage
         persistentVolumeClaim:
