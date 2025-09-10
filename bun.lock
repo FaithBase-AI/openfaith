@@ -56,18 +56,6 @@
         "typescript": "catalog:",
       },
     },
-    "adapters/every-adapter": {
-      "name": "@openfaith/every-adapter",
-      "version": "0.1.0",
-      "dependencies": {
-        "@openfaith/adapter-core": "workspace:*",
-        "@openfaith/shared": "workspace:*",
-        "effect": "catalog:",
-      },
-      "devDependencies": {
-        "typescript": "catalog:",
-      },
-    },
     "adapters/pco": {
       "name": "@openfaith/pco",
       "version": "0.1.0",
@@ -925,8 +913,6 @@
     "@openfaith/email": ["@openfaith/email@workspace:backend/email"],
 
     "@openfaith/eslint-config": ["@openfaith/eslint-config@workspace:tooling/eslint"],
-
-    "@openfaith/every-adapter": ["@openfaith/every-adapter@workspace:adapters/every-adapter"],
 
     "@openfaith/infra-db": ["@openfaith/infra-db@workspace:infra/db"],
 

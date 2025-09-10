@@ -1,0 +1,40 @@
+# Frontend-specific exclusions
+# Keep essential build files and dependencies
+!package.json
+!tsconfig.json
+!vite.config.ts
+!postcss.config.ts
+!tailwind.config.ts
+!public/
+!src/
+!app/
+
+# Exclude development and build artifacts
+node_modules/
+**/node_modules/
+.cache/
+.turbo/
+.output/
+.tanstack/
+.nitro/
+*.log
+
+# Exclude unnecessary directories
+docs/
+infra/
+k8s/
+scripts/
+.github/
+.vscode/
+.idea/
+
+# Exclude environment files (use build args instead)
+.env*
+
+# Keep patches for bun install
+!../../../patches/
+
+# Allow necessary workspace packages
+!../../../packages/
+!../../../backend/
+!../../../adapters/

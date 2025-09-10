@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zero
+  namespace: openfaith
+  labels:
+    app: zero
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zero
+  template:
+    metadata:
+      labels:
+        app: zero
+    spec:
+      imagePullSecrets:
+      - name: ghcr-pull-secret
+      containers:
+      - name: zero
+        image: ghcr.io/faithbase-ai/openfaith-zero:k8s-support-3-f798a86
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 4983
+        envFrom:
+        - configMapRef:
+            name: openfaith-config
+        - secretRef:
+            name: openfaith-secrets
+        volumeMounts:
+        - name: zero-replica-storage
+          mountPath: /data
+
+        # Zero service health check
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 4983
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 4983
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+      volumes:
+      - name: zero-replica-storage
+        persistentVolumeClaim:
+          claimName: zero-replica-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zero-service
+  namespace: openfaith
+spec:
+  selector:
+    app: zero
+  ports:
+  - port: 4983
+    targetPort: 4983
+  type: ClusterIP

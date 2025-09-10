@@ -1,0 +1,53 @@
+# Root level .dockerignore for monorepo builds
+# Dependencies - exclude from build context
+node_modules
+**/node_modules/**
+
+# Docker files
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Build artifacts (don't copy these - let Docker build fresh)
+.output
+.tanstack
+.nitro
+.cache
+.turbo
+*.db
+*.db-*
+*.db-wal*
+
+# Logs and temp files
+*.log
+.env*
+
+# Documentation (exclude from builds to reduce context size)
+README.md
+LICENSE
+docs/
+
+# Infrastructure and tools (not needed for application builds)
+infra/
+k8s/
+scripts/
+.github/
+
+# Allow tooling for TypeScript config
+!tooling/
+
+# Allow workspace packages for proper dependency resolution
+!packages/
+!backend/
+!adapters/
+
+# Keep patches for bun install
+!patches/

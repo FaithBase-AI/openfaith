@@ -42,3 +42,6 @@ packages/zero/zero.db*
 .tanstack
 .nitro
 .output
+
+scripts/
+k8s/secrets.yaml
