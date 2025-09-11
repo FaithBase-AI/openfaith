@@ -3,6 +3,7 @@ import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import { adapterWebhooksTable } from '@openfaith/db'
 import { AppHttpApi } from '@openfaith/domain'
 import { pcoEntityManifest } from '@openfaith/pco/server'
+import { eq } from 'drizzle-orm'
 import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
 
 export const AdapterWebhooksHandlerLive = HttpApiBuilder.group(AppHttpApi, 'adapter', (handlers) =>
@@ -30,6 +31,7 @@ export const AdapterWebhooksHandlerLive = HttpApiBuilder.group(AppHttpApi, 'adap
           orgId: adapterWebhooksTable.orgId,
         })
         .from(adapterWebhooksTable)
+        .where(eq(adapterWebhooksTable.adapter, 'pco'))
 
       const orgIdOpt = pipe(
         webhooks,

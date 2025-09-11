@@ -146,6 +146,8 @@ export class PcoHttpClient extends Effect.Service<PcoHttpClient>()('PcoHttpClien
     const client = (yield* HttpClient.HttpClient).pipe(
       HttpClient.mapRequestEffect(
         Effect.fn(function* (request) {
+          yield* Effect.log('PCO API TokenKey', tokenKey)
+
           const token = yield* getRateLimitedAccessToken
 
           const tokenResponse = HttpClientRequest.bearerToken(request, token)

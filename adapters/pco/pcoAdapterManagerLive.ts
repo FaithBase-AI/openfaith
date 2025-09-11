@@ -1,8 +1,10 @@
+import { Headers } from '@effect/platform'
 import {
   AdapterEntityNotFoundError,
   AdapterFetchError,
   AdapterManager,
   AdapterTransformError,
+  AdapterWebhookProcessingError,
   AdapterWebhookSubscriptionError,
   type EntityData,
   type ExternalLinkInput,
@@ -10,6 +12,7 @@ import {
   type ProcessExternalLinks,
   type ProcessRelationships,
   type RelationshipInput,
+  type SyncEntityId,
   TokenKey,
 } from '@openfaith/adapter-core/server'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
@@ -364,11 +367,106 @@ type WebhookStatus = Data.TaggedEnum<{
 }>
 const WebhookStatus = Data.taggedEnum<WebhookStatus>()
 
+const PcoWebhookPayloadSchema = Schema.Struct({
+  data: Schema.Array(
+    Schema.Union(
+      ...pipe(
+        pcoEntityManifest.webhooks,
+        Record.values,
+        Array.map((x) => x.webhookSchema),
+      ),
+    ),
+  ),
+})
+
+const getSyncEntityId = Effect.fn('getSyncEntityId')(function* () {
+  const pcoClient = yield* PcoHttpClient
+
+  return (params: Parameters<SyncEntityId>[0] & { tokenKey: string }) =>
+    Effect.gen(function* () {
+      const {
+        entityId,
+        entityType,
+        processEntities,
+        processExternalLinks,
+        processRelationships,
+        tokenKey,
+        entityAlt,
+      } = params
+
+      yield* Effect.annotateLogs(Effect.log('🔄 Starting PCO single entity sync'), {
+        adapter: 'pco',
+        entityId,
+        entityType,
+      })
+
+      // Get the PCO client method for this entity using the new type-safe accessor
+      const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
+
+      const method = entityClient.get as PureGetMethod
+
+      // Fetch single entity from PCO with aggressive type casting (following pcoMkEntityManifest.ts pattern)
+      const singletonResponse = yield* method({
+        path: { [`${entityType.toLowerCase()}Id`]: entityId },
+      } as Parameters<typeof method>[0]).pipe(
+        // We are catching all because we want to provide entityAlt as a fallback. This is for webhooks, where sometimes we don't have permissions to get the data, but we have it from the webhook.
+        Effect.catchAll((cause) =>
+          pipe(
+            entityAlt,
+            Option.fromNullable,
+            Option.match({
+              onNone: () =>
+                Effect.fail(
+                  new AdapterFetchError({
+                    adapter: 'pco',
+                    cause,
+                    entityId,
+                    entityType,
+                    message: `Failed to fetch ${entityType} ${entityId} from PCO`,
+                    operation: 'get',
+                  }),
+                ),
+              onSome: (x) => Effect.succeed({ data: x as PcoBaseEntity }),
+            }),
+          ),
+        ),
+      )
+
+      const normalizedResponse = normalizeSingletonResponse(singletonResponse)
+
+      yield* processPcoData({
+        data: normalizedResponse,
+        processEntities,
+        processExternalLinks,
+        processRelationships,
+        tokenKey,
+      }).pipe(
+        Effect.mapError(
+          (cause) =>
+            new AdapterTransformError({
+              adapter: 'pco',
+              cause,
+              entityType,
+              message: `Failed to process ${entityType} data`,
+            }),
+        ),
+      )
+
+      yield* Effect.annotateLogs(Effect.log('✅ Completed PCO single entity sync'), {
+        adapter: 'pco',
+        entityId,
+        entityType,
+      })
+    })
+})
+
 export const PcoAdapterManagerLive = Layer.effect(
   AdapterManager,
   Effect.gen(function* () {
     const pcoClient = yield* PcoHttpClient
     const tokenKey = yield* TokenKey
+
+    const syncEntityId = yield* getSyncEntityId()
 
     return AdapterManager.of({
       adapter: 'pco',
@@ -389,7 +487,97 @@ export const PcoAdapterManagerLive = Layer.effect(
           })),
         ),
 
-      getEntityTypeForWebhookEvent: (_webhookEvent) => Effect.succeed('Person'), // TODO: Implement webhook event mapping
+      processWebhook: (params) =>
+        Effect.gen(function* () {
+          const {
+            headers,
+            payload,
+            deleteEntity,
+            mergeEntity,
+            processEntities,
+            processMutations,
+            getWebhooks,
+          } = params
+
+          const rawBody = JSON.stringify(payload)
+
+          const secretOpt = pipe(headers, Headers.get('x-pco-webhooks-authenticity'))
+          const webhookName = pipe(headers, Headers.get('x-pco-webhooks-name'))
+
+          if (secretOpt._tag === 'None' || webhookName._tag === 'None') {
+            return
+          }
+
+          const webhooks = yield* getWebhooks('pco')
+
+          const orgIdOpt = pipe(
+            webhooks,
+            Array.findFirst((webhook) => {
+              const hasher = new Bun.CryptoHasher('sha256', webhook.authenticitySecret)
+              hasher.update(rawBody)
+              const computedHash = hasher.digest('hex')
+
+              return computedHash === secretOpt.value
+            }),
+            Option.map((webhook) => webhook.orgId),
+          )
+
+          if (orgIdOpt._tag === 'None') {
+            return
+          }
+
+          const data = yield* Schema.decodeUnknown(PcoWebhookPayloadSchema)(payload)
+
+          yield* Effect.forEach(data.data, (x) =>
+            Effect.gen(function* () {
+              const webhookDef = pcoEntityManifest.webhooks[
+                x.attributes.name
+              ] as (typeof pcoEntityManifest.webhooks)[typeof x.attributes.name]
+
+              switch (webhookDef.operation) {
+                case 'upsert': {
+                  const entityId = webhookDef.extractEntityId(x as any)
+
+                  yield* Effect.log('Upserting entity', { entity: x.attributes.payload })
+
+                  yield* syncEntityId({
+                    entityAlt: x.attributes.payload.data,
+                    entityId,
+                    entityType: x.type,
+                    processEntities,
+                    processExternalLinks: () =>
+                      Effect.succeed({ allExternalLinks: [], changedExternalLinks: [] }),
+                    processMutations,
+                    processRelationships: () => Effect.succeed(null),
+                    tokenKey: orgIdOpt.value,
+                  }).pipe(Effect.provideService(TokenKey, orgIdOpt.value))
+                  break
+                }
+                case 'delete': {
+                  const entityId = webhookDef.extractEntityId(x as any)
+                  yield* Effect.log('Deleting entity', { entity: x.attributes.payload })
+                  yield* deleteEntity(entityId, 'pco')
+                  break
+                }
+                case 'merge': {
+                  const { keepId, removeId } = webhookDef.extractEntityId(x as any)
+                  yield* Effect.log('Merging entities', { entity: x.attributes.payload })
+                  yield* mergeEntity(keepId, removeId, 'pco')
+                  break
+                }
+              }
+            }),
+          )
+        }).pipe(
+          Effect.mapError(
+            (error) =>
+              new AdapterWebhookProcessingError({
+                adapter: 'pco',
+                cause: error,
+                message: `Failed to get webhooks`,
+              }),
+          ),
+        ),
 
       subscribeToWebhooks: (params) =>
         Effect.gen(function* () {
@@ -553,72 +741,7 @@ export const PcoAdapterManagerLive = Layer.effect(
           Effect.tapError((error) => Effect.logError('Failed to subscribe to webhooks', { error })),
         ),
 
-      syncEntityId: (params) =>
-        Effect.gen(function* () {
-          const {
-            entityId,
-            entityType,
-            processEntities,
-            processExternalLinks,
-            processRelationships,
-          } = params
-
-          yield* Effect.annotateLogs(Effect.log('🔄 Starting PCO single entity sync'), {
-            adapter: 'pco',
-            entityId: params.entityId,
-            entityType: params.entityType,
-          })
-
-          // Get the PCO client method for this entity using the new type-safe accessor
-          const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
-
-          const method = entityClient.get as PureGetMethod
-
-          // Fetch single entity from PCO with aggressive type casting (following pcoMkEntityManifest.ts pattern)
-          const singletonResponse = yield* method({
-            path: { [`${entityType.toLowerCase()}Id`]: entityId },
-          } as Parameters<typeof method>[0])
-            // TODO: We need to map this error.
-            .pipe(
-              Effect.mapError(
-                (cause: any) =>
-                  new AdapterFetchError({
-                    adapter: 'pco',
-                    cause,
-                    entityId,
-                    entityType,
-                    message: `Failed to fetch ${entityType} ${entityId} from PCO`,
-                    operation: 'get',
-                  }),
-              ),
-            )
-
-          const normalizedResponse = normalizeSingletonResponse(singletonResponse)
-
-          yield* processPcoData({
-            data: normalizedResponse,
-            processEntities,
-            processExternalLinks,
-            processRelationships,
-            tokenKey,
-          }).pipe(
-            Effect.mapError(
-              (cause) =>
-                new AdapterTransformError({
-                  adapter: 'pco',
-                  cause,
-                  entityType,
-                  message: `Failed to process ${entityType} data`,
-                }),
-            ),
-          )
-
-          yield* Effect.annotateLogs(Effect.log('✅ Completed PCO single entity sync'), {
-            adapter: 'pco',
-            entityId,
-            entityType,
-          })
-        }),
+      syncEntityId: (params) => syncEntityId({ ...params, tokenKey }),
 
       syncEntityType: (params) =>
         Effect.gen(function* () {

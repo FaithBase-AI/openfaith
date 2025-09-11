@@ -14,8 +14,14 @@ import {
   InternalManager,
   RelationshipProcessingError,
   TokenKey,
+  WebhookRetrievalError,
 } from '@openfaith/adapter-core/server'
-import { type ExternalLink, edgesTable, externalLinksTable } from '@openfaith/db'
+import {
+  adapterWebhooksTable,
+  type ExternalLink,
+  edgesTable,
+  externalLinksTable,
+} from '@openfaith/db'
 import {
   type CustomFieldSchema,
   getAnnotationFromSchema,
@@ -585,6 +591,25 @@ export const InternalManagerLive = Layer.effect(
               }),
           ),
         ),
+
+      getWebhooks: (adapter) =>
+        db
+          .select({
+            authenticitySecret: adapterWebhooksTable.authenticitySecret,
+            orgId: adapterWebhooksTable.orgId,
+          })
+          .from(adapterWebhooksTable)
+          .where(eq(adapterWebhooksTable.adapter, adapter))
+          .pipe(
+            Effect.mapError(
+              (cause) =>
+                new WebhookRetrievalError({
+                  adapter,
+                  cause,
+                  message: `Failed to retrieve webhooks: ${cause}`,
+                }),
+            ),
+          ),
       mergeEntity: (keepId, removeId, adapter) =>
         Effect.gen(function* () {
           const links = yield* db

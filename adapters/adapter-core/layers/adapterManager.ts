@@ -1,12 +1,18 @@
+import type { Headers } from '@effect/platform'
 import type {
   AdapterEntityNotFoundError,
   AdapterFetchError,
   AdapterTransformError,
+  AdapterWebhookProcessingError,
   AdapterWebhookSubscriptionError,
+  DeleteEntity,
+  GetWebhooks,
+  MergeEntity,
   ProcessEntities,
   ProcessExternalLinks,
   ProcessMutations,
   ProcessRelationships,
+  SyncEntityId,
 } from '@openfaith/adapter-core/layers/types'
 import { Context, type Effect, Schema } from 'effect'
 
@@ -33,9 +39,15 @@ export class AdapterManager extends Context.Tag('@openfaith/adapter-core/layers/
 
     readonly getEntityManifest: () => AdapterEntityManifest
 
-    readonly getEntityTypeForWebhookEvent: (
-      webhookEvent: string,
-    ) => Effect.Effect<string, AdapterTransformError>
+    readonly processWebhook: (params: {
+      headers: Headers.Headers
+      payload: any
+      deleteEntity: DeleteEntity
+      mergeEntity: MergeEntity
+      processEntities: ProcessEntities
+      processMutations: ProcessMutations
+      getWebhooks: GetWebhooks
+    }) => Effect.Effect<void, AdapterWebhookProcessingError>
 
     readonly subscribeToWebhooks: (params: {
       processExternalLinks: ProcessExternalLinks
@@ -45,20 +57,7 @@ export class AdapterManager extends Context.Tag('@openfaith/adapter-core/layers/
     // TODO: private shared method for syncEntityId and syncEntityType that runs the logic.
 
     // Get an entity from the adapter
-    readonly syncEntityId: (params: {
-      entityType: string
-      entityId: string
-
-      entityAlt?: { id: string } & Record<string, unknown>
-
-      processExternalLinks: ProcessExternalLinks
-      processEntities: ProcessEntities
-      processRelationships: ProcessRelationships
-      processMutations: ProcessMutations
-    }) => Effect.Effect<
-      void,
-      AdapterFetchError | AdapterTransformError | AdapterEntityNotFoundError
-    >
+    readonly syncEntityId: SyncEntityId
 
     // readonly upsertEntity: (entityType: string, entity: unknown) => Effect.Effect<void>
 

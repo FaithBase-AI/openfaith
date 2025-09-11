@@ -25,6 +25,15 @@ export class AdapterWebhookSubscriptionError extends Schema.TaggedError<AdapterW
   },
 ) {}
 
+export class AdapterWebhookProcessingError extends Schema.TaggedError<AdapterWebhookProcessingError>()(
+  'AdapterWebhookProcessingError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+  },
+) {}
+
 export class AdapterTransformError extends Schema.TaggedError<AdapterTransformError>()(
   'AdapterTransformError',
   {
@@ -62,6 +71,15 @@ export class RelationshipProcessingError extends Schema.TaggedError<Relationship
     message: Schema.String,
     orgId: Schema.String,
     relationshipCount: Schema.optional(Schema.Number),
+  },
+) {}
+
+export class WebhookRetrievalError extends Schema.TaggedError<WebhookRetrievalError>()(
+  'WebhookRetrievalError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
   },
 ) {}
 
@@ -172,5 +190,32 @@ export interface RelationshipInput {
 export type ProcessRelationships = (
   relationships: Array<RelationshipInput>,
 ) => Effect.Effect<void, RelationshipProcessingError>
+
+export type DeleteEntity = (
+  externalId: string,
+  adapter: string,
+) => Effect.Effect<void, EntityDeletionError>
+
+export type MergeEntity = (
+  keepId: string,
+  removeId: string,
+  adapter: string,
+) => Effect.Effect<void, EntityMergingError>
+
+export type GetWebhooks = (
+  adapter: string,
+) => Effect.Effect<Array<{ authenticitySecret: string; orgId: string }>, WebhookRetrievalError>
+
+export type SyncEntityId = (params: {
+  entityType: string
+  entityId: string
+
+  entityAlt?: { id: string } & Record<string, unknown>
+
+  processExternalLinks: ProcessExternalLinks
+  processEntities: ProcessEntities
+  processRelationships: ProcessRelationships
+  processMutations: ProcessMutations
+}) => Effect.Effect<void, AdapterFetchError | AdapterTransformError | AdapterEntityNotFoundError>
 
 export type ProcessMutations = (mutations: Array<CRUDOp>) => Effect.Effect<void>
