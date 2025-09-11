@@ -619,7 +619,6 @@ export const PcoAdapterManagerLive = Layer.effect(
             entityType,
           })
         }),
-      // syncEntityId: syncEntityIdPco(pcoClient, tokenKey),
 
       syncEntityType: (params) =>
         Effect.gen(function* () {

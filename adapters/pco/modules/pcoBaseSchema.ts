@@ -74,8 +74,8 @@ export const mkPcoWebhookPayload = <TData extends Schema.Schema.Any>(data: TData
     }),
   })
 
-export const mkPcoWebhookDelivery = <TData extends Schema.Schema.Any>(
-  webhook: string,
+export const mkPcoWebhookDelivery = <TData extends Schema.Schema.Any, WebhookName extends string>(
+  webhook: WebhookName,
   data: TData,
 ) =>
   Schema.Struct({

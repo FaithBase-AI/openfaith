@@ -73,6 +73,28 @@ export class DetectionError extends Schema.TaggedError<DetectionError>()('Detect
   orgId: Schema.String,
 }) {}
 
+export class EntityDeletionError extends Schema.TaggedError<EntityDeletionError>()(
+  'EntityDeletionError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    externalId: Schema.String,
+    message: Schema.String,
+    orgId: Schema.String,
+  },
+) {}
+
+export class EntityMergingError extends Schema.TaggedError<EntityMergingError>()(
+  'EntityMergingError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    keepId: Schema.String,
+    orgId: Schema.String,
+    removeId: Schema.String,
+  },
+) {}
+
 export class ExternalLinkUpsertError extends Schema.TaggedError<ExternalLinkUpsertError>()(
   'ExternalLinkUpsertError',
   {

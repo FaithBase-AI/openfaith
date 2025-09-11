@@ -18,15 +18,7 @@ export type EntityUnion = {
 // Helper type to determine if a type is a business entity (not a system entity)
 // This excludes system entities like Edge, ExternalLink, Field types, etc.
 type IsBusinessEntity<T> = T extends { _tag: infer Tag }
-  ? Tag extends
-      | 'edge'
-      | 'externalLink'
-      | 'string'
-      | 'number'
-      | 'boolean'
-      | 'date'
-      | 'field'
-      | 'fieldOption'
+  ? Tag extends 'edge' | 'externalLink' | 'field' | 'fieldOption' | 'adapterWebhook'
     ? false
     : true
   : false

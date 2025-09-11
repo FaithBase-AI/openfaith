@@ -59,11 +59,34 @@ export const AdapterWebhooksHandlerLive = HttpApiBuilder.group(AppHttpApi, 'adap
         ),
       })
 
-      console.log(payload)
-
       const data = yield* Schema.decodeUnknown(PcoWebhookPayloadSchema)(payload)
 
-      console.log(data)
+      yield* Effect.forEach(data.data, (x) =>
+        Effect.gen(function* () {
+          const webhookDef = pcoEntityManifest.webhooks[
+            x.attributes.name
+          ] as (typeof pcoEntityManifest.webhooks)[typeof x.attributes.name]
+
+          switch (webhookDef.operation) {
+            case 'upsert': {
+              const entityId = webhookDef.extractEntityId(x as any)
+
+              yield* Effect.log('Upserting entity', { entity: x.attributes.payload })
+              break
+            }
+            case 'delete': {
+              const entityId = webhookDef.extractEntityId(x as any)
+              yield* Effect.log('Deleting entity', { entity: x.attributes.payload })
+              break
+            }
+            case 'merge': {
+              const { keepId, removeId } = webhookDef.extractEntityId(x as any)
+              yield* Effect.log('Merging entities', { entity: x.attributes.payload })
+              break
+            }
+          }
+        }),
+      )
     }).pipe(
       Effect.catchTags({
         ParseError: (error) =>

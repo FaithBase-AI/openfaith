@@ -24,7 +24,12 @@ export interface BaseWebhookDefinition<
   eventType: TEventType
   operation: TOperation
   primaryKey: string
-  extractEntityId?: (event: ExtractEventType<TWebhookSchema>) => any
+  extractEntityId: (event: ExtractEventType<TWebhookSchema>) => TOperation extends 'merge'
+    ? {
+        keepId: string
+        removeId: string
+      }
+    : string
 }
 
 /**
@@ -38,7 +43,12 @@ export interface DefineWebhookInput<
   webhookSchema: TWebhookSchema
   eventType: TEventType
   operation: TOperation
-  extractEntityId?: (event: ExtractEventType<TWebhookSchema>) => any
+  extractEntityId: (event: ExtractEventType<TWebhookSchema>) => TOperation extends 'merge'
+    ? {
+        keepId: string
+        removeId: string
+      }
+    : string
 }
 
 /**

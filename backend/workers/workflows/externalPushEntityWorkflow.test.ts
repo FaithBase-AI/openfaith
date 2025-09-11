@@ -24,8 +24,10 @@ const MockAdapterManager = Layer.succeed(
 const MockInternalManager = Layer.succeed(
   InternalManager,
   InternalManager.of({
+    deleteEntity: () => Effect.succeed(undefined),
     detectAndMarkDeleted: () => Effect.succeed([]),
     getExternalLink: () => Effect.succeed(Option.none()),
+    mergeEntity: () => Effect.succeed(undefined),
     processEntities: () => Effect.succeed(undefined),
     processExternalLinks: () =>
       Effect.succeed({
