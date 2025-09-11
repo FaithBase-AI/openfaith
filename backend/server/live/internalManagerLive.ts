@@ -73,7 +73,7 @@ const partitionExternalLinksByDataPresence = (externalLinks: Array<ExternalLinkI
         // Reference links have NO createdAt/updatedAt (missing entity data)
         !link.createdAt && !link.updatedAt,
     ),
-    ([referenceLinks, entityLinks]) => ({
+    ([entityLinks, referenceLinks]) => ({
       entityLinks,
       referenceLinks,
     }),

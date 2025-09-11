@@ -13,6 +13,7 @@ const MockAdapterManager = Layer.succeed(
     createEntity: () => Effect.succeed(undefined),
     deleteEntity: () => Effect.succeed(undefined),
     getEntityManifest: () => ({}),
+    getWebhookOrgIdOpt: () => Effect.succeed(Option.none()),
     processWebhook: () => Effect.succeed(undefined),
     subscribeToWebhooks: () => Effect.succeed(undefined),
     syncEntityId: () => Effect.succeed(undefined),

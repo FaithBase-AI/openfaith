@@ -34,6 +34,15 @@ export class AdapterWebhookProcessingError extends Schema.TaggedError<AdapterWeb
   },
 ) {}
 
+export class AdapterWebhookOrgIdRetrievalError extends Schema.TaggedError<AdapterWebhookOrgIdRetrievalError>()(
+  'AdapterWebhookOrgIdRetrievalError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+  },
+) {}
+
 export class AdapterTransformError extends Schema.TaggedError<AdapterTransformError>()(
   'AdapterTransformError',
   {

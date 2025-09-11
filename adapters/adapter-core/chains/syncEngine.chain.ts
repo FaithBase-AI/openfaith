@@ -1,4 +1,3 @@
-import type { Headers } from '@effect/platform'
 import { AdapterManager } from '@openfaith/adapter-core/layers/adapterManager'
 import { InternalManager } from '@openfaith/adapter-core/layers/internalManager'
 import type { CRUDOp } from '@openfaith/domain'
@@ -34,17 +33,12 @@ export const subscribeToWebhooks = Effect.fn('subscribeToWebhooks')(function* ()
 })
 
 // Webhook Event
-export const webhookSyncEntity = Effect.fn('webhookSyncEntity')(function* (
-  headers: Headers.Headers,
-  payload: any,
-) {
+export const webhookSyncEntity = Effect.fn('webhookSyncEntity')(function* (payload: any) {
   const adapterManager = yield* AdapterManager
   const internalManager = yield* InternalManager
 
   yield* adapterManager.processWebhook({
     deleteEntity: internalManager.deleteEntity,
-    getWebhooks: internalManager.getWebhooks,
-    headers,
     mergeEntity: internalManager.mergeEntity,
     payload,
     processEntities: internalManager.processEntities,

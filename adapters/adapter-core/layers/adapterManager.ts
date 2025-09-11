@@ -3,6 +3,7 @@ import type {
   AdapterEntityNotFoundError,
   AdapterFetchError,
   AdapterTransformError,
+  AdapterWebhookOrgIdRetrievalError,
   AdapterWebhookProcessingError,
   AdapterWebhookSubscriptionError,
   DeleteEntity,
@@ -14,7 +15,7 @@ import type {
   ProcessRelationships,
   SyncEntityId,
 } from '@openfaith/adapter-core/layers/types'
-import { Context, type Effect, Schema } from 'effect'
+import { Context, type Effect, type Option, Schema } from 'effect'
 
 export const AdapterEntityManifest = Schema.Record({
   key: Schema.String,
@@ -39,14 +40,18 @@ export class AdapterManager extends Context.Tag('@openfaith/adapter-core/layers/
 
     readonly getEntityManifest: () => AdapterEntityManifest
 
-    readonly processWebhook: (params: {
+    readonly getWebhookOrgIdOpt: (params: {
       headers: Headers.Headers
+      payload: any
+      getWebhooks: GetWebhooks
+    }) => Effect.Effect<Option.Option<string>, AdapterWebhookOrgIdRetrievalError>
+
+    readonly processWebhook: (params: {
       payload: any
       deleteEntity: DeleteEntity
       mergeEntity: MergeEntity
       processEntities: ProcessEntities
       processMutations: ProcessMutations
-      getWebhooks: GetWebhooks
       processExternalLinks: ProcessExternalLinks
       processRelationships: ProcessRelationships
     }) => Effect.Effect<void, AdapterWebhookProcessingError>

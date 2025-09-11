@@ -4,6 +4,7 @@ import {
   AdapterFetchError,
   AdapterManager,
   AdapterTransformError,
+  AdapterWebhookOrgIdRetrievalError,
   AdapterWebhookProcessingError,
   AdapterWebhookSubscriptionError,
   type EntityData,
@@ -380,11 +381,11 @@ const PcoWebhookPayloadSchema = Schema.Struct({
 })
 
 const getSyncEntityId = Effect.fn('getSyncEntityId')(function* () {
+  const pcoClient = yield* PcoHttpClient
+  const tokenKey = yield* TokenKey
+
   return (params: Parameters<SyncEntityId>[0]) =>
     Effect.gen(function* () {
-      const pcoClient = yield* PcoHttpClient
-      const tokenKey = yield* TokenKey
-
       const {
         entityId,
         entityType,
@@ -490,32 +491,21 @@ export const PcoAdapterManagerLive = Layer.effect(
           })),
         ),
 
-      processWebhook: (params) =>
+      getWebhookOrgIdOpt: (params) =>
         Effect.gen(function* () {
-          const {
-            headers,
-            payload,
-            deleteEntity,
-            mergeEntity,
-            processEntities,
-            processMutations,
-            getWebhooks,
-            processExternalLinks,
-            processRelationships,
-          } = params
-
+          const { headers, payload, getWebhooks } = params
           const rawBody = JSON.stringify(payload)
 
           const secretOpt = pipe(headers, Headers.get('x-pco-webhooks-authenticity'))
           const webhookName = pipe(headers, Headers.get('x-pco-webhooks-name'))
 
           if (secretOpt._tag === 'None' || webhookName._tag === 'None') {
-            return
+            return Option.none<string>()
           }
 
           const webhooks = yield* getWebhooks('pco')
 
-          const orgIdOpt = pipe(
+          return pipe(
             webhooks,
             Array.findFirst((webhook) => {
               const hasher = new Bun.CryptoHasher('sha256', webhook.authenticitySecret)
@@ -526,10 +516,28 @@ export const PcoAdapterManagerLive = Layer.effect(
             }),
             Option.map((webhook) => webhook.orgId),
           )
+        }).pipe(
+          Effect.mapError(
+            (error) =>
+              new AdapterWebhookOrgIdRetrievalError({
+                adapter: 'pco',
+                cause: error,
+                message: `Failed to get webhook org id`,
+              }),
+          ),
+        ),
 
-          if (orgIdOpt._tag === 'None') {
-            return
-          }
+      processWebhook: (params) =>
+        Effect.gen(function* () {
+          const {
+            payload,
+            deleteEntity,
+            mergeEntity,
+            processEntities,
+            processMutations,
+            processExternalLinks,
+            processRelationships,
+          } = params
 
           const data = yield* Schema.decodeUnknown(PcoWebhookPayloadSchema)(payload)
 
@@ -553,10 +561,7 @@ export const PcoAdapterManagerLive = Layer.effect(
                     processExternalLinks,
                     processMutations,
                     processRelationships,
-                  }).pipe(
-                    Effect.provideService(TokenKey, orgIdOpt.value),
-                    Effect.provideService(PcoHttpClient, pcoClient),
-                  )
+                  })
                   break
                 }
                 case 'delete': {
@@ -747,11 +752,7 @@ export const PcoAdapterManagerLive = Layer.effect(
           Effect.tapError((error) => Effect.logError('Failed to subscribe to webhooks', { error })),
         ),
 
-      syncEntityId: (params) =>
-        syncEntityId(params).pipe(
-          Effect.provideService(TokenKey, tokenKey),
-          Effect.provideService(PcoHttpClient, pcoClient),
-        ),
+      syncEntityId,
 
       syncEntityType: (params) =>
         Effect.gen(function* () {
