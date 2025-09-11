@@ -5,6 +5,7 @@ import { ExternalPushEntityWorkflow } from '@openfaith/workers/workflows/externa
 import { ExternalPushWorkflow } from '@openfaith/workers/workflows/externalPushWorkflow'
 import { ExternalSyncEntityWorkflow } from '@openfaith/workers/workflows/externalSyncEntityWorkflow'
 import { ExternalSyncWorkflow } from '@openfaith/workers/workflows/externalSyncWorkflow'
+import { ExternalWebhookWorkflow } from '@openfaith/workers/workflows/externalWebhookWorkflow'
 import { TestWorkflow } from '@openfaith/workers/workflows/testWorkflow'
 import { Effect, Schema } from 'effect'
 
@@ -15,6 +16,7 @@ export const workflows = [
   ExternalPushWorkflow,
   ExternalPushEntityWorkflow,
   CreateOrgWorkflow,
+  ExternalWebhookWorkflow,
   TestWorkflow,
 ] as const
 

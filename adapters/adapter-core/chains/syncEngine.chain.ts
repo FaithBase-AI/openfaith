@@ -34,7 +34,7 @@ export const subscribeToWebhooks = Effect.fn('subscribeToWebhooks')(function* ()
 })
 
 // Webhook Event
-export const webhookSyncEntityNew = Effect.fn('webhookSyncEntityNew')(function* (
+export const webhookSyncEntity = Effect.fn('webhookSyncEntity')(function* (
   headers: Headers.Headers,
   payload: any,
 ) {
