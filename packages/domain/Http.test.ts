@@ -2,6 +2,7 @@ import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
 import {
   AppError,
+  AppHttpApi,
   CRUDMutation,
   CRUDOp,
   CustomMutation,
@@ -27,7 +28,6 @@ import {
   UpsertOp,
   ValidationError,
   ZeroError,
-  ZeroMutatorsApi,
   ZeroMutatorsGroup,
   ZeroPusherError,
 } from '@openfaith/domain/Http'
@@ -481,11 +481,11 @@ effect('ZeroMutatorsGroup should be defined correctly', () =>
   }),
 )
 
-effect('ZeroMutatorsApi should be defined correctly', () =>
+effect('AppHttpApi should be defined correctly', () =>
   Effect.gen(function* () {
-    expect(ZeroMutatorsApi).toBeDefined()
+    expect(AppHttpApi).toBeDefined()
     // The API class doesn't have a direct identifier property
-    expect(typeof ZeroMutatorsApi).toBe('function')
+    expect(typeof AppHttpApi).toBe('function')
   }),
 )
 

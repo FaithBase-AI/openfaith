@@ -1,7 +1,7 @@
 import { env } from '@openfaith/shared'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
-import { Option, pipe } from 'effect'
+import { Option, pipe, String } from 'effect'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
@@ -28,7 +28,7 @@ export default defineConfig({
         Option.fromNullable,
         Option.match({
           onNone: () => [],
-          onSome: (x) => [x],
+          onSome: (x) => [pipe(x, String.replace('https://', ''))],
         }),
       ),
     ],
