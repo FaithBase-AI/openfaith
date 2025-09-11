@@ -47,6 +47,8 @@ export class AdapterManager extends Context.Tag('@openfaith/adapter-core/layers/
       processEntities: ProcessEntities
       processMutations: ProcessMutations
       getWebhooks: GetWebhooks
+      processExternalLinks: ProcessExternalLinks
+      processRelationships: ProcessRelationships
     }) => Effect.Effect<void, AdapterWebhookProcessingError>
 
     readonly subscribeToWebhooks: (params: {

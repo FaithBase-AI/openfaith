@@ -380,17 +380,17 @@ const PcoWebhookPayloadSchema = Schema.Struct({
 })
 
 const getSyncEntityId = Effect.fn('getSyncEntityId')(function* () {
-  const pcoClient = yield* PcoHttpClient
-
-  return (params: Parameters<SyncEntityId>[0] & { tokenKey: string }) =>
+  return (params: Parameters<SyncEntityId>[0]) =>
     Effect.gen(function* () {
+      const pcoClient = yield* PcoHttpClient
+      const tokenKey = yield* TokenKey
+
       const {
         entityId,
         entityType,
         processEntities,
         processExternalLinks,
         processRelationships,
-        tokenKey,
         entityAlt,
       } = params
 
@@ -398,6 +398,7 @@ const getSyncEntityId = Effect.fn('getSyncEntityId')(function* () {
         adapter: 'pco',
         entityId,
         entityType,
+        tokenKey,
       })
 
       // Get the PCO client method for this entity using the new type-safe accessor
@@ -431,6 +432,8 @@ const getSyncEntityId = Effect.fn('getSyncEntityId')(function* () {
           ),
         ),
       )
+
+      console.log('singletonResponse', singletonResponse)
 
       const normalizedResponse = normalizeSingletonResponse(singletonResponse)
 
@@ -497,6 +500,8 @@ export const PcoAdapterManagerLive = Layer.effect(
             processEntities,
             processMutations,
             getWebhooks,
+            processExternalLinks,
+            processRelationships,
           } = params
 
           const rawBody = JSON.stringify(payload)
@@ -543,14 +548,15 @@ export const PcoAdapterManagerLive = Layer.effect(
                   yield* syncEntityId({
                     entityAlt: x.attributes.payload.data,
                     entityId,
-                    entityType: x.type,
+                    entityType: x.attributes.payload.data.type,
                     processEntities,
-                    processExternalLinks: () =>
-                      Effect.succeed({ allExternalLinks: [], changedExternalLinks: [] }),
+                    processExternalLinks,
                     processMutations,
-                    processRelationships: () => Effect.succeed(null),
-                    tokenKey: orgIdOpt.value,
-                  }).pipe(Effect.provideService(TokenKey, orgIdOpt.value))
+                    processRelationships,
+                  }).pipe(
+                    Effect.provideService(TokenKey, orgIdOpt.value),
+                    Effect.provideService(PcoHttpClient, pcoClient),
+                  )
                   break
                 }
                 case 'delete': {
@@ -741,7 +747,11 @@ export const PcoAdapterManagerLive = Layer.effect(
           Effect.tapError((error) => Effect.logError('Failed to subscribe to webhooks', { error })),
         ),
 
-      syncEntityId: (params) => syncEntityId({ ...params, tokenKey }),
+      syncEntityId: (params) =>
+        syncEntityId(params).pipe(
+          Effect.provideService(TokenKey, tokenKey),
+          Effect.provideService(PcoHttpClient, pcoClient),
+        ),
 
       syncEntityType: (params) =>
         Effect.gen(function* () {

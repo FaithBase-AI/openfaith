@@ -48,7 +48,9 @@ export const webhookSyncEntity = Effect.fn('webhookSyncEntity')(function* (
     mergeEntity: internalManager.mergeEntity,
     payload,
     processEntities: internalManager.processEntities,
+    processExternalLinks: internalManager.processExternalLinks,
     processMutations: () => Effect.succeed(undefined),
+    processRelationships: internalManager.processRelationships,
   })
 })
 
