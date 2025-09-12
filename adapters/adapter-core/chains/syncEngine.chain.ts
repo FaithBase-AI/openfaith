@@ -96,7 +96,9 @@ export const processMutation = Effect.fn('processMutation')(function* (op: CRUDO
               entityType,
               externalId: externalLink.externalId,
               internalId,
+              processEntities: internalManager.processEntities,
               processExternalLinks: internalManager.processExternalLinks,
+              processRelationships: internalManager.processRelationships,
             }),
         }),
       )

@@ -905,7 +905,14 @@ export const PcoAdapterManagerLive = Layer.effect(
 
       updateEntity: (params) =>
         Effect.gen(function* () {
-          const { entityType, externalId, data } = params
+          const {
+            entityType,
+            externalId,
+            data,
+            processEntities,
+            processExternalLinks,
+            processRelationships,
+          } = params
 
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
 
@@ -925,7 +932,26 @@ export const PcoAdapterManagerLive = Layer.effect(
               },
             },
           })
-          console.log('updateEntity', result)
+
+          const normalizedResponse = normalizeSingletonResponse(result)
+
+          yield* processPcoData({
+            data: normalizedResponse,
+            processEntities,
+            processExternalLinks,
+            processRelationships,
+            tokenKey,
+          }).pipe(
+            Effect.mapError(
+              (cause) =>
+                new AdapterTransformError({
+                  adapter: 'pco',
+                  cause,
+                  entityType,
+                  message: `Failed to process ${entityType} data`,
+                }),
+            ),
+          )
         }),
     })
   }),

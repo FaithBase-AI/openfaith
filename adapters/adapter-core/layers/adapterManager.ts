@@ -88,7 +88,9 @@ export class AdapterManager extends Context.Tag('@openfaith/adapter-core/layers/
       externalId: string
       data: Record<string, unknown>
 
+      processEntities: ProcessEntities
       processExternalLinks: ProcessExternalLinks
+      processRelationships: ProcessRelationships
     }) => Effect.Effect<
       void,
       AdapterFetchError | AdapterTransformError | AdapterEntityNotFoundError
