@@ -5,6 +5,8 @@
 import * as PgDrizzle from '@effect/sql-drizzle/Pg'
 import {
   DetectionError,
+  EntityDeletionError,
+  EntityMergingError,
   EntityProcessingError,
   type ExternalLinkInput,
   ExternalLinkRetrievalError,
@@ -12,8 +14,14 @@ import {
   InternalManager,
   RelationshipProcessingError,
   TokenKey,
+  WebhookRetrievalError,
 } from '@openfaith/adapter-core/server'
-import { type ExternalLink, edgesTable, externalLinksTable } from '@openfaith/db'
+import {
+  adapterWebhooksTable,
+  type ExternalLink,
+  edgesTable,
+  externalLinksTable,
+} from '@openfaith/db'
 import {
   type CustomFieldSchema,
   getAnnotationFromSchema,
@@ -21,14 +29,26 @@ import {
   OfTable,
 } from '@openfaith/schema'
 import { updateEntityRelationshipsForOrgE } from '@openfaith/server/helpers/updateEntityRelationships'
-import { getEntityId } from '@openfaith/shared'
-import { and, type BuildColumns, eq, getTableColumns, inArray, isNull, lt, sql } from 'drizzle-orm'
-import { jsonb, type PgTableWithColumns, text } from 'drizzle-orm/pg-core'
-import { Array, Effect, Layer, Option, pipe, Record } from 'effect'
+import { EdgeDirectionSchema, getEntityId } from '@openfaith/shared'
+import {
+  and,
+  type BuildColumns,
+  eq,
+  getTableColumns,
+  inArray,
+  isNull,
+  lt,
+  or,
+  sql,
+} from 'drizzle-orm'
+import { jsonb, type PgTableWithColumns, text, timestamp } from 'drizzle-orm/pg-core'
+import { Array, Effect, Layer, Option, pipe, Record, Schema } from 'effect'
 
 const baseColumns = {
   _tag: text().notNull(),
   customFields: jsonb().$type<ReadonlyArray<CustomFieldSchema>>().notNull().default([]),
+  deletedAt: timestamp({ mode: 'string' }),
+  deletedBy: text(),
   id: text().primaryKey(),
   orgId: text().notNull(),
 }
@@ -53,7 +73,7 @@ const partitionExternalLinksByDataPresence = (externalLinks: Array<ExternalLinkI
         // Reference links have NO createdAt/updatedAt (missing entity data)
         !link.createdAt && !link.updatedAt,
     ),
-    ([referenceLinks, entityLinks]) => ({
+    ([entityLinks, referenceLinks]) => ({
       entityLinks,
       referenceLinks,
     }),
@@ -284,6 +304,88 @@ const getProcessReferenceExternalLinks = Effect.fn('getProcessReferenceExternalL
   },
 )
 
+const getDeleteEntityId = Effect.fn('getDeleteEntityId')(function* () {
+  const db = yield* PgDrizzle.PgDrizzle
+  const orgId = yield* TokenKey
+
+  return Effect.fn(function* (entityId: string, entityType: string, adapter: string) {
+    const schemaOpt = getSchemaByEntityType(entityType)
+
+    const deletedAt = new Date()
+
+    if (Option.isNone(schemaOpt)) {
+      yield* Effect.annotateLogs(Effect.log('No schema found for entity tag, skipping'), {
+        entityId,
+        entityType,
+        orgId,
+      })
+
+      return deletedAt
+    }
+
+    // Get the table annotation from the schema
+    const tableOpt = getAnnotationFromSchema(OfTable, schemaOpt.value.ast)
+    if (Option.isNone(tableOpt)) {
+      yield* Effect.annotateLogs(Effect.log('No table found for entity schema, skipping'), {
+        entityId,
+        entityType,
+        orgId,
+      })
+
+      return deletedAt
+    }
+
+    const table = tableOpt.value as BaseTable
+    // Things we have to delete:
+    // 1. ExternalLink
+    // 2. Relationships
+    // 3. Entity
+
+    yield* Effect.all(
+      [
+        // 1. Delete ExternalLink
+        db
+          .update(externalLinksTable)
+          .set({
+            deletedAt,
+            deletedBy: 'sync_deletion_detection',
+          })
+          .where(
+            and(
+              eq(externalLinksTable.orgId, orgId),
+              eq(externalLinksTable.adapter, adapter),
+              eq(externalLinksTable.entityId, entityId),
+            ),
+          ),
+        // 2. Delete Relationships
+        db
+          .update(edgesTable)
+          .set({
+            deletedAt,
+            deletedBy: 'sync_deletion_detection',
+          })
+          .where(
+            and(
+              eq(edgesTable.orgId, orgId),
+              or(eq(edgesTable.sourceEntityId, entityId), eq(edgesTable.targetEntityId, entityId)),
+            ),
+          ),
+        // 3. Delete Entity
+        db
+          .update(table)
+          .set({
+            deletedAt: deletedAt.toISOString(),
+            deletedBy: 'sync_deletion_detection',
+          })
+          .where(eq(table.id, entityId)),
+      ],
+      { concurrency: 'unbounded' },
+    )
+
+    return deletedAt
+  })
+})
+
 /**
  * PostgreSQL implementation of the InternalManager service.
  *
@@ -298,8 +400,56 @@ export const InternalManagerLive = Layer.effect(
 
     const processEntityExternalLinks = yield* getProcessEntityExternalLinks()
     const processReferenceExternalLinks = yield* getProcessReferenceExternalLinks()
+    const deleteEntityId = yield* getDeleteEntityId()
 
     return InternalManager.of({
+      deleteEntity: (externalId, adapter) =>
+        Effect.gen(function* () {
+          yield* Effect.annotateLogs(Effect.log('Deleting entity'), {
+            adapter,
+            externalId,
+            orgId,
+          })
+
+          const links = yield* db
+            .select({
+              entityId: externalLinksTable.entityId,
+              entityType: externalLinksTable.entityType,
+            })
+            .from(externalLinksTable)
+            .where(
+              and(
+                eq(externalLinksTable.externalId, externalId),
+                eq(externalLinksTable.adapter, adapter),
+                eq(externalLinksTable.orgId, orgId),
+                isNull(externalLinksTable.deletedAt),
+              ),
+            )
+            .limit(1)
+
+          const linkOpt = pipe(links, Array.head)
+
+          if (linkOpt._tag === 'None') {
+            yield* Effect.annotateLogs(Effect.log('No link found for external ID, skipping'), {
+              externalId,
+              orgId,
+            })
+            return
+          }
+
+          yield* deleteEntityId(linkOpt.value.entityId, linkOpt.value.entityType, adapter)
+        }).pipe(
+          Effect.mapError(
+            (cause) =>
+              new EntityDeletionError({
+                adapter,
+                cause,
+                externalId,
+                message: `Failed to delete entity.`,
+                orgId,
+              }),
+          ),
+        ),
       /**
        * Detects and marks entities as deleted based on sync timing.
        */
@@ -438,6 +588,164 @@ export const InternalManagerLive = Layer.effect(
                 internalId,
                 message: `Failed to retrieve external link: ${cause}`,
                 orgId,
+              }),
+          ),
+        ),
+
+      getWebhooks: (adapter) =>
+        db
+          .select({
+            authenticitySecret: adapterWebhooksTable.authenticitySecret,
+            orgId: adapterWebhooksTable.orgId,
+          })
+          .from(adapterWebhooksTable)
+          .where(eq(adapterWebhooksTable.adapter, adapter))
+          .pipe(
+            Effect.mapError(
+              (cause) =>
+                new WebhookRetrievalError({
+                  adapter,
+                  cause,
+                  message: `Failed to retrieve webhooks: ${cause}`,
+                }),
+            ),
+          ),
+      mergeEntity: (keepId, removeId, adapter) =>
+        Effect.gen(function* () {
+          const links = yield* db
+            .select({
+              entityId: externalLinksTable.entityId,
+              entityType: externalLinksTable.entityType,
+              externalId: externalLinksTable.externalId,
+            })
+            .from(externalLinksTable)
+            .where(
+              and(
+                or(
+                  eq(externalLinksTable.externalId, removeId),
+                  eq(externalLinksTable.externalId, keepId),
+                ),
+                eq(externalLinksTable.adapter, adapter),
+                eq(externalLinksTable.orgId, orgId),
+                isNull(externalLinksTable.deletedAt),
+              ),
+            )
+
+          const removeIdLinkOpt = pipe(
+            links,
+            Array.findFirst((link) => link.externalId === removeId),
+          )
+
+          if (Option.isNone(removeIdLinkOpt)) {
+            yield* Effect.annotateLogs(Effect.log('No link found for remove ID, skipping'), {
+              externalId: removeId,
+              orgId,
+            })
+            return
+          }
+
+          const removeInternalId = removeIdLinkOpt.value.entityId
+
+          const removeIdEdges = yield* db
+            .select()
+            .from(edgesTable)
+            .where(
+              and(
+                eq(edgesTable.orgId, orgId),
+                or(
+                  eq(edgesTable.sourceEntityId, removeInternalId),
+                  eq(edgesTable.targetEntityId, removeInternalId),
+                ),
+              ),
+            )
+
+          const deletedAt = yield* deleteEntityId(
+            removeInternalId,
+            removeIdLinkOpt.value.entityType,
+            adapter,
+          )
+
+          const keepIdLinkOpt = pipe(
+            links,
+            Array.findFirst((link) => link.externalId === keepId),
+          )
+
+          if (Option.isNone(keepIdLinkOpt)) {
+            yield* Effect.annotateLogs(Effect.log('No link found for keep ID, skipping'), {
+              externalId: keepId,
+              orgId,
+            })
+            return
+          }
+
+          const keepInternalId = keepIdLinkOpt.value.entityId
+
+          const { source, target } = Schema.decodeUnknownSync(EdgeDirectionSchema)({
+            idA: keepInternalId,
+            idB: removeInternalId,
+          })
+
+          // 1. Create new edges
+          // 2. Add merged edge
+          yield* db
+            .insert(edgesTable)
+            .values(
+              pipe(
+                removeIdEdges,
+                Array.map((x) => ({
+                  ...x,
+                  ...(x.sourceEntityId === removeInternalId
+                    ? {
+                        sourceEntityId: keepInternalId,
+                      }
+                    : {
+                        targetEntityId: keepInternalId,
+                      }),
+                  createdAt: deletedAt,
+                  createdBy: 'sync_merging',
+                  updatedAt: deletedAt,
+                })),
+                Array.append({
+                  createdAt: deletedAt,
+                  createdBy: 'sync_merging',
+                  metadata: {
+                    keepId: keepInternalId,
+                    relationshipKey: keepIdLinkOpt.value.entityType,
+                    removeId: removeInternalId,
+                    source: `${adapter}_merging`,
+                  },
+                  orgId,
+                  relationshipType: 'merged',
+                  sourceEntityId: source,
+                  sourceEntityTypeTag: keepIdLinkOpt.value.entityType,
+                  targetEntityId: target,
+                  targetEntityTypeTag: keepIdLinkOpt.value.entityType,
+                  updatedAt: deletedAt,
+                  updatedBy: 'sync_merging',
+                }),
+              ),
+            )
+            .onConflictDoUpdate({
+              set: {
+                metadata: sql`EXCLUDED."metadata"`,
+                updatedAt: sql`EXCLUDED."updatedAt"`,
+              },
+              target: [
+                edgesTable.orgId,
+                edgesTable.sourceEntityId,
+                edgesTable.targetEntityId,
+                edgesTable.relationshipType,
+              ],
+            })
+        }).pipe(
+          Effect.mapError(
+            (cause) =>
+              new EntityMergingError({
+                adapter,
+                cause,
+                keepId,
+                orgId,
+                removeId,
               }),
           ),
         ),

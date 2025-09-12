@@ -1,13 +1,14 @@
 import { HttpApiBuilder } from '@effect/platform'
 import { TokenKey } from '@openfaith/adapter-core/server'
-import { MutatorError, SessionContext, ZeroMutatorsApi as ZeroApi } from '@openfaith/domain'
+import { AppHttpApi, MutatorError, SessionContext } from '@openfaith/domain'
 import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
 import { AppZeroStore, ZeroLive } from '@openfaith/server/live/zeroLive'
-import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
+import { WorkflowClient } from '@openfaith/workers'
 import { createMutators } from '@openfaith/zero'
 import type { ReadonlyJSONObject } from '@rocicorp/zero'
 import { Effect, Layer, Option, pipe } from 'effect'
-export const ZeroHandlerLive = HttpApiBuilder.group(ZeroApi, 'zero', (handlers) =>
+
+export const ZeroHandlerLive = HttpApiBuilder.group(AppHttpApi, 'zero', (handlers) =>
   handlers.handle('push', (input) =>
     Effect.gen(function* () {
       const session = yield* SessionContext

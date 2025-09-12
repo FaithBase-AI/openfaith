@@ -1,4 +1,4 @@
-import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
+import { mkPcoEntity, mkPcoWebhookDelivery } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
 import {
   BasePerson,
@@ -152,4 +152,57 @@ export const PcoPerson = mkPcoEntity({
   [OfIdentifier]: 'pco-person',
   [OfTransformer]: pcoPersonTransformer,
 })
+export type PcoPersonSchema = typeof PcoPerson
 export type PcoPerson = typeof PcoPerson.Type
+
+export class PcoPersonCreatedWebhook extends Schema.Class<PcoPersonCreatedWebhook>(
+  'PcoPersonCreatedWebhook',
+)(mkPcoWebhookDelivery('people.v2.events.person.created', PcoPerson)) {}
+
+export class PcoPersonUpdatedWebhook extends Schema.Class<PcoPersonUpdatedWebhook>(
+  'PcoPersonUpdatedWebhook',
+)(mkPcoWebhookDelivery('people.v2.events.person.updated', PcoPerson)) {}
+
+export class PcoPersonDestroyedWebhook extends Schema.Class<PcoPersonDestroyedWebhook>(
+  'PcoPersonDestroyedWebhook',
+)(
+  mkPcoWebhookDelivery(
+    'people.v2.events.person.destroyed',
+    Schema.Struct({
+      // Destroyed events typically have minimal or no attributes
+      attributes: Schema.optional(Schema.Unknown),
+      id: Schema.String,
+      links: Schema.optional(Schema.Unknown),
+      relationships: Schema.optional(Schema.Unknown),
+      type: Schema.Literal('Person'),
+    }),
+  ),
+) {}
+
+export class PcoPersonMergerWebhook extends Schema.Class<PcoPersonMergerWebhook>(
+  'PcoPersonMergerWebhook',
+)(
+  mkPcoWebhookDelivery(
+    'people.v2.events.person_merger.created',
+    Schema.Struct({
+      attributes: Schema.optional(Schema.Unknown),
+      id: Schema.String,
+      links: Schema.optional(Schema.Unknown),
+      relationships: Schema.Struct({
+        person_to_keep: Schema.Struct({
+          data: Schema.Struct({
+            id: Schema.String,
+            type: Schema.Literal('Person'),
+          }),
+        }),
+        person_to_remove: Schema.Struct({
+          data: Schema.Struct({
+            id: Schema.String,
+            type: Schema.Literal('Person'),
+          }),
+        }),
+      }),
+      type: Schema.Literal('PersonMerger'),
+    }),
+  ),
+) {}

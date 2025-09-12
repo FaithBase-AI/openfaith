@@ -5,7 +5,7 @@ import { getTableName, schema, usersTable } from '@openfaith/db'
 import { reactInvitationEmail, reactOTPEmail } from '@openfaith/email'
 import { db } from '@openfaith/server'
 import { asyncNoOp, env } from '@openfaith/shared'
-import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
+import { WorkflowClient } from '@openfaith/workers'
 import { betterAuth, type Models } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import {

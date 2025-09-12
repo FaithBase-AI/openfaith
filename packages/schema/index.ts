@@ -1,4 +1,5 @@
 export * from '@openfaith/schema/adapter/adapterTokensSchema'
+export * from '@openfaith/schema/adapter/adapterWebhookSchema'
 export * from '@openfaith/schema/collection/ofFolderSchema'
 export * from '@openfaith/schema/directory/ofAddressSchema'
 export * from '@openfaith/schema/directory/ofPersonSchema'

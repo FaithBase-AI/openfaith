@@ -1,6 +1,9 @@
 import type {
+  DeleteEntity,
   DetectionError,
   ExternalLinkRetrievalError,
+  GetWebhooks,
+  MergeEntity,
   ProcessEntities,
   ProcessExternalLinks,
   ProcessRelationships,
@@ -22,10 +25,16 @@ export class InternalManager extends Context.Tag('@openfaith/adapter-core/layers
 
     readonly processRelationships: ProcessRelationships
 
+    readonly getWebhooks: GetWebhooks
+
     readonly detectAndMarkDeleted: (
       adapter: string,
       entityType: string,
       syncStartTime: Date,
     ) => Effect.Effect<Array<ExternalLink>, DetectionError>
+
+    readonly deleteEntity: DeleteEntity
+
+    readonly mergeEntity: MergeEntity
   }
 >() {}

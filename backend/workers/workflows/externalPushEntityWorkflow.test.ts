@@ -13,7 +13,9 @@ const MockAdapterManager = Layer.succeed(
     createEntity: () => Effect.succeed(undefined),
     deleteEntity: () => Effect.succeed(undefined),
     getEntityManifest: () => ({}),
-    getEntityTypeForWebhookEvent: () => Effect.succeed('Person'),
+    getWebhookOrgId: () => Effect.succeed(''),
+    processWebhook: () => Effect.succeed(undefined),
+    subscribeToWebhooks: () => Effect.succeed(undefined),
     syncEntityId: () => Effect.succeed(undefined),
     syncEntityType: () => Effect.succeed(undefined),
     updateEntity: () => Effect.succeed(undefined),
@@ -23,8 +25,11 @@ const MockAdapterManager = Layer.succeed(
 const MockInternalManager = Layer.succeed(
   InternalManager,
   InternalManager.of({
+    deleteEntity: () => Effect.succeed(undefined),
     detectAndMarkDeleted: () => Effect.succeed([]),
     getExternalLink: () => Effect.succeed(Option.none()),
+    getWebhooks: () => Effect.succeed([]),
+    mergeEntity: () => Effect.succeed(undefined),
     processEntities: () => Effect.succeed(undefined),
     processExternalLinks: () =>
       Effect.succeed({
