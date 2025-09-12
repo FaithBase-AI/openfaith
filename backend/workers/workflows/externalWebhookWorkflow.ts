@@ -1,11 +1,6 @@
 import { Headers } from '@effect/platform'
 import { Activity, Workflow } from '@effect/workflow'
-import {
-  AdapterManager,
-  InternalManager,
-  TokenKey,
-  webhookSyncEntity,
-} from '@openfaith/adapter-core/server'
+import { getWebhookOrgId, TokenKey, webhookSyncEntity } from '@openfaith/adapter-core/server'
 import { PcoAdapterManagerLayer } from '@openfaith/pco/pcoAdapterManagerLayer'
 import { InternalManagerLive } from '@openfaith/server'
 import { Effect, Layer, pipe, Schema } from 'effect'
@@ -34,68 +29,51 @@ export const ExternalWebhookWorkflow = Workflow.make({
 
 export const ExternalWebhookWorkflowLayer = ExternalWebhookWorkflow.toLayer(
   Effect.fn(function* (payload) {
-    const headers = pipe(payload.headers, Headers.fromInput)
-
-    const orgIdOpt = yield* Activity.make({
+    // We have a bit of a funny problem with TokenKey (orgId). AdapterManager and InternalManager both depend on TokenKey being provided upfront to them. We can technically have a single workflow where we take in the webhooks and do everything all at once, but then we get stuck with a TokenKey that isn't valid. The easiest workaround that I could think of that I didn't hate was to split out validating the webhook and getting the orgId from processing it. This lets us then run another activity with the right orgId as the TokenKey for the rest of the operations.
+    // We could in the future make TokenKey be more robust, have it be a look up service that then lets you change the value, but for now this works.
+    const orgId = yield* Activity.make({
       error: ExternalWebhookError,
-      execute: Effect.gen(function* () {
-        const adapterManager = yield* AdapterManager
-        const internalManager = yield* InternalManager
-
-        return yield* adapterManager.getWebhookOrgIdOpt({
-          getWebhooks: internalManager.getWebhooks,
-          headers,
-          payload: payload.payload,
-        })
+      execute: getWebhookOrgId({
+        headers: pipe(payload.headers, Headers.fromInput),
+        payload: payload.payload,
       }).pipe(
         Effect.provide(Layer.mergeAll(PcoAdapterManagerLayer, InternalManagerLive)),
         Effect.provideService(TokenKey, 'webhook-token-key'),
-        Effect.withSpan('external-webhook-org-id-retrieval-activity'),
-        Effect.tapError((error) =>
-          Effect.logError('External webhook org ID retrieval failed', {
-            error,
-          }),
-        ),
-        Effect.mapError(
-          (error) =>
-            new ExternalWebhookError({
-              cause: error,
-              message: `Failed to get webhook org ID: ${error.message}`,
-            }),
-        ),
+        Effect.catchTags({
+          AdapterWebhookNoOrgIdError: (error) =>
+            Effect.fail(
+              new ExternalWebhookError({
+                cause: error,
+                message: error.message,
+              }),
+            ),
+          AdapterWebhookRetrieveOrgIdError: (error) =>
+            Effect.fail(
+              new ExternalWebhookError({
+                cause: error,
+                message: error.message,
+              }),
+            ),
+        }),
       ),
       name: 'GetWebhookOrgId',
-      success: Schema.Option(Schema.String),
-    })
-
-    if (orgIdOpt._tag === 'None') {
-      return yield* Effect.fail(
-        new ExternalWebhookError({
-          message: 'No org ID found',
-        }),
-      )
-    }
+      success: Schema.String,
+    }).pipe(Activity.retry({ times: 3 }))
 
     yield* Activity.make({
       error: ExternalWebhookError,
-      execute: Effect.gen(function* () {
-        yield* webhookSyncEntity(payload.payload)
-      }).pipe(
+      execute: webhookSyncEntity(payload.payload).pipe(
         Effect.provide(Layer.mergeAll(PcoAdapterManagerLayer, InternalManagerLive)),
-        Effect.provideService(TokenKey, orgIdOpt.value),
-        Effect.withSpan('external-webhook-activity'),
-        Effect.tapError((error) =>
-          Effect.logError('External webhook failed', {
-            error,
-          }),
-        ),
-        Effect.mapError(
-          (error) =>
-            new ExternalWebhookError({
-              cause: error,
-              message: `External webhook failed: ${error.message}`,
-            }),
-        ),
+        Effect.provideService(TokenKey, orgId),
+        Effect.catchTags({
+          AdapterWebhookProcessingError: (error) =>
+            Effect.fail(
+              new ExternalWebhookError({
+                cause: error,
+                message: error.message,
+              }),
+            ),
+        }),
       ),
       name: 'ProcessExternalWebhook',
     }).pipe(Activity.retry({ times: 3 }))

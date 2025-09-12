@@ -1,3 +1,4 @@
+import type { Headers } from '@effect/platform'
 import type { ExternalLink } from '@openfaith/db'
 import type { CRUDOp } from '@openfaith/domain'
 import type { EntityUnion } from '@openfaith/schema/shared/entityDiscovery'
@@ -34,8 +35,17 @@ export class AdapterWebhookProcessingError extends Schema.TaggedError<AdapterWeb
   },
 ) {}
 
-export class AdapterWebhookOrgIdRetrievalError extends Schema.TaggedError<AdapterWebhookOrgIdRetrievalError>()(
-  'AdapterWebhookOrgIdRetrievalError',
+export class AdapterWebhookRetrieveOrgIdError extends Schema.TaggedError<AdapterWebhookRetrieveOrgIdError>()(
+  'AdapterWebhookRetrieveOrgIdError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+  },
+) {}
+
+export class AdapterWebhookNoOrgIdError extends Schema.TaggedError<AdapterWebhookNoOrgIdError>()(
+  'AdapterWebhookNoOrgIdError',
   {
     adapter: Schema.String,
     cause: Schema.optional(Schema.Unknown),
@@ -214,6 +224,12 @@ export type MergeEntity = (
 export type GetWebhooks = (
   adapter: string,
 ) => Effect.Effect<Array<{ authenticitySecret: string; orgId: string }>, WebhookRetrievalError>
+
+export type GetWebhookOrgId = (params: {
+  headers: Headers.Headers
+  payload: any
+  getWebhooks: GetWebhooks
+}) => Effect.Effect<string, AdapterWebhookRetrieveOrgIdError | AdapterWebhookNoOrgIdError>
 
 export type SyncEntityId = (params: {
   entityType: string

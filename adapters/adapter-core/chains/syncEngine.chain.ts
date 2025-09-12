@@ -1,5 +1,6 @@
 import { AdapterManager } from '@openfaith/adapter-core/layers/adapterManager'
 import { InternalManager } from '@openfaith/adapter-core/layers/internalManager'
+import type { GetWebhookOrgId } from '@openfaith/adapter-core/server'
 import type { CRUDOp } from '@openfaith/domain'
 import { mkEntityName } from '@openfaith/shared'
 import { Effect, Option, pipe } from 'effect'
@@ -33,6 +34,18 @@ export const subscribeToWebhooks = Effect.fn('subscribeToWebhooks')(function* ()
 })
 
 // Webhook Event
+export const getWebhookOrgId = Effect.fn('getWebhookOrgId')(function* (
+  params: Omit<Parameters<GetWebhookOrgId>[0], 'getWebhooks'>,
+) {
+  const adapterManager = yield* AdapterManager
+  const internalManager = yield* InternalManager
+
+  return yield* adapterManager.getWebhookOrgId({
+    getWebhooks: internalManager.getWebhooks,
+    ...params,
+  })
+})
+
 export const webhookSyncEntity = Effect.fn('webhookSyncEntity')(function* (payload: any) {
   const adapterManager = yield* AdapterManager
   const internalManager = yield* InternalManager

@@ -4,8 +4,9 @@ import {
   AdapterFetchError,
   AdapterManager,
   AdapterTransformError,
-  AdapterWebhookOrgIdRetrievalError,
+  AdapterWebhookNoOrgIdError,
   AdapterWebhookProcessingError,
+  AdapterWebhookRetrieveOrgIdError,
   AdapterWebhookSubscriptionError,
   type EntityData,
   type ExternalLinkInput,
@@ -491,7 +492,7 @@ export const PcoAdapterManagerLive = Layer.effect(
           })),
         ),
 
-      getWebhookOrgIdOpt: (params) =>
+      getWebhookOrgId: (params) =>
         Effect.gen(function* () {
           const { headers, payload, getWebhooks } = params
           const rawBody = JSON.stringify(payload)
@@ -500,7 +501,7 @@ export const PcoAdapterManagerLive = Layer.effect(
 
           const webhooks = yield* getWebhooks('pco')
 
-          return pipe(
+          return yield* pipe(
             secretOpt,
             Option.flatMap((secret) =>
               pipe(
@@ -522,14 +523,24 @@ export const PcoAdapterManagerLive = Layer.effect(
             ),
           )
         }).pipe(
-          Effect.mapError(
-            (error) =>
-              new AdapterWebhookOrgIdRetrievalError({
-                adapter: 'pco',
-                cause: error,
-                message: `Failed to get webhook org id`,
-              }),
-          ),
+          Effect.catchTags({
+            NoSuchElementException: (error) =>
+              Effect.fail(
+                new AdapterWebhookNoOrgIdError({
+                  adapter: 'pco',
+                  cause: error,
+                  message: `No adapterWebhook found for webhook.`,
+                }),
+              ),
+            WebhookRetrievalError: (error) =>
+              Effect.fail(
+                new AdapterWebhookRetrieveOrgIdError({
+                  adapter: 'pco',
+                  cause: error,
+                  message: `Failed to retrieve webhooks from db.`,
+                }),
+              ),
+          }),
         ),
 
       processWebhook: (params) =>
@@ -585,14 +596,56 @@ export const PcoAdapterManagerLive = Layer.effect(
             }),
           )
         }).pipe(
-          Effect.mapError(
-            (error) =>
-              new AdapterWebhookProcessingError({
-                adapter: 'pco',
-                cause: error,
-                message: `Failed to get webhooks`,
-              }),
-          ),
+          Effect.catchTags({
+            AdapterEntityNotFoundError: (error) =>
+              Effect.fail(
+                new AdapterWebhookProcessingError({
+                  adapter: 'pco',
+                  cause: error,
+                  message: `Failed to find entity`,
+                }),
+              ),
+            AdapterFetchError: (error) =>
+              Effect.fail(
+                new AdapterWebhookProcessingError({
+                  adapter: 'pco',
+                  cause: error,
+                  message: `Failed to fetch entity`,
+                }),
+              ),
+            AdapterTransformError: (error) =>
+              Effect.fail(
+                new AdapterWebhookProcessingError({
+                  adapter: 'pco',
+                  cause: error,
+                  message: `Failed to transform entity`,
+                }),
+              ),
+            EntityDeletionError: (error) =>
+              Effect.fail(
+                new AdapterWebhookProcessingError({
+                  adapter: 'pco',
+                  cause: error,
+                  message: `Failed to delete entity`,
+                }),
+              ),
+            EntityMergingError: (error) =>
+              Effect.fail(
+                new AdapterWebhookProcessingError({
+                  adapter: 'pco',
+                  cause: error,
+                  message: `Failed to merge entity`,
+                }),
+              ),
+            ParseError: (error) =>
+              Effect.fail(
+                new AdapterWebhookProcessingError({
+                  adapter: 'pco',
+                  cause: error,
+                  message: `Failed to parse webhook payload`,
+                }),
+              ),
+          }),
         ),
 
       subscribeToWebhooks: (params) =>
