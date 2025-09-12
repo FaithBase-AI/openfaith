@@ -497,24 +497,29 @@ export const PcoAdapterManagerLive = Layer.effect(
           const rawBody = JSON.stringify(payload)
 
           const secretOpt = pipe(headers, Headers.get('x-pco-webhooks-authenticity'))
-          const webhookName = pipe(headers, Headers.get('x-pco-webhooks-name'))
-
-          if (secretOpt._tag === 'None' || webhookName._tag === 'None') {
-            return Option.none<string>()
-          }
 
           const webhooks = yield* getWebhooks('pco')
 
           return pipe(
-            webhooks,
-            Array.findFirst((webhook) => {
-              const hasher = new Bun.CryptoHasher('sha256', webhook.authenticitySecret)
-              hasher.update(rawBody)
-              const computedHash = hasher.digest('hex')
+            secretOpt,
+            Option.flatMap((secret) =>
+              pipe(
+                webhooks,
+                Array.findFirst((webhook) => {
+                  const hasher = new Bun.CryptoHasher('sha256', webhook.authenticitySecret)
+                  hasher.update(rawBody)
+                  const computedHash = hasher.digest('hex')
 
-              return computedHash === secretOpt.value
-            }),
-            Option.map((webhook) => webhook.orgId),
+                  const expectedBuffer = Buffer.from(secret, 'hex')
+                  const computedBuffer = Buffer.from(computedHash, 'hex')
+                  return (
+                    expectedBuffer.length === computedBuffer.length &&
+                    crypto.timingSafeEqual(expectedBuffer, computedBuffer)
+                  )
+                }),
+                Option.map((webhook) => webhook.orgId),
+              ),
+            ),
           )
         }).pipe(
           Effect.mapError(
