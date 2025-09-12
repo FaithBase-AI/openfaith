@@ -33,7 +33,7 @@ export const pcoNoteCategoryTransformer = pcoToOf(
 
 export const pcoNoteCategoryPartialTransformer = pcoToOf(
   Schema.partial(PcoNoteCategoryAttributes),
-  Schema.partial(BaseFolder),
+  Schema.partial(Schema.Struct(BaseFolder.fields)),
   'noteCategory',
 )
 

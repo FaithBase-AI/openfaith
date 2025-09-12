@@ -52,7 +52,7 @@ export const pcoAddressTransformer = pcoToOf(PcoAddressAttributes, BaseAddress, 
 
 export const pcoAddressPartialTransformer = pcoToOf(
   Schema.partial(PcoAddressAttributes),
-  Schema.partial(BaseAddress),
+  Schema.partial(Schema.Struct(BaseAddress.fields)),
   'address',
 )
 

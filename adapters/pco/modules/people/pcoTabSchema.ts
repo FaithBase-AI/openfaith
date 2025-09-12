@@ -29,7 +29,7 @@ export const pcoTabTransformer = pcoToOf(PcoTabAttributes, BaseFolder, 'tab')
 
 export const pcoTabPartialTransformer = pcoToOf(
   Schema.partial(PcoTabAttributes),
-  Schema.partial(BaseFolder),
+  Schema.partial(Schema.Struct(BaseFolder.fields)),
   'tab',
 )
 

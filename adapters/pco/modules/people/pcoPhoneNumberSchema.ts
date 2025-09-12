@@ -72,7 +72,7 @@ export const pcoPhoneNumberTransformer = pcoToOf(
 
 export const pcoPhoneNumberPartialTransformer = pcoToOf(
   Schema.partial(PcoPhoneNumberAttributes),
-  Schema.partial(BasePhoneNumber),
+  Schema.partial(Schema.Struct(BasePhoneNumber.fields)),
   'phoneNumber',
 )
 

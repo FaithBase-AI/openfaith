@@ -4,7 +4,7 @@ import {
   type PcoPhoneNumberAttributes,
   pcoPhoneNumberTransformer,
 } from '@openfaith/pco/modules/people/pcoPhoneNumberSchema'
-import { PcoPersonAttributes } from '@openfaith/pco/server'
+import { PcoPersonAttributes, pcoPersonPartialTransformer } from '@openfaith/pco/server'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
 import {
   BasePerson,
@@ -462,6 +462,184 @@ effect('pcoToOf: transforms PCO phone number to BasePhoneNumber (integration tes
   }),
 )
 
+effect('pcoToOf: full PcoPersonAttributes bidirectional transformation test', () =>
+  Effect.gen(function* () {
+    // Test data representing a full PcoPersonAttributes object - properly typed
+    const fullPcoPersonData = {
+      accounting_administrator: true,
+      anniversary: '2020-06-15',
+      avatar: 'https://avatars.planningcenteronline.com/uploads/initials/JD.png',
+      birthdate: '1990-03-22',
+      child: false,
+      created_at: '2020-05-03T12:19:13Z',
+      demographic_avatar_url: 'https://avatars.planningcenteronline.com/uploads/initials/JD.png',
+      first_name: 'John',
+      gender: 'Male' as const, // This matches the literal type
+      given_name: 'Johnny',
+      grade: 12 as const,
+      graduation_year: 2025,
+      inactivated_at: null,
+      last_name: 'Doe',
+      medical_notes: 'No known allergies',
+      membership: 'Member',
+      middle_name: 'William',
+      name: 'John William Doe',
+      nickname: 'JD',
+      passed_background_check: true,
+      people_permissions: 'Editor' as const,
+      remote_id: 'external-123',
+      school_type: 'High School',
+      site_administrator: false,
+      status: 'active' as const,
+      updated_at: '2025-06-18T15:30:50Z',
+    } satisfies PcoPersonAttributes
+
+    // Use the actual transformer
+    const transformer = pcoToOf(PcoPersonAttributes, BasePerson, 'person')
+
+    console.log('Starting decode test...')
+
+    // Test decode (PCO → OF)
+    const decodedResult = Schema.decodeSync(transformer, { errors: 'all' })(fullPcoPersonData)
+
+    console.log('Decoded result:', JSON.stringify(decodedResult, null, 2))
+
+    // Verify some key transformations
+    expect(decodedResult._tag).toBe('person')
+    expect(decodedResult.firstName).toBe('John')
+    expect(decodedResult.lastName).toBe('Doe')
+    expect(decodedResult.middleName).toBe('William')
+    expect(decodedResult.gender).toBe('male') // Should be transformed from 'Male' to 'male'
+    expect(decodedResult.status).toBe('active')
+
+    // Check that custom fields are properly created
+    expect(Array.isArray(decodedResult.customFields)).toBe(true)
+
+    // Find specific custom fields
+    const accountingAdminField = pipe(
+      decodedResult.customFields,
+      Array.findFirst((cf) => cf.name === 'pco_accounting_administrator'),
+    )
+    expect(accountingAdminField._tag).toBe('Some')
+    if (accountingAdminField._tag === 'Some') {
+      expect(accountingAdminField.value.value).toBe(true)
+      expect(accountingAdminField.value._tag).toBe('boolean')
+    }
+
+    const givenNameField = pipe(
+      decodedResult.customFields,
+      Array.findFirst((cf) => cf.name === 'pco_given_name'),
+    )
+    expect(givenNameField._tag).toBe('Some')
+    if (givenNameField._tag === 'Some') {
+      expect(givenNameField.value.value).toBe('Johnny')
+      expect(givenNameField.value._tag).toBe('string')
+    }
+
+    console.log('Starting encode test...')
+
+    // Test encode (OF → PCO) - this is where we might see annotation issues
+    const encodedResult = Schema.encodeSync(transformer, { errors: 'all' })(decodedResult)
+
+    console.log('Encoded result:', JSON.stringify(encodedResult, null, 2))
+
+    // Verify round-trip accuracy for standard fields
+    expect(encodedResult.first_name).toBe('John')
+    expect(encodedResult.last_name).toBe('Doe')
+    expect(encodedResult.middle_name).toBe('William')
+    expect(encodedResult.status).toBe('active')
+    expect(encodedResult.anniversary).toBe('2020-06-15')
+    expect(encodedResult.birthdate).toBe('1990-03-22')
+
+    // Verify custom fields were properly restored
+    expect(encodedResult.accounting_administrator).toBe(true)
+    expect(encodedResult.given_name).toBe('Johnny')
+    expect(encodedResult.grade).toBe(12)
+    expect(encodedResult.graduation_year).toBe(2025)
+    expect(encodedResult.medical_notes).toBe('No known allergies')
+    expect(encodedResult.nickname).toBe('JD')
+    expect(encodedResult.passed_background_check).toBe(true)
+    expect(encodedResult.people_permissions).toBe('Editor')
+    expect(encodedResult.remote_id).toBe('external-123')
+    expect(encodedResult.school_type).toBe('High School')
+    expect(encodedResult.site_administrator).toBe(false)
+
+    // Check that non-custom fields don't appear in the encoded result unnecessarily
+    expect('customFields' in encodedResult).toBe(false)
+    expect('_tag' in encodedResult).toBe(false)
+    expect('tags' in encodedResult).toBe(false)
+    expect('type' in encodedResult).toBe(false)
+  }),
+)
+
+effect('pcoPersonPartialTransformer: simple encoding test (firstName -> first_name)', () =>
+  Effect.gen(function* () {
+    // Test the exact issue: {firstName: "George"} should become {first_name: "George"}
+    const input = { firstName: 'George' }
+
+    console.log('Input:', JSON.stringify(input, null, 2))
+
+    try {
+      const result = Schema.encodeSync(pcoPersonPartialTransformer)(input)
+      console.log('Encoded result:', JSON.stringify(result, null, 2))
+
+      // This should work but currently fails
+      expect((result as any).first_name).toBe('George')
+    } catch (error) {
+      console.log('Encoding error:', error)
+      throw error
+    }
+  }),
+)
+
+effect('pcoToOf: test union type annotations with people_permissions field', () =>
+  Effect.gen(function* () {
+    // Specifically test the people_permissions field which has a union type
+    // Schema.Union(Schema.Literal('Manager', 'Editor'), Schema.String)
+    // Use partial transformer for minimal test data
+    const testData = {
+      first_name: 'Test',
+      last_name: 'User',
+      people_permissions: 'Manager' as const,
+    }
+
+    console.log('Testing union type field transformation...')
+
+    const decoded = Schema.decodeSync(pcoPersonPartialTransformer)(testData)
+
+    console.log('Decoded result:', JSON.stringify(decoded, null, 2))
+
+    // Should be a custom field since it has OfCustomField: true
+    const customFields = decoded.customFields || []
+    const permissionsField = pipe(
+      customFields,
+      Array.findFirst((cf) => cf.name === 'pco_people_permissions'),
+    )
+
+    expect(permissionsField._tag).toBe('Some')
+    if (permissionsField._tag === 'Some') {
+      expect(permissionsField.value.value).toBe('Manager')
+      expect(permissionsField.value._tag).toBe('string')
+    }
+
+    // Test encoding back
+    const encoded = Schema.encodeSync(pcoPersonPartialTransformer)(decoded)
+    console.log('Encoded result:', JSON.stringify(encoded, null, 2))
+    expect((encoded as any).people_permissions).toBe('Manager')
+
+    // Test with a string value that's not in the literal union
+    const testDataCustomString = {
+      first_name: 'Test',
+      last_name: 'User',
+      people_permissions: 'CustomRole',
+    }
+
+    const decodedCustom = Schema.decodeSync(pcoPersonPartialTransformer)(testDataCustomString)
+    const encodedCustom = Schema.encodeSync(pcoPersonPartialTransformer)(decodedCustom)
+    expect((encodedCustom as any).people_permissions).toBe('CustomRole')
+  }),
+)
+
 effect('pcoToOf handles Schema.optionalWith with default values', () =>
   Effect.gen(function* () {
     // Test schema with optionalWith and default values
@@ -539,16 +717,36 @@ const extractFields = (schema: Schema.Schema.Any): Record<string, { ast: SchemaA
 
   if (ast._tag === 'TypeLiteral') {
     return pipe(
-      ast.propertySignatures,
-      Array.map((prop) => [prop.name as string, { ast: prop.type }] as const),
+      (ast as any).propertySignatures,
+      Array.map((prop: any) => {
+        // Merge annotations from both the property and its type
+        const fieldAst = {
+          ...prop.type,
+          annotations: {
+            ...(prop.type.annotations || {}),
+            ...(prop.annotations || {}), // Property annotations override type annotations
+          },
+        } as SchemaAST.AST
+        return [prop.name as string, { ast: fieldAst }] as const
+      }),
       Record.fromEntries,
     )
   }
 
   if (ast._tag === 'Transformation' && ast.from._tag === 'TypeLiteral') {
     return pipe(
-      ast.from.propertySignatures,
-      Array.map((prop) => [prop.name as string, { ast: prop.type }] as const),
+      (ast.from as any).propertySignatures,
+      Array.map((prop: any) => {
+        // Merge annotations from both the property and its type
+        const fieldAst = {
+          ...prop.type,
+          annotations: {
+            ...(prop.type.annotations || {}),
+            ...(prop.annotations || {}), // Property annotations override type annotations
+          },
+        } as SchemaAST.AST
+        return [prop.name as string, { ast: fieldAst }] as const
+      }),
       Record.fromEntries,
     )
   }

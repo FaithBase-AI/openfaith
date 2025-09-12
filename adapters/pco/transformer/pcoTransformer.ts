@@ -8,6 +8,33 @@ import {
 } from '@openfaith/schema'
 import { Array, Boolean, Option, pipe, Record, Schema, SchemaAST, String } from 'effect'
 
+// Recursive function to find annotations in nested AST structures (for Schema.partial support)
+const findAnnotationInAST = <T>(annotationKey: symbol, ast: SchemaAST.AST): Option.Option<T> => {
+  // Check current level
+  const directAnnotation = SchemaAST.getAnnotation<T>(annotationKey)(ast as SchemaAST.Annotated)
+  if (directAnnotation._tag === 'Some') {
+    return directAnnotation
+  }
+
+  // Check nested structures for Schema.partial() support
+  if ((ast as any)._tag === 'Union' && (ast as any).types) {
+    // Search in union types (Schema.partial creates unions with undefined)
+    for (const unionType of (ast as any).types) {
+      const foundInUnion = findAnnotationInAST<T>(annotationKey, unionType)
+      if (foundInUnion._tag === 'Some') {
+        return foundInUnion
+      }
+    }
+  }
+
+  if ((ast as any)._tag === 'Refinement' && (ast as any).from) {
+    // Search in refinement 'from' type
+    return findAnnotationInAST<T>(annotationKey, (ast as any).from)
+  }
+
+  return Option.none()
+}
+
 type MergeShape = Record<string, unknown> & {
   customFields: Array<CustomFieldSchema>
 }
@@ -20,7 +47,37 @@ const extractFields = (schema: Schema.Schema.Any): Record<string, { ast: SchemaA
   if (ast._tag === 'TypeLiteral') {
     return pipe(
       ast.propertySignatures,
-      Array.map((prop) => [prop.name as string, { ast: prop.type }] as const),
+      Array.map((prop) => {
+        // For Schema.partial(), annotations may be nested in union types
+        // Use recursive search to find them
+        const ofFieldNameOpt = findAnnotationInAST<string>(OfFieldName, prop.type)
+        const ofCustomFieldOpt = findAnnotationInAST<boolean>(OfCustomField, prop.type)
+        const ofSkipFieldOpt = findAnnotationInAST<boolean>(OfSkipField, prop.type)
+
+        // Create merged annotations with found values
+        const mergedAnnotations = {
+          ...(prop.type.annotations || {}),
+          ...(prop.annotations || {}),
+        }
+
+        // Add found annotations
+        if (ofFieldNameOpt._tag === 'Some') {
+          mergedAnnotations[OfFieldName as any] = ofFieldNameOpt.value
+        }
+        if (ofCustomFieldOpt._tag === 'Some') {
+          mergedAnnotations[OfCustomField as any] = ofCustomFieldOpt.value
+        }
+        if (ofSkipFieldOpt._tag === 'Some') {
+          mergedAnnotations[OfSkipField as any] = ofSkipFieldOpt.value
+        }
+
+        const fieldAst = {
+          ...prop.type,
+          annotations: mergedAnnotations,
+        } as SchemaAST.AST
+
+        return [prop.name as string, { ast: fieldAst }] as const
+      }),
       Record.fromEntries,
     )
   }
@@ -174,7 +231,13 @@ export const pcoToOf = <From extends Schema.Schema.Any, To extends Schema.Schema
         },
       ),
     encode: (toItem) => {
-      const { customFields, ...rest } = toItem as MergeShape
+      const { customFields = [], ...rest } = toItem as MergeShape
+      // Ensure customFields is an array (it might be serialized as string)
+      const customFieldsArray = Array.isArray(customFields)
+        ? customFields
+        : typeof customFields === 'string'
+          ? JSON.parse(customFields)
+          : []
 
       const standardFields = pipe(
         extractFields(from),
@@ -218,7 +281,7 @@ export const pcoToOf = <From extends Schema.Schema.Any, To extends Schema.Schema
       )
 
       const customFieldsDecoded = pipe(
-        customFields as Array<CustomFieldSchema>,
+        customFieldsArray as Array<CustomFieldSchema>,
         Array.reduce({}, (b, customField) => {
           // Skip custom fields that are not from PCO
           if (customField.source !== 'pco') {

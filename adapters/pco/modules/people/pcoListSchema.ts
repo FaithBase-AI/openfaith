@@ -29,7 +29,7 @@ export const pcoListTransformer = pcoToOf(PcoListAttributes, BaseFolder, 'list')
 
 export const pcoListPartialTransformer = pcoToOf(
   Schema.partial(PcoListAttributes),
-  Schema.partial(BaseFolder),
+  Schema.partial(Schema.Struct(BaseFolder.fields)),
   'list',
 )
 

@@ -33,7 +33,7 @@ export const pcoListCategoryTransformer = pcoToOf(
 
 export const pcoListCategoryPartialTransformer = pcoToOf(
   Schema.partial(PcoListCategoryAttributes),
-  Schema.partial(BaseFolder),
+  Schema.partial(Schema.Struct(BaseFolder.fields)),
   'listCategory',
 )
 

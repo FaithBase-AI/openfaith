@@ -93,7 +93,7 @@ export const pcoCampusTransformer = pcoToOf(PcoCampusAttributes, BaseCampus, 'ca
 
 export const pcoCampusPartialTransformer = pcoToOf(
   Schema.partial(PcoCampusAttributes),
-  Schema.partial(BaseCampus),
+  Schema.partial(Schema.Struct(BaseCampus.fields)),
   'campus',
 )
 

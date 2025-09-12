@@ -64,8 +64,8 @@ export const pcoWebhookSubscriptionTransformer = pcoToOf(
 )
 
 export const pcoWebhookSubscriptionPartialTransformer = pcoToOf(
-  Schema.partial(PcoWebhookSubscriptionAttributes),
-  Schema.partial(BaseAdapterWebhook),
+  PcoWebhookSubscriptionAttributes,
+  Schema.partial(Schema.Struct(BaseAdapterWebhook.fields)),
   'adapterWebhook',
 )
 

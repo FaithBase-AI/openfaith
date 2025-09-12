@@ -114,7 +114,7 @@ export const pcoPersonTransformer = pcoToOf(PcoPersonAttributes, BasePerson, 'pe
 
 export const pcoPersonPartialTransformer = pcoToOf(
   Schema.partial(PcoPersonAttributes),
-  Schema.partial(BasePerson),
+  Schema.partial(Schema.Struct(BasePerson.fields)),
   'person',
 )
 

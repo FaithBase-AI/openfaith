@@ -26,11 +26,18 @@ import {
 import { discoverPcoRelationships } from '@openfaith/pco/helpers/relationshipDiscovery'
 import type {
   PcoPersonSchema,
+  pcoPersonPartialTransformer,
   pcoPersonTransformer,
 } from '@openfaith/pco/modules/people/pcoPersonSchema'
 import { pcoEntityManifest } from '@openfaith/pco/server'
-import { getAnnotationFromSchema, OfEntity, OfSkipEntity, OfTransformer } from '@openfaith/schema'
-import { EdgeDirectionSchema, env } from '@openfaith/shared'
+import {
+  getAnnotationFromSchema,
+  OfEntity,
+  OfPartialTransformer,
+  OfSkipEntity,
+  OfTransformer,
+} from '@openfaith/schema'
+import { EdgeDirectionSchema, env, mkUrlParamName } from '@openfaith/shared'
 import {
   Array,
   Chunk,
@@ -896,10 +903,77 @@ export const PcoAdapterManagerLive = Layer.effect(
           })
         }),
 
-      updateEntity: (_params) => Effect.log('TODO: Implement updateEntity for PCO'),
+      updateEntity: (params) =>
+        Effect.gen(function* () {
+          const { entityType, externalId, data } = params
+
+          const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
+
+          const method = entityClient.update as typeof pcoClient.Person.update
+
+          const transformedData = yield* transformPartialEntityDataE(entityType, data)
+
+          const result = yield* method({
+            path: { [mkUrlParamName(entityType)]: externalId } as Parameters<
+              typeof pcoClient.Person.update
+            >[0]['path'],
+            payload: {
+              data: {
+                attributes: transformedData,
+                id: externalId,
+                type: entityType as 'Person',
+              },
+            },
+          })
+          console.log('updateEntity', result)
+        }),
     })
   }),
 )
+
+export const transformPartialEntityDataE = Effect.fn('transformPartialEntityDataE')(function* (
+  entityName: string,
+  partialData: Record<string, unknown>,
+) {
+  const entitySchema = yield* (
+    entityName in pcoEntityManifest.entities
+      ? Option.some(
+          pcoEntityManifest.entities[entityName as keyof typeof pcoEntityManifest.entities]
+            .apiSchema as PcoPersonSchema,
+        )
+      : Option.none()
+  ).pipe(
+    Effect.mapError(
+      (error) =>
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entityName,
+          message: `No entity schema found for ${entityName}`,
+        }),
+    ),
+  )
+
+  const partialTransformer = yield* getAnnotationFromSchema<Schema.transform<any, any>>(
+    OfPartialTransformer,
+    entitySchema.ast,
+  ).pipe(
+    Effect.mapError((error) =>
+      Effect.fail(
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entityName,
+          message: `No transformer found for ${entityName}`,
+        }),
+      ),
+    ),
+  )
+
+  return yield* Schema.encode(partialTransformer as unknown as typeof pcoPersonPartialTransformer)({
+    ...partialData,
+  })
+})
 
 // Enhanced version that handles missing external links
 const extractRelationshipsEnhanced = (params: {
