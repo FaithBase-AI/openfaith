@@ -1,6 +1,6 @@
 import { HttpApiBuilder } from '@effect/platform'
 import { AppHttpApi } from '@openfaith/domain'
-import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
+import { WorkflowClient } from '@openfaith/workers'
 import { Effect } from 'effect'
 
 export const AdapterWebhooksHandlerLive = HttpApiBuilder.group(AppHttpApi, 'adapter', (handlers) =>

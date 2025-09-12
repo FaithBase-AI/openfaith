@@ -13,7 +13,7 @@ import { CoreHandlerLive } from '@openfaith/server/handlers/coreHandler'
 import { ZeroHandlerLive } from '@openfaith/server/handlers/zeroMutatorsHandler'
 import { DBLive } from '@openfaith/server/live/dbLive'
 import { SessionRpcMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
-import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
+import { WorkflowClient } from '@openfaith/workers'
 import { Layer } from 'effect'
 
 // Create the handlers layer with basic dependencies

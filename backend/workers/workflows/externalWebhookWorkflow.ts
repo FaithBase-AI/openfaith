@@ -29,8 +29,15 @@ export const ExternalWebhookWorkflow = Workflow.make({
 
 export const ExternalWebhookWorkflowLayer = ExternalWebhookWorkflow.toLayer(
   Effect.fn(function* (payload) {
-    // We have a bit of a funny problem with TokenKey (orgId). AdapterManager and InternalManager both depend on TokenKey being provided upfront to them. We can technically have a single workflow where we take in the webhooks and do everything all at once, but then we get stuck with a TokenKey that isn't valid. The easiest workaround that I could think of that I didn't hate was to split out validating the webhook and getting the orgId from processing it. This lets us then run another activity with the right orgId as the TokenKey for the rest of the operations.
-    // We could in the future make TokenKey be more robust, have it be a look up service that then lets you change the value, but for now this works.
+    // We have a bit of a funny problem with TokenKey (orgId). AdapterManager and InternalManager both depend on
+    // TokenKey being provided upfront to them. We can technically have a single workflow where we take in the webhooks
+    // and do everything all at once, but then we get stuck with a TokenKey that isn't valid. The easiest workaround
+    // that I could think of that I didn't hate was to split out validating the webhook and getting the orgId from
+    // processing it. This lets us then run another activity with the right orgId as the TokenKey for the rest of the
+    // operations.
+    //
+    // We could in the future make TokenKey be more robust, have it be a look up service that then lets you change the
+    // value, but for now this works.
     const orgId = yield* Activity.make({
       error: ExternalWebhookError,
       execute: getWebhookOrgId({

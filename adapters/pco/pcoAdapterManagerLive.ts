@@ -150,44 +150,42 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
   // We have to pretend that we are dealing with a Person to get this to type correctly.
   const { entity, entityId, tokenKey } = params
 
-  const entitySchemaOpt =
+  const entitySchema = yield* (
     entity.type in pcoEntityManifest.entities
       ? Option.some(
           pcoEntityManifest.entities[entity.type as keyof typeof pcoEntityManifest.entities]
-            .apiSchema,
+            .apiSchema as PcoPersonSchema,
         )
       : Option.none()
-
-  if (Option.isNone(entitySchemaOpt)) {
-    return yield* Effect.fail(
-      new AdapterTransformError({
-        adapter: 'pco',
-        entityType: entity.type,
-        message: `No entity schema found for ${entity.type}`,
-      }),
-    )
-  }
-
-  const entitySchema = entitySchemaOpt.value as PcoPersonSchema
+  ).pipe(
+    Effect.mapError(
+      (error) =>
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entity.type,
+          message: `No entity schema found for ${entity.type}`,
+        }),
+    ),
+  )
 
   const entityName = getOfEntityNameForPcoEntityType(entity.type)
 
-  const transformerOpt = getAnnotationFromSchema<Schema.transform<any, any>>(
+  const transformer = yield* getAnnotationFromSchema<Schema.transform<any, any>>(
     OfTransformer,
     entitySchema.ast,
+  ).pipe(
+    Effect.mapError((error) =>
+      Effect.fail(
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entity.type,
+          message: `No transformer found for ${entity.type}`,
+        }),
+      ),
+    ),
   )
-
-  if (Option.isNone(transformerOpt)) {
-    return yield* Effect.fail(
-      new AdapterTransformError({
-        adapter: 'pco',
-        entityType: entity.type,
-        message: `No transformer found for ${entity.type}`,
-      }),
-    )
-  }
-
-  const transformer = transformerOpt.value
 
   const attributesSchema = Schema.Struct({
     ...entitySchema.fields.attributes.fields,
@@ -435,8 +433,6 @@ const getSyncEntityId = Effect.fn('getSyncEntityId')(function* () {
         ),
       )
 
-      console.log('singletonResponse', singletonResponse)
-
       const normalizedResponse = normalizeSingletonResponse(singletonResponse)
 
       yield* processPcoData({
@@ -497,30 +493,36 @@ export const PcoAdapterManagerLive = Layer.effect(
           const { headers, payload, getWebhooks } = params
           const rawBody = JSON.stringify(payload)
 
-          const secretOpt = pipe(headers, Headers.get('x-pco-webhooks-authenticity'))
+          const secret = yield* pipe(
+            headers,
+            Headers.get('x-pco-webhooks-authenticity'),
+            Effect.mapError(
+              (error) =>
+                new AdapterWebhookNoOrgIdError({
+                  adapter: 'pco',
+                  cause: error,
+                  message: `No secret found in headers`,
+                }),
+            ),
+          )
 
           const webhooks = yield* getWebhooks('pco')
 
           return yield* pipe(
-            secretOpt,
-            Option.flatMap((secret) =>
-              pipe(
-                webhooks,
-                Array.findFirst((webhook) => {
-                  const hasher = new Bun.CryptoHasher('sha256', webhook.authenticitySecret)
-                  hasher.update(rawBody)
-                  const computedHash = hasher.digest('hex')
+            webhooks,
+            Array.findFirst((webhook) => {
+              const hasher = new Bun.CryptoHasher('sha256', webhook.authenticitySecret)
+              hasher.update(rawBody)
+              const computedHash = hasher.digest('hex')
 
-                  const expectedBuffer = Buffer.from(secret, 'hex')
-                  const computedBuffer = Buffer.from(computedHash, 'hex')
-                  return (
-                    expectedBuffer.length === computedBuffer.length &&
-                    crypto.timingSafeEqual(expectedBuffer, computedBuffer)
-                  )
-                }),
-                Option.map((webhook) => webhook.orgId),
-              ),
-            ),
+              const expectedBuffer = Buffer.from(secret, 'hex')
+              const computedBuffer = Buffer.from(computedHash, 'hex')
+              return (
+                expectedBuffer.length === computedBuffer.length &&
+                crypto.timingSafeEqual(expectedBuffer, computedBuffer)
+              )
+            }),
+            Option.map((webhook) => webhook.orgId),
           )
         }).pipe(
           Effect.catchTags({
