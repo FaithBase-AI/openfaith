@@ -7,6 +7,7 @@ import {
   OfEntity,
   OfFieldName,
   OfIdentifier,
+  OfPartialTransformer,
   OfTransformer,
 } from '@openfaith/schema'
 import { Schema } from 'effect'
@@ -62,6 +63,12 @@ export const pcoWebhookSubscriptionTransformer = pcoToOf(
   'adapterWebhook',
 )
 
+export const pcoWebhookSubscriptionPartialTransformer = pcoToOf(
+  Schema.partial(PcoWebhookSubscriptionAttributes),
+  Schema.partial(BaseAdapterWebhook),
+  'adapterWebhook',
+)
+
 /**
  * PCO Webhook Subscription Entity Schema
  * Full schema including relationships for webhook events
@@ -77,6 +84,7 @@ export const PcoWebhookSubscription = mkPcoEntity({
   [OfEntity]: AdapterWebhook,
   [OfIdentifier]: 'pco-webhook-subscription',
   [OfTransformer]: pcoWebhookSubscriptionTransformer,
+  [OfPartialTransformer]: pcoWebhookSubscriptionPartialTransformer,
 })
 
 export type PcoWebhookSubscription = typeof PcoWebhookSubscription.Type

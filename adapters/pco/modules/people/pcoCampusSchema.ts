@@ -7,6 +7,7 @@ import {
   OfEntity,
   OfFieldName,
   OfIdentifier,
+  OfPartialTransformer,
   OfTransformer,
 } from '@openfaith/schema'
 import { StringOrNumberToNumber } from '@openfaith/shared'
@@ -90,6 +91,12 @@ export type PcoCampusAttributes = typeof PcoCampusAttributes.Type
 
 export const pcoCampusTransformer = pcoToOf(PcoCampusAttributes, BaseCampus, 'campus')
 
+export const pcoCampusPartialTransformer = pcoToOf(
+  Schema.partial(PcoCampusAttributes),
+  Schema.partial(BaseCampus),
+  'campus',
+)
+
 export const PcoCampus = mkPcoEntity({
   attributes: PcoCampusAttributes,
   links: Schema.Struct({
@@ -113,5 +120,6 @@ export const PcoCampus = mkPcoEntity({
   [OfEntity]: Campus,
   [OfIdentifier]: 'pco-campus',
   [OfTransformer]: pcoCampusTransformer,
+  [OfPartialTransformer]: pcoCampusPartialTransformer,
 })
 export type PcoCampus = typeof PcoCampus.Type

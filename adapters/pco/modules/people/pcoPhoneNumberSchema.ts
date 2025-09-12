@@ -6,6 +6,7 @@ import {
   OfEntity,
   OfFieldName,
   OfIdentifier,
+  OfPartialTransformer,
   OfSkipField,
   OfTransformer,
   PhoneNumber,
@@ -69,6 +70,12 @@ export const pcoPhoneNumberTransformer = pcoToOf(
   'phoneNumber',
 )
 
+export const pcoPhoneNumberPartialTransformer = pcoToOf(
+  Schema.partial(PcoPhoneNumberAttributes),
+  Schema.partial(BasePhoneNumber),
+  'phoneNumber',
+)
+
 export const PcoPhoneNumber = mkPcoEntity({
   attributes: PcoPhoneNumberAttributes,
   links: Schema.Struct({
@@ -87,5 +94,6 @@ export const PcoPhoneNumber = mkPcoEntity({
   [OfEntity]: PhoneNumber,
   [OfIdentifier]: 'pco-phone-number',
   [OfTransformer]: pcoPhoneNumberTransformer,
+  [OfPartialTransformer]: pcoPhoneNumberPartialTransformer,
 })
 export type PcoPhoneNumber = typeof PcoPhoneNumber.Type

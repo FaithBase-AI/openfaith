@@ -6,6 +6,7 @@ import {
   OfFieldName,
   OfFolderType,
   OfIdentifier,
+  OfPartialTransformer,
   OfTransformer,
 } from '@openfaith/schema'
 import { Schema } from 'effect'
@@ -25,6 +26,12 @@ export const PcoTabAttributes = Schema.Struct({
 export type PcoTabAttributes = typeof PcoTabAttributes.Type
 
 export const pcoTabTransformer = pcoToOf(PcoTabAttributes, BaseFolder, 'tab')
+
+export const pcoTabPartialTransformer = pcoToOf(
+  Schema.partial(PcoTabAttributes),
+  Schema.partial(BaseFolder),
+  'tab',
+)
 
 export const PcoTab = mkPcoEntity({
   attributes: PcoTabAttributes,
@@ -49,5 +56,6 @@ export const PcoTab = mkPcoEntity({
   [OfFolderType]: 'pco_custom_field_tab',
   [OfIdentifier]: 'pco-tab',
   [OfTransformer]: pcoTabTransformer,
+  [OfPartialTransformer]: pcoTabPartialTransformer,
 })
 export type PcoTab = typeof PcoTab.Type

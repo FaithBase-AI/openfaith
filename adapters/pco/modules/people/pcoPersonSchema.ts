@@ -7,6 +7,7 @@ import {
   OfEntity,
   OfFieldName,
   OfIdentifier,
+  OfPartialTransformer,
   OfTransformer,
   Person,
 } from '@openfaith/schema'
@@ -111,6 +112,12 @@ export type PcoPersonAttributes = typeof PcoPersonAttributes.Type
 
 export const pcoPersonTransformer = pcoToOf(PcoPersonAttributes, BasePerson, 'person')
 
+export const pcoPersonPartialTransformer = pcoToOf(
+  Schema.partial(PcoPersonAttributes),
+  Schema.partial(BasePerson),
+  'person',
+)
+
 export const PcoPerson = mkPcoEntity({
   attributes: PcoPersonAttributes,
   links: Schema.Struct({
@@ -151,6 +158,7 @@ export const PcoPerson = mkPcoEntity({
   [OfEntity]: Person,
   [OfIdentifier]: 'pco-person',
   [OfTransformer]: pcoPersonTransformer,
+  [OfPartialTransformer]: pcoPersonPartialTransformer,
 })
 export type PcoPersonSchema = typeof PcoPerson
 export type PcoPerson = typeof PcoPerson.Type

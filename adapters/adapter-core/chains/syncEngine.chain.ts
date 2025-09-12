@@ -78,19 +78,21 @@ export const processMutation = Effect.fn('processMutation')(function* (op: CRUDO
         adapterManager.adapter,
       )
 
+      const { id: _id, ...data } = op.value
+
       yield* pipe(
         externalLinkOpt,
         Option.match({
           onNone: () =>
             adapterManager.createEntity({
-              data: op.value,
+              data,
               entityType,
               internalId,
               processExternalLinks: internalManager.processExternalLinks,
             }),
           onSome: (externalLink) =>
             adapterManager.updateEntity({
-              data: op.value,
+              data,
               entityType,
               externalId: externalLink.externalId,
               internalId,

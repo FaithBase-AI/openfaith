@@ -6,6 +6,7 @@ import {
   OfFieldName,
   OfFolderType,
   OfIdentifier,
+  OfPartialTransformer,
   OfTransformer,
 } from '@openfaith/schema'
 import { Schema } from 'effect'
@@ -27,6 +28,12 @@ export type PcoNoteCategoryAttributes = typeof PcoNoteCategoryAttributes.Type
 export const pcoNoteCategoryTransformer = pcoToOf(
   PcoNoteCategoryAttributes,
   BaseFolder,
+  'noteCategory',
+)
+
+export const pcoNoteCategoryPartialTransformer = pcoToOf(
+  Schema.partial(PcoNoteCategoryAttributes),
+  Schema.partial(BaseFolder),
   'noteCategory',
 )
 
@@ -53,5 +60,6 @@ export const PcoNoteCategory = mkPcoEntity({
   [OfFolderType]: 'pco_note_category',
   [OfIdentifier]: 'pco-note-category',
   [OfTransformer]: pcoNoteCategoryTransformer,
+  [OfPartialTransformer]: pcoNoteCategoryPartialTransformer,
 })
 export type PcoNoteCategory = typeof PcoNoteCategory.Type
