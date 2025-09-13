@@ -67,6 +67,7 @@ export class AdapterEntityNotFoundError extends Schema.TaggedError<AdapterEntity
   'AdapterEntityNotFoundError',
   {
     adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
     entityType: Schema.String,
     message: Schema.String,
   },

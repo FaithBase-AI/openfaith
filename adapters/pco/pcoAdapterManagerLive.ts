@@ -134,12 +134,15 @@ const normalizeSingletonResponse = <D extends PcoBaseEntity, I extends PcoBaseEn
 /**
  * Creates external links from PCO entities
  */
-const createExternalLinks = (entities: ReadonlyArray<PcoBaseEntity>): Array<ExternalLinkInput> =>
+const createExternalLinks = (
+  entities: ReadonlyArray<PcoBaseEntity & { entityId?: string }>,
+): Array<ExternalLinkInput> =>
   pipe(
     entities,
     Array.map((entity) => ({
       adapter: 'pco' as const,
       createdAt: entity.attributes.created_at,
+      entityId: entity.entityId,
       entityType: getOfEntityNameForPcoEntityType(entity.type),
       externalId: entity.id,
       updatedAt: entity.attributes.updated_at || undefined,
@@ -479,9 +482,88 @@ export const PcoAdapterManagerLive = Layer.effect(
     return AdapterManager.of({
       adapter: 'pco',
 
-      createEntity: (_params) => Effect.log('TODO: Implement createEntity for PCO'),
+      createEntity: (params) =>
+        Effect.gen(function* () {
+          const { entityType, data, processEntities, processExternalLinks, processRelationships } =
+            params
 
-      deleteEntity: (_params) => Effect.log('TODO: Implement deleteEntity for PCO'),
+          const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
+
+          const create = yield* Option.fromNullable(
+            entityClient.create as typeof pcoClient.Person.create,
+          )
+
+          const transformedData = yield* transformEntityDataE(entityType, data)
+
+          const result = yield* create({
+            payload: {
+              data: transformedData as unknown as Parameters<
+                typeof pcoClient.Person.create
+              >[0]['payload']['data'],
+            },
+          })
+
+          const normalizedResponse = normalizeSingletonResponse(result)
+
+          yield* processPcoData({
+            data: normalizedResponse,
+            processEntities,
+            processExternalLinks,
+            processRelationships,
+            tokenKey,
+          })
+        }),
+
+      deleteEntity: (params) =>
+        Effect.gen(function* () {
+          const { entityType, externalId, internalId, deleteEntity } = params
+
+          const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
+
+          const deleteMethod = yield* Option.fromNullable(
+            entityClient.delete as typeof pcoClient.Person.delete,
+          ).pipe(
+            Effect.mapError(
+              (error) =>
+                new AdapterEntityNotFoundError({
+                  adapter: 'pco',
+                  cause: error,
+                  entityType,
+                  message: `No delete method found for ${entityType}`,
+                }),
+            ),
+          )
+
+          yield* deleteMethod({
+            path: { [mkUrlParamName(entityType)]: externalId } as Parameters<
+              typeof deleteMethod
+            >[0]['path'],
+          }).pipe(
+            Effect.mapError(
+              (error) =>
+                new AdapterFetchError({
+                  adapter: 'pco',
+                  cause: error,
+                  entityType,
+                  message: `Failed to delete ${entityType} ${externalId}`,
+                  operation: 'delete',
+                }),
+            ),
+          )
+
+          yield* deleteEntity(internalId, 'pco').pipe(
+            Effect.mapError(
+              (error) =>
+                new AdapterFetchError({
+                  adapter: 'pco',
+                  cause: error,
+                  entityType,
+                  message: `Failed to delete ${entityType} ${externalId} in our system`,
+                  operation: 'delete',
+                }),
+            ),
+          )
+        }),
 
       getEntityManifest: () =>
         pipe(
@@ -820,7 +902,6 @@ export const PcoAdapterManagerLive = Layer.effect(
         ),
 
       syncEntityId,
-
       syncEntityType: (params) =>
         Effect.gen(function* () {
           const { entityType, processEntities, processExternalLinks, processRelationships } = params
@@ -912,15 +993,18 @@ export const PcoAdapterManagerLive = Layer.effect(
             processEntities,
             processExternalLinks,
             processRelationships,
+            internalId,
           } = params
 
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
 
-          const method = entityClient.update as typeof pcoClient.Person.update
+          const update = yield* Option.fromNullable(
+            entityClient.update as typeof pcoClient.Person.update,
+          )
 
           const transformedData = yield* transformPartialEntityDataE(entityType, data)
 
-          const result = yield* method({
+          const result = yield* update({
             path: { [mkUrlParamName(entityType)]: externalId } as Parameters<
               typeof pcoClient.Person.update
             >[0]['path'],
@@ -933,7 +1017,15 @@ export const PcoAdapterManagerLive = Layer.effect(
             },
           })
 
-          const normalizedResponse = normalizeSingletonResponse(result)
+          const normalizedResponse = normalizeSingletonResponse({
+            ...result,
+            data: {
+              ...result.data,
+              // We put the internalId because it needs to get passed into `processExternalLinks` so we can make the
+              // correct external link.
+              entityId: internalId,
+            },
+          })
 
           yield* processPcoData({
             data: normalizedResponse,
@@ -997,6 +1089,50 @@ export const transformPartialEntityDataE = Effect.fn('transformPartialEntityData
   )
 
   return yield* Schema.encode(partialTransformer as unknown as typeof pcoPersonPartialTransformer)({
+    ...partialData,
+  })
+})
+
+export const transformEntityDataE = Effect.fn('transformPartialEntityDataE')(function* (
+  entityName: string,
+  partialData: Record<string, unknown>,
+) {
+  const entitySchema = yield* (
+    entityName in pcoEntityManifest.entities
+      ? Option.some(
+          pcoEntityManifest.entities[entityName as keyof typeof pcoEntityManifest.entities]
+            .apiSchema as PcoPersonSchema,
+        )
+      : Option.none()
+  ).pipe(
+    Effect.mapError(
+      (error) =>
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entityName,
+          message: `No entity schema found for ${entityName}`,
+        }),
+    ),
+  )
+
+  const transformer = yield* getAnnotationFromSchema<Schema.transform<any, any>>(
+    OfTransformer,
+    entitySchema.ast,
+  ).pipe(
+    Effect.mapError((error) =>
+      Effect.fail(
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entityName,
+          message: `No transformer found for ${entityName}`,
+        }),
+      ),
+    ),
+  )
+
+  return yield* Schema.encodeUnknown(transformer as unknown as typeof pcoPersonTransformer)({
     ...partialData,
   })
 })

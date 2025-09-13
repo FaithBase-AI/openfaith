@@ -88,7 +88,9 @@ export const processMutation = Effect.fn('processMutation')(function* (op: CRUDO
               data,
               entityType,
               internalId,
+              processEntities: internalManager.processEntities,
               processExternalLinks: internalManager.processExternalLinks,
+              processRelationships: internalManager.processRelationships,
             }),
           onSome: (externalLink) =>
             adapterManager.updateEntity({
@@ -124,10 +126,10 @@ export const processMutation = Effect.fn('processMutation')(function* (op: CRUDO
             }),
           onSome: (externalLink) =>
             adapterManager.deleteEntity({
+              deleteEntity: internalManager.deleteEntity,
               entityType,
               externalId: externalLink.externalId,
               internalId,
-              processExternalLinks: internalManager.processExternalLinks,
             }),
         }),
       )
