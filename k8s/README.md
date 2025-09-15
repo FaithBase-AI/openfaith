@@ -30,7 +30,6 @@
    kubectl apply -f redis.yaml
    kubectl apply -f zero-storage.yaml
    kubectl apply -f opentelemetry.yaml
-   kubectl apply -f backend.yaml
    kubectl apply -f zero.yaml          # ← NEW: Zero cache service (requires DB)
    kubectl apply -f workers.yaml
    kubectl apply -f shard-manager.yaml
@@ -150,7 +149,6 @@ kubectl get ingress -n openfaith
 ```bash
 kubectl get pods -n openfaith
 kubectl get services -n openfaith
-kubectl logs -n openfaith deployment/backend
 kubectl logs -n openfaith deployment/zero
 ```
 

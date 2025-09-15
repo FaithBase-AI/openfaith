@@ -22,9 +22,6 @@ jobs:
           - name: frontend
             context: .
             dockerfile: apps/openfaith/Dockerfile
-          - name: backend
-            context: .
-            dockerfile: backend/server/Dockerfile
           - name: zero
             context: .
             dockerfile: packages/zero/Dockerfile

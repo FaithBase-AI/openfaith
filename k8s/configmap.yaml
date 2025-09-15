@@ -12,11 +12,11 @@ data:
   DB_SSL: "false"
   
   # Zero Configuration (Backend/Workers - Server-side)
-  ZERO_AUTH_JWKS_URL: "http://backend-service:4000/auth/jwks"
+  ZERO_AUTH_JWKS_URL: "http://frontend-service:3000/auth/jwks"
   ZERO_APP_ID: "openfaith_prod"
   ZERO_NUM_SYNC_WORKERS: "4"
   ZERO_LOG_LEVEL: "info"
-  ZERO_PUSH_URL: "http://backend-service:4000/api/zero/push"
+  ZERO_PUSH_URL: "http://frontend-service:3000/api/zero/push"
   ZERO_REPLICA_FILE: "/data/zero-replica.db"
   
   # Redis Configuration

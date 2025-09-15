@@ -4,23 +4,14 @@ metadata:
   name: openfaith-ingress
   namespace: openfaith
   annotations:
-    # Preserve original paths - backend expects full /api/auth/... paths
+    # Preserve original paths - api expects full /api/auth/... paths
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
   - host: localhost
     http:
-      paths:
-      # API routes go to backend (preserve full path)
-      - path: /api
-        pathType: Prefix
-        backend:
-          service:
-            name: backend-service
-            port:
-              number: 4000
-      # Frontend routes (everything else)
+      # Frontend routes
       - path: /
         pathType: Prefix
         backend:

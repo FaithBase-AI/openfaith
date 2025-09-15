@@ -14,7 +14,6 @@
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "format": "biome check",
-    "start": "bun run main.ts",
     "typecheck": "tsgo --noEmit"
   },
   "type": "module",
