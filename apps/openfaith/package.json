@@ -58,7 +58,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "bunx --bun vite dev --port 3000",
     "format": "biome check",
-    "start": "bun .output/server/index.mjs",
+    "start": "HOST=0.0.0.0 bun .output/server/index.mjs",
     "typecheck": "tsgo --noEmit"
   },
   "type": "module",
