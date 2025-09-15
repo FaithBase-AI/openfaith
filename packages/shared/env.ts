@@ -24,6 +24,10 @@ export const env = createEnv({
     ZERO_ADMIN_PASSWORD: z.string(),
     ZERO_PUSH_URL: z.string(),
 
+    // Cluster / Workers
+    WORKERS_HOST: z.string().optional().default('localhost'),
+    SHARD_MANAGER_HOST: z.string().optional().default('localhost'),
+
     // Config
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
     TUNNEL_URL: z.string().optional(),

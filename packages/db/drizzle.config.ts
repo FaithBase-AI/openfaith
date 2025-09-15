@@ -1,6 +1,5 @@
 import { env } from '@openfaith/shared'
 import type { Config } from 'drizzle-kit'
-import { Boolean, pipe } from 'effect'
 
 export default {
   dbCredentials: {
@@ -8,13 +7,7 @@ export default {
     host: env.DB_HOST_PRIMARY,
     password: env.DB_PASSWORD,
     port: env.DB_PORT,
-    ssl: pipe(
-      env.DB_HOST_PRIMARY === '127.0.0.1',
-      Boolean.match({
-        onFalse: () => ({ rejectUnauthorized: false }),
-        onTrue: () => false,
-      }),
-    ),
+    ssl: false,
     user: env.DB_USERNAME,
     // ssl: { rejectUnauthorized: false },
   },

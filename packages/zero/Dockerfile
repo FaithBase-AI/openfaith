@@ -30,12 +30,12 @@ RUN echo "=== DEBUG: Zero package.json ===" && cat packages/zero/package.json | 
 RUN echo "=== DEBUG: Node modules zero-cache-dev location ===" && find node_modules -name "zero-cache-dev" -type f 2>/dev/null | head -5
 
 # Expose port
-EXPOSE 4983
+EXPOSE 4848
 
 # Ensure local binaries are available to child processes (zero-deploy-permissions)
 ENV PATH=/usr/src/app/node_modules/.bin:$PATH
 # Set default Zero port to match container port
-ENV ZERO_PORT=4983
+ENV ZERO_PORT=4848
 
 # Run zero-cache-dev with Node and point to the project schema; postinstall creates node_modules/.zero/schema.mts for permissions
-CMD ["sh", "-c", "cd /usr/src/app && node /usr/src/app/node_modules/@rocicorp/zero/out/zero/src/deploy-permissions.js -p /usr/src/app/packages/zero/zeroSchema.mts && node /usr/src/app/node_modules/.bin/zero-cache-dev -p /usr/src/app/packages/zero/zeroSchema.mts --port 4983"]
+CMD ["sh", "-c", "cd /usr/src/app && node /usr/src/app/node_modules/@rocicorp/zero/out/zero/src/deploy-permissions.js -p /usr/src/app/packages/zero/zeroSchema.mts && node /usr/src/app/node_modules/.bin/zero-cache-dev -p /usr/src/app/packages/zero/zeroSchema.mts --port 4848"]

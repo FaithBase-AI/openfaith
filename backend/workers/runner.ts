@@ -1,9 +1,16 @@
-import { ClusterWorkflowEngine } from '@effect/cluster'
+import { ClusterWorkflowEngine, RunnerAddress } from '@effect/cluster'
 import { NodeSdk } from '@effect/opentelemetry'
-import { FetchHttpClient, HttpApiBuilder, HttpMiddleware, HttpServer } from '@effect/platform'
+import {
+  FetchHttpClient,
+  HttpApiBuilder,
+  HttpApiSwagger,
+  HttpMiddleware,
+  HttpServer,
+} from '@effect/platform'
 import { BunClusterRunnerSocket, BunHttpServer, BunRuntime } from '@effect/platform-bun'
 import { WorkflowProxyServer } from '@effect/workflow'
 import { DBLive, TokenManagerLive } from '@openfaith/server'
+import { env } from '@openfaith/shared'
 import { HealthLive, WorkflowApi, workflows } from '@openfaith/workers/api/workflowApi'
 import { CreateOrgWorkflowLayer } from '@openfaith/workers/workflows/createOrgWorkflow'
 import { ExternalPushEntityWorkflowLayer } from '@openfaith/workers/workflows/externalPushEntityWorkflow'
@@ -14,7 +21,7 @@ import { ExternalWebhookWorkflowLayer } from '@openfaith/workers/workflows/exter
 import { TestWorkflowLayer } from '@openfaith/workers/workflows/testWorkflow'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
-import { Layer, Logger } from 'effect'
+import { Layer, Logger, Option } from 'effect'
 
 // NodeSDK layer for telemetry
 
@@ -27,14 +34,14 @@ const BunSdkLive = NodeSdk.layer(() => ({
 const WorkflowEngineLayer = ClusterWorkflowEngine.layer.pipe(
   Layer.provideMerge(
     BunClusterRunnerSocket.layer({
+      shardingConfig: {
+        runnerAddress: Option.some(RunnerAddress.make(env.WORKERS_HOST, 34431)),
+        runnerListenAddress: Option.some(RunnerAddress.make('0.0.0.0', 34431)),
+        shardManagerAddress: RunnerAddress.make(env.SHARD_MANAGER_HOST, 8080),
+      },
       storage: 'sql',
     }),
   ),
-)
-
-const WorkflowApiLive = HttpApiBuilder.api(WorkflowApi).pipe(
-  Layer.provide(WorkflowProxyServer.layerHttpApi(WorkflowApi, 'workflows', workflows)),
-  HttpServer.withLogAddress,
 )
 
 const port = 3020
@@ -53,15 +60,25 @@ const EnvLayer = Layer.mergeAll(
   Layer.provideMerge(DBLive),
 )
 
-// Set up the server using NodeHttpServer on port 3000
-const ServerLayer = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
-  Layer.provide(WorkflowApiLive),
+const WorkflowApiLive = HttpApiBuilder.api(WorkflowApi).pipe(
+  Layer.provide(WorkflowProxyServer.layerHttpApi(WorkflowApi, 'workflows', workflows)),
   Layer.provide(HealthLive),
   Layer.provide(EnvLayer),
+  HttpServer.withLogAddress,
+)
+
+export const SwaggerLayer = HttpApiSwagger.layer({
+  path: '/api/docs',
+}).pipe(Layer.provide(WorkflowApiLive))
+
+// Set up the server using NodeHttpServer on port 3020
+const ServerLayer = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
+  Layer.provide(WorkflowApiLive),
   Layer.provide(Logger.pretty),
+  Layer.provide(SwaggerLayer),
   Layer.provide(BunHttpServer.layer({ port })),
   Layer.provide(FetchHttpClient.layer),
   Layer.provide(BunSdkLive),
 )
 
-BunRuntime.runMain(ServerLayer.pipe(Layer.launch))
+BunRuntime.runMain(Layer.launch(ServerLayer))

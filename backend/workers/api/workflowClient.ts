@@ -1,4 +1,5 @@
 import { FetchHttpClient, HttpApiClient } from '@effect/platform'
+import { env } from '@openfaith/shared'
 import { WorkflowApi } from '@openfaith/workers/api/workflowApi'
 import { Effect } from 'effect'
 
@@ -6,6 +7,6 @@ import { Effect } from 'effect'
 export class WorkflowClient extends Effect.Service<WorkflowClient>()('WorkflowClient', {
   dependencies: [FetchHttpClient.layer],
   effect: HttpApiClient.make(WorkflowApi, {
-    baseUrl: 'http://localhost:3020',
+    baseUrl: `http://${env.WORKERS_HOST}:3020`,
   }),
 }) {}

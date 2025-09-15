@@ -5,7 +5,7 @@ import { Effect, Layer } from 'effect'
 
 // Create the protocol layer for HTTP communication
 const ProtocolLayer = RpcClient.layerProtocolHttp({
-  url: '/api/api',
+  url: '/api',
 }).pipe(
   Layer.provide([
     // Use fetch for HTTP requests

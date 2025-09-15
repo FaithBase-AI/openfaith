@@ -23,6 +23,7 @@ services:
       -c max_replication_slots=5 
       -c hot_standby=on 
       -c hot_standby_feedback=on
+      -c max_connections=200
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

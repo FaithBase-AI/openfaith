@@ -11,8 +11,16 @@ COPY . .
 # Install production dependencies directly (excludes dev dependencies for faster builds)
 RUN bun install --no-dev --ignore-scripts
 
+# [optional] tests & build
+ENV NODE_ENV=production
+# Build from root using turbo filter
+RUN bun run build --filter=@openfaith/shard-manager
+
 # Change to the root directory
 WORKDIR /usr/src/app
 
+# Expose port
+EXPOSE 8080
+
 # Run the shard manager (no exposed port needed)
-CMD ["bun", "run", "--filter", "@openfaith/shard-manager", "dev"]
+CMD ["bun", "run", "--filter", "@openfaith/shard-manager", "start"]

@@ -11,11 +11,17 @@ COPY . .
 # Install production dependencies directly (excludes dev dependencies for faster builds)
 RUN bun install --no-dev --ignore-scripts
 
+# [optional] tests & build
+ENV NODE_ENV=production
+# Build from root using turbo filter
+RUN bun run build --filter=@openfaith/workers
+
 # Stay in root directory
 WORKDIR /usr/src/app
 
 # Expose port
 EXPOSE 3020
+EXPOSE 34431
 
 # Run the workers service
-CMD ["bun", "run", "--filter", "@openfaith/workers", "dev"]
+CMD ["bun", "run", "--filter", "@openfaith/workers", "start"]
