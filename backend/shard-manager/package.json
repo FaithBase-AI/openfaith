@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@effect/platform-node": "catalog:",
+    "@effect/platform-bun": "catalog:",
     "@openfaith/db": "workspace:*",
     "@openfaith/shared": "workspace:*",
     "effect": "catalog:"
@@ -12,9 +12,11 @@
   "name": "@openfaith/shard-manager",
   "private": true,
   "scripts": {
+    "build": "bun build index.ts --outfile dist/index.js --target bun",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "bun run --watch index.ts",
     "format": "biome check",
+    "start": "bun dist/index.js",
     "typecheck": "tsgo --noEmit"
   },
   "type": "module",

@@ -1,0 +1,118 @@
+services:
+  # OpenFaith Frontend
+  openfaith-frontend:
+    image: openfaith:latest
+    build:
+      context: .
+      dockerfile: apps/openfaith/Dockerfile
+      args:
+        VITE_ZERO_SERVER: http://openfaith-zero:4983
+        VITE_APP_NAME: OpenFaith
+        VITE_BASE_URL: http://localhost:3000
+        VITE_PROD_ROOT_DOMAIN: localhost
+        VITE_PROD_EMAIL_DOMAIN: localhost
+        VITE_PLANNING_CENTER_CLIENT_ID: your-pco-client-id-here
+    container_name: openfaith-frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      # Database
+      - DB_HOST_PRIMARY=postgres
+      - DB_NAME=postgres
+      - DB_PASSWORD=password
+      - DB_PORT=5432
+      - DB_USERNAME=user
+      # Zero
+      - ZERO_UPSTREAM_DB=postgresql://user:password@postgres:5432/postgres
+      - ZERO_CVR_DB=postgresql://user:password@postgres:5432/postgres
+      - ZERO_CHANGE_DB=postgresql://user:password@postgres:5432/postgres
+      - ZERO_REPLICA_FILE=/tmp/zero-replica.db
+      - ZERO_AUTH_JWKS_URL=http://openfaith-frontend:3000/auth/jwks
+      - ZERO_APP_ID=openfaith
+      - ZERO_NUM_SYNC_WORKERS=2
+      - ZERO_LOG_LEVEL=info
+      - ZERO_ADMIN_PASSWORD=admin123
+      - ZERO_PUSH_URL=http://openfaith-frontend:3000/sync/push
+      # Redis
+      - REDIS_URL=redis://redis:6379
+      # Auth
+      - BETTER_AUTH_SECRET=super-secret-key-change-this-in-production
+      # Email
+      - RESEND_API_KEY=your-resend-api-key-here
+      # Planning Center
+      - PLANNING_CENTER_SECRET=your-pco-secret-here
+      # Frontend specific
+      - VITE_ZERO_SERVER=http://openfaith-zero:4983
+      - VITE_APP_NAME=OpenFaith
+      - VITE_BASE_URL=http://localhost:3000
+      - VITE_PROD_ROOT_DOMAIN=localhost
+      - VITE_PROD_EMAIL_DOMAIN=localhost
+      - VITE_PLANNING_CENTER_CLIENT_ID=your-pco-client-id-here
+    restart: unless-stopped
+
+  # Zero Cache Service
+  openfaith-zero:
+    image: openfaith-zero:latest
+    build:
+      context: .
+      dockerfile: packages/zero/Dockerfile
+    container_name: openfaith-zero
+    ports:
+      - "4983:4983"
+    env_file:
+      - .env
+    environment:
+      - ZERO_UPSTREAM_DB=postgresql://user:password@postgres:5432/postgres
+      - ZERO_CVR_DB=postgresql://user:password@postgres:5432/postgres
+      - ZERO_CHANGE_DB=postgresql://user:password@postgres:5432/postgres
+      - ZERO_REPLICA_FILE=/data/zero-replica.db
+    volumes:
+      - zero_replica_data:/data
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # Effect Workflow Workers
+  openfaith-workers:
+    image: openfaith-workers:latest
+    build:
+      context: .
+      dockerfile: backend/workers/Dockerfile
+    container_name: openfaith-workers
+    ports:
+      - "3020:3020"
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DB_HOST_PRIMARY=postgres
+      - DB_PORT=5432
+      - ZERO_UPSTREAM_DB=postgresql://user:password@postgres:5432/postgres
+      - ZERO_CVR_DB=postgresql://user:password@postgres:5432/postgres
+      - ZERO_CHANGE_DB=postgresql://user:password@postgres:5432/postgres
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  # Shard Manager
+  openfaith-shard-manager:
+    image: openfaith-shard-manager:latest
+    build:
+      context: .
+      dockerfile: backend/shard-manager/Dockerfile
+    container_name: openfaith-shard-manager
+    env_file:
+      - .env
+    environment:
+      - DB_HOST_PRIMARY=postgres
+      - DB_PORT=5432
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  zero_replica_data:
+    driver: local

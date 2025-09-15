@@ -52,6 +52,7 @@
     "infra": "turbo run infra --continue",
     "lint": "turbo run lint --continue  --ui=stream -- --cache --cache-location .cache/.eslintcache",
     "lint:fix": "turbo run lint --continue --ui=stream -- --fix --cache --cache-location .cache/.eslintcache",
+    "server": "bun run --filter '@openfaith/server' start",
     "test": "TESTCONTAINERS_RYUK_DISABLED=true turbo run test --ui=stream",
     "typecheck": "turbo run typecheck --ui=stream",
     "ui-add": "turbo run ui-add"

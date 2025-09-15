@@ -1,0 +1,28 @@
+# Temporary: Use hostPath volumes instead of PVC for development
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: zero-replica-pv
+  namespace: openfaith
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /tmp/zero-replica-data
+    type: DirectoryOrCreate
+  storageClassName: manual
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: zero-replica-pvc
+  namespace: openfaith
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: manual

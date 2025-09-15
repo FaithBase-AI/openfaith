@@ -1,0 +1,39 @@
+# Workers service exclusions
+# Keep essential build files and dependencies
+!package.json
+!tsconfig.json
+!runner.ts
+!api/
+!helpers/
+!workflows/
+
+# Exclude development and build artifacts
+node_modules/
+**/node_modules/
+.cache/
+.turbo/
+*.log
+
+# Exclude frontend and unnecessary backend services
+apps/
+docs/
+public/
+src/
+app/
+infra/
+k8s/
+scripts/
+.github/
+.vscode/
+.idea/
+
+# Exclude environment files (use env_file in docker-compose)
+.env*
+
+# Keep patches for bun install
+!../../../patches/
+
+# Allow necessary workspace packages
+!../../../packages/
+!../../../backend/
+!../../../adapters/

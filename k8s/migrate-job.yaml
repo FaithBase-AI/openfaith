@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate-job
+  namespace: openfaith
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate
+        image: ghcr.io/faithbase-ai/openfaith-frontend:k8s-support-3-f798a86
+        command: ["bun", "run", "db:migrate"]
+        envFrom:
+        - configMapRef:
+            name: openfaith-config
+        - secretRef:
+            name: openfaith-secrets

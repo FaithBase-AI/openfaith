@@ -3,7 +3,7 @@
     "@effect/cluster": "catalog:",
     "@effect/opentelemetry": "catalog:",
     "@effect/platform": "catalog:",
-    "@effect/platform-node": "catalog:",
+    "@effect/platform-bun": "catalog:",
     "@effect/sql-pg": "catalog:",
     "@effect/workflow": "catalog:",
     "@openfaith/adapter-core": "workspace:*",
@@ -22,9 +22,11 @@
   "name": "@openfaith/workers",
   "private": true,
   "scripts": {
+    "build": "bun build runner.ts --outfile dist/runner.js --target bun",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "bun run --watch runner.ts",
     "format": "biome check",
+    "start": "bun dist/runner.js",
     "test": "TESTCONTAINERS_RYUK_DISABLED=true bun test",
     "typecheck": "tsgo --noEmit"
   },
