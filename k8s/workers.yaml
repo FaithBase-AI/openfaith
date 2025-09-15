@@ -23,6 +23,7 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 3020
+        - containerPort: 34431
         envFrom:
         - configMapRef:
             name: openfaith-config
@@ -55,4 +56,6 @@ spec:
   ports:
   - port: 3020
     targetPort: 3020
+  - port: 34431
+    targetPort: 34431
   type: ClusterIP
