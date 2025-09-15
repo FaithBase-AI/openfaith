@@ -2,7 +2,7 @@ name: Build and Push Docker Images
 
 on:
   push:
-    branches: [ k8s-support-3 ]
+    branches: [ master ]
 
 env:
   REGISTRY: ghcr.io
