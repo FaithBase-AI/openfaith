@@ -51,7 +51,7 @@ spec:
       - name: postgres
         image: postgres:16.2-alpine
         ports:
-        - containerPort: 5432
+        - containerPort: 5430
         env:
         - name: POSTGRES_USER
           value: "user"
@@ -120,6 +120,6 @@ spec:
   selector:
     app: postgres
   ports:
-  - port: 5432
-    targetPort: 5432
+  - port: 5430
+    targetPort: 5430
   type: ClusterIP
