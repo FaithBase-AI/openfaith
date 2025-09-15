@@ -19,7 +19,7 @@ spec:
       - name: ghcr-pull-secret
       containers:
       - name: workers
-        image: ghcr.io/faithbase-ai/openfaith-workers:k8s-support-3-f798a86
+        image: ghcr.io/faithbase-ai/openfaith-workers:master-33adc1d
         imagePullPolicy: Always
         ports:
         - containerPort: 3020
@@ -54,8 +54,10 @@ spec:
   selector:
     app: workers
   ports:
-  - port: 3020
+  - name: jobs
+    port: 3020
     targetPort: 3020
-  - port: 34431
+  - name: sync
+    port: 34431
     targetPort: 34431
   type: ClusterIP

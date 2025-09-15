@@ -19,10 +19,10 @@ spec:
       - name: ghcr-pull-secret
       containers:
       - name: zero
-        image: ghcr.io/faithbase-ai/openfaith-zero:k8s-support-3-f798a86
+        image: ghcr.io/faithbase-ai/openfaith-zero:master-33adc1d
         imagePullPolicy: Always
         ports:
-        - containerPort: 4983
+        - containerPort: 4848
         envFrom:
         - configMapRef:
             name: openfaith-config
@@ -36,7 +36,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /
-            port: 4983
+            port: 4848
           initialDelaySeconds: 30
           periodSeconds: 30
           timeoutSeconds: 5
@@ -44,7 +44,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /
-            port: 4983
+            port: 4848
           initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 3
@@ -64,6 +64,6 @@ spec:
   selector:
     app: zero
   ports:
-  - port: 4983
-    targetPort: 4983
+  - port: 4848
+    targetPort: 4848
   type: ClusterIP

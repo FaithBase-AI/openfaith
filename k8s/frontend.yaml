@@ -6,7 +6,7 @@ metadata:
   labels:
     app: frontend
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: frontend
@@ -19,7 +19,7 @@ spec:
       - name: ghcr-pull-secret
       containers:
       - name: frontend
-        image: ghcr.io/faithbase-ai/openfaith-frontend:k8s-support-3-f798a86
+        image: ghcr.io/faithbase-ai/openfaith-frontend:master-33adc1d
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
@@ -39,6 +39,6 @@ spec:
   selector:
     app: frontend
   ports:
-  - port: 80
+  - port: 3000
     targetPort: 3000
   type: ClusterIP
