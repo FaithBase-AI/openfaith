@@ -6,6 +6,7 @@ import {
   OfFieldName,
   OfFolderType,
   OfIdentifier,
+  OfPartialTransformer,
   OfTransformer,
 } from '@openfaith/schema'
 import { Schema } from 'effect'
@@ -25,6 +26,12 @@ export const PcoListAttributes = Schema.Struct({
 export type PcoListAttributes = typeof PcoListAttributes.Type
 
 export const pcoListTransformer = pcoToOf(PcoListAttributes, BaseFolder, 'list')
+
+export const pcoListPartialTransformer = pcoToOf(
+  Schema.partial(PcoListAttributes),
+  Schema.partial(Schema.Struct(BaseFolder.fields)),
+  'list',
+)
 
 export const PcoList = mkPcoEntity({
   attributes: PcoListAttributes,
@@ -49,5 +56,6 @@ export const PcoList = mkPcoEntity({
   [OfFolderType]: 'pco_list',
   [OfIdentifier]: 'pco-list',
   [OfTransformer]: pcoListTransformer,
+  [OfPartialTransformer]: pcoListPartialTransformer,
 })
 export type PcoList = typeof PcoList.Type

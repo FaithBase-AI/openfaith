@@ -1,4 +1,4 @@
-import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
+import { mkPcoEntity, mkPcoWebhookDelivery } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
 import {
   BasePerson,
@@ -7,6 +7,7 @@ import {
   OfEntity,
   OfFieldName,
   OfIdentifier,
+  OfPartialTransformer,
   OfTransformer,
   Person,
 } from '@openfaith/schema'
@@ -111,6 +112,12 @@ export type PcoPersonAttributes = typeof PcoPersonAttributes.Type
 
 export const pcoPersonTransformer = pcoToOf(PcoPersonAttributes, BasePerson, 'person')
 
+export const pcoPersonPartialTransformer = pcoToOf(
+  Schema.partial(PcoPersonAttributes),
+  Schema.partial(Schema.Struct(BasePerson.fields)),
+  'person',
+)
+
 export const PcoPerson = mkPcoEntity({
   attributes: PcoPersonAttributes,
   links: Schema.Struct({
@@ -151,5 +158,59 @@ export const PcoPerson = mkPcoEntity({
   [OfEntity]: Person,
   [OfIdentifier]: 'pco-person',
   [OfTransformer]: pcoPersonTransformer,
+  [OfPartialTransformer]: pcoPersonPartialTransformer,
 })
+export type PcoPersonSchema = typeof PcoPerson
 export type PcoPerson = typeof PcoPerson.Type
+
+export class PcoPersonCreatedWebhook extends Schema.Class<PcoPersonCreatedWebhook>(
+  'PcoPersonCreatedWebhook',
+)(mkPcoWebhookDelivery('people.v2.events.person.created', PcoPerson)) {}
+
+export class PcoPersonUpdatedWebhook extends Schema.Class<PcoPersonUpdatedWebhook>(
+  'PcoPersonUpdatedWebhook',
+)(mkPcoWebhookDelivery('people.v2.events.person.updated', PcoPerson)) {}
+
+export class PcoPersonDestroyedWebhook extends Schema.Class<PcoPersonDestroyedWebhook>(
+  'PcoPersonDestroyedWebhook',
+)(
+  mkPcoWebhookDelivery(
+    'people.v2.events.person.destroyed',
+    Schema.Struct({
+      // Destroyed events typically have minimal or no attributes
+      attributes: Schema.optional(Schema.Unknown),
+      id: Schema.String,
+      links: Schema.optional(Schema.Unknown),
+      relationships: Schema.optional(Schema.Unknown),
+      type: Schema.Literal('Person'),
+    }),
+  ),
+) {}
+
+export class PcoPersonMergerWebhook extends Schema.Class<PcoPersonMergerWebhook>(
+  'PcoPersonMergerWebhook',
+)(
+  mkPcoWebhookDelivery(
+    'people.v2.events.person_merger.created',
+    Schema.Struct({
+      attributes: Schema.optional(Schema.Unknown),
+      id: Schema.String,
+      links: Schema.optional(Schema.Unknown),
+      relationships: Schema.Struct({
+        person_to_keep: Schema.Struct({
+          data: Schema.Struct({
+            id: Schema.String,
+            type: Schema.Literal('Person'),
+          }),
+        }),
+        person_to_remove: Schema.Struct({
+          data: Schema.Struct({
+            id: Schema.String,
+            type: Schema.Literal('Person'),
+          }),
+        }),
+      }),
+      type: Schema.Literal('PersonMerger'),
+    }),
+  ),
+) {}

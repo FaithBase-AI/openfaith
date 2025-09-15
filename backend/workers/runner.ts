@@ -10,6 +10,7 @@ import { ExternalPushEntityWorkflowLayer } from '@openfaith/workers/workflows/ex
 import { ExternalPushWorkflowLayer } from '@openfaith/workers/workflows/externalPushWorkflow'
 import { ExternalSyncEntityWorkflowLayer } from '@openfaith/workers/workflows/externalSyncEntityWorkflow'
 import { ExternalSyncWorkflowLayer } from '@openfaith/workers/workflows/externalSyncWorkflow'
+import { ExternalWebhookWorkflowLayer } from '@openfaith/workers/workflows/externalWebhookWorkflow'
 import { TestWorkflowLayer } from '@openfaith/workers/workflows/testWorkflow'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
@@ -40,6 +41,7 @@ const port = 3020
 
 const EnvLayer = Layer.mergeAll(
   ExternalSyncWorkflowLayer,
+  ExternalWebhookWorkflowLayer,
   ExternalSyncEntityWorkflowLayer,
   ExternalPushWorkflowLayer,
   ExternalPushEntityWorkflowLayer,

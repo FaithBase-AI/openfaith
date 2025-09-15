@@ -5,7 +5,7 @@ import { createServerFileRoute } from '@tanstack/react-start/server'
 // Create the web handler using HttpLayerRouter.toWebHandler
 const { handler } = HttpLayerRouter.toWebHandler(ServerLive)
 
-export const ServerRoute = createServerFileRoute('/api/api/$').methods({
+export const ServerRoute = createServerFileRoute('/api/$').methods({
   async DELETE({ request }) {
     return await handler(request)
   },

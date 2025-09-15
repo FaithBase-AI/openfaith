@@ -6,6 +6,7 @@ import {
   OfEntity,
   OfFieldName,
   OfIdentifier,
+  OfPartialTransformer,
   OfTransformer,
 } from '@openfaith/schema'
 import { Schema } from 'effect'
@@ -49,6 +50,12 @@ export type PcoAddressAttributes = typeof PcoAddressAttributes.Type
 
 export const pcoAddressTransformer = pcoToOf(PcoAddressAttributes, BaseAddress, 'address')
 
+export const pcoAddressPartialTransformer = pcoToOf(
+  Schema.partial(PcoAddressAttributes),
+  Schema.partial(Schema.Struct(BaseAddress.fields)),
+  'address',
+)
+
 export const PcoAddress = mkPcoEntity({
   attributes: PcoAddressAttributes,
   links: Schema.Struct({
@@ -67,6 +74,7 @@ export const PcoAddress = mkPcoEntity({
   [OfEntity]: Address,
   [OfIdentifier]: 'pco-address',
   [OfTransformer]: pcoAddressTransformer,
+  [OfPartialTransformer]: pcoAddressPartialTransformer,
 })
 
 export type PcoAddress = typeof PcoAddress.Type

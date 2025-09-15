@@ -1,3 +1,4 @@
+import type { Headers } from '@effect/platform'
 import type { ExternalLink } from '@openfaith/db'
 import type { CRUDOp } from '@openfaith/domain'
 import type { EntityUnion } from '@openfaith/schema/shared/entityDiscovery'
@@ -15,6 +16,43 @@ export class AdapterFetchError extends Schema.TaggedError<AdapterFetchError>()(
   },
 ) {}
 
+export class AdapterWebhookSubscriptionError extends Schema.TaggedError<AdapterWebhookSubscriptionError>()(
+  'AdapterWebhookSubscriptionError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+    orgId: Schema.String,
+  },
+) {}
+
+export class AdapterWebhookProcessingError extends Schema.TaggedError<AdapterWebhookProcessingError>()(
+  'AdapterWebhookProcessingError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+  },
+) {}
+
+export class AdapterWebhookRetrieveOrgIdError extends Schema.TaggedError<AdapterWebhookRetrieveOrgIdError>()(
+  'AdapterWebhookRetrieveOrgIdError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+  },
+) {}
+
+export class AdapterWebhookNoOrgIdError extends Schema.TaggedError<AdapterWebhookNoOrgIdError>()(
+  'AdapterWebhookNoOrgIdError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+  },
+) {}
+
 export class AdapterTransformError extends Schema.TaggedError<AdapterTransformError>()(
   'AdapterTransformError',
   {
@@ -29,6 +67,7 @@ export class AdapterEntityNotFoundError extends Schema.TaggedError<AdapterEntity
   'AdapterEntityNotFoundError',
   {
     adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
     entityType: Schema.String,
     message: Schema.String,
   },
@@ -55,6 +94,15 @@ export class RelationshipProcessingError extends Schema.TaggedError<Relationship
   },
 ) {}
 
+export class WebhookRetrievalError extends Schema.TaggedError<WebhookRetrievalError>()(
+  'WebhookRetrievalError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+  },
+) {}
+
 export class DetectionError extends Schema.TaggedError<DetectionError>()('DetectionError', {
   adapter: Schema.String,
   cause: Schema.optional(Schema.Unknown),
@@ -62,6 +110,28 @@ export class DetectionError extends Schema.TaggedError<DetectionError>()('Detect
   message: Schema.String,
   orgId: Schema.String,
 }) {}
+
+export class EntityDeletionError extends Schema.TaggedError<EntityDeletionError>()(
+  'EntityDeletionError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    externalId: Schema.String,
+    message: Schema.String,
+    orgId: Schema.String,
+  },
+) {}
+
+export class EntityMergingError extends Schema.TaggedError<EntityMergingError>()(
+  'EntityMergingError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    keepId: Schema.String,
+    orgId: Schema.String,
+    removeId: Schema.String,
+  },
+) {}
 
 export class ExternalLinkUpsertError extends Schema.TaggedError<ExternalLinkUpsertError>()(
   'ExternalLinkUpsertError',
@@ -140,5 +210,38 @@ export interface RelationshipInput {
 export type ProcessRelationships = (
   relationships: Array<RelationshipInput>,
 ) => Effect.Effect<void, RelationshipProcessingError>
+
+export type DeleteEntity = (
+  externalId: string,
+  adapter: string,
+) => Effect.Effect<void, EntityDeletionError>
+
+export type MergeEntity = (
+  keepId: string,
+  removeId: string,
+  adapter: string,
+) => Effect.Effect<void, EntityMergingError>
+
+export type GetWebhooks = (
+  adapter: string,
+) => Effect.Effect<Array<{ authenticitySecret: string; orgId: string }>, WebhookRetrievalError>
+
+export type GetWebhookOrgId = (params: {
+  headers: Headers.Headers
+  payload: any
+  getWebhooks: GetWebhooks
+}) => Effect.Effect<string, AdapterWebhookRetrieveOrgIdError | AdapterWebhookNoOrgIdError>
+
+export type SyncEntityId = (params: {
+  entityType: string
+  entityId: string
+
+  entityAlt?: { id: string } & Record<string, unknown>
+
+  processExternalLinks: ProcessExternalLinks
+  processEntities: ProcessEntities
+  processRelationships: ProcessRelationships
+  processMutations: ProcessMutations
+}) => Effect.Effect<void, AdapterFetchError | AdapterTransformError | AdapterEntityNotFoundError>
 
 export type ProcessMutations = (mutations: Array<CRUDOp>) => Effect.Effect<void>

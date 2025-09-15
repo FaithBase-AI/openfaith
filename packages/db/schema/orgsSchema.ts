@@ -86,7 +86,7 @@ export const orgSettingsTable = pgTable('orgSettings', (d) => ({
     .default('orgSettings')
     .$type<'orgSettings'>()
     .notNull(),
-  orgId: d.varchar({ length: 128 }).primaryKey(),
+  orgId: d.text().primaryKey(),
 }))
 export const OrgSettings = createSelectSchema(orgSettingsTable)
 export type OrgSettings = typeof OrgSettings.Type
