@@ -4,6 +4,7 @@
       "@openfaith/workers/*": ["./*"]
     }
   },
+  "exclude": ["dist"],
   "extends": "@openfaith/tsconfig/base.json",
   "include": ["."]
 }

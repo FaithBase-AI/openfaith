@@ -1,8 +1,7 @@
-import { createServer } from 'node:http'
 import { ClusterWorkflowEngine } from '@effect/cluster'
 import { NodeSdk } from '@effect/opentelemetry'
 import { FetchHttpClient, HttpApiBuilder, HttpMiddleware, HttpServer } from '@effect/platform'
-import { NodeClusterRunnerSocket, NodeHttpServer, NodeRuntime } from '@effect/platform-node'
+import { BunClusterRunnerSocket, BunHttpServer, BunRuntime } from '@effect/platform-bun'
 import { WorkflowProxyServer } from '@effect/workflow'
 import { DBLive, TokenManagerLive } from '@openfaith/server'
 import { HealthLive, WorkflowApi, workflows } from '@openfaith/workers/api/workflowApi'
@@ -18,7 +17,7 @@ import { Layer, Logger } from 'effect'
 
 // NodeSDK layer for telemetry
 
-const NodeSdkLive = NodeSdk.layer(() => ({
+const BunSdkLive = NodeSdk.layer(() => ({
   resource: { serviceName: 'openfaith-workflow-runner' },
   spanProcessor: [new BatchSpanProcessor(new OTLPTraceExporter())],
 }))
@@ -26,7 +25,7 @@ const NodeSdkLive = NodeSdk.layer(() => ({
 // Workflow engine layer
 const WorkflowEngineLayer = ClusterWorkflowEngine.layer.pipe(
   Layer.provideMerge(
-    NodeClusterRunnerSocket.layer({
+    BunClusterRunnerSocket.layer({
       storage: 'sql',
     }),
   ),
@@ -58,9 +57,9 @@ const ServerLayer = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(HealthLive),
   Layer.provide(EnvLayer),
   Layer.provide(Logger.pretty),
-  Layer.provide(NodeHttpServer.layer(createServer, { port })),
+  Layer.provide(BunHttpServer.layer({ port })),
   Layer.provide(FetchHttpClient.layer),
-  Layer.provide(NodeSdkLive),
+  Layer.provide(BunSdkLive),
 )
 
-NodeRuntime.runMain(ServerLayer.pipe(Layer.launch))
+BunRuntime.runMain(ServerLayer.pipe(Layer.launch))
