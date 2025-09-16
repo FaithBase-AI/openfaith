@@ -14,8 +14,6 @@ export const env = createEnv({
 
     // Zero
     ZERO_UPSTREAM_DB: z.string(),
-    ZERO_CVR_DB: z.string(),
-    ZERO_CHANGE_DB: z.string(),
     ZERO_REPLICA_FILE: z.string(),
     ZERO_AUTH_JWKS_URL: z.string(),
     ZERO_APP_ID: z.string(),
