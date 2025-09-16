@@ -8,33 +8,25 @@ data:
   DB_HOST_PRIMARY: "postgres-service"
   DB_NAME: "postgres"
   DB_PORT: "5432"
-  DB_USERNAME: "user"
   DB_SSL: "false"
   
   # Zero Configuration (Backend/Workers - Server-side)
-  ZERO_AUTH_JWKS_URL: "http://frontend-service:3000/auth/jwks"
   ZERO_APP_ID: "openfaith_prod"
   ZERO_NUM_SYNC_WORKERS: "4"
   ZERO_LOG_LEVEL: "info"
-  ZERO_PUSH_URL: "http://frontend-service:3000/api/zero/push"
-  ZERO_REPLICA_FILE: "/data/zero-replica.db"
+  ZERO_REPLICA_FILE: "/tmp/zero.db"
   
   # Redis Configuration
   REDIS_URL: "redis://redis-service.openfaith.svc.cluster.local:6379"
 
   # Client-side environment variables (VITE_ prefix)
-  VITE_ZERO_SERVER: "http://zero-service:4848"
   VITE_APP_NAME: "OpenFaith"
-  VITE_BASE_URL: "http://frontend-service:3000"
-  VITE_PROD_ROOT_DOMAIN: "openfaith.app"
-  VITE_PROD_EMAIL_DOMAIN: "openfaith.app"
-  VITE_PLANNING_CENTER_CLIENT_ID: "your-planning-center-client-id"
-
+  
   # Workflow communication
   WORKERS_HOST: "workers-service"
   SHARD_MANAGER_HOST: "shard-manager-service"
   
   # Application Configuration
   NODE_ENV: "production"
-  
 
+  HOST: 0.0.0.0

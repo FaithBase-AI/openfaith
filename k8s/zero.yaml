@@ -19,7 +19,7 @@ spec:
       - name: ghcr-pull-secret
       containers:
       - name: zero
-        image: ghcr.io/faithbase-ai/openfaith-zero:master-33adc1d
+        image: ghcr.io/faithbase-ai/openfaith-zero:master-8863d85
         imagePullPolicy: Always
         ports:
         - containerPort: 4848
@@ -64,6 +64,6 @@ spec:
   selector:
     app: zero
   ports:
-  - port: 4848
+  - port: 80
     targetPort: 4848
-  type: ClusterIP
+  type: LoadBalancer

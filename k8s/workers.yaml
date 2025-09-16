@@ -19,7 +19,7 @@ spec:
       - name: ghcr-pull-secret
       containers:
       - name: workers
-        image: ghcr.io/faithbase-ai/openfaith-workers:master-33adc1d
+        image: ghcr.io/faithbase-ai/openfaith-workers:master-8863d85
         imagePullPolicy: Always
         ports:
         - containerPort: 3020
@@ -27,8 +27,6 @@ spec:
         envFrom:
         - configMapRef:
             name: openfaith-config
-        - configMapRef:
-            name: openfaith-frontend-config
         - secretRef:
             name: openfaith-secrets
         livenessProbe:

@@ -4,14 +4,13 @@ metadata:
   name: openfaith-ingress
   namespace: openfaith
   annotations:
-    # Preserve original paths - api expects full /api/auth/... paths
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
   - host: localhost
     http:
-      # Frontend routes
+      paths:
       - path: /
         pathType: Prefix
         backend:
@@ -19,5 +18,3 @@ spec:
             name: frontend-service
             port:
               number: 80
-# Note: Removed duplicate ingress for IP access to avoid conflicts
-# If needed, can be added back with a different host specification

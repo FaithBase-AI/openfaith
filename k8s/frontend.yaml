@@ -19,13 +19,13 @@ spec:
       - name: ghcr-pull-secret
       containers:
       - name: frontend
-        image: ghcr.io/faithbase-ai/openfaith-frontend:master-33adc1d
+        image: ghcr.io/faithbase-ai/openfaith-frontend:master-8863d85
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
         envFrom:
         - configMapRef:
-            name: openfaith-frontend-config
+            name: openfaith-config
         - secretRef:
             name: openfaith-secrets
 
@@ -39,6 +39,6 @@ spec:
   selector:
     app: frontend
   ports:
-  - port: 3000
+  - port: 80
     targetPort: 3000
-  type: ClusterIP
+  type: LoadBalancer
