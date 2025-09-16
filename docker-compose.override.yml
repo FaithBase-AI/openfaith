@@ -5,13 +5,6 @@ services:
     build:
       context: .
       dockerfile: apps/openfaith/Dockerfile
-      args:
-        VITE_ZERO_SERVER: http://localhost:4848
-        VITE_APP_NAME: OpenFaith
-        VITE_BASE_URL: http://localhost:3000
-        VITE_PROD_ROOT_DOMAIN: localhost
-        VITE_PROD_EMAIL_DOMAIN: localhost
-        VITE_PLANNING_CENTER_CLIENT_ID: your-pco-client-id-here
     container_name: openfaith-frontend
     ports:
       - "3000:3000"
