@@ -180,6 +180,12 @@ kubectl describe ingress -n openfaith
 kubectl get ingress -n openfaith -o wide
 ```
 
+### Connect to remote db
+
+```bash
+kubectl port-forward -n openfaith service/postgres-service 5432:5432
+```
+
 ## Security Notes
 
 - `secrets.yaml` is gitignored - never commit real secrets

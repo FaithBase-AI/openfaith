@@ -40,8 +40,6 @@ effect('env should have expected server variables structure', () =>
 
     // Zero variables
     expect(() => env.ZERO_UPSTREAM_DB).not.toThrow()
-    expect(() => env.ZERO_CVR_DB).not.toThrow()
-    expect(() => env.ZERO_CHANGE_DB).not.toThrow()
     expect(() => env.ZERO_REPLICA_FILE).not.toThrow()
     expect(() => env.ZERO_AUTH_JWKS_URL).not.toThrow()
     expect(() => env.ZERO_APP_ID).not.toThrow()

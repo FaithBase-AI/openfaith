@@ -21,10 +21,8 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
   })
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: We only want to refresh for session.data.userID
-  const opts = useMemo(() => {
-    console.log(env)
-
-    return {
+  const opts = useMemo(
+    () => ({
       auth: session.zeroAuth,
       init: (zero: Zero<ZSchema, Mutators>) => {
         router.update({
@@ -59,8 +57,9 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
           onSome: (x) => x.userID,
         }),
       ),
-    }
-  }, [session.data, router])
+    }),
+    [session.data, router],
+  )
 
   return <ZeroProvider {...opts}>{children}</ZeroProvider>
 }

@@ -422,9 +422,7 @@ export const auth = betterAuth({
       return value ? value : null
     },
     set: async (key, value, ttl) => {
-      if (ttl) await redis.set(key, value, { EX: ttl })
-      // or for ioredis:
-      // if (ttl) await redis.set(key, value, 'EX', ttl)
+      if (ttl) await redis.set(key, value, 'EX', ttl)
       else await redis.set(key, value)
     },
   },
