@@ -2,7 +2,6 @@
   "dependencies": {
     "@openfaith/shared": "workspace:*",
     "effect": "catalog:",
-    "redis": "5.5.6",
     "resend": "catalog:"
   },
   "devDependencies": {

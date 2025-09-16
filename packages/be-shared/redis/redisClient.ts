@@ -1,5 +1,3 @@
-import { createClient } from 'redis'
+import { RedisClient } from 'bun'
 
-export const redis = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-})
+export const redis = new RedisClient(process.env.REDIS_URL || 'redis://localhost:6379')
