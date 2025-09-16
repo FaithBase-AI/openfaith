@@ -4,6 +4,16 @@ import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_APP_NAME': JSON.stringify(process.env.VITE_APP_NAME),
+    'import.meta.env.VITE_BASE_URL': JSON.stringify(process.env.VITE_BASE_URL),
+    'import.meta.env.VITE_PLANNING_CENTER_CLIENT_ID': JSON.stringify(
+      process.env.VITE_PLANNING_CENTER_CLIENT_ID,
+    ),
+    'import.meta.env.VITE_PROD_EMAIL_DOMAIN': JSON.stringify(process.env.VITE_PROD_EMAIL_DOMAIN),
+    'import.meta.env.VITE_PROD_ROOT_DOMAIN': JSON.stringify(process.env.VITE_PROD_ROOT_DOMAIN),
+    'import.meta.env.VITE_ZERO_SERVER': JSON.stringify(process.env.VITE_ZERO_SERVER),
+  },
   plugins: [
     tsconfigPaths({
       projects: ['./tsconfig.json'],
