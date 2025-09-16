@@ -8,7 +8,7 @@ export const ServerRoute = createServerFileRoute('/api/auth/refresh').methods({
       headers: request.headers,
     })
     if (!session) {
-      console.info('Could not get session')
+      console.info('Could not get session', session, request.headers)
       return unauthorized()
     }
 
