@@ -6,8 +6,8 @@ set -e
 # values, and this script replaces them with the actual values from the
 # environment before starting the server.
 
-# Default to /usr/src/app/.output/public if PUBLIC_DIR is not set
-PUBLIC_DIR="${PUBLIC_DIR:-/usr/src/app/.output/public}"
+# Default to the correct output directory for the @openfaith/openfaith package
+PUBLIC_DIR="${PUBLIC_DIR:-/usr/src/app/apps/openfaith/.output/public}"
 
 if [ ! -d "$PUBLIC_DIR" ]; then
   echo "Error: Public directory not found at $PUBLIC_DIR"
