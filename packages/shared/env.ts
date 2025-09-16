@@ -71,7 +71,17 @@ export const env = createEnv({
       Option.fromNullable,
       Option.filter((x) => x === 'drizzle-kit studio'),
       Option.match({
-        onNone: () => import.meta.env,
+        onNone: () =>
+          typeof window === 'undefined'
+            ? import.meta.env
+            : {
+                VITE_ZERO_SERVER: import.meta.env.VITE_ZERO_SERVER,
+                VITE_APP_NAME: import.meta.env.VITE_APP_NAME,
+                VITE_BASE_URL: import.meta.env.VITE_BASE_URL,
+                VITE_PROD_ROOT_DOMAIN: import.meta.env.VITE_PROD_ROOT_DOMAIN,
+                VITE_PROD_EMAIL_DOMAIN: import.meta.env.VITE_PROD_EMAIL_DOMAIN,
+                VITE_PLANNING_CENTER_CLIENT_ID: import.meta.env.VITE_PLANNING_CENTER_CLIENT_ID,
+              },
         onSome: () => ({}),
       }),
     ),
