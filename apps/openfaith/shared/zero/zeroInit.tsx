@@ -22,6 +22,8 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: We only want to refresh for session.data.userID
   const opts = useMemo(() => {
+    console.log(env)
+
     return {
       auth: session.zeroAuth,
       init: (zero: Zero<ZSchema, Mutators>) => {
