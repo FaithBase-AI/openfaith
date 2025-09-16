@@ -432,7 +432,12 @@ export const auth = betterAuth({
       maxAge: 5 * 60, // Cache duration in seconds
     },
   },
-  trustedOrigins: [`https://${env.VITE_PROD_ROOT_DOMAIN}`, 'http://localhost:3000'],
+  trustedOrigins: [
+    `https://${env.VITE_PROD_ROOT_DOMAIN}`,
+    'http://localhost:3000',
+    'http://172.252.211.87',
+    'http://172.252.211.73',
+  ],
   user: {
     modelName: getTableName('users'),
   },
