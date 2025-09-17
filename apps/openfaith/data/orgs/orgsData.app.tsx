@@ -47,7 +47,7 @@ export const orgsTableColumns: Array<ColumnDef<OrgClientShape>> = [
       pipe(
         row.original.adapterDetails,
         Array.map((x) => (
-          <Badge variant='secondary'>
+          <Badge key={x.adapter} variant='secondary'>
             {x.enabled ? <CheckCircleIcon /> : <XIcon />}
             {pipe(x.adapter, String.toUpperCase)}
           </Badge>
