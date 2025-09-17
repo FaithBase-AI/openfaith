@@ -59,7 +59,7 @@
       "persistent": true
     },
     "lint": {
-      "dependsOn": ["^topo", "^build"],
+      "dependsOn": ["^topo"],
       "outputs": [".cache/.eslintcache"]
     },
     "push": {
@@ -91,7 +91,7 @@
       "dependsOn": ["^topo"]
     },
     "typecheck": {
-      "dependsOn": ["^topo", "^build"],
+      "dependsOn": ["^topo"],
       "outputs": [".cache/tsbuildinfo.json"]
     },
     "ui-add": {

@@ -113,6 +113,7 @@ export const generateColumnConfigs = <T>(
       const finalConfig: Required<FieldConfig['table']> = {
         ...baseConfig,
         hidden: baseConfig.hidden ?? false,
+        readonly: baseConfig.readonly ?? false,
       }
 
       return { config: finalConfig, key }
