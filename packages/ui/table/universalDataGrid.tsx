@@ -29,7 +29,7 @@ import { getRelatedEntityIds } from '@openfaith/ui/table/relationColumnGenerator
 import { getBaseEntityRelationshipsQuery } from '@openfaith/zero/baseQueries'
 import { useZero } from '@openfaith/zero/useZero'
 import { useQuery } from '@rocicorp/zero/react'
-import { Array, pipe, type Schema, String } from 'effect'
+import { Array, Option, pipe, type Schema, String } from 'effect'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo } from 'react'
 
@@ -97,15 +97,9 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     clearFetchedCache()
   }, [clearFetchedCache])
 
-  const entityRelationshipsQuery = useMemo(() => {
-    if (!showRelations || !entityInfo.entityName) {
-      return null
-    }
-
-    return getBaseEntityRelationshipsQuery(z)
-  }, [z, entityInfo.entityName, showRelations])
-
-  const [allRelationships] = useQuery(entityRelationshipsQuery as Parameters<typeof useQuery>[0])
+  const [allRelationships] = useQuery(getBaseEntityRelationshipsQuery(z), {
+    enabled: showRelations && pipe(entityInfo.entityName, Option.fromNullable, Option.isSome),
+  })
 
   // Transform relationships into a format for relation columns
   const transformedRelationships = useMemo(() => {
@@ -114,7 +108,7 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     }
 
     const db = pipe(
-      allRelationships as Array<any>,
+      allRelationships,
       Array.map((r) => ({
         sourceEntityType: r.sourceEntityType as string,
         targetEntityTypes: (r.targetEntityTypes || []) as ReadonlyArray<string>,

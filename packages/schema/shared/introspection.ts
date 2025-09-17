@@ -270,14 +270,8 @@ export const extractAST = (schema: SchemaAST.AST | SchemaAST.PropertySignature):
 export const extractEntityInfo = (
   schema: Schema.Schema.AnyNoContext,
 ): { entityName: string; entityTag?: string } => {
-  // Import OfEntity symbol
-  const OfEntity = Symbol.for('@openfaith/schema/entity')
-
   // Get entity annotation if present
-  const entityAnnotation = pipe(
-    SchemaAST.getAnnotation<string>(OfEntity)(schema.ast),
-    Option.getOrUndefined,
-  )
+  const entityAnnotation = pipe(extractEntityName(schema), Option.getOrUndefined)
 
   // Get entity tag from _tag field if present
   const entityTag = pipe(extractEntityTag(schema.ast), Option.getOrUndefined)
