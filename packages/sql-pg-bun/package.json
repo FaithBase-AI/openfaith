@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "@effect/experimental": "catalog:",
+    "@effect/platform": "catalog:",
+    "@effect/sql": "catalog:",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@openfaith/bun-test": "workspace:*",
+    "@testcontainers/postgresql": "catalog:",
+    "@types/bun": "latest",
+    "typescript": "catalog:"
+  },
+  "license": "MIT",
+  "name": "@openfaith/sql-pg-bun",
+  "private": true,
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "format": "biome check",
+    "test": "bun test",
+    "typecheck": "tsgo --noEmit"
+  },
+  "type": "module",
+  "version": "0.1.0"
+}

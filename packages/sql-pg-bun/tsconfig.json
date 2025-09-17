@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "tsBuildInfoFile": ".cache/tsbuildinfo.json"
+  },
+  "exclude": ["dist/**/*", "**/*.test.ts"],
+  "extends": "../../tooling/typescript/base.json",
+  "include": ["src/**/*", "*.ts"]
+}
