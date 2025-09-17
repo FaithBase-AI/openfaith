@@ -1,3 +1,4 @@
+import { OrgsTable } from '@openfaith/openfaith/features/admin/orgsTable'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_app/admin/orgs')({
@@ -5,11 +6,5 @@ export const Route = createFileRoute('/_app/admin/orgs')({
 })
 
 function RouteComponent() {
-  return (
-    <div className='flex flex-col items-start'>
-      <div className='p-6 text-muted-foreground'>
-        Organization management features coming soon...
-      </div>
-    </div>
-  )
+  return <OrgsTable />
 }

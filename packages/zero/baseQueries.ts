@@ -19,7 +19,7 @@ export const getBaseUserQuery = (z: ReturnType<typeof useZero>, userId: string) 
 
 // Orgs
 export const getBaseOrgsQuery = (z: ReturnType<typeof useZero>) =>
-  z.query.orgs.related('orgUsers').orderBy('name', 'asc')
+  z.query.orgs.related('orgUsers').related('adapterDetails').orderBy('name', 'asc')
 export const getBaseOrgQuery = (z: ReturnType<typeof useZero>, orgId: string) =>
   getBaseOrgsQuery(z).where('id', orgId).one()
 
