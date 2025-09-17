@@ -86,17 +86,8 @@ export const ExternalPushEntityWorkflowLayer = ExternalPushEntityWorkflow.toLaye
           concurrency: 'unbounded',
         })
       }).pipe(
-        Effect.withSpan('external-sync-entity-activity'),
         Effect.provide(Layer.mergeAll(PcoAdapterManagerLayer, InternalManagerLive)),
         Effect.provideService(TokenKey, tokenKey),
-        Effect.tapError((error) =>
-          Effect.logError('External sync failed', {
-            entityName,
-            error,
-            mutationCount: mutations.length,
-            tokenKey,
-          }),
-        ),
       ),
       name: 'SyncExternalEntityData',
     }).pipe(Activity.retry({ times: 3 }))

@@ -86,20 +86,15 @@ export const CreateOrgWorkflowLayer = CreateOrgWorkflow.toLayer(
               target: [sacramentsTable.id],
             })
         }).pipe(
-          // Handle errors at the activity boundary
-          Effect.tapError((error) =>
-            Effect.logError('Failed to seed default sacraments', {
-              error,
-              organizationId: payload.organizationId,
-            }),
-          ),
-          Effect.mapError(
-            (error) =>
-              new CreateOrgWorkflowError({
-                cause: error,
-                message: 'Failed to seed default sacraments',
-              }),
-          ),
+          Effect.catchTags({
+            SqlError: (error) =>
+              Effect.fail(
+                new CreateOrgWorkflowError({
+                  cause: error,
+                  message: 'Failed to seed default sacraments',
+                }),
+              ),
+          }),
         ),
         name: 'SeedDefaultSacraments',
       }).pipe(Activity.retry({ times: 3 }))
@@ -116,20 +111,15 @@ export const CreateOrgWorkflowLayer = CreateOrgWorkflow.toLayer(
             },
           ],
         }).pipe(
-          // Handle errors at the activity boundary
-          Effect.tapError((error) =>
-            Effect.logError('Failed to seed entity relationships', {
-              error,
-              organizationId: payload.organizationId,
-            }),
-          ),
-          Effect.mapError(
-            (error) =>
-              new CreateOrgWorkflowError({
-                cause: error,
-                message: 'Failed to seed relationships',
-              }),
-          ),
+          Effect.catchTags({
+            SqlError: (error) =>
+              Effect.fail(
+                new CreateOrgWorkflowError({
+                  cause: error,
+                  message: 'Failed to seed relationships',
+                }),
+              ),
+          }),
         ),
         name: 'SeedEntityRelationships',
       }).pipe(Activity.retry({ times: 3 }))

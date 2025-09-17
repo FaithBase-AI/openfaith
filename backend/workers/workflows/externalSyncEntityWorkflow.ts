@@ -70,15 +70,6 @@ export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLaye
         yield* externalSyncEntity(entity).pipe(
           Effect.provide(Layer.mergeAll(PcoAdapterManagerLayer, InternalManagerLive)),
           Effect.provideService(TokenKey, tokenKey),
-          Effect.mapError(
-            (cause) =>
-              new ExternalSyncEntityError({
-                cause,
-                entityType: entity,
-                message: `Failed to sync ${entity} entity`,
-                tokenKey,
-              }),
-          ),
         )
 
         yield* Effect.annotateLogs(Effect.log(`✅ Completed internal sync for ${entity}`), {
@@ -89,15 +80,44 @@ export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLaye
           tokenKey,
         })
       }).pipe(
-        Effect.withSpan('internal-sync-entity-activity'),
-        Effect.tapError((error) =>
-          Effect.logError('Entity sync failed', {
-            adapter,
-            entityType: entity,
-            error,
-            tokenKey,
-          }),
-        ),
+        Effect.catchTags({
+          AdapterEntityNotFoundError: (error) =>
+            Effect.fail(
+              new ExternalSyncEntityError({
+                cause: error,
+                entityType: entity,
+                message: `Failed to sync ${entity} entity`,
+                tokenKey,
+              }),
+            ),
+          AdapterFetchError: (error) =>
+            Effect.fail(
+              new ExternalSyncEntityError({
+                cause: error,
+                entityType: entity,
+                message: `Failed to sync ${entity} entity`,
+                tokenKey,
+              }),
+            ),
+          AdapterTransformError: (error) =>
+            Effect.fail(
+              new ExternalSyncEntityError({
+                cause: error,
+                entityType: entity,
+                message: `Failed to sync ${entity} entity`,
+                tokenKey,
+              }),
+            ),
+          DetectionError: (error) =>
+            Effect.fail(
+              new ExternalSyncEntityError({
+                cause: error,
+                entityType: entity,
+                message: `Failed to sync ${entity} entity`,
+                tokenKey,
+              }),
+            ),
+        }),
       ),
       name: 'SyncExternalEntityData',
     }).pipe(Activity.retry({ times: 3 }))

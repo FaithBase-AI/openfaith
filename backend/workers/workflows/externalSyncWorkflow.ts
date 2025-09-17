@@ -1,8 +1,9 @@
-import { Workflow } from '@effect/workflow'
-import { AdapterManager, TokenKey } from '@openfaith/adapter-core/server'
+import { Activity, Workflow } from '@effect/workflow'
+import { AdapterManager, subscribeToWebhooks, TokenKey } from '@openfaith/adapter-core/server'
 import { PcoAdapterManagerLayer } from '@openfaith/pco/server'
+import { InternalManagerLive } from '@openfaith/server'
 import { ExternalSyncEntityWorkflow } from '@openfaith/workers/workflows/externalSyncEntityWorkflow'
-import { Array, Effect, Option, pipe, Record, Schema } from 'effect'
+import { Array, Effect, Layer, Option, pipe, Record, Schema } from 'effect'
 
 // Define the internal sync error
 class ExternalSyncError extends Schema.TaggedError<ExternalSyncError>()('ExternalSyncError', {
@@ -43,6 +44,19 @@ export const ExternalSyncWorkflowLayer = ExternalSyncWorkflow.toLayer(
       )
     }
 
+    yield* Activity.make({
+      error: ExternalSyncError,
+      execute: subscribeToWebhooks().pipe(
+        Effect.provide(Layer.mergeAll(PcoAdapterManagerLayer, InternalManagerLive)),
+        Effect.provideService(TokenKey, tokenKey),
+        Effect.catchTags({
+          AdapterWebhookSubscriptionError: (error) =>
+            Effect.fail(new ExternalSyncError({ message: error.message })),
+        }),
+      ),
+      name: 'SubscribeToWebhooks',
+    }).pipe(Activity.retry({ times: 3 }))
+
     const adapterManager = yield* AdapterManager.pipe(
       Effect.provide(PcoAdapterManagerLayer),
       Effect.provideService(TokenKey, tokenKey),
@@ -58,6 +72,7 @@ export const ExternalSyncWorkflowLayer = ExternalSyncWorkflow.toLayer(
         if ('list' in entity.endpoints && entity.skipSync === false) {
           return Option.some(entity.entity)
         }
+
         return Option.none()
       }),
     )
