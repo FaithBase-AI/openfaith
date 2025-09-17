@@ -119,9 +119,10 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
   }, [allRelationships, entityInfo.entityName, schema])
 
   // Generate columns from schema using the helper
-  const { columns: baseColumns, columnIdToField } = useMemo(() => {
-    return generateDataGridColumns(schema)
-  }, [schema])
+  const { columns: baseColumns, columnIdToField } = useMemo(
+    () => generateDataGridColumns(schema),
+    [schema],
+  )
 
   // Add relation columns if enabled
   const relationColumns = useMemo(() => {

@@ -2,6 +2,7 @@ import type { GridCell } from '@glideapps/glide-data-grid'
 import { GridCellKind } from '@glideapps/glide-data-grid'
 import { autoDetectCellConfig, extractAST, getContextConfig } from '@openfaith/schema'
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
+import { format } from 'date-fns/fp'
 import { Array, Option, pipe, Record } from 'effect'
 
 /**
@@ -75,11 +76,11 @@ export const getGridCellContent = (field: any, value: any, editable = true): Gri
 
     case 'date':
     case 'datetime': {
-      // Format date/datetime values
-      const dateStr = value instanceof Date ? value.toISOString() : `${value}`
+      const dateStr = pipe(new Date(value), format('MMM d, yyyy h:mm a'))
+
       return {
         allowOverlay: isEditable,
-        data: dateStr,
+        data: value,
         displayData: dateStr,
         kind: GridCellKind.Text,
       }
