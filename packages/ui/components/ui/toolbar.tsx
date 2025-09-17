@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@openfaith/ui/shared/utils'
-import * as ToolbarPrimitive from '@radix-ui/react-toolbar'
+import { Toolbar as ToolbarPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
 
 const ToolbarRoot = ({ className, ...props }: ComponentProps<typeof ToolbarPrimitive.Root>) => (

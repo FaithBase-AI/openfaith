@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@effect/cluster": "catalog:",
     "@effect/platform-bun": "catalog:",
     "@openfaith/db": "workspace:*",
     "@openfaith/shared": "workspace:*",

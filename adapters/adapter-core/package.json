@@ -1,14 +1,18 @@
 {
   "dependencies": {
     "@effect/platform": "catalog:",
+    "@openfaith/db": "workspace:*",
+    "@openfaith/domain": "workspace:*",
     "@openfaith/shared": "workspace:*",
     "@openfaith/ui": "workspace:*",
     "deepmerge-ts": "7.1.5",
     "effect": "catalog:",
-    "effect-redis": "0.0.10",
-    "jotai": "catalog:"
+    "effect-redis": "0.0.11",
+    "jotai": "catalog:",
+    "react": "catalog:"
   },
   "devDependencies": {
+    "@openfaith/bun-test": "workspace:*",
     "typescript": "catalog:"
   },
   "license": "MIT",

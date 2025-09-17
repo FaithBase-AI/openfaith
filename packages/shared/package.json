@@ -2,9 +2,11 @@
   "dependencies": {
     "@t3-oss/env-core": "0.13.6",
     "effect": "catalog:",
-    "zod": "3.25.42"
+    "typeid-js": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
+    "@openfaith/bun-test": "workspace:*",
     "typescript": "catalog:"
   },
   "license": "MIT",

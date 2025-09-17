@@ -1,29 +1,31 @@
 'use client'
 import { nullOp } from '@openfaith/shared'
+import { Form } from '@openfaith/ui/components/form/form'
+import { ActionRow } from '@openfaith/ui/components/ui/action-row'
 import {
-  ActionRow,
-  cn,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  Divider,
+} from '@openfaith/ui/components/ui/dialog'
+import { Divider } from '@openfaith/ui/components/ui/divider'
+import {
   Drawer,
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
-  Form,
-  ScrollArea,
-  Separator,
-  useIsMdScreen,
-} from '@openfaith/ui'
-import type { DialogProps } from '@radix-ui/react-dialog'
+} from '@openfaith/ui/components/ui/drawer'
+import { ScrollArea } from '@openfaith/ui/components/ui/scroll-area'
+import { Separator } from '@openfaith/ui/components/ui/separator'
+import { useIsMdScreen } from '@openfaith/ui/shared/hooks/useMediaQuery'
+import { cn } from '@openfaith/ui/shared/utils'
 import { Boolean, Option, pipe } from 'effect'
+import type { Dialog as DialogPrimitive } from 'radix-ui'
 import type { ComponentProps, FC, HTMLAttributes, ReactNode } from 'react'
 
-type QuickActionsWrapperProps = DialogProps & {
+type QuickActionsWrapperProps = DialogPrimitive.DialogProps & {
   dialogContentClassName?: string
 }
 

@@ -1,7 +1,7 @@
 import { Loader2Icon } from '@openfaith/ui/icons/loader2Icon'
 import { cn } from '@openfaith/ui/shared/utils'
-import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { Slot } from 'radix-ui'
 import { type ComponentProps, cloneElement, isValidElement, type ReactNode } from 'react'
 
 const buttonDisplayClassNames =
@@ -89,7 +89,7 @@ const Button = ({
   contentWrapperClassName,
   ...props
 }: ButtonProps) => {
-  const Comp = asChild ? Slot : 'button'
+  const Comp = asChild ? Slot.Slot : 'button'
 
   return (
     <Comp

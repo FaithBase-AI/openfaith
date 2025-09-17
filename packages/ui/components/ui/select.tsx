@@ -4,7 +4,7 @@ import { CheckIcon } from '@openfaith/ui/icons/checkIcon'
 import { ChevronDownIcon } from '@openfaith/ui/icons/chevronDownIcon'
 import { ChevronUpIcon } from '@openfaith/ui/icons/chevronUpIcon'
 import { cn } from '@openfaith/ui/shared/utils'
-import * as SelectPrimitive from '@radix-ui/react-select'
+import { Select as SelectPrimitive } from 'radix-ui'
 
 function Select({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) {
   return <SelectPrimitive.Root data-slot='select' {...props} />

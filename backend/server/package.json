@@ -2,12 +2,21 @@
   "dependencies": {
     "@effect/platform": "catalog:",
     "@effect/rpc": "catalog:",
+    "@effect/sql": "catalog:",
+    "@effect/sql-pg": "catalog:",
     "@openfaith/db": "workspace:*",
     "@openfaith/domain": "workspace:*",
+    "@openfaith/schema": "workspace:*",
+    "@openfaith/shared": "workspace:*",
+    "@openfaith/zero": "workspace:*",
+    "@rocicorp/zero": "catalog:",
     "date-fns": "catalog:",
-    "effect": "catalog:"
+    "drizzle-orm": "catalog:",
+    "effect": "catalog:",
+    "jose": "catalog:"
   },
   "devDependencies": {
+    "@openfaith/bun-test": "workspace:*",
     "typescript": "catalog:"
   },
   "name": "@openfaith/server",

@@ -1,5 +1,5 @@
+import { ScrollArea } from '@openfaith/ui/components/ui/scroll-area'
 import { cn } from '@openfaith/ui/shared/utils'
-import { ScrollArea } from '@radix-ui/react-scroll-area'
 import type { VariantProps } from 'class-variance-authority'
 import { cva } from 'class-variance-authority'
 import type { ComponentProps, FC } from 'react'

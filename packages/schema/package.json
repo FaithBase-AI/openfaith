@@ -1,10 +1,12 @@
 {
   "dependencies": {
+    "@openfaith/db": "workspace:*",
     "@openfaith/shared": "workspace:*",
     "@openfaith/zero": "workspace:*",
     "effect": "catalog:"
   },
   "devDependencies": {
+    "@openfaith/bun-test": "workspace:*",
     "typescript": "catalog:"
   },
   "license": "MIT",

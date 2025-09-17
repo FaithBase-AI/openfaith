@@ -1,6 +1,6 @@
 import { ScrollArea } from '@openfaith/ui/components/ui/scroll-area'
 import { cn } from '@openfaith/ui/shared/utils'
-import type * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area'
+import type { ScrollArea as ScrollAreaPrimitive } from 'radix-ui'
 import type { ComponentRef, Ref } from 'react'
 
 function Table({

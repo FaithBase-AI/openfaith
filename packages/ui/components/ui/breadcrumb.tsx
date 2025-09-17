@@ -2,7 +2,7 @@
 
 import { ChevronRightIcon } from '@openfaith/ui/icons/chevronRightIcon'
 import { cn } from '@openfaith/ui/shared/utils'
-import { Slot } from '@radix-ui/react-slot'
+import { Slot } from 'radix-ui'
 import type * as React from 'react'
 
 function Breadcrumb({ ...props }: React.ComponentProps<'nav'>) {
@@ -32,7 +32,7 @@ function BreadcrumbLink({
 }: React.ComponentProps<'a'> & {
   asChild?: boolean
 }) {
-  const Comp = asChild ? Slot : 'a'
+  const Comp = asChild ? Slot.Slot : 'a'
 
   return <Comp className={cn('transition-colors hover:text-foreground', className)} {...props} />
 }

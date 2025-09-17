@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@openfaith/ui/shared/utils'
-import * as TabsPrimitive from '@radix-ui/react-tabs'
+import { Tabs as TabsPrimitive } from 'radix-ui'
 
 function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Root>) {
   return (

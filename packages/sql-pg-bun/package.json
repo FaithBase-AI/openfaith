@@ -9,6 +9,7 @@
     "@openfaith/bun-test": "workspace:*",
     "@testcontainers/postgresql": "catalog:",
     "@types/bun": "latest",
+    "testcontainers": "catalog:",
     "typescript": "catalog:"
   },
   "license": "MIT",

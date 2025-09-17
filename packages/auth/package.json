@@ -1,11 +1,15 @@
 {
   "dependencies": {
     "@effect/platform": "catalog:",
+    "@openfaith/be-shared": "workspace:*",
     "@openfaith/db": "workspace:*",
     "@openfaith/email": "workspace:*",
+    "@openfaith/server": "workspace:*",
+    "@openfaith/shared": "workspace:*",
     "@openfaith/workers": "workspace:*",
     "better-auth": "catalog:",
     "cookie": "1.0.2",
+    "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "resend": "catalog:",
     "typeid-js": "catalog:"

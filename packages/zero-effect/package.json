@@ -6,6 +6,7 @@
     "effect": "catalog:"
   },
   "devDependencies": {
+    "@openfaith/bun-test": "workspace:*",
     "typescript": "catalog:"
   },
   "license": "MIT",

@@ -2,7 +2,7 @@
 
 import { CheckIcon } from '@openfaith/ui/icons/checkIcon'
 import { cn } from '@openfaith/ui/shared/utils'
-import * as CheckboxPrimitive from '@radix-ui/react-checkbox'
+import { Checkbox as CheckboxPrimitive } from 'radix-ui'
 
 function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
   return (

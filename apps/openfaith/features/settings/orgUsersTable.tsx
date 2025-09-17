@@ -10,11 +10,12 @@ import {
   ColumnHeader,
   createColumnConfigHelper,
   getIdColumn,
+  SearchIcon,
   UserAvatar,
+  UserCircleIcon,
 } from '@openfaith/ui'
 import type { OrgUserClientShape } from '@openfaith/zero'
 import type { ColumnDef } from '@tanstack/react-table'
-import { SearchIcon, UserCircleIcon } from 'lucide-react'
 import type { FC } from 'react'
 
 const dtf = createColumnConfigHelper<OrgUserClientShape>()

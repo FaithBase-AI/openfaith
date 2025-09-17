@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@openfaith/ui/shared/utils'
-import * as SliderPrimitive from '@radix-ui/react-slider'
+import { Slider as SliderPrimitive } from 'radix-ui'
 import * as React from 'react'
 
 function Slider({

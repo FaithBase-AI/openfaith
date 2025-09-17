@@ -19,8 +19,8 @@ import {
 } from '@openfaith/ui/components/ui/tooltip'
 import { SideBarIcon } from '@openfaith/ui/icons/sideBarIcon'
 import { cn } from '@openfaith/ui/shared/utils'
-import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { Slot } from 'radix-ui'
 import * as React from 'react'
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state'
@@ -403,7 +403,7 @@ function SidebarGroupLabel({
   asChild = false,
   ...props
 }: React.ComponentProps<'div'> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : 'div'
+  const Comp = asChild ? Slot.Slot : 'div'
 
   return (
     <Comp
@@ -428,7 +428,7 @@ function SidebarGroupAction({
   asChild?: boolean
   tooltip?: string | React.ComponentProps<typeof TooltipContent>
 }) {
-  const Comp = asChild ? Slot : 'button'
+  const Comp = asChild ? Slot.Slot : 'button'
 
   const button = (
     <Comp
@@ -533,7 +533,7 @@ function SidebarMenuButton({
   isActive?: boolean
   tooltip?: string | React.ComponentProps<typeof TooltipContent>
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
-  const Comp = asChild ? Slot : 'button'
+  const Comp = asChild ? Slot.Slot : 'button'
   const { isMobile, state } = useSidebar()
 
   const button = (
@@ -579,7 +579,7 @@ function SidebarMenuAction({
   asChild?: boolean
   showOnHover?: boolean
 }) {
-  const Comp = asChild ? Slot : 'button'
+  const Comp = asChild ? Slot.Slot : 'button'
 
   return (
     <Comp
@@ -691,7 +691,7 @@ function SidebarMenuSubButton({
   size?: 'sm' | 'md'
   isActive?: boolean
 }) {
-  const Comp = asChild ? Slot : 'a'
+  const Comp = asChild ? Slot.Slot : 'a'
 
   return (
     <Comp

@@ -16,10 +16,9 @@ import { XIcon } from '@openfaith/ui/icons/xIcon'
 import { detailsPaneStickyAtom } from '@openfaith/ui/shared/globalState'
 import { useIsMdScreen } from '@openfaith/ui/shared/hooks/useMediaQuery'
 import { cn } from '@openfaith/ui/shared/utils'
-import * as DialogPrimitive from '@radix-ui/react-dialog'
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { Array, Boolean, Match, Option, pipe, Record } from 'effect'
 import { useAtom } from 'jotai'
+import { Dialog as DialogPrimitive, VisuallyHidden } from 'radix-ui'
 import type { FC, ReactNode } from 'react'
 import { useMemo } from 'react'
 
@@ -143,12 +142,12 @@ const DetailsPaneWrapper: FC<DetailsPaneWrapperProps> = (props) => {
                       width,
                     )}
                   >
-                    <VisuallyHidden asChild>
+                    <VisuallyHidden.VisuallyHidden asChild>
                       <DialogPrimitive.Title>Details Pane</DialogPrimitive.Title>
-                    </VisuallyHidden>
-                    <VisuallyHidden asChild>
+                    </VisuallyHidden.VisuallyHidden>
+                    <VisuallyHidden.VisuallyHidden asChild>
                       <DialogPrimitive.Description>Details Pane</DialogPrimitive.Description>
-                    </VisuallyHidden>
+                    </VisuallyHidden.VisuallyHidden>
                     <DetailsPaneHistory history={detailsPaneParams} />
                     {children}
                     <div

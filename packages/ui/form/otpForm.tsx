@@ -6,7 +6,11 @@ import {
   verifyEmailE,
 } from '@openfaith/auth/authClientE'
 import { nullOp } from '@openfaith/shared'
-import { ArrowRightIcon, Button, Form, useAppForm, usePasteDetect } from '@openfaith/ui'
+import { Form } from '@openfaith/ui/components/form/form'
+import { useAppForm } from '@openfaith/ui/components/form/tsForm'
+import { Button } from '@openfaith/ui/components/ui/button'
+import { ArrowRightIcon } from '@openfaith/ui/icons/arrowRightIcon'
+import { usePasteDetect } from '@openfaith/ui/shared/hooks/usePasteDetect'
 import { revalidateLogic } from '@tanstack/react-form'
 import { Effect, Match, pipe, Schema, String } from 'effect'
 import { REGEXP_ONLY_DIGITS } from 'input-otp'

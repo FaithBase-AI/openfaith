@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@effect/platform": "catalog:",
     "@openfaith/adapter-core": "workspace:*",
     "@openfaith/schema": "workspace:*",
     "@openfaith/shared": "workspace:*",
@@ -8,6 +9,7 @@
     "qs": "catalog:"
   },
   "devDependencies": {
+    "@openfaith/bun-test": "workspace:*",
     "@types/qs": "catalog:",
     "typescript": "catalog:"
   },

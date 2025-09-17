@@ -9,7 +9,7 @@ import {
   SignOutIcon,
   UserAvatar,
 } from '@openfaith/ui'
-import type * as AvatarPrimitive from '@radix-ui/react-avatar'
+import type { Avatar as AvatarPrimitive } from 'radix-ui'
 import type { ComponentPropsWithoutRef, FC } from 'react'
 
 type UserMenuProps = ComponentPropsWithoutRef<typeof AvatarPrimitive.Root> & {

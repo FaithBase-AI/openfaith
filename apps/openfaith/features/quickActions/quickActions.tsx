@@ -21,9 +21,9 @@ import {
   QuickActionsTitle,
   QuickActionsWrapper,
 } from '@openfaith/ui'
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { Array, Option, pipe } from 'effect'
 import { useAtom } from 'jotai'
+import { VisuallyHidden } from 'radix-ui'
 import type { FC } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 
@@ -55,13 +55,13 @@ export const QuickActions: FC = () => {
         onOpenChange={setQuickActionsIsOpen}
         open={quickActionsIsOpen}
       >
-        <VisuallyHidden>
+        <VisuallyHidden.VisuallyHidden>
           <QuickActionsTitle>Quick Actions Menu</QuickActionsTitle>
 
           <QuickActionsDescription>
             A menu that lets you quickly execute actions within the application.
           </QuickActionsDescription>
-        </VisuallyHidden>
+        </VisuallyHidden.VisuallyHidden>
 
         <Command
           className={

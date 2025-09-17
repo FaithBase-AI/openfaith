@@ -3,9 +3,9 @@
 import { toggleVariants } from '@openfaith/ui/components/ui/toggle'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@openfaith/ui/components/ui/tooltip'
 import { cn } from '@openfaith/ui/shared/utils'
-import * as ToggleGroupPrimitive from '@radix-ui/react-toggle-group'
 import type { VariantProps } from 'class-variance-authority'
 import { Option, pipe } from 'effect'
+import { ToggleGroup as ToggleGroupPrimitive } from 'radix-ui'
 import type { ComponentProps } from 'react'
 import { createContext, useContext } from 'react'
 
