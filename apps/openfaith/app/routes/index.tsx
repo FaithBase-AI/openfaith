@@ -13,7 +13,17 @@ function Home() {
       <h1 className='font-bold text-4xl'>OpenFaith</h1>
 
       <p className='text-gray-600 text-lg dark:text-gray-400'>
-        The platform for churches to connect their software and data.
+        The platform for managing your church's data.
+        <br />
+        <br />
+        1. We work with Planning Center, but will work with other ChMS's soon.
+        <br />
+        2. Everything is a spreadsheet, just like Airtable.
+        <br />
+        3. AI is coming soon, but what we have today should blow you away.
+        <br />
+        <br />
+        Just login, sync with Planning Center, and see your data come to life.
       </p>
 
       <Button asChild>
