@@ -36,7 +36,7 @@
     "effect": "3.17.13"
   },
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run build --ui=stream",
     "check": "turbo run format lint typecheck test --ui=stream",
     "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo run clean",

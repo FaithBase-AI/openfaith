@@ -11,12 +11,30 @@
   },
   "files": {
     "experimentalScannerIgnores": ["node_modules"],
-    "includes": ["**", "!**/.cache", "!**/.turbo", "!**/routeTree.gen.ts", "!node_modules"]
+    "includes": [
+      "**",
+      "!**/.cache",
+      "!**/.turbo",
+      "!**/routeTree.gen.ts",
+      "!node_modules",
+      "!**/.output",
+      "!**/.tanstack",
+      "!**/dist"
+    ]
   },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
-    "includes": ["**", "!**/.cache", "!**/.turbo", "!**/routeTree.gen.ts", "!node_modules"],
+    "includes": [
+      "**",
+      "!**/.cache",
+      "!**/.turbo",
+      "!**/routeTree.gen.ts",
+      "!node_modules",
+      "!**/.output",
+      "!**/.tanstack",
+      "!**/dist"
+    ],
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 100
@@ -35,7 +53,16 @@
       "react": "recommended"
     },
     "enabled": true,
-    "includes": ["**", "!**/.cache", "!**/.turbo", "!**/routeTree.gen.ts", "!node_modules"],
+    "includes": [
+      "**",
+      "!**/.cache",
+      "!**/.turbo",
+      "!**/routeTree.gen.ts",
+      "!node_modules",
+      "!**/.output",
+      "!**/.tanstack",
+      "!**/dist"
+    ],
     "rules": {
       "a11y": {
         "noHeaderScope": "off",

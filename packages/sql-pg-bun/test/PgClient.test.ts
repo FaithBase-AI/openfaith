@@ -1,8 +1,8 @@
-import * as PgClient from '../src/PgClient.js'
-import * as Statement from '@effect/sql/Statement'
 import { expect } from 'bun:test'
+import * as Statement from '@effect/sql/Statement'
 import { effect, layer } from '@openfaith/bun-test'
 import { Effect, String } from 'effect'
+import * as PgClient from '../src/PgClient.js'
 import { PgContainer } from './utils.js'
 
 const compilerTransform = PgClient.makeCompiler(String.camelToSnake)
@@ -32,15 +32,15 @@ effect('transform nested', () =>
       transformsNested.array([
         {
           a_key: 1,
-          nested: [{ b_key: 2 }],
           arr_primitive: [1, '2', true],
+          nested: [{ b_key: 2 }],
         },
       ]) as any,
     ).toEqual([
       {
         aKey: 1,
-        nested: [{ bKey: 2 }],
         arrPrimitive: [1, '2', true],
+        nested: [{ bKey: 2 }],
       },
     ])
   }),
@@ -52,15 +52,15 @@ effect('transform non nested', () =>
       transforms.array([
         {
           a_key: 1,
-          nested: [{ b_key: 2 }],
           arr_primitive: [1, '2', true],
+          nested: [{ b_key: 2 }],
         },
       ]) as any,
     ).toEqual([
       {
         aKey: 1,
-        nested: [{ b_key: 2 }],
         arrPrimitive: [1, '2', true],
+        nested: [{ b_key: 2 }],
       },
     ])
 
@@ -68,20 +68,20 @@ effect('transform non nested', () =>
       transforms.array([
         {
           json_field: {
-            test_value: [1, true, null, 'text'],
             test_nested: {
               test_value: [1, true, null, 'text'],
             },
+            test_value: [1, true, null, 'text'],
           },
         },
       ]) as any,
     ).toEqual([
       {
         jsonField: {
-          test_value: [1, true, null, 'text'],
           test_nested: {
             test_value: [1, true, null, 'text'],
           },
+          test_value: [1, true, null, 'text'],
         },
       },
     ])
@@ -102,7 +102,7 @@ layer(PgContainer.ClientLive, { timeout: 60_000 })('PgClient Database Tests', (i
     Effect.gen(function* () {
       const sql = yield* PgClient.PgClient
       const [query, params] =
-        sql`INSERT INTO people ${sql.insert({ name: 'Tim', age: 10 })}`.compile()
+        sql`INSERT INTO people ${sql.insert({ age: 10, name: 'Tim' })}`.compile()
       expect(query).toEqual(`INSERT INTO people ("name","age") VALUES ($1,$2)`)
       expect(params).toEqual(['Tim', 10])
     }),
@@ -129,7 +129,7 @@ layer(PgContainer.ClientLive, { timeout: 60_000 })('PgClient Database Tests', (i
       expect(result[0]).toEqual(`UPDATE people SET "name" = $1`)
       expect(result[1]).toEqual(['Tim'])
 
-      result = sql`UPDATE people SET ${sql.update({ name: 'Tim', age: 10 }, ['age'])}`.compile()
+      result = sql`UPDATE people SET ${sql.update({ age: 10, name: 'Tim' }, ['age'])}`.compile()
       expect(result[0]).toEqual(`UPDATE people SET "name" = $1`)
       expect(result[1]).toEqual(['Tim'])
     }),
@@ -199,11 +199,11 @@ layer(PgContainer.ClientLive, { timeout: 60_000 })('PgClient Database Tests', (i
       const sql = yield* PgClient.PgClient
       expect(
         sql.onDialect({
-          sqlite: () => 'A',
-          pg: () => 'B',
-          mysql: () => 'C',
-          mssql: () => 'D',
           clickhouse: () => 'E',
+          mssql: () => 'D',
+          mysql: () => 'C',
+          pg: () => 'B',
+          sqlite: () => 'A',
         }),
       ).toBe('B')
       expect(
@@ -229,7 +229,7 @@ layer(PgContainer.ClientTransformLive, { timeout: 60_000 })('PgClient Transform 
     Effect.gen(function* () {
       const sql = yield* PgClient.PgClient
       const [query, params] =
-        sql`INSERT INTO people ${sql.insert({ firstName: 'Tim', age: 10 })}`.compile()
+        sql`INSERT INTO people ${sql.insert({ age: 10, firstName: 'Tim' })}`.compile()
       expect(query).toEqual(`INSERT INTO people ("first_name","age") VALUES ($1,$2)`)
       expect(params).toEqual(['Tim', 10])
     }),
@@ -239,7 +239,7 @@ layer(PgContainer.ClientTransformLive, { timeout: 60_000 })('PgClient Transform 
     Effect.gen(function* () {
       const sql = (yield* PgClient.PgClient).withoutTransforms()
       const [query, params] =
-        sql`INSERT INTO people ${sql.insert({ first_name: 'Tim', age: 10 })}`.compile()
+        sql`INSERT INTO people ${sql.insert({ age: 10, first_name: 'Tim' })}`.compile()
       expect(query).toEqual(`INSERT INTO people ("first_name","age") VALUES ($1,$2)`)
       expect(params).toEqual(['Tim', 10])
     }),
