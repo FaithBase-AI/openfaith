@@ -76,6 +76,7 @@ export interface FieldConfig {
     hidden?: boolean
     pinned?: 'left' | 'right'
     order?: number
+    readonly?: boolean
   }
   navigation?: {
     enabled: boolean

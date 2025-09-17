@@ -27,7 +27,8 @@ export const getGridCellContent = (field: any, value: any, editable = true): Gri
 
   // Determine if this specific field should be editable
   // Avatar images are not editable, everything else can be edited if editable is true
-  const isEditable = editable && cellType !== 'avatar'
+  const isFieldReadonly = tableConfig?.readonly === true
+  const isEditable = editable && !isFieldReadonly && cellType !== 'avatar'
 
   // Handle null/undefined values
   if (value === null || value === undefined) {

@@ -15,6 +15,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       table: {
         cellType: 'datetime',
         order: 10,
+        readonly: true,
         sortable: true,
       },
     } satisfies FieldConfig,
@@ -27,6 +28,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       },
       table: {
         hidden: true,
+        readonly: true,
       },
     } satisfies FieldConfig,
   }),
@@ -38,6 +40,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       },
       table: {
         hidden: true,
+        readonly: true,
       },
     } satisfies FieldConfig,
   }),
@@ -49,6 +52,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       },
       table: {
         hidden: true,
+        readonly: true,
       },
     } satisfies FieldConfig,
   }),
@@ -60,6 +64,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       },
       table: {
         hidden: true,
+        readonly: true,
       },
     } satisfies FieldConfig,
   }),
@@ -71,6 +76,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       },
       table: {
         hidden: true,
+        readonly: true,
       },
     } satisfies FieldConfig,
   }),
@@ -82,6 +88,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       },
       table: {
         hidden: true,
+        readonly: true,
       },
     } satisfies FieldConfig,
   }),
@@ -116,6 +123,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       table: {
         cellType: 'datetime',
         order: 11,
+        readonly: true,
         sortable: true,
       },
     } satisfies FieldConfig,
@@ -128,6 +136,7 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
       },
       table: {
         hidden: true,
+        readonly: true,
       },
     } satisfies FieldConfig,
   }),
@@ -150,6 +159,7 @@ export class BaseIdentifiedEntity extends Schema.Class<BaseIdentifiedEntity>(
       },
       table: {
         hidden: true,
+        readonly: true,
       },
     } satisfies FieldConfig,
   }),
@@ -161,6 +171,7 @@ export class BaseIdentifiedEntity extends Schema.Class<BaseIdentifiedEntity>(
       },
       table: {
         hidden: true,
+        readonly: true,
       },
     } satisfies FieldConfig,
   }),
@@ -172,6 +183,7 @@ export class BaseIdentifiedEntity extends Schema.Class<BaseIdentifiedEntity>(
       },
       table: {
         hidden: true,
+        readonly: true,
       },
     } satisfies FieldConfig,
   }),
