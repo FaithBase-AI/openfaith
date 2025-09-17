@@ -73,7 +73,7 @@ spec:
         - -c
         - max_wal_senders=10
         - -c
-        - max_replication_slots=5
+        - max_replication_slots=20
         - -c
         - hot_standby=on
         - -c

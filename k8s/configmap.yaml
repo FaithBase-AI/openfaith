@@ -8,7 +8,6 @@ data:
   DB_HOST_PRIMARY: "postgres-service"
   DB_NAME: "postgres"
   DB_PORT: "5432"
-  DB_SSL: "false"
   
   # Zero Configuration (Backend/Workers - Server-side)
   ZERO_APP_ID: "openfaith_prod"

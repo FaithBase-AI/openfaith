@@ -6,6 +6,9 @@
       "dependsOn": ["@openfaith/infra-db#health-check"],
       "persistent": true
     },
+    "@openfaith/openfaith#build": {
+      "env": ["VITE_*"]
+    },
     "@openfaith/openfaith#dev": {
       "cache": false,
       "dependsOn": ["@openfaith/infra-db#health-check", "^infra"],
@@ -31,7 +34,7 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".cache/tsbuildinfo.json", "dist/**"]
+      "outputs": [".cache/tsbuildinfo.json", "dist/**", ".output/**"]
     },
     "clean": {
       "cache": false

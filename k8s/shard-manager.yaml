@@ -19,7 +19,7 @@ spec:
       - name: ghcr-pull-secret
       containers:
       - name: shard-manager
-        image: ghcr.io/faithbase-ai/openfaith-shard-manager:master-8863d85
+        image: ghcr.io/faithbase-ai/openfaith-shard-manager:master-c709fb3
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
