@@ -31,7 +31,7 @@ export const PcoPhoneNumberAttributes = Schema.Struct({
   created_at: Schema.String.annotations({
     [OfFieldName]: 'createdAt',
   }),
-  e164: Schema.String.annotations({
+  e164: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'number',
   }),
   international: Schema.NullOr(Schema.String).annotations({
@@ -95,5 +95,6 @@ export const PcoPhoneNumber = mkPcoEntity({
   [OfIdentifier]: 'pco-phone-number',
   [OfTransformer]: pcoPhoneNumberTransformer,
   [OfPartialTransformer]: pcoPhoneNumberPartialTransformer,
+  // [OfFilterFn]: (entity: PcoPhoneNumber) => entity.attributes.e164 !== null,
 })
 export type PcoPhoneNumber = typeof PcoPhoneNumber.Type

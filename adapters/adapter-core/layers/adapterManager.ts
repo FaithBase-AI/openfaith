@@ -1,4 +1,5 @@
 import type {
+  AdapterEntityMethodNotFoundError,
   AdapterEntityNotFoundError,
   AdapterFetchError,
   AdapterTransformError,
@@ -48,7 +49,7 @@ export class AdapterManager extends Context.Tag('@openfaith/adapter-core/layers/
       processMutations: ProcessMutations
       processExternalLinks: ProcessExternalLinks
       processRelationships: ProcessRelationships
-    }) => Effect.Effect<void, AdapterWebhookProcessingError>
+    }) => Effect.Effect<void, AdapterWebhookProcessingError | AdapterEntityMethodNotFoundError>
 
     readonly subscribeToWebhooks: (params: {
       processExternalLinks: ProcessExternalLinks
@@ -71,7 +72,10 @@ export class AdapterManager extends Context.Tag('@openfaith/adapter-core/layers/
       processMutations: ProcessMutations
     }) => Effect.Effect<
       void,
-      AdapterFetchError | AdapterTransformError | AdapterEntityNotFoundError
+      | AdapterFetchError
+      | AdapterTransformError
+      | AdapterEntityNotFoundError
+      | AdapterEntityMethodNotFoundError
     >
 
     readonly createEntity: (params: {

@@ -1,5 +1,6 @@
 import { Headers } from '@effect/platform'
 import {
+  AdapterEntityMethodNotFoundError,
   AdapterEntityNotFoundError,
   AdapterFetchError,
   AdapterManager,
@@ -20,6 +21,8 @@ import {
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import type { PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
 import {
+  getEntitySchemaOpt,
+  getOfEntityFilterFnForPcoSchemaOpt,
   getOfEntityNameForPcoEntitySchemaOpt,
   getOfEntityNameForPcoEntityType,
 } from '@openfaith/pco/helpers/pcoEntityNames'
@@ -117,19 +120,92 @@ const getEntityClient = <EntityName extends PcoEntityClientKeys | string>(
 /**
  * Normalizes a singleton PCO response to collection shape
  */
-const normalizeSingletonResponse = <D extends PcoBaseEntity, I extends PcoBaseEntity>(response: {
-  readonly data: D
+const normalizeResponse = <D extends PcoBaseEntity, I extends PcoBaseEntity>(response: {
+  readonly data: D | ReadonlyArray<D>
   readonly included?: ReadonlyArray<I>
   readonly meta?: unknown
 }): {
   readonly data: ReadonlyArray<D>
   readonly included: ReadonlyArray<I>
   readonly meta?: unknown
-} => ({
-  data: [response.data],
-  included: response.included || [],
-  meta: response.meta,
-})
+} => {
+  const { included = [] } = response
+
+  const data = Array.isArray(response.data)
+    ? (response.data as ReadonlyArray<D>)
+    : ([response.data] as ReadonlyArray<D>)
+
+  // One of the main things we need to do with an adapter is pre filter out bad data before we walk down the
+  // processPcoData path. For instance, PCO will give us back empty PhoneNumbers. They exist in PCO but
+  const dataFilterFnLookup: Record<string, (entity: PcoPersonSchema) => boolean> = pipe(
+    data,
+    Array.head,
+    Option.flatMap((x) =>
+      pipe(
+        getEntitySchemaOpt(x.type),
+        Option.flatMap(getOfEntityFilterFnForPcoSchemaOpt),
+        Option.map(
+          (y) =>
+            ({ [x.type]: y }) as unknown as Record<string, (entity: PcoPersonSchema) => boolean>,
+        ),
+      ),
+    ),
+    Option.getOrElse(() => ({})),
+  )
+
+  const filteredData = pipe(dataFilterFnLookup, Record.empty)
+    ? data
+    : pipe(
+        data,
+        Array.filter((entity) =>
+          pipe(
+            dataFilterFnLookup,
+            Record.get(entity.type),
+            Option.map((filterFn) => filterFn(entity as unknown as Parameters<typeof filterFn>[0])),
+            Option.getOrElse(() => true),
+          ),
+        ),
+      )
+
+  const includedFilterFnLookup = pipe(
+    included,
+    Array.reduce({} as Record<string, (entity: PcoPersonSchema) => boolean>, (b, a) => {
+      const entityType = a.type
+
+      if (entityType in b) {
+        return b
+      }
+
+      pipe(
+        getEntitySchemaOpt(entityType),
+        Option.flatMap(getOfEntityFilterFnForPcoSchemaOpt),
+        Option.map((y) => (b[entityType] = y as unknown as (entity: PcoPersonSchema) => boolean)),
+      )
+
+      return b
+    }),
+  )
+
+  const filteredIncluded = pipe(includedFilterFnLookup, Record.empty)
+    ? included
+    : pipe(
+        included,
+        Array.filter((entity) =>
+          pipe(
+            includedFilterFnLookup,
+            Record.get(entity.type),
+            Option.map((filterFn) => filterFn(entity as unknown as Parameters<typeof filterFn>[0])),
+            Option.getOrElse(() => true),
+          ),
+        ),
+      )
+
+  return {
+    data: filteredData,
+    included: filteredIncluded,
+    meta: response.meta,
+  }
+}
 
 /**
  * Creates external links from PCO entities
@@ -160,14 +236,7 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
   // We have to pretend that we are dealing with a Person to get this to type correctly.
   const { entity, entityId, tokenKey } = params
 
-  const entitySchema = yield* (
-    entity.type in pcoEntityManifest.entities
-      ? Option.some(
-          pcoEntityManifest.entities[entity.type as keyof typeof pcoEntityManifest.entities]
-            .apiSchema as PcoPersonSchema,
-        )
-      : Option.none()
-  ).pipe(
+  const entitySchema = yield* getEntitySchemaOpt(entity.type).pipe(
     Effect.mapError(
       (error) =>
         new AdapterTransformError({
@@ -337,6 +406,7 @@ const processPcoData = Effect.fn('processPcoData')(function* (params: {
     externalLinks: allExternalLinks,
     processExternalLinks,
   })
+
   yield* processRelationships(relationships)
 })
 
@@ -414,12 +484,52 @@ const getSyncEntityId = Effect.fn('getSyncEntityId')(function* () {
       // Get the PCO client method for this entity using the new type-safe accessor
       const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
 
-      const method = entityClient.get as PureGetMethod
+      // We need to make sure that this code has the best chance of succeeding. When we have an entityAlt (fallback
+      // data) and we don't have a get method on entityClient, don't fail, just move on to processPcoData with the data
+      // we have.
+      if (!('get' in entityClient) && entityAlt) {
+        yield* processPcoData({
+          data: normalizeResponse({ data: entityAlt as PcoBaseEntity }),
+          processEntities,
+          processExternalLinks,
+          processRelationships,
+          tokenKey,
+        }).pipe(
+          Effect.mapError(
+            (cause) =>
+              new AdapterTransformError({
+                adapter: 'pco',
+                cause,
+                entityType,
+                message: `Failed to process ${entityType} data`,
+              }),
+          ),
+        )
+
+        yield* Effect.annotateLogs(Effect.log('✅ Completed PCO single entity sync'), {
+          adapter: 'pco',
+          entityId,
+          entityType,
+        })
+      }
+
+      const getMethod = yield* Option.fromNullable(entityClient.get as PureGetMethod).pipe(
+        Effect.mapError(
+          (error) =>
+            new AdapterEntityMethodNotFoundError({
+              adapter: 'pco',
+              cause: error,
+              entityType,
+              message: `No get method found for ${entityType}`,
+              method: 'get',
+            }),
+        ),
+      )
 
       // Fetch single entity from PCO with aggressive type casting (following pcoMkEntityManifest.ts pattern)
-      const singletonResponse = yield* method({
+      const getResponse = yield* getMethod({
         path: { [`${entityType.toLowerCase()}Id`]: entityId },
-      } as Parameters<typeof method>[0]).pipe(
+      } as Parameters<typeof getMethod>[0]).pipe(
         // We are catching all because we want to provide entityAlt as a fallback. This is for webhooks, where sometimes we don't have permissions to get the data, but we have it from the webhook.
         Effect.catchAll((cause) =>
           pipe(
@@ -443,10 +553,8 @@ const getSyncEntityId = Effect.fn('getSyncEntityId')(function* () {
         ),
       )
 
-      const normalizedResponse = normalizeSingletonResponse(singletonResponse)
-
       yield* processPcoData({
-        data: normalizedResponse,
+        data: normalizeResponse(getResponse),
         processEntities,
         processExternalLinks,
         processRelationships,
@@ -489,13 +597,13 @@ export const PcoAdapterManagerLive = Layer.effect(
 
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
 
-          const create = yield* Option.fromNullable(
+          const createMethod = yield* Option.fromNullable(
             entityClient.create as typeof pcoClient.Person.create,
           )
 
           const transformedData = yield* transformEntityDataE(entityType, data)
 
-          const result = yield* create({
+          const createResponse = yield* createMethod({
             payload: {
               data: transformedData as unknown as Parameters<
                 typeof pcoClient.Person.create
@@ -503,10 +611,8 @@ export const PcoAdapterManagerLive = Layer.effect(
             },
           })
 
-          const normalizedResponse = normalizeSingletonResponse(result)
-
           yield* processPcoData({
-            data: normalizedResponse,
+            data: normalizeResponse(createResponse),
             processEntities,
             processExternalLinks,
             processRelationships,
@@ -855,7 +961,7 @@ export const PcoAdapterManagerLive = Layer.effect(
               Match.tag('unset', () =>
                 Effect.gen(function* () {
                   // When it's unset, we walk through a similar flow as `syncEntityId`.
-                  const newWebhook = yield* pcoClient.WebhookSubscription.create({
+                  const createWebhookResponse = yield* pcoClient.WebhookSubscription.create({
                     payload: {
                       data: {
                         attributes: {
@@ -869,11 +975,11 @@ export const PcoAdapterManagerLive = Layer.effect(
                   })
 
                   yield* Effect.annotateLogs(Effect.log('🔄 New webhook'), {
-                    newWebhook: newWebhook.data.attributes.name,
+                    newWebhook: createWebhookResponse.data.attributes.name,
                   })
 
                   yield* processPcoData({
-                    data: normalizeSingletonResponse(newWebhook),
+                    data: normalizeResponse(createWebhookResponse),
                     processEntities,
                     processExternalLinks,
                     // Webhooks don't have relationships, so we can just return undefined.
@@ -929,7 +1035,18 @@ export const PcoAdapterManagerLive = Layer.effect(
             Option.getOrElse(() => ({})),
           ) as Object
 
-          const method = entityClient.list as PureListMethod
+          const listMethod = yield* Option.fromNullable(entityClient.list as PureListMethod).pipe(
+            Effect.mapError(
+              (error) =>
+                new AdapterEntityMethodNotFoundError({
+                  adapter: 'pco',
+                  cause: error,
+                  entityType,
+                  message: `No list method found for ${entityType}`,
+                  method: 'list',
+                }),
+            ),
+          )
 
           // Use the shared PCO streaming utility
           yield* Stream.runForEach(
@@ -938,7 +1055,7 @@ export const PcoAdapterManagerLive = Layer.effect(
                 ? { ...params, ...urlParams, offset: currentOffset }
                 : { ...urlParams, offset: currentOffset }
 
-              return method({ urlParams: finalParams }).pipe(
+              return listMethod({ urlParams: finalParams }).pipe(
                 Effect.map((response: any) => {
                   const nextOffset = response.meta?.next?.offset
                   return [
@@ -958,9 +1075,9 @@ export const PcoAdapterManagerLive = Layer.effect(
                 ),
               )
             }),
-            (response) =>
+            (listResponse) =>
               processPcoData({
-                data: response,
+                data: normalizeResponse(listResponse),
                 processEntities,
                 processExternalLinks,
                 processRelationships,
@@ -998,13 +1115,13 @@ export const PcoAdapterManagerLive = Layer.effect(
 
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
 
-          const update = yield* Option.fromNullable(
+          const updateMethod = yield* Option.fromNullable(
             entityClient.update as typeof pcoClient.Person.update,
           )
 
           const transformedData = yield* transformPartialEntityDataE(entityType, data)
 
-          const result = yield* update({
+          const updateResponse = yield* updateMethod({
             path: { [mkUrlParamName(entityType)]: externalId } as Parameters<
               typeof pcoClient.Person.update
             >[0]['path'],
@@ -1017,18 +1134,16 @@ export const PcoAdapterManagerLive = Layer.effect(
             },
           })
 
-          const normalizedResponse = normalizeSingletonResponse({
-            ...result,
-            data: {
-              ...result.data,
-              // We put the internalId because it needs to get passed into `processExternalLinks` so we can make the
-              // correct external link.
-              entityId: internalId,
-            },
-          })
-
           yield* processPcoData({
-            data: normalizedResponse,
+            data: normalizeResponse({
+              ...updateResponse,
+              data: {
+                ...updateResponse.data,
+                // We put the internalId because it needs to get passed into `processExternalLinks` so we can make the
+                // correct external link.
+                entityId: internalId,
+              },
+            }),
             processEntities,
             processExternalLinks,
             processRelationships,
@@ -1053,14 +1168,7 @@ export const transformPartialEntityDataE = Effect.fn('transformPartialEntityData
   entityName: string,
   partialData: Record<string, unknown>,
 ) {
-  const entitySchema = yield* (
-    entityName in pcoEntityManifest.entities
-      ? Option.some(
-          pcoEntityManifest.entities[entityName as keyof typeof pcoEntityManifest.entities]
-            .apiSchema as PcoPersonSchema,
-        )
-      : Option.none()
-  ).pipe(
+  const entitySchema = yield* getEntitySchemaOpt(entityName).pipe(
     Effect.mapError(
       (error) =>
         new AdapterTransformError({
@@ -1097,14 +1205,7 @@ export const transformEntityDataE = Effect.fn('transformPartialEntityDataE')(fun
   entityName: string,
   partialData: Record<string, unknown>,
 ) {
-  const entitySchema = yield* (
-    entityName in pcoEntityManifest.entities
-      ? Option.some(
-          pcoEntityManifest.entities[entityName as keyof typeof pcoEntityManifest.entities]
-            .apiSchema as PcoPersonSchema,
-        )
-      : Option.none()
-  ).pipe(
+  const entitySchema = yield* getEntitySchemaOpt(entityName).pipe(
     Effect.mapError(
       (error) =>
         new AdapterTransformError({
@@ -1146,7 +1247,7 @@ const extractRelationshipsEnhanced = (params: {
     readonly lastProcessedAt: Date
   }>
   processExternalLinks: ProcessExternalLinks
-}): Effect.Effect<Array<RelationshipInput>, any, never> =>
+}) =>
   Effect.gen(function* () {
     const { entities, externalLinks, processExternalLinks } = params
 
@@ -1259,13 +1360,7 @@ const extractRelationships = (params: {
     entitiesByType,
     Record.toEntries,
     Array.filterMap(([entityType, entities]) => {
-      const apiSchemaOpt =
-        entityType in pcoEntityManifest.entities
-          ? Option.some(
-              pcoEntityManifest.entities[entityType as keyof typeof pcoEntityManifest.entities]
-                .apiSchema,
-            )
-          : Option.none()
+      const apiSchemaOpt = getEntitySchemaOpt(entityType)
 
       if (Option.isNone(apiSchemaOpt)) {
         return Option.none()

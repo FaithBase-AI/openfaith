@@ -1,22 +1,22 @@
-import { pcoEntityManifest } from '@openfaith/pco/server'
-import { extractEntityName, getAnnotationFromSchema, OfEntity } from '@openfaith/schema'
+import { type PcoPersonSchema, pcoEntityManifest } from '@openfaith/pco/server'
+import { extractEntityName, getAnnotationFromSchema, OfEntity, OfFilterFn } from '@openfaith/schema'
 import { Option, pipe, type Schema, String } from 'effect'
+
+export const getEntitySchemaOpt = (entityType: string) =>
+  entityType in pcoEntityManifest.entities
+    ? Option.some(
+        pcoEntityManifest.entities[entityType as keyof typeof pcoEntityManifest.entities]
+          .apiSchema as PcoPersonSchema,
+      )
+    : Option.none()
 
 export const getOfEntityNameForPcoEntityType = (entityType: string): string => {
   const normalizedEntityType = pipe(entityType, String.pascalToSnake, String.snakeToCamel)
 
-  if (entityType in pcoEntityManifest.entities) {
-    const schema =
-      pcoEntityManifest.entities[entityType as keyof typeof pcoEntityManifest.entities].apiSchema
-
-    return pipe(
-      schema,
-      getOfEntityNameForPcoEntitySchemaOpt,
-      Option.getOrElse(() => normalizedEntityType),
-    )
-  }
-
-  return normalizedEntityType
+  return getEntitySchemaOpt(entityType).pipe(
+    Option.flatMap(getOfEntityNameForPcoEntitySchemaOpt),
+    Option.getOrElse(() => normalizedEntityType),
+  )
 }
 
 export const getOfEntityNameForPcoEntitySchemaOpt = (
@@ -26,3 +26,8 @@ export const getOfEntityNameForPcoEntitySchemaOpt = (
     getAnnotationFromSchema<Schema.Schema<any, any, any>>(OfEntity, schema.ast),
     Option.flatMap(extractEntityName),
   )
+
+export const getOfEntityFilterFnForPcoSchemaOpt = <A, I, R>(
+  schema: Schema.Schema<A, I, R>,
+): Option.Option<(entity: A) => boolean> =>
+  pipe(getAnnotationFromSchema<(entity: A) => boolean>(OfFilterFn, schema.ast))

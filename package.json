@@ -43,6 +43,7 @@
     "db:generate": "bun run --filter '@openfaith/db' db:generate",
     "db:migrate": "bun run --filter '@openfaith/db' db:migrate",
     "dev": "turbo run infra dev --continue",
+    "dev:prod": "turbo run dev --continue",
     "format": "turbo run format --ui=stream --continue",
     "format:fix": "turbo run format --ui=stream --continue -- --write --unsafe",
     "infra": "turbo run infra --continue",

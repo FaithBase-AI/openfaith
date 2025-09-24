@@ -73,6 +73,14 @@ export const ExternalWebhookWorkflowLayer = ExternalWebhookWorkflow.toLayer(
         Effect.provide(Layer.mergeAll(PcoAdapterManagerLayer, InternalManagerLive)),
         Effect.provideService(TokenKey, orgId),
         Effect.catchTags({
+          AdapterEntityMethodNotFoundError: (error) =>
+            Effect.fail(
+              new ExternalWebhookError({
+                cause: error,
+                message:
+                  'Failed to find get method for entity. THIS SHOULD NOT HAPPEN! IF IT DOES there is a bug in getSyncEntityId in pcoAdapterMangerLive',
+              }),
+            ),
           AdapterWebhookProcessingError: (error) =>
             Effect.fail(
               new ExternalWebhookError({

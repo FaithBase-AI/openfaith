@@ -103,7 +103,7 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
   return {
     adapterDetails: {
       row: {
-        select: [allowIfOrg],
+        select: [allowIfOrg, allowIfAdmin],
       },
     },
     adapterTokens: {
@@ -189,7 +189,7 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
     orgUsers: {
       row: {
         insert: NOBODY_CAN,
-        select: [allowIfOrg],
+        select: [allowIfOrg, allowIfAdmin],
       },
     },
     people: {

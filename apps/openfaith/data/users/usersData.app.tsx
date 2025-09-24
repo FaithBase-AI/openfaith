@@ -1,4 +1,6 @@
-import { Button, ColumnHeader, getIdColumn, getUserNameColumn } from '@openfaith/ui'
+import { Atom, Result, useAtom } from '@effect-atom/atom-react'
+import { impersonateUserE } from '@openfaith/auth/authClientE'
+import { Button, ColumnHeader, getUserNameColumn } from '@openfaith/ui'
 import { getBaseUsersQuery } from '@openfaith/zero/baseQueries'
 import type { UserClientShape } from '@openfaith/zero/clientShapes'
 import { useZero } from '@openfaith/zero/useZero'
@@ -7,15 +9,10 @@ import type { ColumnDef } from '@tanstack/react-table'
 import type { FC } from 'react'
 
 export const usersTableColumns: Array<ColumnDef<UserClientShape>> = [
-  getIdColumn(),
   getUserNameColumn(),
   {
     accessorFn: (row) => row.id,
-    cell: ({ row }) => {
-      const user = row.original
-
-      return <ImpersonateButton userId={user.id} />
-    },
+    cell: ({ row }) => <ImpersonateButton userId={row.original.id} />,
     header: ({ column }) => <ColumnHeader column={column}>Actions</ColumnHeader>,
     id: 'actions',
     minSize: 144,
@@ -23,14 +20,24 @@ export const usersTableColumns: Array<ColumnDef<UserClientShape>> = [
   },
 ]
 
-const ImpersonateButton: FC<{ userId: string }> = (props) => {
+// Create an atom function for impersonation
+const impersonateAtom = Atom.fn(impersonateUserE)
+
+type ImpersonateButtonProps = {
+  userId: string
+}
+
+const ImpersonateButton: FC<ImpersonateButtonProps> = (props) => {
   const { userId } = props
+  const [impersonateResult, impersonateSet] = useAtom(impersonateAtom)
+
+  console.log(impersonateResult)
 
   return (
     <Button
+      loading={Result.isWaiting(impersonateResult)}
       onClick={() => {
-        // TODO: Implement impersonation when better-auth supports it
-        console.log('Impersonate user:', userId)
+        impersonateSet({ userId })
       }}
       size='sm'
       variant='secondary'

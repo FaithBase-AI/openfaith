@@ -47,6 +47,16 @@ export class EmailChangeError extends Schema.TaggedError<EmailChangeError>()('Em
   operation: Schema.optional(Schema.String),
 }) {}
 
+export class ImpersonationError extends Schema.TaggedError<ImpersonationError>()(
+  'ImpersonationError',
+  {
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+    operation: Schema.optional(Schema.String),
+    params: Schema.optional(Schema.Unknown),
+  },
+) {}
+
 // Organization operations
 export const createOrganizationE = Effect.fn('createOrganization')(function* (
   params: Parameters<typeof authClient.organization.create>[0],
@@ -340,6 +350,36 @@ export const verifyEmailChangeOtpE = Effect.fn('verifyEmailChangeOtp')(function*
       new EmailChangeError({
         message: result.error.message || 'Email verification failed',
         operation: 'verifyEmailChange',
+      }),
+    )
+  }
+
+  return result.data
+})
+
+// Admin operations
+export const impersonateUserE = Effect.fn('impersonateUser')(function* (
+  params: Parameters<typeof authClient.admin.impersonateUser>[0],
+) {
+  yield* Effect.annotateCurrentSpan('admin.impersonateUser', params)
+
+  const result = yield* Effect.tryPromise({
+    catch: (cause) =>
+      new ImpersonationError({
+        cause,
+        message: cause instanceof Error ? cause.message : 'Failed to impersonate user',
+        operation: 'impersonateUser',
+        params,
+      }),
+    try: () => authClient.admin.impersonateUser(params),
+  })
+
+  if (result.error) {
+    return yield* Effect.fail(
+      new ImpersonationError({
+        message: result.error.message || 'Failed to impersonate user',
+        operation: 'impersonateUser',
+        params,
       }),
     )
   }

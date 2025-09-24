@@ -1,11 +1,13 @@
+import { Result, useAtom } from '@effect-atom/atom-react'
+import { adapterReSyncAtom } from '@openfaith/openfaith/data/rpcState'
 import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
 import {
   Badge,
+  Button,
   CheckCircleIcon,
   ColumnHeader,
   EntityIdBadges,
   getCreatedAtColumn,
-  getIdColumn,
   getNameColumn,
   useFilterQuery,
   XIcon,
@@ -14,10 +16,16 @@ import { getBaseOrgsQuery, type OrgClientShape, useZero } from '@openfaith/zero'
 import { useQuery } from '@rocicorp/zero/react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Array, Option, pipe, String } from 'effect'
+import type { FC } from 'react'
 
 export const orgsTableColumns: Array<ColumnDef<OrgClientShape>> = [
-  getIdColumn(),
   getNameColumn(),
+  {
+    accessorKey: 'id',
+    enableResizing: false,
+    header: ({ column }) => <ColumnHeader column={column}>Id</ColumnHeader>,
+    size: 256,
+  },
   {
     accessorFn: (row) => row.orgUsers.length,
     header: ({ column }) => <ColumnHeader column={column}>Total Members</ColumnHeader>,
@@ -59,7 +67,33 @@ export const orgsTableColumns: Array<ColumnDef<OrgClientShape>> = [
     size: 256,
   },
   getCreatedAtColumn(),
+  {
+    accessorFn: (row) => row.id,
+    cell: ({ row }) => <ResyncButton orgId={row.original.id} />,
+    header: ({ column }) => <ColumnHeader column={column}>Actions</ColumnHeader>,
+    id: 'actions',
+    minSize: 144,
+    size: 256,
+  },
 ]
+
+type ResyncButtonProps = {
+  orgId: string
+}
+
+const ResyncButton: FC<ResyncButtonProps> = (props) => {
+  const { orgId } = props
+  const [adapterReSyncResult, adapterReSyncSet] = useAtom(adapterReSyncAtom)
+
+  return (
+    <Button
+      loading={Result.isWaiting(adapterReSyncResult)}
+      onClick={() => adapterReSyncSet({ adapter: 'pco', orgId })}
+    >
+      Resync PCO
+    </Button>
+  )
+}
 
 export const orgsFiltersDef = [] as const
 

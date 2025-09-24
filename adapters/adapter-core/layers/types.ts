@@ -73,6 +73,17 @@ export class AdapterEntityNotFoundError extends Schema.TaggedError<AdapterEntity
   },
 ) {}
 
+export class AdapterEntityMethodNotFoundError extends Schema.TaggedError<AdapterEntityMethodNotFoundError>()(
+  'AdapterEntityMethodNotFoundError',
+  {
+    adapter: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+    entityType: Schema.String,
+    message: Schema.String,
+    method: Schema.String,
+  },
+) {}
+
 export class EntityProcessingError extends Schema.TaggedError<EntityProcessingError>()(
   'EntityProcessingError',
   {
@@ -242,6 +253,12 @@ export type SyncEntityId = (params: {
   processEntities: ProcessEntities
   processRelationships: ProcessRelationships
   processMutations: ProcessMutations
-}) => Effect.Effect<void, AdapterFetchError | AdapterTransformError | AdapterEntityNotFoundError>
+}) => Effect.Effect<
+  void,
+  | AdapterFetchError
+  | AdapterTransformError
+  | AdapterEntityNotFoundError
+  | AdapterEntityMethodNotFoundError
+>
 
 export type ProcessMutations = (mutations: Array<CRUDOp>) => Effect.Effect<void>
