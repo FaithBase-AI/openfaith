@@ -272,6 +272,7 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
 
   const processedAttributes = yield* Schema.decodeUnknown(attributesSchema)(entity.attributes).pipe(
     Effect.mapError((error) => {
+      console.log('processedAttributes error', error)
       return new AdapterTransformError({
         adapter: 'pco',
         cause: error,
@@ -280,10 +281,6 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
       })
     }),
   )
-
-  yield* Effect.annotateLogs(Effect.log('🔄 Processed attributes'), {
-    processedAttributes,
-  })
 
   // For webhooks, we need to include the externalWebhookId
   const attributesToTransform =
@@ -296,6 +293,7 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
       attributesToTransform,
     ).pipe(
       Effect.mapError((error) => {
+        console.log('attributesToTransform error', error)
         return new AdapterTransformError({
           adapter: 'pco',
           cause: error,

@@ -31,15 +31,16 @@ export const PcoPhoneNumberAttributes = Schema.Struct({
   created_at: Schema.String.annotations({
     [OfFieldName]: 'createdAt',
   }),
-  e164: Schema.NullOr(Schema.String)
-    .annotations({
-      [OfFieldName]: 'number',
-    })
-    .pipe(
-      Schema.propertySignature,
-      // This is a sane default value for the e164 field.
-      Schema.withConstructorDefault(() => '-'),
-    ),
+  e164: Schema.transform(
+    Schema.NullOr(Schema.String), // Input: string | null
+    Schema.String, // Output: string
+    {
+      decode: (value) => value ?? 'n/a', // Convert null to 'n/a'
+      encode: (value) => (value === 'n/a' ? null : value), // Convert 'n/a' back to null
+    },
+  ).annotations({
+    [OfFieldName]: 'number',
+  }),
   international: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'international',
     [OfCustomField]: true,
