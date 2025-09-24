@@ -9,6 +9,7 @@ import { RpcSerialization, RpcServer } from '@effect/rpc'
 import { AdapterRpc, AppHttpApi, CoreRpc } from '@openfaith/domain'
 import { AdapterHandlerLive } from '@openfaith/server/handlers/adapterHandler'
 import { AdapterWebhooksHandlerLive } from '@openfaith/server/handlers/adapterWebhooksHandler'
+import { AdminHandlerLive } from '@openfaith/server/handlers/adminHandler'
 import { CoreHandlerLive } from '@openfaith/server/handlers/coreHandler'
 import { ZeroHandlerLive } from '@openfaith/server/handlers/zeroMutatorsHandler'
 import { DBLive } from '@openfaith/server/live/dbLive'
@@ -21,6 +22,7 @@ const HandlersLayer = Layer.mergeAll(
   CoreHandlerLive,
   AdapterHandlerLive,
   ZeroHandlerLive,
+  AdminHandlerLive,
   AdapterWebhooksHandlerLive,
 ).pipe(
   Layer.provide(DBLive),

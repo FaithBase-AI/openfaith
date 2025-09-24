@@ -26,7 +26,7 @@ export class AdapterConnectError extends Schema.TaggedError<AdapterConnectError>
   'AdapterConnectError',
 )('AdapterConnectError', {
   adapter: Schema.optional(Schema.String),
-  cause: Schema.optional(Schema.String),
+  cause: Schema.optional(Schema.Unknown),
   message: Schema.String,
 }) {
   get message(): string {
@@ -55,6 +55,23 @@ export class AdapterRpc extends RpcGroup.make(
     error: Schema.Union(AdapterReSyncError, UnauthorizedError, ForbiddenError),
     payload: Schema.Struct({
       adapter: Schema.String,
+    }),
+    success: Schema.Unknown,
+  }),
+).middleware(SessionRpcMiddleware) {}
+
+export class NotAdminError extends Schema.TaggedError<NotAdminError>()('NotAdminError', {
+  cause: Schema.optional(Schema.Unknown),
+  message: Schema.String,
+  userId: Schema.String,
+}) {}
+
+export class AdminRpc extends RpcGroup.make(
+  Rpc.make('orgAdapterReSync', {
+    error: Schema.Union(AdapterReSyncError, UnauthorizedError, ForbiddenError, NotAdminError),
+    payload: Schema.Struct({
+      adapter: Schema.String,
+      orgId: Schema.String,
     }),
     success: Schema.Unknown,
   }),

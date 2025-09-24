@@ -1,6 +1,6 @@
 import { FetchHttpClient } from '@effect/platform'
 import { RpcClient, RpcSerialization } from '@effect/rpc'
-import { AdapterRpc, CoreRpc } from '@openfaith/domain'
+import { AdapterRpc, AdminRpc, CoreRpc } from '@openfaith/domain'
 import { Effect, Layer } from 'effect'
 
 // Create the protocol layer for HTTP communication
@@ -26,8 +26,17 @@ export class AdapterRpcClient extends Effect.Service<AdapterRpcClient>()('Adapte
   scoped: RpcClient.make(AdapterRpc),
 }) {}
 
+export class AdminRpcClient extends Effect.Service<AdminRpcClient>()('AdminRpcClient', {
+  dependencies: [ProtocolLayer],
+  scoped: RpcClient.make(AdminRpc),
+}) {}
+
 // Create a runtime for the RPC clients
-const RpcLayer = Layer.mergeAll(CoreRpcClient.Default, AdapterRpcClient.Default)
+const RpcLayer = Layer.mergeAll(
+  CoreRpcClient.Default,
+  AdapterRpcClient.Default,
+  AdminRpcClient.Default,
+)
 
 // Export the layer for use in effect-rx
 export const rpcLayer = RpcLayer

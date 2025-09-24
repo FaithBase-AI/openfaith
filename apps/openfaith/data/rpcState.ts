@@ -1,5 +1,10 @@
 import { Atom } from '@effect-atom/atom-react'
-import { AdapterRpcClient, CoreRpcClient, rpcLayer } from '@openfaith/openfaith/data/rpcClient'
+import {
+  AdapterRpcClient,
+  AdminRpcClient,
+  CoreRpcClient,
+  rpcLayer,
+} from '@openfaith/openfaith/data/rpcClient'
 import { Effect } from 'effect'
 
 const runtime = Atom.runtime(rpcLayer)
@@ -18,6 +23,16 @@ export const adapterReSyncAtom = runtime.fn(
     const client = yield* AdapterRpcClient
 
     return yield* client.adapterReSync(params)
+  }),
+)
+
+export const adminAdapterReSyncAtom = runtime.fn(
+  Effect.fnUntraced(function* (
+    params: Parameters<typeof AdminRpcClient.prototype.orgAdapterReSync>[0],
+  ) {
+    const client = yield* AdminRpcClient
+
+    return yield* client.orgAdapterReSync(params)
   }),
 )
 

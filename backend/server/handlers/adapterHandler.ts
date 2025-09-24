@@ -21,16 +21,16 @@ export const AdapterHandlerLive = AdapterRpc.toLayer(
           // Get authenticated user and org from session context
           const session = yield* SessionContext
           const userId = session.userId
-          const orgId = session.activeOrganizationIdOpt.pipe(Option.getOrNull)
-
-          if (!orgId) {
-            return yield* Effect.fail(
-              new AdapterConnectError({
-                adapter,
-                message: 'No organization found',
-              }),
-            )
-          }
+          const orgId = yield* session.activeOrganizationIdOpt.pipe(
+            Effect.mapError(
+              (error) =>
+                new AdapterConnectError({
+                  adapter,
+                  cause: error,
+                  message: 'No organization found',
+                }),
+            ),
+          )
 
           const adapterImpl = yield* pipe(
             adaptersApi,
@@ -152,16 +152,16 @@ export const AdapterHandlerLive = AdapterRpc.toLayer(
 
           const session = yield* SessionContext
 
-          const orgId = session.activeOrganizationIdOpt.pipe(Option.getOrNull)
-
-          if (!orgId) {
-            return yield* Effect.fail(
-              new AdapterReSyncError({
-                adapter,
-                message: 'No organization found',
-              }),
-            )
-          }
+          const orgId = yield* session.activeOrganizationIdOpt.pipe(
+            Effect.mapError(
+              (error) =>
+                new AdapterReSyncError({
+                  adapter,
+                  cause: error,
+                  message: 'No organization found',
+                }),
+            ),
+          )
 
           const workflowClient = yield* WorkflowClient
 

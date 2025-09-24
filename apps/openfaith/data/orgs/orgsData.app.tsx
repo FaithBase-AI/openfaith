@@ -1,5 +1,5 @@
 import { Result, useAtom } from '@effect-atom/atom-react'
-import { adapterReSyncAtom } from '@openfaith/openfaith/data/rpcState'
+import { adminAdapterReSyncAtom } from '@openfaith/openfaith/data/rpcState'
 import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
 import {
   Badge,
@@ -83,12 +83,12 @@ type ResyncButtonProps = {
 
 const ResyncButton: FC<ResyncButtonProps> = (props) => {
   const { orgId } = props
-  const [adapterReSyncResult, adapterReSyncSet] = useAtom(adapterReSyncAtom)
+  const [orgAdapterReSyncResult, orgAdapterReSyncSet] = useAtom(adminAdapterReSyncAtom)
 
   return (
     <Button
-      loading={Result.isWaiting(adapterReSyncResult)}
-      onClick={() => adapterReSyncSet({ adapter: 'pco', orgId })}
+      loading={Result.isWaiting(orgAdapterReSyncResult)}
+      onClick={() => orgAdapterReSyncSet({ adapter: 'pco', orgId })}
     >
       Resync PCO
     </Button>
