@@ -2,14 +2,17 @@ import { authClient } from '@openfaith/auth/authClient'
 import { OrgRole } from '@openfaith/openfaith/data/orgs/orgsShared'
 import { useOrgId } from '@openfaith/openfaith/data/users/useOrgId'
 import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
+import { nullOp } from '@openfaith/shared'
 import {
   getBaseOrgQuery,
   getBaseOrgUsersQuery,
+  type OrgClientShape,
   type OrgUserClientShape,
   useZero,
 } from '@openfaith/zero'
 import { useQuery } from '@rocicorp/zero/react'
 import { Array, Option, pipe } from 'effect'
+import type { FC, ReactNode } from 'react'
 
 export function useAuthOrgOpt() {
   const { data, isPending } = authClient.useActiveOrganization()
@@ -68,6 +71,23 @@ export function useUserOrgRole() {
     Option.match({
       onNone: () => OrgRole.Member,
       onSome: (x) => x.role as OrgRole,
+    }),
+  )
+}
+
+type CurrentOrgWrapperProps = {
+  children: (org: OrgClientShape) => ReactNode
+}
+
+export const CurrentOrgWrapper: FC<CurrentOrgWrapperProps> = (props) => {
+  const { children } = props
+  const { orgOpt } = useOrgOpt()
+
+  return pipe(
+    orgOpt,
+    Option.match({
+      onNone: nullOp,
+      onSome: (org) => children(org),
     }),
   )
 }
