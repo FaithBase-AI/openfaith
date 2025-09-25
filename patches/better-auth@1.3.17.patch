@@ -1,0 +1,13 @@
+diff --git a/dist/shared/better-auth.B2VxXQPN.mjs b/dist/shared/better-auth.B2VxXQPN.mjs
+index 9546fb3d2736d9bff0d866c7d5ef62aedf26fef7..e115f670911a146ae7b959c077518275165c433b 100644
+--- a/dist/shared/better-auth.B2VxXQPN.mjs
++++ b/dist/shared/better-auth.B2VxXQPN.mjs
+@@ -3087,7 +3087,7 @@ const setActiveOrganization = (options) => {
+         userId: session.user.id,
+         organizationId
+       });
+-      if (!isMember) {
++      if (!isMember && session?.user?.role !== 'admin') {
+         await adapter.setActiveOrganization(session.session.token, null, ctx);
+         throw new APIError("FORBIDDEN", {
+           message: ORGANIZATION_ERROR_CODES.USER_IS_NOT_A_MEMBER_OF_THE_ORGANIZATION
