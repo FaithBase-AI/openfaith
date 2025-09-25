@@ -68,7 +68,7 @@ export class Pathway extends BasePathway.extend<Pathway>('Pathway')(BaseIdentifi
     [OfUiConfig]: {
       navigation: {
         description: 'Define and manage funnels (generic across entities)',
-        enabled: true,
+        enabled: false,
         icon: 'milestoneIcon',
         module: 'domain',
         order: 7,
@@ -126,7 +126,7 @@ export class Journey extends BaseJourney.extend<Journey>('Journey')(BaseIdentifi
     [OfUiConfig]: {
       navigation: {
         description: 'Track entity progress through a pathway',
-        enabled: true,
+        enabled: false,
         icon: 'kanbanIcon',
         module: 'domain',
         order: 9,

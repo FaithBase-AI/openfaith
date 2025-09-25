@@ -40,7 +40,7 @@ export class Qualification extends BaseQualification.extend<Qualification>('Qual
       [OfUiConfig]: {
         navigation: {
           description: 'Define achievements/awards used for gating (e.g., Membership)',
-          enabled: true,
+          enabled: false,
           icon: 'badgeCheckIcon',
           module: 'domain',
           order: 11,

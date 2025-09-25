@@ -94,7 +94,7 @@ export class Sacrament extends BaseSacrament.extend<Sacrament>('Sacrament')(
       [OfUiConfig]: {
         navigation: {
           description: 'Record and manage sacraments (system and custom)',
-          enabled: true,
+          enabled: false,
           icon: 'crossIcon',
           module: 'directory',
           order: 6,

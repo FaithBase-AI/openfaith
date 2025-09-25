@@ -40,7 +40,7 @@ export class Field extends BaseField.extend<Field>('Field')(BaseIdentifiedEntity
     [OfUiConfig]: {
       navigation: {
         description: 'Define selectable fields and options for entities',
-        enabled: true,
+        enabled: false,
         icon: 'listChecksIcon',
         module: 'system',
         order: 12,
