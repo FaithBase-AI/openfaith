@@ -6,6 +6,7 @@ import {
   Button,
   CheckCircleIcon,
   ColumnHeader,
+  CopyButton,
   EntityIdBadges,
   getCreatedAtColumn,
   getNameColumn,
@@ -22,8 +23,15 @@ export const orgsTableColumns: Array<ColumnDef<OrgClientShape>> = [
   getNameColumn(),
   {
     accessorKey: 'id',
+    cell: ({ row }) => (
+      <>
+        <span className='mr-auto text-xs'>{row.original.id}</span>
+        <CopyButton value={row.original.id} />
+      </>
+    ),
     enableResizing: false,
     header: ({ column }) => <ColumnHeader column={column}>Id</ColumnHeader>,
+    id: `idColumn`,
     size: 256,
   },
   {
