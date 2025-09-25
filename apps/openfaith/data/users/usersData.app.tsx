@@ -1,6 +1,6 @@
 import { Atom, Result, useAtom } from '@effect-atom/atom-react'
 import { impersonateUserE } from '@openfaith/auth/authClientE'
-import { Button, ColumnHeader, getUserNameColumn } from '@openfaith/ui'
+import { Button, ColumnHeader, CopyButton, getUserNameColumn } from '@openfaith/ui'
 import { getBaseUsersQuery } from '@openfaith/zero/baseQueries'
 import type { UserClientShape } from '@openfaith/zero/clientShapes'
 import { useZero } from '@openfaith/zero/useZero'
@@ -10,6 +10,19 @@ import type { FC } from 'react'
 
 export const usersTableColumns: Array<ColumnDef<UserClientShape>> = [
   getUserNameColumn(),
+  {
+    accessorKey: 'id',
+    cell: ({ row }) => (
+      <>
+        <span className='mr-auto text-xs'>{row.original.id}</span>
+        <CopyButton value={row.original.id} />
+      </>
+    ),
+    enableResizing: false,
+    header: ({ column }) => <ColumnHeader column={column}>Id</ColumnHeader>,
+    id: `idColumn`,
+    size: 256,
+  },
   {
     accessorFn: (row) => row.id,
     cell: ({ row }) => <ImpersonateButton userId={row.original.id} />,
