@@ -31,8 +31,6 @@ const ImpersonateButton: FC<ImpersonateButtonProps> = (props) => {
   const { userId } = props
   const [impersonateResult, impersonateSet] = useAtom(impersonateAtom)
 
-  console.log(impersonateResult)
-
   return (
     <Button
       loading={Result.isWaiting(impersonateResult)}
