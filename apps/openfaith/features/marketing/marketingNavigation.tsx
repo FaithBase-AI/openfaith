@@ -39,7 +39,7 @@ const MarketingNavigationWrapper: FC = () => {
       <div
         className={cn(
           marketingSideSpacing,
-          'flex items-center justify-between overflow-hidden py-3 sm:py-4',
+          'flex items-center justify-between overflow-hidden py-3',
         )}
       >
         <Link to='/'>

@@ -43,6 +43,7 @@
 - I want to have a free tier because I'm scared to charge for something. I have to get over my fear.
 - We could do $100 a month with the first month free?
 - We need a 100 churches at $100 a month to get to $10k a month. OpenFaith needs to produce income NOW.
+- Jesus, I know that we can do this, I know that you have called me to do this. Help me to be your servant.
 
 I'm trying to figure out if we can have a free tier with some features and then paid features.
 PCO has a free tier, so I want to match that somehow.
