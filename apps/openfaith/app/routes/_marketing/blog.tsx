@@ -5,5 +5,5 @@ export const Route = createFileRoute('/_marketing/blog')({
 })
 
 function RouteComponent() {
-  return <div className='flex flex-col items-start gap-4 p-16'>Hello "/_marketing/blog"!</div>
+  return <div className='flex flex-col items-start gap-4 py-4'>Hello "/_marketing/blog"!</div>
 }

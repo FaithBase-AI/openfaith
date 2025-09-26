@@ -108,6 +108,10 @@ I have a lot of contacts from ARC. We also have that rough understanding of if t
 
 How do we be different? I want to care for the churches at a deeper level. It's more than just software, it's the new move. I need to focus on churches that want to do discipleship, that want to see their city save and actually do something about it.
 
+### Open Source contributions
+
+- We need to figure out how to engage other devs with what we are building.
+
 ## What big problems do we still need to tackle?
 
 ### How do we be like plaid for church data?

@@ -1,9 +1,10 @@
 import { Logo } from '@openfaith/openfaith/components/logo'
 import { MainNav } from '@openfaith/openfaith/features/marketing/mainNav'
+import { marketingSideSpacing } from '@openfaith/openfaith/features/marketing/marketingGlobals'
 import { MobileMarketingNavigation } from '@openfaith/openfaith/features/marketing/mobileMarketingNavigation'
 import { RightNav } from '@openfaith/openfaith/features/marketing/rightNav'
 import { UserNav } from '@openfaith/openfaith/features/marketing/userNav'
-import { ThemeToggle } from '@openfaith/ui'
+import { cn, ThemeToggle } from '@openfaith/ui'
 import { Link, useRouter } from '@tanstack/react-router'
 import type { FC } from 'react'
 
@@ -32,13 +33,20 @@ const MarketingNavigationWrapper: FC = () => {
   return (
     <div
       className={
-        'fixed absolute top-0 right-0 left-0 z-20 flex items-center justify-between overflow-hidden bg-background/95 px-8 py-3 backdrop-blur-sm supports-backdrop-filter:bg-background/60 sm:px-6 sm:py-4'
+        'fixed absolute top-0 right-0 left-0 z-20 overflow-hidden bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60'
       }
     >
-      <Link to='/'>
-        <Logo className='h-8 text-inherit' variant='wordmark' />
-      </Link>
-      <MarketingNavigation />
+      <div
+        className={cn(
+          marketingSideSpacing,
+          'flex items-center justify-between overflow-hidden py-3 sm:py-4',
+        )}
+      >
+        <Link to='/'>
+          <Logo className='h-8 text-inherit' variant='wordmark' />
+        </Link>
+        <MarketingNavigation />
+      </div>
     </div>
   )
 }
