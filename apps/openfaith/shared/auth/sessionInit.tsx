@@ -4,17 +4,17 @@ import { Option, pipe } from 'effect'
 import { useMemo } from 'react'
 import { Cookies, useCookies } from 'react-cookie'
 
+export type Session = {
+  userID: string
+  email: string
+  activeOrganizationId: string | null
+  userRole: string | null
+  orgRole: string | null
+  impersonatedBy: string | null
+}
+
 export type SessionContextType = {
-  data:
-    | {
-        userID: string
-        email: string
-        activeOrganizationId: string | null
-        userRole: string | null
-        orgRole: string | null
-        impersonatedBy: string | null
-      }
-    | undefined
+  data: Session | undefined
   login: () => void
   logout: () => void
   zeroAuth: () => Promise<string | undefined>

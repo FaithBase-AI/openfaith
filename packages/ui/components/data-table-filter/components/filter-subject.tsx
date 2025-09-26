@@ -1,4 +1,4 @@
-import type { Column, ColumnDataType } from '../core/types'
+import type { Column, ColumnDataType } from '@openfaith/ui/components/data-table-filter/core/types'
 
 interface FilterSubjectProps<TData, TType extends ColumnDataType> {
   column: Column<TData, TType>

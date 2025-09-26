@@ -1,0 +1,63 @@
+'use client'
+
+import { useOrgId } from '@openfaith/openfaith/data/users/useOrgId'
+import type { Session } from '@openfaith/openfaith/shared/auth/sessionInit'
+import { nullOp } from '@openfaith/shared'
+import { cn } from '@openfaith/ui'
+import { Link, useLocation } from '@tanstack/react-router'
+import { Option, pipe, String } from 'effect'
+import { AnimatePresence, motion } from 'motion/react'
+import type { FC } from 'react'
+
+type MainNavProps = {
+  session?: Session | undefined
+}
+
+export const MainNav: FC<MainNavProps> = (props) => {
+  const { session: passedSession } = props
+
+  const location = useLocation()
+
+  const orgId = useOrgId()
+
+  return (
+    <div className='ml-4 hidden md:flex'>
+      <AnimatePresence>
+        {pipe(
+          passedSession,
+          Option.fromNullable,
+          Option.flatMapNullable((x) => x.activeOrganizationId),
+          Option.orElse(() =>
+            pipe(
+              orgId,
+              Option.fromNullable,
+              Option.filter((x) => x !== 'noOrganization'),
+            ),
+          ),
+          Option.match({
+            onNone: nullOp,
+            onSome: () => (
+              <motion.nav
+                animate={{ opacity: 1 }}
+                className='flex items-center gap-4 text-sm xl:gap-6'
+                initial={{ opacity: 0 }}
+              >
+                <Link
+                  className={cn(
+                    'text-inherit transition-colors hover:opacity-80',
+                    pipe(location.pathname, String.startsWith('/directory/people'))
+                      ? 'opacity-100'
+                      : 'opacity-80',
+                  )}
+                  to='/directory/people'
+                >
+                  App
+                </Link>
+              </motion.nav>
+            ),
+          }),
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}

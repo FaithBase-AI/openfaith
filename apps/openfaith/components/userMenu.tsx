@@ -1,5 +1,6 @@
 'use client'
 
+import type { Session } from '@openfaith/openfaith/shared/auth/sessionInit'
 import { useSignOut } from '@openfaith/openfaith/shared/auth/useSignOut'
 import {
   DropdownMenu,
@@ -14,11 +15,7 @@ import type { ComponentPropsWithoutRef, FC } from 'react'
 
 type UserMenuProps = ComponentPropsWithoutRef<typeof AvatarPrimitive.Root> & {
   size?: number
-  session: {
-    userID: string
-    email: string
-    activeOrganizationId: string | null
-  }
+  session: Session
 }
 
 export const UserMenu: FC<UserMenuProps> = (props) => {

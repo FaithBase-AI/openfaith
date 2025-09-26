@@ -12,11 +12,13 @@ import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OnboardingRouteRouteImport } from './routes/_onboarding/route'
+import { Route as MarketingRouteRouteImport } from './routes/_marketing/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
 import { Route as OauthProviderRouteImport } from './routes/oauth/$provider'
 import { Route as OnboardingOnboardingRouteImport } from './routes/_onboarding/onboarding'
+import { Route as MarketingBlogRouteImport } from './routes/_marketing/blog'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppGroupRouteRouteImport } from './routes/_app/$group/route'
@@ -40,6 +42,10 @@ const OnboardingRouteRoute = OnboardingRouteRouteImport.update({
   id: '/_onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketingRouteRoute = MarketingRouteRouteImport.update({
+  id: '/_marketing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRouteRoute = AuthRouteRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
@@ -48,10 +54,10 @@ const AppRouteRoute = AppRouteRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const MarketingIndexRoute = MarketingIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => MarketingRouteRoute,
 } as any)
 const OauthProviderRoute = OauthProviderRouteImport.update({
   id: '/oauth/$provider',
@@ -62,6 +68,11 @@ const OnboardingOnboardingRoute = OnboardingOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
   getParentRoute: () => OnboardingRouteRoute,
+} as any)
+const MarketingBlogRoute = MarketingBlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => MarketingRouteRoute,
 } as any)
 const AuthSignInRoute = AuthSignInRouteImport.update({
   id: '/sign-in',
@@ -145,12 +156,13 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/$group': typeof AppGroupRouteRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
+  '/blog': typeof MarketingBlogRoute
   '/onboarding': typeof OnboardingOnboardingRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/': typeof MarketingIndexRoute
   '/$group/$entity': typeof AppGroupEntityRouteRouteWithChildren
   '/admin/orgs': typeof AppAdminOrgsRoute
   '/admin/users': typeof AppAdminUsersRoute
@@ -163,12 +175,13 @@ export interface FileRoutesByFullPath {
   '/$group/$entity/': typeof AppGroupEntityIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/$group': typeof AppGroupRouteRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
+  '/blog': typeof MarketingBlogRoute
   '/onboarding': typeof OnboardingOnboardingRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/': typeof MarketingIndexRoute
   '/admin/orgs': typeof AppAdminOrgsRoute
   '/admin/users': typeof AppAdminUsersRoute
   '/dev/logs': typeof AppDevLogsRoute
@@ -181,15 +194,17 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_app': typeof AppRouteRouteWithChildren
   '/_auth': typeof AuthRouteRouteWithChildren
+  '/_marketing': typeof MarketingRouteRouteWithChildren
   '/_onboarding': typeof OnboardingRouteRouteWithChildren
   '/_app/$group': typeof AppGroupRouteRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/_auth/sign-in': typeof AuthSignInRoute
+  '/_marketing/blog': typeof MarketingBlogRoute
   '/_onboarding/onboarding': typeof OnboardingOnboardingRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/_marketing/': typeof MarketingIndexRoute
   '/_app/$group/$entity': typeof AppGroupEntityRouteRouteWithChildren
   '/_app/admin/orgs': typeof AppAdminOrgsRoute
   '/_app/admin/users': typeof AppAdminUsersRoute
@@ -204,12 +219,13 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/$group'
     | '/dashboard'
     | '/sign-in'
+    | '/blog'
     | '/onboarding'
     | '/oauth/$provider'
+    | '/'
     | '/$group/$entity'
     | '/admin/orgs'
     | '/admin/users'
@@ -222,12 +238,13 @@ export interface FileRouteTypes {
     | '/$group/$entity/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/$group'
     | '/dashboard'
     | '/sign-in'
+    | '/blog'
     | '/onboarding'
     | '/oauth/$provider'
+    | '/'
     | '/admin/orgs'
     | '/admin/users'
     | '/dev/logs'
@@ -239,15 +256,17 @@ export interface FileRouteTypes {
     | '/$group/$entity'
   id:
     | '__root__'
-    | '/'
     | '/_app'
     | '/_auth'
+    | '/_marketing'
     | '/_onboarding'
     | '/_app/$group'
     | '/_app/dashboard'
     | '/_auth/sign-in'
+    | '/_marketing/blog'
     | '/_onboarding/onboarding'
     | '/oauth/$provider'
+    | '/_marketing/'
     | '/_app/$group/$entity'
     | '/_app/admin/orgs'
     | '/_app/admin/users'
@@ -261,9 +280,9 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AppRouteRoute: typeof AppRouteRouteWithChildren
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
+  MarketingRouteRoute: typeof MarketingRouteRouteWithChildren
   OnboardingRouteRoute: typeof OnboardingRouteRouteWithChildren
   OauthProviderRoute: typeof OauthProviderRoute
 }
@@ -306,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_marketing': {
+      id: '/_marketing'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof MarketingRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_auth': {
       id: '/_auth'
       path: ''
@@ -320,12 +346,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_marketing/': {
+      id: '/_marketing/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof MarketingIndexRouteImport
+      parentRoute: typeof MarketingRouteRoute
     }
     '/oauth/$provider': {
       id: '/oauth/$provider'
@@ -340,6 +366,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingOnboardingRouteImport
       parentRoute: typeof OnboardingRouteRoute
+    }
+    '/_marketing/blog': {
+      id: '/_marketing/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof MarketingBlogRouteImport
+      parentRoute: typeof MarketingRouteRoute
     }
     '/_auth/sign-in': {
       id: '/_auth/sign-in'
@@ -525,6 +558,20 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
   AuthRouteRouteChildren,
 )
 
+interface MarketingRouteRouteChildren {
+  MarketingBlogRoute: typeof MarketingBlogRoute
+  MarketingIndexRoute: typeof MarketingIndexRoute
+}
+
+const MarketingRouteRouteChildren: MarketingRouteRouteChildren = {
+  MarketingBlogRoute: MarketingBlogRoute,
+  MarketingIndexRoute: MarketingIndexRoute,
+}
+
+const MarketingRouteRouteWithChildren = MarketingRouteRoute._addFileChildren(
+  MarketingRouteRouteChildren,
+)
+
 interface OnboardingRouteRouteChildren {
   OnboardingOnboardingRoute: typeof OnboardingOnboardingRoute
 }
@@ -538,9 +585,9 @@ const OnboardingRouteRouteWithChildren = OnboardingRouteRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AppRouteRoute: AppRouteRouteWithChildren,
   AuthRouteRoute: AuthRouteRouteWithChildren,
+  MarketingRouteRoute: MarketingRouteRouteWithChildren,
   OnboardingRouteRoute: OnboardingRouteRouteWithChildren,
   OauthProviderRoute: OauthProviderRoute,
 }

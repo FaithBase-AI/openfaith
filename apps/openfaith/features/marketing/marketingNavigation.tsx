@@ -1,0 +1,46 @@
+import { Logo } from '@openfaith/openfaith/components/logo'
+import { MainNav } from '@openfaith/openfaith/features/marketing/mainNav'
+import { MobileMarketingNavigation } from '@openfaith/openfaith/features/marketing/mobileMarketingNavigation'
+import { RightNav } from '@openfaith/openfaith/features/marketing/rightNav'
+import { UserNav } from '@openfaith/openfaith/features/marketing/userNav'
+import { ThemeToggle } from '@openfaith/ui'
+import { Link, useRouter } from '@tanstack/react-router'
+import type { FC } from 'react'
+
+const MarketingNavigation: FC = () => {
+  const router = useRouter()
+
+  return (
+    <>
+      <MainNav session={router.options.context.session.data} />
+
+      <div className={'ml-auto hidden items-center gap-2 md:flex'}>
+        <RightNav />
+        <ThemeToggle className='rounded-full' />
+        <UserNav className='text-inherit' session={router.options.context.session.data} />
+      </div>
+
+      <div className={'ml-auto flex items-center gap-2 md:hidden'}>
+        <ThemeToggle className='rounded-full' />
+        <MobileMarketingNavigation session={router.options.context.session.data} />
+      </div>
+    </>
+  )
+}
+
+const MarketingNavigationWrapper: FC = () => {
+  return (
+    <div
+      className={
+        'fixed absolute top-0 right-0 left-0 z-20 flex items-center justify-between overflow-hidden bg-background/95 px-8 py-3 backdrop-blur-sm supports-backdrop-filter:bg-background/60 sm:px-6 sm:py-4'
+      }
+    >
+      <Link to='/'>
+        <Logo className='h-8 text-inherit' variant='wordmark' />
+      </Link>
+      <MarketingNavigation />
+    </div>
+  )
+}
+
+export { MarketingNavigationWrapper as MarketingNavigation }

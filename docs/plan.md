@@ -4,20 +4,33 @@
 
 ## What do we still have to do to launch?
 
+### Done
+
 - [x] We need to move `org_01k5a0dv8hfk3atrjx7n561nvw` token back to prod
-- [ ] We need to move to a cloud instance of supabase
-- [ ] We need to add a separate db instance for cluster / workers, we need to be able to run a local cluster against the prod db and not compete with it.
-  - I need to check to see if I can not run shard-manager and talk to local workers.
-- [ ] We need to test crud on Campuses, and People.
-  - [ ] We need to probably disable creation on Address / Phone Numbers, but we can keep edit for it.
-  - [ ] We need to figure out how to auto write custom mutators for all the entities that flow through `mutators.ts`. We need to not hand jam these.
-  - [ ] We need to fix the types for our effect based custom mutators. We should need to cast each mutator, `as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError>`.
-- [ ] We need to fully test create / delete pushes to PCO.
 - [x] Add copy orgId / userId to user settings.
 - [x] We need to hide the nav items that we don't want normal people to see yet.
 - [x] We need to figure out what we need to do about Dashboard.
   - Ended up hiding it for now, and we will send people to `/directory/people` for now.
+
+### Todo
+
+- [ ] We need to test crud on Campuses, and People.
+  - [ ] We need to fully test create / delete pushes to PCO.
+  - [ ] We need to probably disable creation on Address / Phone Numbers, but we can keep edit for it.
+  - [ ] We need to figure out how to auto write custom mutators for all the entities that flow through `mutators.ts`. We need to not hand jam these.
+  - [ ] We need to fix the types for our effect based custom mutators. We should need to cast each mutator, `as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError>`.
+    - I think this is the number one issue right now, custom mutators
+- [ ] Figure out why the css is loading after the html causing a flash of unstyled content.
+
+- [ ] Update to tanstack start rc.
+- [ ] We need to move to a cloud instance of supabase
+- [ ] We need to add a separate db instance for cluster / workers, we need to be able to run a local cluster against the prod db and not compete with it.
+  - I need to check to see if I can not run shard-manager and talk to local workers.
 - [ ] We need to map the user that auths with PCO, get their person ID, and then link their profile.
+- [ ] We need to figure out our custom tab / field datams in PCO so we can sync custom data that links to the person back to PCO.
+- [ ] Improve onboarding flow. We need to gather some ministry details. Name / Location
+
+### Backlog
 
 ## GTM
 
@@ -59,6 +72,11 @@ I think we can move really fast soon.
   - Fast
 - When a user signs up, we need to known! Need some kinda of notification about new orgs, and do outreach.
 
+#### Blog
+
+- We need to figure out what we are gonna do for our blog / media. I want to use Payload, but they are nextjs first now which works for them, but doesn't work for us on Tanstack Start.
+- I want something that is integrated into the product. I don't want to build my own cms, but we need something that is open source and embedded into our system.
+
 ### Sales
 
 - We need a script for texts
@@ -85,6 +103,10 @@ Their are two problems in my space, the technical issues of the product that I l
 The goal with OpenFaith is to be ok with every feature we have. We don't need more features. If you can Crud people fast, we can sell.
 
 I have 3 churches on the platform, and I need to fix sync, move the db, disable things, and blow their phones up.
+
+I have a lot of contacts from ARC. We also have that rough understanding of if they are using PCO, we can also focus on churches are in Florida.
+
+How do we be different? I want to care for the churches at a deeper level. It's more than just software, it's the new move. I need to focus on churches that want to do discipleship, that want to see their city save and actually do something about it.
 
 ## What big problems do we still need to tackle?
 
@@ -137,6 +159,15 @@ Thinking grow rich
 ### AI
 
 - We need to get the AI chat bot into the app quickly and see how it goes.
+
+### App Admin
+
+- We need to add product flags into the platform. Things like billing / blog / marketing home page ect.
+
+### Payments
+
+- We need to figure out if we want to do polar.sh / stripe directly. We need to integrate with better-auth.
+- We need to put the billing behind a flag.
 
 ### YouTube external Adapter
 
