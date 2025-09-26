@@ -1,4 +1,5 @@
 import SignIn from '@openfaith/openfaith/features/auth/signIn'
+import { env } from '@openfaith/shared'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Schema } from 'effect'
 
@@ -9,7 +10,7 @@ const SignInSearch = Schema.Struct({
 
 export const Route = createFileRoute('/_auth/sign-in')({
   beforeLoad: (ctx) => {
-    const { 'invitation-id': _invitationId, redirect: to = '/dashboard' } = ctx.search
+    const { 'invitation-id': _invitationId, redirect: to = env.VITE_APP_REDIRECT_URL } = ctx.search
 
     if (ctx.context.session.data) {
       // if (invitationId) {

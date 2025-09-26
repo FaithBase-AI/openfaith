@@ -2,6 +2,7 @@ import { useAdaptersDetailsCollection } from '@openfaith/openfaith/data/adapterD
 import { OrgForm } from '@openfaith/openfaith/features/auth/orgForm'
 import { IntegrationsComponent } from '@openfaith/openfaith/features/integrations/integrationsComponent'
 import { OnboardingProgress } from '@openfaith/openfaith/features/onboarding/onboardingProgress'
+import { env } from '@openfaith/shared'
 import {
   ActionRow,
   ArrowRightIcon,
@@ -95,8 +96,8 @@ function OnboardingPage() {
                 <IntegrationsComponent />
               </ScrollArea>
               <IntegrationsButtons
-                onContinue={() => navigate({ to: '/dashboard' })}
-                onSkip={() => navigate({ to: '/dashboard' })}
+                onContinue={() => navigate({ to: env.VITE_APP_REDIRECT_URL })}
+                onSkip={() => navigate({ to: env.VITE_APP_REDIRECT_URL })}
               />
             </>
           )),

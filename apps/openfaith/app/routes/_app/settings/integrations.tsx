@@ -1,4 +1,5 @@
 import { IntegrationsComponent } from '@openfaith/openfaith/features/integrations/integrationsComponent'
+import { ScrollArea } from '@openfaith/ui'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_app/settings/integrations')({
@@ -6,5 +7,9 @@ export const Route = createFileRoute('/_app/settings/integrations')({
 })
 
 function RouteComponent() {
-  return <IntegrationsComponent />
+  return (
+    <ScrollArea>
+      <IntegrationsComponent />
+    </ScrollArea>
+  )
 }

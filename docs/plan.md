@@ -4,16 +4,19 @@
 
 ## What do we still have to do to launch?
 
-- [ ] We need to move `org_01k5a0dv8hfk3atrjx7n561nvw` token back to prod
+- [x] We need to move `org_01k5a0dv8hfk3atrjx7n561nvw` token back to prod
 - [ ] We need to move to a cloud instance of supabase
 - [ ] We need to add a separate db instance for cluster / workers, we need to be able to run a local cluster against the prod db and not compete with it.
   - I need to check to see if I can not run shard-manager and talk to local workers.
 - [ ] We need to test crud on Campuses, and People.
   - [ ] We need to probably disable creation on Address / Phone Numbers, but we can keep edit for it.
+  - [ ] We need to figure out how to auto write custom mutators for all the entities that flow through `mutators.ts`. We need to not hand jam these.
+  - [ ] We need to fix the types for our effect based custom mutators. We should need to cast each mutator, `as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError>`.
 - [ ] We need to fully test create / delete pushes to PCO.
 - [x] Add copy orgId / userId to user settings.
 - [x] We need to hide the nav items that we don't want normal people to see yet.
-- [ ] We need to figure out what we need to do about Dashboard.
+- [x] We need to figure out what we need to do about Dashboard.
+  - Ended up hiding it for now, and we will send people to `/directory/people` for now.
 - [ ] We need to map the user that auths with PCO, get their person ID, and then link their profile.
 
 ## GTM

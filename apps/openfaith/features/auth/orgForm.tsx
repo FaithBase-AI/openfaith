@@ -4,6 +4,7 @@ import { createOrganizationE, updateOrganizationE } from '@openfaith/auth/authCl
 import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
 import { createOrgIsOpenAtom } from '@openfaith/openfaith/features/quickActions/quickActionsState'
 import { useChangeOrg } from '@openfaith/openfaith/shared/auth/useChangeOrg'
+import { env } from '@openfaith/shared'
 import {
   ArrowRightIcon,
   Button,
@@ -105,11 +106,11 @@ export const OrgForm: FC<OrgFormProps> = (props) => {
                 yield* changeOrg({ orgId: result.id })
 
                 setTimeout(() => {
-                  router.navigate({ replace: true, to: '/dashboard' })
+                  router.navigate({ replace: true, to: env.VITE_APP_REDIRECT_URL })
                 }, 0)
               }),
             ),
-            Match.tag('onboarding', ({ redirect = '/dashboard' }) =>
+            Match.tag('onboarding', ({ redirect = env.VITE_APP_REDIRECT_URL }) =>
               Effect.gen(function* () {
                 const trimmedName = pipe(value.name, String.trim)
                 const trimmedSlug = pipe(value.slug, String.trim)

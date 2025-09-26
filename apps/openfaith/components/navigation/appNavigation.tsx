@@ -1,9 +1,6 @@
 import { AdminNav } from '@openfaith/openfaith/components/navigation/adminNav'
 import { DevMenu } from '@openfaith/openfaith/components/navigation/devMenu'
-import {
-  mainNavItems,
-  settingsNavItems,
-} from '@openfaith/openfaith/components/navigation/navShared'
+import { settingsNavItems } from '@openfaith/openfaith/components/navigation/navShared'
 import { SideBarItem } from '@openfaith/openfaith/components/navigation/sideBarItem'
 import { OrgSwitcher } from '@openfaith/openfaith/components/orgSwitcher'
 import { formatLabel } from '@openfaith/shared'
@@ -50,7 +47,7 @@ export const AppNavigation: FC<AppSidebarProps> = (props) => {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
+        {/* <SidebarGroup>
           <SidebarGroupLabel>Core</SidebarGroupLabel>
           <SidebarMenu>
             {pipe(
@@ -58,7 +55,7 @@ export const AppNavigation: FC<AppSidebarProps> = (props) => {
               Array.map((item) => <SideBarItem key={item.url} {...item} />),
             )}
           </SidebarMenu>
-        </SidebarGroup>
+        </SidebarGroup> */}
 
         {pipe(
           moduleSections,

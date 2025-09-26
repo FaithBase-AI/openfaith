@@ -49,6 +49,7 @@ export const env = createEnv({
   client: {
     // Zero
     VITE_ZERO_SERVER: z.string(),
+    VITE_APP_REDIRECT_URL: z.string().optional().default('/directory/people'),
 
     // Config
     VITE_APP_NAME: z.string(),

@@ -33,7 +33,7 @@ type SignInProps = {
 }
 
 const SignIn: FC<SignInProps> = (props) => {
-  const { redirect = '/dashboard' } = props
+  const { redirect = env.VITE_APP_REDIRECT_URL } = props
 
   const router = useRouter()
 
