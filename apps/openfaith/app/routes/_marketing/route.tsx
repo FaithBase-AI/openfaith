@@ -12,7 +12,7 @@ function RouteComponent() {
     <>
       <MarketingNavigation />
 
-      <main className={cn(marketingSideSpacing, 'relative flex min-h-screen flex-col pt-18 pb-24')}>
+      <main className={cn(marketingSideSpacing, 'relative flex min-h-screen flex-col pt-16 pb-24')}>
         <Outlet />
       </main>
     </>
