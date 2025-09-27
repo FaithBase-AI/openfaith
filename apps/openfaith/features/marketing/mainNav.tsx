@@ -1,6 +1,5 @@
 'use client'
 
-import { useOrgId } from '@openfaith/openfaith/data/users/useOrgId'
 import type { Session } from '@openfaith/openfaith/shared/auth/sessionInit'
 import { nullOp } from '@openfaith/shared'
 import { cn } from '@openfaith/ui'
@@ -14,26 +13,17 @@ type MainNavProps = {
 }
 
 export const MainNav: FC<MainNavProps> = (props) => {
-  const { session: passedSession } = props
+  const { session } = props
 
   const location = useLocation()
-
-  const orgId = useOrgId()
 
   return (
     <div className='ml-4 hidden md:flex'>
       <AnimatePresence>
         {pipe(
-          passedSession,
+          session,
           Option.fromNullable,
           Option.flatMapNullable((x) => x.activeOrganizationId),
-          Option.orElse(() =>
-            pipe(
-              orgId,
-              Option.fromNullable,
-              Option.filter((x) => x !== 'noOrganization'),
-            ),
-          ),
           Option.match({
             onNone: nullOp,
             onSome: () => (
