@@ -13,7 +13,7 @@ const MarketingNavigation: FC = () => {
 
   return (
     <>
-      <MainNav session={router.options.context.session.data} />
+      <MainNav />
 
       <div className={'ml-auto hidden items-center gap-2 md:flex'}>
         <RightNav />

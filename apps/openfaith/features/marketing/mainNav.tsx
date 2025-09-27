@@ -1,22 +1,12 @@
 'use client'
 
-import type { Session } from '@openfaith/openfaith/shared/auth/sessionInit'
-import { nullOp } from '@openfaith/shared'
-import { cn } from '@openfaith/ui'
-import { Link, useLocation } from '@tanstack/react-router'
-import { Option, pipe, String } from 'effect'
+import { NavLink } from '@openfaith/openfaith/features/marketing/navLink'
 import { AnimatePresence, motion } from 'motion/react'
 import type { FC } from 'react'
 
-type MainNavProps = {
-  session?: Session | undefined
-}
+type MainNavProps = {}
 
-export const MainNav: FC<MainNavProps> = (props) => {
-  const { session } = props
-
-  const location = useLocation()
-
+export const MainNav: FC<MainNavProps> = () => {
   return (
     <div className='ml-4 hidden md:flex'>
       <AnimatePresence>
@@ -25,27 +15,11 @@ export const MainNav: FC<MainNavProps> = (props) => {
           className='flex items-center gap-4 text-sm xl:gap-6'
           initial={{ opacity: 0 }}
         >
-          {pipe(
-            session,
-            Option.fromNullable,
-            Option.flatMapNullable((x) => x.activeOrganizationId),
-            Option.match({
-              onNone: nullOp,
-              onSome: () => (
-                <Link
-                  className={cn(
-                    'text-inherit transition-colors hover:opacity-80',
-                    pipe(location.pathname, String.startsWith('/directory/people'))
-                      ? 'opacity-100'
-                      : 'opacity-80',
-                  )}
-                  to='/directory/people'
-                >
-                  App
-                </Link>
-              ),
-            }),
-          )}
+          <NavLink to='/features'>Features</NavLink>
+          <NavLink to='/integrations'>Integrations</NavLink>
+          <NavLink to='/pricing'>Pricing</NavLink>
+          <NavLink to='/vision'>Vision</NavLink>
+          <NavLink to='/blog'>Blog</NavLink>
         </motion.nav>
       </AnimatePresence>
     </div>

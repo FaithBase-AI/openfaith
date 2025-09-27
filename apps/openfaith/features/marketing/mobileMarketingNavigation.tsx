@@ -60,28 +60,21 @@ export const MobileMarketingNavigation: FC<MobileMarketingNavigationProps> = (pr
               Home
             </MobileLink>
 
-            {pipe(
-              session,
-              Option.fromNullable,
-              Option.flatMapNullable((x) => x.activeOrganizationId),
-              Option.orElse(() =>
-                pipe(
-                  orgId,
-                  Option.fromNullable,
-                  Option.filter((x) => x !== 'noOrganization'),
-                ),
-              ),
-              Option.match({
-                onNone: nullOp,
-                onSome: () => (
-                  <>
-                    <MobileLink href='/directory/people' onOpenChange={setOpen}>
-                      App
-                    </MobileLink>
-                  </>
-                ),
-              }),
-            )}
+            <MobileLink href='/features' onOpenChange={setOpen}>
+              Features
+            </MobileLink>
+
+            <MobileLink href='/integrations' onOpenChange={setOpen}>
+              Integrations
+            </MobileLink>
+
+            <MobileLink href='/pricing' onOpenChange={setOpen}>
+              Pricing
+            </MobileLink>
+
+            <MobileLink href='/vision' onOpenChange={setOpen}>
+              Vision
+            </MobileLink>
 
             <MobileLink href='/blog' onOpenChange={setOpen}>
               Blog
