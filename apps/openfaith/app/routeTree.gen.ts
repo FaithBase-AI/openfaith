@@ -18,6 +18,10 @@ import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
 import { Route as OauthProviderRouteImport } from './routes/oauth/$provider'
 import { Route as OnboardingOnboardingRouteImport } from './routes/_onboarding/onboarding'
+import { Route as MarketingVisionRouteImport } from './routes/_marketing/vision'
+import { Route as MarketingPricingRouteImport } from './routes/_marketing/pricing'
+import { Route as MarketingIntegrationsRouteImport } from './routes/_marketing/integrations'
+import { Route as MarketingFeaturesRouteImport } from './routes/_marketing/features'
 import { Route as MarketingBlogRouteImport } from './routes/_marketing/blog'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
@@ -68,6 +72,26 @@ const OnboardingOnboardingRoute = OnboardingOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
   getParentRoute: () => OnboardingRouteRoute,
+} as any)
+const MarketingVisionRoute = MarketingVisionRouteImport.update({
+  id: '/vision',
+  path: '/vision',
+  getParentRoute: () => MarketingRouteRoute,
+} as any)
+const MarketingPricingRoute = MarketingPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => MarketingRouteRoute,
+} as any)
+const MarketingIntegrationsRoute = MarketingIntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
+  getParentRoute: () => MarketingRouteRoute,
+} as any)
+const MarketingFeaturesRoute = MarketingFeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
+  getParentRoute: () => MarketingRouteRoute,
 } as any)
 const MarketingBlogRoute = MarketingBlogRouteImport.update({
   id: '/blog',
@@ -160,6 +184,10 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
   '/blog': typeof MarketingBlogRoute
+  '/features': typeof MarketingFeaturesRoute
+  '/integrations': typeof MarketingIntegrationsRoute
+  '/pricing': typeof MarketingPricingRoute
+  '/vision': typeof MarketingVisionRoute
   '/onboarding': typeof OnboardingOnboardingRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/': typeof MarketingIndexRoute
@@ -179,6 +207,10 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
   '/blog': typeof MarketingBlogRoute
+  '/features': typeof MarketingFeaturesRoute
+  '/integrations': typeof MarketingIntegrationsRoute
+  '/pricing': typeof MarketingPricingRoute
+  '/vision': typeof MarketingVisionRoute
   '/onboarding': typeof OnboardingOnboardingRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/': typeof MarketingIndexRoute
@@ -202,6 +234,10 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_marketing/blog': typeof MarketingBlogRoute
+  '/_marketing/features': typeof MarketingFeaturesRoute
+  '/_marketing/integrations': typeof MarketingIntegrationsRoute
+  '/_marketing/pricing': typeof MarketingPricingRoute
+  '/_marketing/vision': typeof MarketingVisionRoute
   '/_onboarding/onboarding': typeof OnboardingOnboardingRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/_marketing/': typeof MarketingIndexRoute
@@ -223,6 +259,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/sign-in'
     | '/blog'
+    | '/features'
+    | '/integrations'
+    | '/pricing'
+    | '/vision'
     | '/onboarding'
     | '/oauth/$provider'
     | '/'
@@ -242,6 +282,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/sign-in'
     | '/blog'
+    | '/features'
+    | '/integrations'
+    | '/pricing'
+    | '/vision'
     | '/onboarding'
     | '/oauth/$provider'
     | '/'
@@ -264,6 +308,10 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_auth/sign-in'
     | '/_marketing/blog'
+    | '/_marketing/features'
+    | '/_marketing/integrations'
+    | '/_marketing/pricing'
+    | '/_marketing/vision'
     | '/_onboarding/onboarding'
     | '/oauth/$provider'
     | '/_marketing/'
@@ -366,6 +414,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingOnboardingRouteImport
       parentRoute: typeof OnboardingRouteRoute
+    }
+    '/_marketing/vision': {
+      id: '/_marketing/vision'
+      path: '/vision'
+      fullPath: '/vision'
+      preLoaderRoute: typeof MarketingVisionRouteImport
+      parentRoute: typeof MarketingRouteRoute
+    }
+    '/_marketing/pricing': {
+      id: '/_marketing/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof MarketingPricingRouteImport
+      parentRoute: typeof MarketingRouteRoute
+    }
+    '/_marketing/integrations': {
+      id: '/_marketing/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof MarketingIntegrationsRouteImport
+      parentRoute: typeof MarketingRouteRoute
+    }
+    '/_marketing/features': {
+      id: '/_marketing/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof MarketingFeaturesRouteImport
+      parentRoute: typeof MarketingRouteRoute
     }
     '/_marketing/blog': {
       id: '/_marketing/blog'
@@ -560,11 +636,19 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 
 interface MarketingRouteRouteChildren {
   MarketingBlogRoute: typeof MarketingBlogRoute
+  MarketingFeaturesRoute: typeof MarketingFeaturesRoute
+  MarketingIntegrationsRoute: typeof MarketingIntegrationsRoute
+  MarketingPricingRoute: typeof MarketingPricingRoute
+  MarketingVisionRoute: typeof MarketingVisionRoute
   MarketingIndexRoute: typeof MarketingIndexRoute
 }
 
 const MarketingRouteRouteChildren: MarketingRouteRouteChildren = {
   MarketingBlogRoute: MarketingBlogRoute,
+  MarketingFeaturesRoute: MarketingFeaturesRoute,
+  MarketingIntegrationsRoute: MarketingIntegrationsRoute,
+  MarketingPricingRoute: MarketingPricingRoute,
+  MarketingVisionRoute: MarketingVisionRoute,
   MarketingIndexRoute: MarketingIndexRoute,
 }
 

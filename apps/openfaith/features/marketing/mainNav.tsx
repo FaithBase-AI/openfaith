@@ -20,18 +20,18 @@ export const MainNav: FC<MainNavProps> = (props) => {
   return (
     <div className='ml-4 hidden md:flex'>
       <AnimatePresence>
-        {pipe(
-          session,
-          Option.fromNullable,
-          Option.flatMapNullable((x) => x.activeOrganizationId),
-          Option.match({
-            onNone: nullOp,
-            onSome: () => (
-              <motion.nav
-                animate={{ opacity: 1 }}
-                className='flex items-center gap-4 text-sm xl:gap-6'
-                initial={{ opacity: 0 }}
-              >
+        <motion.nav
+          animate={{ opacity: 1 }}
+          className='flex items-center gap-4 text-sm xl:gap-6'
+          initial={{ opacity: 0 }}
+        >
+          {pipe(
+            session,
+            Option.fromNullable,
+            Option.flatMapNullable((x) => x.activeOrganizationId),
+            Option.match({
+              onNone: nullOp,
+              onSome: () => (
                 <Link
                   className={cn(
                     'text-inherit transition-colors hover:opacity-80',
@@ -43,10 +43,10 @@ export const MainNav: FC<MainNavProps> = (props) => {
                 >
                   App
                 </Link>
-              </motion.nav>
-            ),
-          }),
-        )}
+              ),
+            }),
+          )}
+        </motion.nav>
       </AnimatePresence>
     </div>
   )
