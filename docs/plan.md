@@ -73,6 +73,13 @@ I think we can move really fast soon.
   - Fast
 - When a user signs up, we need to known! Need some kinda of notification about new orgs, and do outreach.
 
+What pages do we need for the marketing site?
+
+- Blog
+- Features
+- Integrations
+- Vision
+
 #### Blog
 
 - We need to figure out what we are gonna do for our blog / media. I want to use Payload, but they are nextjs first now which works for them, but doesn't work for us on Tanstack Start.

@@ -13,6 +13,7 @@ import {
   YouTubeIcon,
 } from '@openfaith/ui'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { AnimatePresence, motion } from 'motion/react'
 import type { ComponentProps, FC, ReactNode } from 'react'
 
 export const Route = createFileRoute('/_marketing/')({
@@ -20,7 +21,7 @@ export const Route = createFileRoute('/_marketing/')({
 })
 
 const cardClassName =
-  'h-full w-full rounded-2xl p-8 text-xl flex flex-col items-start justify-end font-semibold light:text-primary/80 dark:text-secondary/80 gap-4 [&_svg]:pointer-events-none [&_svg]:size-8 cursor-pointer hover:scale-101 transition-all'
+  'h-full w-full rounded-xl p-8 text-xl flex flex-col items-start justify-end font-semibold light:text-primary/80 dark:text-secondary/80 gap-4 [&_svg]:pointer-events-none [&_svg]:size-7 cursor-pointer hover:scale-101 transition-all grid-col-1'
 
 const cardColors = {
   blue: 'bg-blue-200 hover:bg-blue-300/80 dark:hover:bg-blue-250',
@@ -31,6 +32,9 @@ const cardColors = {
   teal: 'bg-teal-200 hover:bg-teal-300/80 dark:hover:bg-teal-200/90',
   yellow: 'bg-yellow-200 hover:bg-yellow-300/80 dark:hover:bg-yellow-200/90',
 }
+
+const heroTextClassName =
+  'text-balance font-bold text-4xl sm:text-[54px] md:text-[67px] lg:text-[68px] xl:text-7xl'
 
 type FeatureCardProps = ComponentProps<'div'> & {
   Icon: ReactNode
@@ -53,12 +57,12 @@ const FeatureCard: FC<FeatureCardProps> = (props) => {
 function Home() {
   return (
     <div className='flex flex-col items-start gap-4 pb-4'>
-      <div className='grid-row sm:grid-col-2 grid w-full grid-cols-1 grid-rows-11 gap-2 sm:grid-rows-7 md:grid-cols-3 md:grid-rows-6 lg:grid-cols-4 lg:grid-rows-4'>
-        <div className='relative col-span-1 row-span-4 flex min-h-[660px] w-full flex-3 overflow-hidden rounded-2xl rounded-tl-4xl rounded-tr-4xl bg-gradient-to-br from-emerald-800/40 to-emerald-700/20 sm:col-span-2 sm:row-span-3 md:col-span-3 lg:rounded-tr-2xl lg:rounded-br-[40px]'>
-          <div className='algin-start relative z-10 mx-auto my-auto mt-[30%] flex w-[calc(80%+16px)] flex-col justify-center px-4 sm:mt-[20%] md:mt-[8%]'>
+      <div className='grid-row grid w-full grid-cols-1 grid-rows-11 gap-2 sm:grid-cols-2 sm:grid-rows-7 md:grid-cols-3 md:grid-rows-6 lg:grid-cols-4 lg:grid-rows-4'>
+        <div className='relative col-span-1 row-span-4 flex min-h-[min(660px,780dvh)] w-full flex-3 overflow-hidden rounded-xl rounded-tl-4xl rounded-tr-4xl bg-gradient-to-br from-emerald-800/40 to-emerald-700/20 sm:col-span-2 sm:row-span-3 md:col-span-3 lg:rounded-tr-xl lg:rounded-br-[40px]'>
+          <div className='algin-start relative z-10 mx-auto my-auto mt-16 flex w-[calc(80%+16px)] flex-col justify-center px-4 xl:mt-16'>
             <TextEffect
               as='h1'
-              className='text-balance font-bold text-4xl sm:text-6xl md:text-7xl'
+              className={heroTextClassName}
               delay={0.1}
               preset='fade-in-blur'
               speedSegment={0.3}
@@ -69,7 +73,7 @@ function Home() {
             </TextEffect>
             <TextEffect
               as='h1'
-              className='text-balance font-bold text-4xl sm:text-6xl md:text-7xl'
+              className={heroTextClassName}
               delay={0.36}
               preset='fade-in-blur'
               speedSegment={0.3}
@@ -78,11 +82,32 @@ function Home() {
               {/* your flock */}
               built for tomorrow
             </TextEffect>
-            <Button asChild className='mt-6 self-start py-6 text-lg' size={'lg'}>
-              <Link to='/sign-in'>Sign Up Today!</Link>
-            </Button>
+            <AnimatePresence mode='popLayout'>
+              <motion.div
+                animate={{
+                  filter: 'blur(0px)',
+                  opacity: 1,
+                  transform: 'translateY(0) rotate(0)',
+                  transformOrigin: 'left',
+                  transition: {
+                    delay: 0.69,
+                    duration: 0.76,
+                  },
+                }}
+                initial={{
+                  filter: 'blur(12px)',
+                  opacity: 0,
+                  transform: 'translateY(20px) rotate(2deg)',
+                  transformOrigin: 'left',
+                }}
+              >
+                <Button asChild className='mt-6 self-start py-6 text-lg' size={'lg'}>
+                  <Link to='/sign-in'>Sign Up Today!</Link>
+                </Button>
+              </motion.div>
+            </AnimatePresence>
           </div>
-          <div className='absolute top-[50%] left-[50%] h-full w-[80%] translate-x-[-50%] rounded-2xl border-8 border-neutral-300 bg-neutral-200' />
+          <div className='absolute top-[50%] left-[50%] h-full w-[80%] translate-x-[-50%] rounded-xl border-8 border-neutral-300 bg-neutral-200' />
         </div>
         <FeatureCard
           className={cn(cardColors.red, 'lg:rounded-tr-4xl')}
@@ -112,7 +137,7 @@ function Home() {
         <FeatureCard
           className={cn(
             cardColors.purple,
-            'sm:rounded-br-[40px] lg:rounded-tr-[40px] lg:rounded-br-2xl',
+            'sm:rounded-br-4xl lg:rounded-tr-[40px] lg:rounded-br-xl',
           )}
           Icon={<LinkIcon />}
           Tagline={'Link anything to anything'}
@@ -142,12 +167,12 @@ function Home() {
         <br />
         <br />
         Church software has been stuck in the dark ages. For a long time, the church has gotten the
-        sloppy seconds from the world. Silicon Valley isn't gonna build software for believers, they
-        are at war with the Kingdom. I'm so grateful for those who have served the church, built
-        tools for them, and served the bride. The problem is technology moves forward at a break
-        neck pace. What was hot 5 years ago feels dated today. Churches have had their data held
-        captive in old systems without a path forward. Data has been scattered in different products
-        that don't sync with one another.
+        sloppy seconds from the world. Silicon Valley isn't building software for believers because
+        they are at war with the Kingdom. I'm so grateful for those who have served the church,
+        built tools for them, and served the bride. The problem is technology moves forward at a
+        break neck pace. What was hot 5 years ago feels dated today. Churches have had their data
+        held captive in old systems without a path forward. Data has been scattered in different
+        products that don't sync with one another.
         <br />
         <br />
         The burden of administration for churches continues to grow. Managing Services, Teams,
