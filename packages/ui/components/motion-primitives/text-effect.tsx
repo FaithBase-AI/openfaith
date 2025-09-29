@@ -154,7 +154,7 @@ const splitText = (text: string, per: 'line' | 'word' | 'char') => {
 }
 
 const hasTransition = (
-  variant: Variant,
+  variant: Variant | undefined,
 ): variant is TargetAndTransition & { transition?: Transition } => {
   return typeof variant === 'object' && variant !== null && 'transition' in variant
 }

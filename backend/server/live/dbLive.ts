@@ -8,6 +8,7 @@ export const PgLive = PgClient.layer({
   host: env.DB_HOST_PRIMARY,
   password: Redacted.make(env.DB_PASSWORD),
   port: env.DB_PORT,
+  prepare: false,
   ssl: false, // Disable SSL for local development
   username: env.DB_USERNAME,
 })

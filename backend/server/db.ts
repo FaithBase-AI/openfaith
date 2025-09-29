@@ -8,6 +8,7 @@ const connection = new SQL({
   host: env.DB_HOST_PRIMARY,
   password: env.DB_PASSWORD,
   port: env.DB_PORT,
+  prepare: false,
   ssl: false,
   user: env.DB_USERNAME,
 })
