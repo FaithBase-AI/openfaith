@@ -26,14 +26,14 @@ export const adapterReSyncAtom = runtime.fn(
   }),
 )
 
-export const adminAdapterReSyncAtom = runtime.fn(
-  Effect.fnUntraced(function* (
-    params: Parameters<typeof AdminRpcClient.prototype.orgAdapterReSync>[0],
-  ) {
-    const client = yield* AdminRpcClient
+export const adminAdapterReSyncAtom = Atom.family((orgId: string) =>
+  runtime.fn(
+    Effect.fnUntraced(function* (params: { adapter: string }) {
+      const client = yield* AdminRpcClient
 
-    return yield* client.orgAdapterReSync(params)
-  }),
+      return yield* client.orgAdapterReSync({ ...params, orgId })
+    }),
+  ),
 )
 
 export const testFunctionAtom = runtime.fn(

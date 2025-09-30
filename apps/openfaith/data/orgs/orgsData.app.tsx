@@ -91,12 +91,12 @@ type ResyncButtonProps = {
 
 const ResyncButton: FC<ResyncButtonProps> = (props) => {
   const { orgId } = props
-  const [orgAdapterReSyncResult, orgAdapterReSyncSet] = useAtom(adminAdapterReSyncAtom)
+  const [orgAdapterReSyncResult, orgAdapterReSyncSet] = useAtom(adminAdapterReSyncAtom(orgId))
 
   return (
     <Button
       loading={Result.isWaiting(orgAdapterReSyncResult)}
-      onClick={() => orgAdapterReSyncSet({ adapter: 'pco', orgId })}
+      onClick={() => orgAdapterReSyncSet({ adapter: 'pco' })}
     >
       Resync PCO
     </Button>
