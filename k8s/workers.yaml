@@ -19,7 +19,7 @@ spec:
       - name: ghcr-pull-secret
       containers:
       - name: workers
-        image: ghcr.io/faithbase-ai/openfaith-workers:master-a001ab7
+        image: ghcr.io/faithbase-ai/openfaith-workers:master-bee0ec0
         imagePullPolicy: Always
         ports:
         - containerPort: 3020

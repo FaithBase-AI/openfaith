@@ -914,10 +914,9 @@ const buildSchemaCollectionQuery = <T>(
 const decodeSchemaCollection = <T>(
   schema: SchemaType.Schema<T>,
   result: unknown,
-  info: { type: string },
   context: string,
 ): Array<T> => {
-  if (!result || info.type !== 'complete') {
+  if (!result) {
     return []
   }
 
@@ -977,8 +976,8 @@ export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> })
 
   // Decode the collection data through the schema to get class instances with getters
   const decodedCollection = useMemo(() => {
-    return decodeSchemaCollection(schema, result, info, 'useSchemaCollection')
-  }, [result, info, schema])
+    return decodeSchemaCollection(schema, result, 'useSchemaCollection')
+  }, [result, schema])
 
   return {
     collection: decodedCollection,
@@ -1008,8 +1007,8 @@ export const useSchemaCollectionFull = <T>(params: {
 
   // Decode the collection data through the schema to get class instances with getters
   const decodedCollection = useMemo(() => {
-    return decodeSchemaCollection(schema, result, info, 'useSchemaCollectionFull')
-  }, [result, info, schema])
+    return decodeSchemaCollection(schema, result, 'useSchemaCollectionFull')
+  }, [result, schema])
 
   return {
     collection: decodedCollection,

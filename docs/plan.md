@@ -12,6 +12,7 @@
 - [x] We need to figure out what we need to do about Dashboard.
   - Ended up hiding it for now, and we will send people to `/directory/people` for now.
 - [x] We need to move to a cloud instance of supabase
+- [x] Figure out why the css is loading after the html causing a flash of unstyled content.
 
 ### Todo
 
@@ -21,9 +22,8 @@
   - [ ] We need to figure out how to auto write custom mutators for all the entities that flow through `mutators.ts`. We need to not hand jam these.
   - [ ] We need to fix the types for our effect based custom mutators. We should need to cast each mutator, `as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError>`.
     - I think this is the number one issue right now, custom mutators
-- [ ] Figure out why the css is loading after the html causing a flash of unstyled content.
 
-- [ ] Update to tanstack start rc.
+- [ ] Update to tanstack start rc. (blocked due to https://discord.com/channels/795981131316985866/1421523535821541447 less pressure on this since I fixed the FOUC issue.)
 - [ ] We need to add a separate db instance for cluster / workers, we need to be able to run a local cluster against the prod db and not compete with it.
   - I need to check to see if I can not run shard-manager and talk to local workers.
 - [ ] We need to map the user that auths with PCO, get their person ID, and then link their profile.
