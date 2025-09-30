@@ -19,7 +19,7 @@ spec:
       - name: ghcr-pull-secret
       containers:
       - name: zero
-        image: ghcr.io/faithbase-ai/openfaith-zero:master-0463ea6
+        image: ghcr.io/faithbase-ai/openfaith-zero:master-b4ef86e
         imagePullPolicy: Always
         ports:
         - containerPort: 4848
