@@ -6,7 +6,7 @@ import {
   HttpServer,
 } from '@effect/platform'
 import { RpcSerialization, RpcServer } from '@effect/rpc'
-import { AdapterRpc, AppHttpApi, CoreRpc } from '@openfaith/domain'
+import { AdapterRpc, AdminRpc, AppHttpApi, CoreRpc } from '@openfaith/domain'
 import { AdapterHandlerLive } from '@openfaith/server/handlers/adapterHandler'
 import { AdapterWebhooksHandlerLive } from '@openfaith/server/handlers/adapterWebhooksHandler'
 import { AdminHandlerLive } from '@openfaith/server/handlers/adminHandler'
@@ -32,7 +32,7 @@ const HandlersLayer = Layer.mergeAll(
 
 // Create the Core RPC route using HttpLayerRouter
 export const RpcRoute = RpcServer.layerHttpRouter({
-  group: CoreRpc.merge(AdapterRpc),
+  group: CoreRpc.merge(AdapterRpc, AdminRpc),
   path: '/api',
   protocol: 'http',
 }).pipe(
