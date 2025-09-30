@@ -1,3 +1,4 @@
+import { NodeSdk } from '@effect/opentelemetry'
 import {
   FetchHttpClient,
   HttpApiBuilder,
@@ -15,7 +16,14 @@ import { ZeroHandlerLive } from '@openfaith/server/handlers/zeroMutatorsHandler'
 import { DBLive } from '@openfaith/server/live/dbLive'
 import { SessionRpcMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
 import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-web'
 import { Layer } from 'effect'
+
+const BunSdkLive = NodeSdk.layer(() => ({
+  resource: { serviceName: 'openfaith-api' },
+  spanProcessor: [new BatchSpanProcessor(new OTLPTraceExporter())],
+}))
 
 // Create the handlers layer with basic dependencies
 const HandlersLayer = Layer.mergeAll(
@@ -58,4 +66,5 @@ export const ServerLive = Layer.mergeAll(
   RpcRoute,
   SwaggerLayer,
   HttpServer.layerContext,
+  BunSdkLive,
 )
