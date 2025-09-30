@@ -25,7 +25,7 @@ export const DevMenuContent: FC<DevMenuContentProps> = (props) => {
       {pipe(
         impersonatedBy,
         Option.fromNullable,
-        Option.filter((x) => x.length === ''),
+        Option.filter((x) => x !== ''),
         Option.match({
           onNone: nullOp,
           onSome: () => (

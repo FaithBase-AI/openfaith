@@ -1,6 +1,5 @@
 'use client'
 
-import { useOrgId } from '@openfaith/openfaith/data/users/useOrgId'
 import { AppButton } from '@openfaith/openfaith/features/marketing/appButton'
 import { Button, cn, Drawer, DrawerContent, DrawerTrigger, useMetaColor } from '@openfaith/ui'
 import { Link, type LinkProps, useRouter } from '@tanstack/react-router'
@@ -26,8 +25,6 @@ export const MobileMarketingNavigation: FC<MobileMarketingNavigationProps> = (pr
     },
     [setMetaColor, metaColor],
   )
-
-  const orgId = useOrgId()
 
   return (
     <Drawer onOpenChange={onOpenChange} open={open}>
