@@ -1,37 +1,41 @@
 import { auth, setCookies } from '@openfaith/auth/auth'
-import { createServerFileRoute } from '@tanstack/react-start/server'
+import { createFileRoute } from '@tanstack/react-router'
 import { Option, pipe } from 'effect'
 
-export const ServerRoute = createServerFileRoute('/api/auth/refresh').methods({
-  GET: async ({ request }) => {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    })
-    if (!session) {
-      console.info('Could not get session', session, request.headers)
-      return unauthorized()
-    }
+export const Route = createFileRoute('/api/auth/refresh')({
+  server: {
+    handlers: {
+      GET: async ({ request }) => {
+        const session = await auth.api.getSession({
+          headers: request.headers,
+        })
+        if (!session) {
+          console.info('Could not get session', session, request.headers)
+          return unauthorized()
+        }
 
-    const token = await getJwtToken(request.headers)
-    if (!token) {
-      console.info('Could not get JWT token')
-      return unauthorized()
-    }
+        const token = await getJwtToken(request.headers)
+        if (!token) {
+          console.info('Could not get JWT token')
+          return unauthorized()
+        }
 
-    console.info('Refreshed JWT token')
+        console.info('Refreshed JWT token')
 
-    // Extract custom session fields
-    const sessionData = session.session as any
+        // Extract custom session fields
+        const sessionData = session.session as any
 
-    return authorized(
-      session.user.id,
-      session.user.email,
-      token,
-      sessionData?.activeOrganizationId,
-      sessionData?.userRole,
-      sessionData?.orgRole,
-      sessionData?.impersonatedBy,
-    )
+        return authorized(
+          session.user.id,
+          session.user.email,
+          token,
+          sessionData?.activeOrganizationId,
+          sessionData?.userRole,
+          sessionData?.orgRole,
+          sessionData?.impersonatedBy,
+        )
+      },
+    },
   },
 })
 

@@ -8,8 +8,6 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createServerRootRoute } from '@tanstack/react-start/server'
-
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OnboardingRouteRouteImport } from './routes/_onboarding/route'
 import { Route as MarketingRouteRouteImport } from './routes/_marketing/route'
@@ -17,6 +15,7 @@ import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as MarketingIndexRouteImport } from './routes/_marketing/index'
 import { Route as OauthProviderRouteImport } from './routes/oauth/$provider'
+import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as OnboardingOnboardingRouteImport } from './routes/_onboarding/onboarding'
 import { Route as MarketingVisionRouteImport } from './routes/_marketing/vision'
 import { Route as MarketingPricingRouteImport } from './routes/_marketing/pricing'
@@ -26,6 +25,8 @@ import { Route as MarketingBlogRouteImport } from './routes/_marketing/blog'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppGroupRouteRouteImport } from './routes/_app/$group/route'
+import { Route as ApiAuthRefreshRouteImport } from './routes/api/auth/refresh'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppSettingsTeamRouteImport } from './routes/_app/settings/team'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
 import { Route as AppSettingsIntegrationsRouteImport } from './routes/_app/settings/integrations'
@@ -36,11 +37,6 @@ import { Route as AppAdminOrgsRouteImport } from './routes/_app/admin/orgs'
 import { Route as AppGroupEntityRouteRouteImport } from './routes/_app/$group/$entity/route'
 import { Route as AppGroupEntityIndexRouteImport } from './routes/_app/$group/$entity/index'
 import { Route as AppGroupEntityEntityIdRouteImport } from './routes/_app/$group/$entity/$entityId'
-import { ServerRoute as ApiSplatServerRouteImport } from './routes/api/$'
-import { ServerRoute as ApiAuthRefreshServerRouteImport } from './routes/api/auth/refresh'
-import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
-
-const rootServerRouteImport = createServerRootRoute()
 
 const OnboardingRouteRoute = OnboardingRouteRouteImport.update({
   id: '/_onboarding',
@@ -66,6 +62,11 @@ const MarketingIndexRoute = MarketingIndexRouteImport.update({
 const OauthProviderRoute = OauthProviderRouteImport.update({
   id: '/oauth/$provider',
   path: '/oauth/$provider',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSplatRoute = ApiSplatRouteImport.update({
+  id: '/api/$',
+  path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingOnboardingRoute = OnboardingOnboardingRouteImport.update({
@@ -112,6 +113,16 @@ const AppGroupRouteRoute = AppGroupRouteRouteImport.update({
   id: '/$group',
   path: '/$group',
   getParentRoute: () => AppRouteRoute,
+} as any)
+const ApiAuthRefreshRoute = ApiAuthRefreshRouteImport.update({
+  id: '/api/auth/refresh',
+  path: '/api/auth/refresh',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppSettingsTeamRoute = AppSettingsTeamRouteImport.update({
   id: '/settings/team',
@@ -163,21 +174,6 @@ const AppGroupEntityEntityIdRoute = AppGroupEntityEntityIdRouteImport.update({
   path: '/$entityId',
   getParentRoute: () => AppGroupEntityRouteRoute,
 } as any)
-const ApiSplatServerRoute = ApiSplatServerRouteImport.update({
-  id: '/api/$',
-  path: '/api/$',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
-const ApiAuthRefreshServerRoute = ApiAuthRefreshServerRouteImport.update({
-  id: '/api/auth/refresh',
-  path: '/api/auth/refresh',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
-const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/$group': typeof AppGroupRouteRouteWithChildren
@@ -189,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof MarketingPricingRoute
   '/vision': typeof MarketingVisionRoute
   '/onboarding': typeof OnboardingOnboardingRoute
+  '/api/$': typeof ApiSplatRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/': typeof MarketingIndexRoute
   '/$group/$entity': typeof AppGroupEntityRouteRouteWithChildren
@@ -199,6 +196,8 @@ export interface FileRoutesByFullPath {
   '/settings/integrations': typeof AppSettingsIntegrationsRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/team': typeof AppSettingsTeamRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/auth/refresh': typeof ApiAuthRefreshRoute
   '/$group/$entity/$entityId': typeof AppGroupEntityEntityIdRoute
   '/$group/$entity/': typeof AppGroupEntityIndexRoute
 }
@@ -212,6 +211,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof MarketingPricingRoute
   '/vision': typeof MarketingVisionRoute
   '/onboarding': typeof OnboardingOnboardingRoute
+  '/api/$': typeof ApiSplatRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/': typeof MarketingIndexRoute
   '/admin/orgs': typeof AppAdminOrgsRoute
@@ -221,6 +221,8 @@ export interface FileRoutesByTo {
   '/settings/integrations': typeof AppSettingsIntegrationsRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/team': typeof AppSettingsTeamRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/auth/refresh': typeof ApiAuthRefreshRoute
   '/$group/$entity/$entityId': typeof AppGroupEntityEntityIdRoute
   '/$group/$entity': typeof AppGroupEntityIndexRoute
 }
@@ -239,6 +241,7 @@ export interface FileRoutesById {
   '/_marketing/pricing': typeof MarketingPricingRoute
   '/_marketing/vision': typeof MarketingVisionRoute
   '/_onboarding/onboarding': typeof OnboardingOnboardingRoute
+  '/api/$': typeof ApiSplatRoute
   '/oauth/$provider': typeof OauthProviderRoute
   '/_marketing/': typeof MarketingIndexRoute
   '/_app/$group/$entity': typeof AppGroupEntityRouteRouteWithChildren
@@ -249,6 +252,8 @@ export interface FileRoutesById {
   '/_app/settings/integrations': typeof AppSettingsIntegrationsRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/team': typeof AppSettingsTeamRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/auth/refresh': typeof ApiAuthRefreshRoute
   '/_app/$group/$entity/$entityId': typeof AppGroupEntityEntityIdRoute
   '/_app/$group/$entity/': typeof AppGroupEntityIndexRoute
 }
@@ -264,6 +269,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/vision'
     | '/onboarding'
+    | '/api/$'
     | '/oauth/$provider'
     | '/'
     | '/$group/$entity'
@@ -274,6 +280,8 @@ export interface FileRouteTypes {
     | '/settings/integrations'
     | '/settings/profile'
     | '/settings/team'
+    | '/api/auth/$'
+    | '/api/auth/refresh'
     | '/$group/$entity/$entityId'
     | '/$group/$entity/'
   fileRoutesByTo: FileRoutesByTo
@@ -287,6 +295,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/vision'
     | '/onboarding'
+    | '/api/$'
     | '/oauth/$provider'
     | '/'
     | '/admin/orgs'
@@ -296,6 +305,8 @@ export interface FileRouteTypes {
     | '/settings/integrations'
     | '/settings/profile'
     | '/settings/team'
+    | '/api/auth/$'
+    | '/api/auth/refresh'
     | '/$group/$entity/$entityId'
     | '/$group/$entity'
   id:
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/_marketing/pricing'
     | '/_marketing/vision'
     | '/_onboarding/onboarding'
+    | '/api/$'
     | '/oauth/$provider'
     | '/_marketing/'
     | '/_app/$group/$entity'
@@ -323,6 +335,8 @@ export interface FileRouteTypes {
     | '/_app/settings/integrations'
     | '/_app/settings/profile'
     | '/_app/settings/team'
+    | '/api/auth/$'
+    | '/api/auth/refresh'
     | '/_app/$group/$entity/$entityId'
     | '/_app/$group/$entity/'
   fileRoutesById: FileRoutesById
@@ -332,36 +346,10 @@ export interface RootRouteChildren {
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   MarketingRouteRoute: typeof MarketingRouteRouteWithChildren
   OnboardingRouteRoute: typeof OnboardingRouteRouteWithChildren
+  ApiSplatRoute: typeof ApiSplatRoute
   OauthProviderRoute: typeof OauthProviderRoute
-}
-export interface FileServerRoutesByFullPath {
-  '/api/$': typeof ApiSplatServerRoute
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-  '/api/auth/refresh': typeof ApiAuthRefreshServerRoute
-}
-export interface FileServerRoutesByTo {
-  '/api/$': typeof ApiSplatServerRoute
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-  '/api/auth/refresh': typeof ApiAuthRefreshServerRoute
-}
-export interface FileServerRoutesById {
-  __root__: typeof rootServerRouteImport
-  '/api/$': typeof ApiSplatServerRoute
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-  '/api/auth/refresh': typeof ApiAuthRefreshServerRoute
-}
-export interface FileServerRouteTypes {
-  fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/$' | '/api/auth/$' | '/api/auth/refresh'
-  fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/$' | '/api/auth/$' | '/api/auth/refresh'
-  id: '__root__' | '/api/$' | '/api/auth/$' | '/api/auth/refresh'
-  fileServerRoutesById: FileServerRoutesById
-}
-export interface RootServerRouteChildren {
-  ApiSplatServerRoute: typeof ApiSplatServerRoute
-  ApiAuthSplatServerRoute: typeof ApiAuthSplatServerRoute
-  ApiAuthRefreshServerRoute: typeof ApiAuthRefreshServerRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiAuthRefreshRoute: typeof ApiAuthRefreshRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -406,6 +394,13 @@ declare module '@tanstack/react-router' {
       path: '/oauth/$provider'
       fullPath: '/oauth/$provider'
       preLoaderRoute: typeof OauthProviderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/$': {
+      id: '/api/$'
+      path: '/api/$'
+      fullPath: '/api/$'
+      preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_onboarding/onboarding': {
@@ -470,6 +465,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/$group'
       preLoaderRoute: typeof AppGroupRouteRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/api/auth/refresh': {
+      id: '/api/auth/refresh'
+      path: '/api/auth/refresh'
+      fullPath: '/api/auth/refresh'
+      preLoaderRoute: typeof ApiAuthRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/settings/team': {
       id: '/_app/settings/team'
@@ -540,31 +549,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/$group/$entity/$entityId'
       preLoaderRoute: typeof AppGroupEntityEntityIdRouteImport
       parentRoute: typeof AppGroupEntityRouteRoute
-    }
-  }
-}
-declare module '@tanstack/react-start/server' {
-  interface ServerFileRoutesByPath {
-    '/api/$': {
-      id: '/api/$'
-      path: '/api/$'
-      fullPath: '/api/$'
-      preLoaderRoute: typeof ApiSplatServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/auth/refresh': {
-      id: '/api/auth/refresh'
-      path: '/api/auth/refresh'
-      fullPath: '/api/auth/refresh'
-      preLoaderRoute: typeof ApiAuthRefreshServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatServerRouteImport
-      parentRoute: typeof rootServerRouteImport
     }
   }
 }
@@ -673,16 +657,20 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRouteRoute: AuthRouteRouteWithChildren,
   MarketingRouteRoute: MarketingRouteRouteWithChildren,
   OnboardingRouteRoute: OnboardingRouteRouteWithChildren,
+  ApiSplatRoute: ApiSplatRoute,
   OauthProviderRoute: OauthProviderRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiAuthRefreshRoute: ApiAuthRefreshRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-const rootServerRouteChildren: RootServerRouteChildren = {
-  ApiSplatServerRoute: ApiSplatServerRoute,
-  ApiAuthSplatServerRoute: ApiAuthSplatServerRoute,
-  ApiAuthRefreshServerRoute: ApiAuthRefreshServerRoute,
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
 }
-export const serverRouteTree = rootServerRouteImport
-  ._addFileChildren(rootServerRouteChildren)
-  ._addFileTypes<FileServerRouteTypes>()

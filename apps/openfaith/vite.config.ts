@@ -1,6 +1,8 @@
 import { env } from '@openfaith/shared'
 import tailwindcss from '@tailwindcss/vite'
+import { nitroV2Plugin } from '@tanstack/nitro-v2-vite-plugin'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import viteReact from '@vitejs/plugin-react'
 import { Option, pipe, String } from 'effect'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
@@ -17,19 +19,21 @@ export default defineConfig({
     'import.meta.env.VITE_ZERO_SERVER': JSON.stringify(process.env.VITE_ZERO_SERVER),
   },
   plugins: [
+    tailwindcss(),
     tsconfigPaths({
       projects: ['./tsconfig.json'],
     }),
     tanstackStart({
+      router: {
+        routesDirectory: 'routes',
+      },
       spa: {
         enabled: true,
       },
-      target: 'bun',
-      tsr: {
-        srcDirectory: 'app',
-      },
+      srcDirectory: 'app',
     }),
-    tailwindcss(),
+    nitroV2Plugin({ preset: 'bun' }),
+    viteReact(),
   ],
   server: {
     allowedHosts: [

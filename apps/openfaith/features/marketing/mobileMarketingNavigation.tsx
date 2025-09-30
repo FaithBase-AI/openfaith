@@ -1,9 +1,8 @@
 'use client'
 
-import { useOrgId } from '@openfaith/openfaith/data/users/useOrgId'
 import { AppButton } from '@openfaith/openfaith/features/marketing/appButton'
 import { Button, cn, Drawer, DrawerContent, DrawerTrigger, useMetaColor } from '@openfaith/ui'
-import { Link, type LinkProps, useRouter } from '@tanstack/react-router'
+import { Link, type LinkComponentProps, useRouter } from '@tanstack/react-router'
 import { Option, pipe } from 'effect'
 import { type FC, type ReactNode, useCallback, useState } from 'react'
 
@@ -26,8 +25,6 @@ export const MobileMarketingNavigation: FC<MobileMarketingNavigationProps> = (pr
     },
     [setMetaColor, metaColor],
   )
-
-  const orgId = useOrgId()
 
   return (
     <Drawer onOpenChange={onOpenChange} open={open}>
@@ -56,27 +53,27 @@ export const MobileMarketingNavigation: FC<MobileMarketingNavigationProps> = (pr
       <DrawerContent className='max-h-[80svh] p-0'>
         <div className='overflow-auto p-6'>
           <div className='flex flex-col space-y-3'>
-            <MobileLink href='/' onOpenChange={setOpen}>
+            <MobileLink onOpenChange={setOpen} to='/'>
               Home
             </MobileLink>
 
-            <MobileLink href='/features' onOpenChange={setOpen}>
+            <MobileLink onOpenChange={setOpen} to='/features'>
               Features
             </MobileLink>
 
-            <MobileLink href='/integrations' onOpenChange={setOpen}>
+            <MobileLink onOpenChange={setOpen} to='/integrations'>
               Integrations
             </MobileLink>
 
-            <MobileLink href='/pricing' onOpenChange={setOpen}>
+            <MobileLink onOpenChange={setOpen} to='/pricing'>
               Pricing
             </MobileLink>
 
-            <MobileLink href='/vision' onOpenChange={setOpen}>
+            <MobileLink onOpenChange={setOpen} to='/vision'>
               Vision
             </MobileLink>
 
-            <MobileLink href='/blog' onOpenChange={setOpen}>
+            <MobileLink onOpenChange={setOpen} to='/blog'>
               Blog
             </MobileLink>
 
@@ -85,7 +82,7 @@ export const MobileMarketingNavigation: FC<MobileMarketingNavigationProps> = (pr
               Option.fromNullable,
               Option.match({
                 onNone: () => (
-                  <MobileLink href='/sign-in' onOpenChange={setOpen}>
+                  <MobileLink onOpenChange={setOpen} to='/sign-in'>
                     Sign In
                   </MobileLink>
                 ),
@@ -99,13 +96,14 @@ export const MobileMarketingNavigation: FC<MobileMarketingNavigationProps> = (pr
   )
 }
 
-interface MobileLinkProps extends LinkProps {
+type MobileLinkProps = LinkComponentProps & {
   onOpenChange?: (open: boolean) => void
   children: ReactNode
   className?: string
 }
 
-function MobileLink({ to, onOpenChange, className, children, ...props }: MobileLinkProps) {
+function MobileLink(props: MobileLinkProps) {
+  const { onOpenChange, className, children, to, ...domProps } = props
   const router = useRouter()
 
   return (
@@ -122,7 +120,7 @@ function MobileLink({ to, onOpenChange, className, children, ...props }: MobileL
         onOpenChange?.(false)
       }}
       to={to}
-      {...props}
+      {...domProps}
     >
       {children}
     </Link>
