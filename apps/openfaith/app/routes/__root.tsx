@@ -7,6 +7,7 @@ import { HeightWrapper } from '@openfaith/ui'
 import type { Mutators, ZSchema } from '@openfaith/zero'
 import type { Zero } from '@rocicorp/zero'
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
+import type { ReactNode } from 'react'
 
 export interface RouterAppContext {
   zero: Zero<ZSchema, Mutators>
@@ -37,9 +38,14 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     ],
   }),
   notFoundComponent: () => <NotFound />,
+  shellComponent: RootShell,
 })
 
 function RootDocument() {
+  return <Outlet />
+}
+
+function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang='en' suppressHydrationWarning>
       <head>
@@ -47,9 +53,7 @@ function RootDocument() {
       </head>
       <body className='overscroll-none font-sans antialiased'>
         <Providers>
-          <HeightWrapper>
-            <Outlet />
-          </HeightWrapper>
+          <HeightWrapper>{children}</HeightWrapper>
         </Providers>
         <Scripts />
       </body>
