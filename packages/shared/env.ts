@@ -17,7 +17,6 @@ export const env = createEnv({
     ZERO_REPLICA_FILE: z.string(),
     ZERO_AUTH_JWKS_URL: z.string(),
     ZERO_APP_ID: z.string(),
-    ZERO_NUM_SYNC_WORKERS: z.string().transform((x) => Number.parseInt(x, 10)),
     ZERO_LOG_LEVEL: z.string(),
     ZERO_ADMIN_PASSWORD: z.string(),
     ZERO_PUSH_URL: z.string(),
