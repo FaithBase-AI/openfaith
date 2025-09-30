@@ -12,8 +12,20 @@ export const env = createEnv({
     DB_PORT: z.string().transform((x) => Number.parseInt(x, 10)),
     DB_USERNAME: z.string(),
 
+    // Workflow DB
+    DB_WORKFLOW_HOST_PRIMARY: z.string().optional(), // For local dev when connected to prod db
+    DB_WORKFLOW_NAME: z.string().optional(), // For local dev when connected to prod db
+    DB_WORKFLOW_PASSWORD: z.string().optional(), // For local dev when connected to prod db
+    DB_WORKFLOW_PORT: z
+      .string()
+      .transform((x) => Number.parseInt(x, 10))
+      .optional(), // For local dev when connected to prod db
+    DB_WORKFLOW_USERNAME: z.string().optional(), // For local dev when connected to prod db
+
     // Zero
     ZERO_UPSTREAM_DB: z.string(),
+    ZERO_CVR_DB: z.string().optional(), // For local dev when connected to prod upstream db
+    ZERO_CHANGE_DB: z.string().optional(), // For local dev when connected to prod upstream db
     ZERO_REPLICA_FILE: z.string(),
     ZERO_AUTH_JWKS_URL: z.string(),
     ZERO_APP_ID: z.string(),

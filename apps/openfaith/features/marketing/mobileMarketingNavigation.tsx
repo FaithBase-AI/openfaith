@@ -1,8 +1,7 @@
 'use client'
 
 import { useOrgId } from '@openfaith/openfaith/data/users/useOrgId'
-import type { Session } from '@openfaith/openfaith/shared/auth/sessionInit'
-import { nullOp } from '@openfaith/shared'
+import { AppButton } from '@openfaith/openfaith/features/marketing/appButton'
 import { Button, cn, Drawer, DrawerContent, DrawerTrigger, useMetaColor } from '@openfaith/ui'
 import { Link, type LinkProps, useRouter } from '@tanstack/react-router'
 import { Option, pipe } from 'effect'
@@ -10,11 +9,12 @@ import { type FC, type ReactNode, useCallback, useState } from 'react'
 
 type MobileMarketingNavigationProps = {
   className?: string
-  session?: Session | undefined
 }
 
 export const MobileMarketingNavigation: FC<MobileMarketingNavigationProps> = (props) => {
-  const { className, session, ...domProps } = props
+  const { className, ...domProps } = props
+  const router = useRouter()
+  const session = router.options.context.session.data
 
   const [open, setOpen] = useState(false)
   const { setMetaColor, metaColor } = useMetaColor()
@@ -83,21 +83,13 @@ export const MobileMarketingNavigation: FC<MobileMarketingNavigationProps> = (pr
             {pipe(
               session,
               Option.fromNullable,
-              Option.flatMapNullable((x) => x.activeOrganizationId),
-              Option.orElse(() =>
-                pipe(
-                  orgId,
-                  Option.fromNullable,
-                  Option.filter((x) => x !== 'noOrganization'),
-                ),
-              ),
               Option.match({
                 onNone: () => (
                   <MobileLink href='/sign-in' onOpenChange={setOpen}>
                     Sign In
                   </MobileLink>
                 ),
-                onSome: nullOp,
+                onSome: () => <AppButton />,
               }),
             )}
           </div>

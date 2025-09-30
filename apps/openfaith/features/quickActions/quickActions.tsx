@@ -1,6 +1,5 @@
 'use client'
 
-import { authClient } from '@openfaith/auth/authClient'
 import { CreateOrgQuickAction } from '@openfaith/openfaith/features/quickActions/createOrgQuickAction'
 import { InviteMemberQuickAction } from '@openfaith/openfaith/features/quickActions/inviteMemberQuickAction'
 import {
@@ -21,6 +20,7 @@ import {
   QuickActionsTitle,
   QuickActionsWrapper,
 } from '@openfaith/ui'
+import { useRouter } from '@tanstack/react-router'
 import { Array, Option, pipe } from 'effect'
 import { useAtom } from 'jotai'
 import { VisuallyHidden } from 'radix-ui'
@@ -32,7 +32,8 @@ export const QuickActions: FC = () => {
 
   const [disableQuickActions] = useAtom(disableQuickActionsAtom)
 
-  const { data: session } = authClient.useSession()
+  const router = useRouter()
+  const session = router.options.context.session.data
 
   useHotkeys(['meta+k', 'ctrl+k'], () => setQuickActionsIsOpen((x) => !x), {
     enabled: pipe(

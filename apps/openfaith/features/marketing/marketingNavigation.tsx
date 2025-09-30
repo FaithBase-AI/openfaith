@@ -1,29 +1,27 @@
 import { Logo } from '@openfaith/openfaith/components/logo'
+import { UserNav } from '@openfaith/openfaith/components/navigation/userNav'
+import { AppButton } from '@openfaith/openfaith/features/marketing/appButton'
 import { MainNav } from '@openfaith/openfaith/features/marketing/mainNav'
 import { marketingSideSpacing } from '@openfaith/openfaith/features/marketing/marketingGlobals'
 import { MobileMarketingNavigation } from '@openfaith/openfaith/features/marketing/mobileMarketingNavigation'
-import { RightNav } from '@openfaith/openfaith/features/marketing/rightNav'
-import { UserNav } from '@openfaith/openfaith/features/marketing/userNav'
 import { cn, ThemeToggle } from '@openfaith/ui'
-import { Link, useRouter } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import type { FC } from 'react'
 
 const MarketingNavigation: FC = () => {
-  const router = useRouter()
-
   return (
     <>
       <MainNav />
 
       <div className={'ml-auto hidden items-center gap-2 md:flex'}>
-        <RightNav />
         <ThemeToggle className='rounded-full' />
-        <UserNav className='text-inherit' session={router.options.context.session.data} />
+        <AppButton />
+        <UserNav />
       </div>
 
       <div className={'ml-auto flex items-center gap-2 md:hidden'}>
         <ThemeToggle className='rounded-full' />
-        <MobileMarketingNavigation session={router.options.context.session.data} />
+        <MobileMarketingNavigation />
       </div>
     </>
   )

@@ -10,7 +10,6 @@ import {
   SidebarTrigger,
   ThemeToggle,
 } from '@openfaith/ui'
-import { useRouter } from '@tanstack/react-router'
 import { Option, pipe } from 'effect'
 import type { ReactNode } from 'react'
 
@@ -21,8 +20,6 @@ type AppNavigationLayoutProps = {
 
 export const AppNavigationLayout = (props: AppNavigationLayoutProps) => {
   const { children, breadcrumbs } = props
-  const router = useRouter()
-  const { session } = router.options.context
 
   // Get default sidebar state from localStorage or default to true
   // TODO: We need to move this to a cookie.
@@ -51,7 +48,7 @@ export const AppNavigationLayout = (props: AppNavigationLayoutProps) => {
 
           <div className={'ml-auto flex items-center gap-2'}>
             <ThemeToggle />
-            <UserNav session={session} />
+            <UserNav />
           </div>
         </header>
         <div className='-mt-2 flex flex-1 flex-col overflow-hidden pt-2'>{children}</div>

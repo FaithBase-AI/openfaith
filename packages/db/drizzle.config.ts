@@ -7,8 +7,6 @@ export default {
     host: env.DB_HOST_PRIMARY,
     password: env.DB_PASSWORD,
     port: env.DB_PORT,
-    // @ts-expect-error - prepare is not a valid property for dbCredentials
-    prepare: false,
     ssl: false,
     user: env.DB_USERNAME,
   },

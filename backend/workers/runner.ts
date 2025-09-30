@@ -9,7 +9,7 @@ import {
 } from '@effect/platform'
 import { BunClusterRunnerSocket, BunHttpServer, BunRuntime } from '@effect/platform-bun'
 import { WorkflowProxyServer } from '@effect/workflow'
-import { DBLive, TokenManagerLive } from '@openfaith/server'
+import { DBLive, TokenManagerLive, WorkflowPgLive } from '@openfaith/server'
 import { env } from '@openfaith/shared'
 import { HealthLive, WorkflowApi, workflows } from '@openfaith/workers/api/workflowApi'
 import { CreateOrgWorkflowLayer } from '@openfaith/workers/workflows/createOrgWorkflow'
@@ -42,6 +42,7 @@ const WorkflowEngineLayer = ClusterWorkflowEngine.layer.pipe(
       storage: 'sql',
     }),
   ),
+  Layer.provideMerge(WorkflowPgLive),
 )
 
 const port = 3020

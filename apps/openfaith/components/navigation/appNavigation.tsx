@@ -5,7 +5,6 @@ import { SideBarItem } from '@openfaith/openfaith/components/navigation/sideBarI
 import { OrgSwitcher } from '@openfaith/openfaith/components/orgSwitcher'
 import { formatLabel } from '@openfaith/shared'
 import {
-  CommentTextIcon,
   HomeIcon,
   Sidebar,
   SidebarContent,
@@ -95,7 +94,7 @@ export const AppNavigation: FC<AppSidebarProps> = (props) => {
           <SidebarMenu>
             <DevMenu />
 
-            <SidebarMenuItem>
+            {/* <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <a
                   href='https://faithbase.userjot.com/?cursor=1&order=newest&limit=10'
@@ -106,7 +105,7 @@ export const AppNavigation: FC<AppSidebarProps> = (props) => {
                   Feedback
                 </a>
               </SidebarMenuButton>
-            </SidebarMenuItem>
+            </SidebarMenuItem> */}
 
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
