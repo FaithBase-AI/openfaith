@@ -1,7 +1,9 @@
 'use client'
 
+import { useOrgId } from '@openfaith/openfaith/data/users/useOrgId'
+import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
 import type { QuickActionConfig } from '@openfaith/openfaith/features/quickActions/schemaQuickActions'
-import { generateDefaultValues, getCreateSchema } from '@openfaith/schema'
+import { generateDefaultValues } from '@openfaith/schema'
 import {
   QuickActionsHeader,
   QuickActionsTitle,
@@ -14,6 +16,7 @@ import type { ComponentType, FC } from 'react'
 type UniversalQuickActionProps =
   | {
       _tag: 'create'
+      entityType: string
       quickAction: QuickActionConfig
       isOpen: boolean
       onOpenChange: (isOpen: boolean) => void
@@ -21,6 +24,7 @@ type UniversalQuickActionProps =
     }
   | {
       _tag: 'edit'
+      entityType: string
       quickAction: QuickActionConfig
       isOpen: boolean
       onOpenChange: (isOpen: boolean) => void
@@ -29,7 +33,7 @@ type UniversalQuickActionProps =
     }
 
 export const UniversalQuickAction: FC<UniversalQuickActionProps> = (props) => {
-  const { quickAction, isOpen, onOpenChange, iconComponents } = props
+  const { quickAction, isOpen, onOpenChange, iconComponents, entityType } = props
 
   const defaultValues = pipe(
     Match.type<typeof props>(),
@@ -54,6 +58,9 @@ export const UniversalQuickAction: FC<UniversalQuickActionProps> = (props) => {
     Match.exhaustive,
   )(props)
 
+  const orgId = useOrgId()
+  const userId = useUserId()
+
   return (
     <QuickActionsWrapper onOpenChange={onOpenChange} open={isOpen}>
       <QuickActionsHeader className={'p-4'}>
@@ -71,9 +78,12 @@ export const UniversalQuickAction: FC<UniversalQuickActionProps> = (props) => {
 
       <UniversalForm
         defaultValues={defaultValues}
+        entityType={entityType}
         mode={mode}
         onSuccess={() => onOpenChange(false)}
-        schema={mode === 'create' ? getCreateSchema(quickAction.schema) : quickAction.schema}
+        orgId={orgId}
+        schema={quickAction.schema}
+        userId={userId}
       />
     </QuickActionsWrapper>
   )

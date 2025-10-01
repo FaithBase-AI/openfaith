@@ -1,10 +1,13 @@
+import { getCreateSchema } from '@openfaith/schema'
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
+import { getEntityId, pluralize } from '@openfaith/shared'
 import { useAppForm } from '@openfaith/ui/components/form/tsForm'
 import { QuickActionForm } from '@openfaith/ui/components/quickActions/quickActionsComponents'
 import { Button } from '@openfaith/ui/components/ui/button'
 import { getComponentProps, getFieldComponentName } from '@openfaith/ui/form/fieldComponentMapping'
 import { generateFieldConfigs } from '@openfaith/ui/form/fieldConfigGenerator'
 import { useSchemaInsert, useSchemaUpdate } from '@openfaith/ui/shared/hooks/schemaHooks'
+import { useZero } from '@openfaith/zero'
 import { revalidateLogic } from '@tanstack/react-form'
 import { Array, Order, pipe, Record, Schema } from 'effect'
 import { useMemo } from 'react'
@@ -19,27 +22,35 @@ export interface UniversalFormProps<T> {
   fieldOverrides?: Partial<Record<keyof T, Partial<FieldConfig['field']>>>
   className?: string
   loading?: boolean
+  entityType: string
+  orgId: string
+  userId: string
 }
 
 /**
  * Universal Form Component that automatically generates forms from Effect Schema
  * Supports both custom submit handlers and built-in Zero mutations
  */
-export function UniversalForm<T>({
-  schema,
-  defaultValues,
-  onSubmit,
-  mode = 'custom',
-  onSuccess,
-  onError,
-  fieldOverrides = {},
-  className,
-  loading = false,
-}: UniversalFormProps<T>) {
+export function UniversalForm<T>(props: UniversalFormProps<T>) {
+  const {
+    schema,
+    defaultValues,
+    onSubmit,
+    mode = 'custom',
+    onSuccess,
+    onError,
+    fieldOverrides = {},
+    className,
+    loading = false,
+    entityType,
+    orgId,
+    userId,
+  } = props
   const fieldConfigs = generateFieldConfigs(schema, fieldOverrides)
 
+  const z = useZero()
   // Use mutation hooks when in create/edit mode
-  const { mutate: schemaInsert, isPending: isInsertPending } = useSchemaInsert(schema, {
+  const { mutate: _schemaInsert, isPending: isInsertPending } = useSchemaInsert(schema, {
     onError,
     onSuccess,
   })
@@ -52,18 +63,47 @@ export function UniversalForm<T>({
   const form = useAppForm({
     defaultValues: (defaultValues ?? {}) as T,
     onSubmit: async ({ value }: { value: T }) => {
-      switch (mode) {
-        case 'create':
-          schemaInsert(value as any)
-          break
-        case 'edit':
-          schemaUpdate(value as any)
-          break
-        default:
-          if (onSubmit) {
-            await onSubmit(value)
+      console.log(value)
+
+      try {
+        switch (mode) {
+          case 'create': {
+            const createdAt = new Date().toISOString()
+            const data = pipe(
+              {
+                ...(value as any),
+                _tag: entityType,
+                createdAt,
+                createdBy: userId,
+                customFields: [],
+                externalIds: [],
+                id: getEntityId(entityType),
+                orgId,
+                status: 'active',
+                tags: [],
+                updatedAt: createdAt,
+                updatedBy: userId,
+                userId,
+              },
+              Schema.decodeUnknownSync(schema),
+            )
+
+            z.mutate[pluralize(entityType) as keyof typeof z.mutate].insert(data as any)
+
+            // schemaInsert(value as any)
+            break
           }
-          break
+          case 'edit':
+            schemaUpdate(value as any)
+            break
+          default:
+            if (onSubmit) {
+              await onSubmit(value)
+            }
+            break
+        }
+      } catch (error) {
+        console.error(error)
       }
     },
     validationLogic: revalidateLogic({
@@ -71,7 +111,7 @@ export function UniversalForm<T>({
       modeAfterSubmission: 'blur',
     }),
     validators: {
-      onDynamic: Schema.standardSchemaV1(schema),
+      onDynamic: Schema.standardSchemaV1(mode === 'create' ? getCreateSchema(schema) : schema),
     },
   })
 

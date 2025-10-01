@@ -13,6 +13,13 @@ import {
   type Rectangle,
 } from '@glideapps/glide-data-grid'
 
+type CellClickedEventArgs = {
+  bounds: Rectangle
+  localEventX: number
+  localEventY: number
+  kind: string
+}
+
 import { CollectionToolbarDataGrid } from '@openfaith/ui/components/collections/collectionToolbarDataGrid'
 import type {
   ColumnConfig,
@@ -41,6 +48,7 @@ type CollectionDataGridProps<
   data: Array<TData>
   getCellContent: (cell: Item) => GridCell
   onRowClick?: (row: TData) => void
+  onCellClicked?: (cell: Item, event: CellClickedEventArgs) => void
   onRowsSelected?: (rows: Array<TData>) => void
   onCellEdited?: (cell: Item, newValue: GridCell) => void
   onVisibleRegionChanged?: (visibleRange: Rectangle) => void
@@ -69,6 +77,7 @@ export const CollectionDataGrid = <
     data,
     getCellContent: providedGetCellContent,
     onRowClick,
+    onCellClicked,
     onRowsSelected,
     onCellEdited,
     onVisibleRegionChanged,
@@ -135,16 +144,19 @@ export const CollectionDataGrid = <
     [data, providedGetCellContent],
   )
 
-  // Handle row click
   const onRowClicked = useCallback(
-    (cell: Item) => {
-      const [, row] = cell
-      const dataRow = data[row]
-      if (dataRow && onRowClick) {
-        onRowClick(dataRow)
+    (cell: Item, event: CellClickedEventArgs) => {
+      if (onCellClicked) {
+        onCellClicked(cell, event)
+      } else {
+        const [, row] = cell
+        const dataRow = data[row]
+        if (dataRow && onRowClick) {
+          onRowClick(dataRow)
+        }
       }
     },
-    [data, onRowClick],
+    [data, onRowClick, onCellClicked],
   )
 
   // Handle selection change

@@ -8,6 +8,12 @@ import type { Edge } from '@openfaith/db'
 import { extractEntityInfo } from '@openfaith/schema'
 import { CollectionDataGrid } from '@openfaith/ui/components/collections/collectionDataGrid'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@openfaith/ui/components/ui/dropdown-menu'
+import {
   buildEntityRelationshipsForTable,
   useEntityNamesFetcher,
   useSchemaCollection,
@@ -30,7 +36,7 @@ import { useZero } from '@openfaith/zero/useZero'
 import { useQuery } from '@rocicorp/zero/react'
 import { Array, Option, pipe, type Schema, String } from 'effect'
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 export interface UniversalDataGridProps<T> {
   schema: Schema.Schema<T>
@@ -75,6 +81,14 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
   const entityInfo = useMemo(() => {
     return extractEntityInfo(schema)
   }, [schema])
+
+  const [showMenu, setShowMenu] = useState<
+    | {
+        row: T
+        bounds: Rectangle
+      }
+    | undefined
+  >()
 
   const { collection, nextPage, loading, pageSize } = useSchemaCollection({ schema })
 
@@ -282,16 +296,37 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     [collection, columns, columnIdToField, updateEntity, onCellEdit],
   )
 
-  // Handle row click with actions column special handling
-  const handleRowClick = useCallback(
-    (row: T) => {
-      // For now, just call the provided onRowClick
-      // In the future, we could show a dropdown menu for the actions column
+  const handleCellClicked = useCallback(
+    (
+      cell: Item,
+      event: {
+        bounds: Rectangle
+        localEventX: number
+        localEventY: number
+        kind: string
+      },
+    ) => {
+      const [col, row] = cell
+      const column = columns[col]
+      const dataRow = collection[row]
+
+      if (!dataRow) {
+        return
+      }
+
+      if (column?.id === 'actions') {
+        setShowMenu({
+          bounds: event.bounds,
+          row: dataRow,
+        })
+        return
+      }
+
       if (onRowClick) {
-        onRowClick(row)
+        onRowClick(dataRow)
       }
     },
-    [onRowClick],
+    [columns, collection, onRowClick],
   )
 
   const entityName = entityInfo.entityName || 'items'
@@ -342,23 +377,59 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
   }, [enableVirtualScrolling, collection.length, pageSize, isLikelyLastPage])
 
   return (
-    <CollectionDataGrid
-      _tag={entityInfo.entityTag || 'default'}
-      Actions={Actions}
-      columns={columns}
-      data={collection}
-      enableVirtualScrolling={enableVirtualScrolling}
-      filterColumnId={filtering.filterColumnId || 'name'}
-      filterKey={filtering.filterKey || `${entityName}-filter`}
-      filterPlaceHolder={filterPlaceHolder}
-      filtersDef={filtersDef}
-      getCellContent={getCellContent}
-      onCellEdited={editable ? handleCellEdited : undefined}
-      onRowClick={handleRowClick}
-      onRowsSelected={onRowsSelected}
-      onVisibleRegionChanged={handleVisibleRegionChanged}
-      showRowNumbers={showRowNumbers}
-      totalRows={virtualRowCount}
-    />
+    <>
+      <CollectionDataGrid
+        _tag={entityInfo.entityTag || 'default'}
+        Actions={Actions}
+        columns={columns}
+        data={collection}
+        enableVirtualScrolling={enableVirtualScrolling}
+        filterColumnId={filtering.filterColumnId || 'name'}
+        filterKey={filtering.filterKey || `${entityName}-filter`}
+        filterPlaceHolder={filterPlaceHolder}
+        filtersDef={filtersDef}
+        getCellContent={getCellContent}
+        onCellClicked={handleCellClicked}
+        onCellEdited={editable ? handleCellEdited : undefined}
+        onRowClick={onRowClick}
+        onRowsSelected={onRowsSelected}
+        onVisibleRegionChanged={handleVisibleRegionChanged}
+        showRowNumbers={showRowNumbers}
+        totalRows={virtualRowCount}
+      />
+      {showMenu && (
+        <div
+          style={{
+            left: showMenu.bounds.x,
+            position: 'fixed',
+            top: showMenu.bounds.y + showMenu.bounds.height,
+            zIndex: 9999,
+          }}
+        >
+          <DropdownMenu
+            onOpenChange={(open) => {
+              if (!open) {
+                setShowMenu(undefined)
+              }
+            }}
+            open={true}
+          >
+            <DropdownMenuTrigger asChild>
+              <div />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='start'>
+              <DropdownMenuItem
+                onClick={() => {
+                  console.log('Test action clicked for row:', showMenu.row)
+                  setShowMenu(undefined)
+                }}
+              >
+                Test Action
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+    </>
   )
 }

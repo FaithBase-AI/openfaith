@@ -67,7 +67,7 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
   return <ZeroProvider {...opts}>{children}</ZeroProvider>
 }
 
-function preload(z: Zero<ZSchema, Mutators>, entities: Array<EntityUiConfig>) {
+function preload(z: Zero<ZSchema, any>, entities: Array<EntityUiConfig>) {
   // Delay preload() slightly to avoid blocking UI on first run. We don't need
   // this data to display the UI, it's used by search.
   setTimeout(() => {

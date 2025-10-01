@@ -25,6 +25,7 @@ export const SchemaQuickActions: FC<SchemaQuickActionsProps> = () => {
         Array.map((quickAction) => (
           <UniversalQuickAction
             _tag='create'
+            entityType={quickAction.tag}
             iconComponents={iconComponents}
             isOpen={getIsOpen(quickAction.quickActionKey)}
             key={quickAction.quickActionKey}
@@ -45,6 +46,7 @@ export const SchemaQuickActions: FC<SchemaQuickActionsProps> = () => {
             <UniversalQuickAction
               _tag='edit'
               editData={editState.editData}
+              entityType={quickAction.tag}
               iconComponents={iconComponents}
               isOpen={editState.isOpen}
               key={editKey}

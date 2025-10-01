@@ -306,8 +306,8 @@ export const getCreateSchema = <A, I = A, R = never>(
   Omit<A, keyof typeof BaseSystemFields.fields & keyof typeof BaseIdentifiedEntity.fields & '_tag'>,
   I,
   R
-> => {
-  return pipe(
+> =>
+  pipe(
     schema,
     Schema.omit(
       ...(Object.keys(BaseSystemFields.fields) as Array<keyof A & keyof I>),
@@ -315,4 +315,20 @@ export const getCreateSchema = <A, I = A, R = never>(
       '_tag' as keyof A & keyof I,
     ),
   ) as any
-}
+
+export const getUpdateSchema = <A, I = A, R = never>(
+  schema: Schema.Schema<A, I, R>,
+): Schema.Schema<A, I, R> =>
+  Schema.Struct({
+    // @ts-expect-error - We have a struct, should be fine.
+    ...Schema.partial(schema).fields,
+    id: Schema.String,
+  }) as any
+
+export const getDeleteSchema = <A, I = A, R = never>(_schema: Schema.Schema<A, I, R>) =>
+  Schema.Struct({
+    deleted: Schema.Literal(true),
+    deletedAt: Schema.String,
+    deletedBy: Schema.String,
+    id: Schema.String,
+  })
