@@ -95,6 +95,9 @@ export class BaseSystemFields extends Schema.Class<BaseSystemFields>('BaseSystem
   status: Schema.Literal('active', 'inactive').annotations({
     description: 'The status of the record',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         cellType: 'badge',
         filterable: true,

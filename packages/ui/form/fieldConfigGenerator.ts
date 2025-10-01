@@ -26,10 +26,13 @@ export const generateFieldConfigs = <T>(
       const key = field.key as keyof T
 
       // Get field config using shared utility
-      const fieldConfig = getContextConfig(field, 'form') as FieldConfig['field']
+      const fieldConfig = (getContextConfig(field, 'form') as FieldConfig['field']) || {}
 
       // Fallback to auto-detection if no config provided
-      const autoConfig = fieldConfig || autoDetectFieldConfig(extractAST(field.schema), field.key)
+      const autoConfig = {
+        ...autoDetectFieldConfig(extractAST(field.schema), field.key),
+        ...fieldConfig,
+      }
 
       // Apply defaults and overrides
       const baseConfig = {
