@@ -7,7 +7,6 @@ import { GridCellKind } from '@glideapps/glide-data-grid'
 import type { Edge } from '@openfaith/db'
 import { extractEntityInfo } from '@openfaith/schema'
 import { CollectionDataGrid } from '@openfaith/ui/components/collections/collectionDataGrid'
-import { Button } from '@openfaith/ui/components/ui/button'
 import {
   buildEntityRelationshipsForTable,
   useEntityNamesFetcher,
@@ -303,18 +302,6 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     return generateFilterConfig(schema)
   }, [schema])
 
-  // Render actions for the toolbar
-  const ToolbarActions = Actions || (
-    <Button
-      onClick={() => {
-        // Handle add new item
-      }}
-      size='sm'
-    >
-      Add {entityName}
-    </Button>
-  )
-
   // Detect if we're likely on the last page of data
   const isLikelyLastPage = collection.length > 0 && collection.length % pageSize !== 0
 
@@ -357,7 +344,7 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
   return (
     <CollectionDataGrid
       _tag={entityInfo.entityTag || 'default'}
-      Actions={ToolbarActions}
+      Actions={Actions}
       columns={columns}
       data={collection}
       enableVirtualScrolling={enableVirtualScrolling}

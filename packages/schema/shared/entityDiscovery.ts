@@ -108,6 +108,11 @@ export interface EntityUiConfig {
     title: string
     url: string
   }
+  meta: {
+    disableCreate: boolean
+    disableDelete: boolean
+    disableEdit: boolean
+  }
 }
 
 export const discoverUiEntities = (): Array<EntityUiConfig> => {
@@ -122,6 +127,21 @@ export const discoverUiEntities = (): Array<EntityUiConfig> => {
         uiConfigOpt,
         Option.flatMap((config) => Option.fromNullable(config.navigation)),
         Option.filter((navConfig) => navConfig.enabled),
+      )
+
+      const meta = pipe(
+        uiConfigOpt,
+        Option.flatMap((config) => Option.fromNullable(config.meta)),
+        Option.getOrElse(() => ({
+          disableCreate: false,
+          disableDelete: false,
+          disableEdit: false,
+        })),
+        (x) => ({
+          disableCreate: x.disableCreate || false,
+          disableDelete: x.disableDelete || false,
+          disableEdit: x.disableEdit || false,
+        }),
       )
 
       if (Option.isNone(navConfigOpt)) {
@@ -139,6 +159,7 @@ export const discoverUiEntities = (): Array<EntityUiConfig> => {
       }
 
       return Option.some({
+        meta,
         navConfig,
         navItem,
         schema: entitySchema.schema,

@@ -170,6 +170,11 @@ export class ExternalLink extends BaseExternalLink.extend<ExternalLink>('Externa
     title: 'externalLink',
     [OfTable]: externalLinksTable,
     [OfUiConfig]: {
+      meta: {
+        disableCreate: true,
+        disableDelete: true,
+        disableEdit: true,
+      },
       navigation: {
         description: 'Manage external system links and sync tracking',
         enabled: true,

@@ -25,6 +25,7 @@ export const useSchemaQuickActions = () => {
   const commandMenuItems = useMemo((): ReadonlyArray<CommandMenuType> => {
     return pipe(
       quickActions,
+      Array.filter((quickAction) => !quickAction.meta.disableCreate),
       Array.map((quickAction) => ({
         icon: createElement(getEntityIcon(quickAction.tag)),
         name: quickAction.createTitle,

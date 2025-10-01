@@ -98,6 +98,12 @@ export interface FieldConfig {
     order?: number
     description?: string
   }
+
+  meta?: {
+    disableCreate?: boolean
+    disableEdit?: boolean
+    disableDelete?: boolean
+  }
 }
 
 export type RelationDirection = 'outbound' | 'inbound' | 'both'

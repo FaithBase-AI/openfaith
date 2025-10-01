@@ -95,10 +95,12 @@ function RouteComponent() {
             onSome: (schema) => (
               <UniversalDataGrid
                 Actions={
-                  <Button className='ml-auto' onClick={handleCreateClick} size='sm'>
-                    <PlusIcon />
-                    Create {pipe(config.navItem.title, singularize)}
-                  </Button>
+                  config.meta.disableCreate ? null : (
+                    <Button className='ml-auto' onClick={handleCreateClick} size='sm'>
+                      <PlusIcon />
+                      Create {pipe(config.navItem.title, singularize)}
+                    </Button>
+                  )
                 }
                 filtering={{
                   filterPlaceHolder: `Search ${pipe(config.navItem.title, String.toLowerCase)}...`,

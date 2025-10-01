@@ -199,6 +199,11 @@ export class Edge extends BaseEdge.extend<Edge>('Edge')({}, [
     title: 'edge',
     [OfTable]: edgesTable,
     [OfUiConfig]: {
+      meta: {
+        disableCreate: true,
+        disableDelete: true,
+        disableEdit: true,
+      },
       navigation: {
         description: 'Manage entity relationships and connections',
         enabled: true,
