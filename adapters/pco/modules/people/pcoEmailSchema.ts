@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoEmailAttributes = Schema.Struct({
@@ -44,5 +44,5 @@ export const PcoEmail = mkPcoEntity({
     }),
   }),
   type: 'Email',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-email' })
+}).annotations({ [OfSkipEntity]: true, title: 'pco-email' })
 export type PcoEmail = typeof PcoEmail.Type

@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoPersonMergerAttributes = Schema.Struct({
@@ -40,5 +40,5 @@ export const PcoPersonMerger = mkPcoEntity({
     }),
   }),
   type: 'PersonMerger',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-person-merger' })
+}).annotations({ [OfSkipEntity]: true, title: 'pco-person-merger' })
 export type PcoPersonMerger = typeof PcoPersonMerger.Type

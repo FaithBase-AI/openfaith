@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoServiceTimeAttributes = Schema.Struct({
@@ -40,5 +40,5 @@ export const PcoServiceTime = mkPcoEntity({
     }),
   }),
   type: 'ServiceTime',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-service-time' })
+}).annotations({ [OfSkipEntity]: true, title: 'pco-service-time' })
 export type PcoServiceTime = typeof PcoServiceTime.Type

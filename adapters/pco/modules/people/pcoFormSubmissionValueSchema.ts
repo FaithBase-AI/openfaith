@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoFormSubmissionValueAttributes = Schema.Struct({
@@ -46,6 +46,6 @@ export const PcoFormSubmissionValue = mkPcoEntity({
   type: 'FormSubmissionValue',
 }).annotations({
   [OfSkipEntity]: true,
-  [OfIdentifier]: 'pco-form-submission-value',
+  title: 'pco-form-submission-value',
 })
 export type PcoFormSubmissionValue = typeof PcoFormSubmissionValue.Type

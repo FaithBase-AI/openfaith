@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoMailchimpSyncStatusAttributes = Schema.Struct({
@@ -33,6 +33,6 @@ export const PcoMailchimpSyncStatus = mkPcoEntity({
   type: 'MailchimpSyncStatus',
 }).annotations({
   [OfSkipEntity]: true,
-  [OfIdentifier]: 'pco-mailchimp-sync-status',
+  title: 'pco-mailchimp-sync-status',
 })
 export type PcoMailchimpSyncStatus = typeof PcoMailchimpSyncStatus.Type

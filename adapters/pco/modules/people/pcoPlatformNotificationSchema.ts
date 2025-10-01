@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoPlatformNotificationAttributes = Schema.Struct({
@@ -17,6 +17,6 @@ export const PcoPlatformNotification = mkPcoEntity({
   type: 'PlatformNotification',
 }).annotations({
   [OfSkipEntity]: true,
-  [OfIdentifier]: 'pco-platform-notification',
+  title: 'pco-platform-notification',
 })
 export type PcoPlatformNotification = typeof PcoPlatformNotification.Type

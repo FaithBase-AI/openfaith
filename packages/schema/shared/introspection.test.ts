@@ -201,7 +201,13 @@ effect(
       const TestSchemaWithEntity = Schema.Struct({
         id: Schema.String,
         name: Schema.String,
-      }).pipe(Schema.annotations({ [OfEntity]: 'TestEntity' }))
+      }).pipe(
+        Schema.annotations({
+          [OfEntity]: Schema.Struct({
+            _tag: Schema.Literal('TestEntity'),
+          }),
+        }),
+      )
 
       const entityInfo = extractEntityInfo(TestSchemaWithEntity)
 
@@ -226,20 +232,6 @@ effect(
     }),
 )
 
-effect('extractEntityInfo should handle empty string OfEntity annotation', () =>
-  Effect.gen(function* () {
-    const TestSchemaWithEmptyEntity = Schema.Struct({
-      id: Schema.String,
-      name: Schema.String,
-    }).pipe(Schema.annotations({ [OfEntity]: '' }))
-
-    const entityInfo = extractEntityInfo(TestSchemaWithEmptyEntity)
-
-    expect(entityInfo.entityName).toBe('')
-    expect(entityInfo.entityTag).toBe('')
-  }),
-)
-
 effect('extractEntityInfo should handle complex schema structures', () =>
   Effect.gen(function* () {
     const ComplexSchema = Schema.Struct({
@@ -253,7 +245,13 @@ effect('extractEntityInfo should handle complex schema structures', () =>
           enabled: Schema.Boolean,
         }),
       ),
-    }).pipe(Schema.annotations({ [OfEntity]: 'ComplexEntity' }))
+    }).pipe(
+      Schema.annotations({
+        [OfEntity]: Schema.Struct({
+          _tag: Schema.Literal('ComplexEntity'),
+        }),
+      }),
+    )
 
     const entityInfo = extractEntityInfo(ComplexSchema)
 
@@ -268,7 +266,9 @@ effect('extractEntityInfo should handle schema with multiple annotations', () =>
       name: Schema.String,
     }).pipe(
       Schema.annotations({
-        [OfEntity]: 'MultiEntity',
+        [OfEntity]: Schema.Struct({
+          _tag: Schema.Literal('MultiEntity'),
+        }),
         description: 'A schema with multiple annotations',
         title: 'Multi Annotated Schema',
       }),

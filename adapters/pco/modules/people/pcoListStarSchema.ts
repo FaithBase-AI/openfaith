@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoListStarAttributes = Schema.Struct({
@@ -15,5 +15,5 @@ export const PcoListStar = mkPcoEntity({
   links: Schema.Struct({}),
   relationships: Schema.Struct({}),
   type: 'ListStar',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-list-star' })
+}).annotations({ [OfSkipEntity]: true, title: 'pco-list-star' })
 export type PcoListStar = typeof PcoListStar.Type

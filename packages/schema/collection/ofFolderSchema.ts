@@ -1,4 +1,4 @@
-import { type FieldConfig, OfEntity, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
 import { Schema } from 'effect'
 
@@ -86,7 +86,6 @@ export class BaseFolder extends BaseSystemFields.extend<BaseFolder>('BaseFolder'
 
 export class Folder extends BaseFolder.extend<Folder>('Folder')(BaseIdentifiedEntity.fields, [
   {
-    [OfEntity]: 'folder',
     [OfUiConfig]: {
       navigation: {
         description: 'Organize content with hierarchical folders',
@@ -97,5 +96,6 @@ export class Folder extends BaseFolder.extend<Folder>('Folder')(BaseIdentifiedEn
         title: 'Folders',
       },
     } satisfies FieldConfig,
+    title: 'Folder',
   },
 ]) {}

@@ -5,7 +5,6 @@ import {
   BaseAddress,
   OfEntity,
   OfFieldName,
-  OfIdentifier,
   OfPartialTransformer,
   OfTransformer,
 } from '@openfaith/schema'
@@ -72,7 +71,7 @@ export const PcoAddress = mkPcoEntity({
   type: 'Address',
 }).annotations({
   [OfEntity]: Address,
-  [OfIdentifier]: 'pco-address',
+  title: 'pco-address',
   [OfTransformer]: pcoAddressTransformer,
   [OfPartialTransformer]: pcoAddressPartialTransformer,
 })

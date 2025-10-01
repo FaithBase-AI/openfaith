@@ -1,5 +1,5 @@
 import { edgesTable } from '@openfaith/db/schema/modules/edgesSchema'
-import { type FieldConfig, OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { Schema } from 'effect'
 
 // Custom base class for edges that excludes customFields (which doesn't exist in edges table)
@@ -196,7 +196,7 @@ export class BaseEdge extends BaseEdgeSystemFields.extend<BaseEdge>('BaseEdge')(
 
 export class Edge extends BaseEdge.extend<Edge>('Edge')({}, [
   {
-    [OfEntity]: 'edge',
+    title: 'edge',
     [OfTable]: edgesTable,
     [OfUiConfig]: {
       navigation: {

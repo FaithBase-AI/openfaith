@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfEntity, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
+import { OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoWorkflowCardNoteAttributes = Schema.Struct({
@@ -23,8 +23,7 @@ export const PcoWorkflowCardNote = mkPcoEntity({
   }),
   type: 'WorkflowCardNote',
 }).annotations({
-  [OfEntity]: 'workflow_card_note',
   [OfSkipEntity]: true,
-  [OfIdentifier]: 'pco-workflow-card-note',
+  title: 'pco-workflow-card-note',
 })
 export type PcoWorkflowCardNote = typeof PcoWorkflowCardNote.Type

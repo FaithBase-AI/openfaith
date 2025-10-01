@@ -2,10 +2,10 @@ import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
 import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
 import {
   BaseFolder,
+  Folder,
   OfEntity,
   OfFieldName,
   OfFolderType,
-  OfIdentifier,
   OfPartialTransformer,
   OfTransformer,
 } from '@openfaith/schema'
@@ -56,9 +56,9 @@ export const PcoListCategory = mkPcoEntity({
   }),
   type: 'ListCategory',
 }).annotations({
-  [OfEntity]: 'folder',
+  [OfEntity]: Folder,
   [OfFolderType]: 'pco_list_category',
-  [OfIdentifier]: 'pco-list-category',
+  title: 'pco-list-category',
   [OfTransformer]: pcoListCategoryTransformer,
   [OfPartialTransformer]: pcoListCategoryPartialTransformer,
 })

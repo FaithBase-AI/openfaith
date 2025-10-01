@@ -6,7 +6,6 @@ import {
   OfCustomField,
   OfEntity,
   OfFieldName,
-  OfIdentifier,
   OfPartialTransformer,
   OfTransformer,
   Person,
@@ -156,7 +155,7 @@ export const PcoPerson = mkPcoEntity({
   type: 'Person',
 }).annotations({
   [OfEntity]: Person,
-  [OfIdentifier]: 'pco-person',
+  title: 'pco-person',
   [OfTransformer]: pcoPersonTransformer,
   [OfPartialTransformer]: pcoPersonPartialTransformer,
 })

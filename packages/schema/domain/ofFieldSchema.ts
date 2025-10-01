@@ -1,5 +1,5 @@
 import { fieldOptionsTable, fieldsTable } from '@openfaith/db'
-import { type FieldConfig, OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
 import { Schema } from 'effect'
 
@@ -35,7 +35,7 @@ export class BaseField extends BaseSystemFields.extend<BaseField>('BaseField')({
 
 export class Field extends BaseField.extend<Field>('Field')(BaseIdentifiedEntity.fields, [
   {
-    [OfEntity]: 'field',
+    title: 'field',
     [OfTable]: fieldsTable,
     [OfUiConfig]: {
       navigation: {
@@ -79,7 +79,7 @@ export class FieldOption extends BaseFieldOption.extend<FieldOption>('FieldOptio
   BaseIdentifiedEntity.fields,
   [
     {
-      [OfEntity]: 'fieldOption',
+      title: 'fieldOption',
       [OfTable]: fieldOptionsTable,
       [OfUiConfig]: {
         navigation: {

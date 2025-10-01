@@ -888,7 +888,7 @@ export const useSchemaMutation = <T>(
 /**
  * Common schema collection query builder
  */
-const buildSchemaCollectionQuery = <T>(
+export const buildSchemaCollectionQuery = <T>(
   schema: SchemaType.Schema<T>,
   z: ReturnType<typeof useZero>,
   limit?: number,

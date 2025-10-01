@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfEdge, OfFieldName, OfIdentifier, OfSkipEntity, OfSkipField } from '@openfaith/schema'
+import { OfEdge, OfFieldName, OfSkipEntity, OfSkipField } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoFieldDefinitionAttributes = Schema.Struct({
@@ -23,7 +23,10 @@ export const PcoFieldDefinitionAttributes = Schema.Struct({
   }),
   tab_id: Schema.optional(Schema.String).annotations({
     [OfSkipField]: true,
-    [OfEdge]: 'tabId',
+    [OfEdge]: {
+      relationshipType: 'tabId',
+      targetEntityTypeTag: 'Tab',
+    },
   }),
 })
 export type PcoFieldDefinitionAttributes = typeof PcoFieldDefinitionAttributes.Type
@@ -46,6 +49,6 @@ export const PcoFieldDefinition = mkPcoEntity({
   type: 'FieldDefinition',
 }).annotations({
   [OfSkipEntity]: true,
-  [OfIdentifier]: 'pco-field-definition',
+  title: 'pco-field-definition',
 })
 export type PcoFieldDefinition = typeof PcoFieldDefinition.Type

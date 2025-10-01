@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoListResultAttributes = Schema.Struct({
@@ -36,5 +36,5 @@ export const PcoListResult = mkPcoEntity({
     }),
   }),
   type: 'ListResult',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-list-result' })
+}).annotations({ [OfSkipEntity]: true, title: 'pco-list-result' })
 export type PcoListResult = typeof PcoListResult.Type

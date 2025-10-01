@@ -13,6 +13,10 @@
   - Ended up hiding it for now, and we will send people to `/directory/people` for now.
 - [x] We need to move to a cloud instance of supabase
 - [x] Figure out why the css is loading after the html causing a flash of unstyled content.
+- [x] We need to add a separate db instance for cluster / workers, we need to be able to run a local cluster against the prod db and not compete with it.
+  - I need to check to see if I can not run shard-manager and talk to local workers.
+    - Ended up just doing a separate env for this. Had to do the same thing for zero, needs a local cvr / change db for it to be fast.
+- [x] Speed up navigation by preloading items.
 
 ### Todo
 
@@ -24,8 +28,6 @@
     - I think this is the number one issue right now, custom mutators
 
 - [ ] Update to tanstack start rc. (blocked due to https://discord.com/channels/795981131316985866/1421523535821541447 less pressure on this since I fixed the FOUC issue.)
-- [ ] We need to add a separate db instance for cluster / workers, we need to be able to run a local cluster against the prod db and not compete with it.
-  - I need to check to see if I can not run shard-manager and talk to local workers.
 - [ ] We need to map the user that auths with PCO, get their person ID, and then link their profile.
 - [ ] We need to figure out our custom tab / field datams in PCO so we can sync custom data that links to the person back to PCO.
 - [ ] Improve onboarding flow. We need to gather some ministry details. Name / Location

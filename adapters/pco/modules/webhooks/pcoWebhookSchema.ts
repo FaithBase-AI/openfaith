@@ -6,7 +6,6 @@ import {
   OfCustomField,
   OfEntity,
   OfFieldName,
-  OfIdentifier,
   OfPartialTransformer,
   OfTransformer,
 } from '@openfaith/schema'
@@ -82,7 +81,7 @@ export const PcoWebhookSubscription = mkPcoEntity({
   type: 'WebhookSubscription',
 }).annotations({
   [OfEntity]: AdapterWebhook,
-  [OfIdentifier]: 'pco-webhook-subscription',
+  title: 'pco-webhook-subscription',
   [OfTransformer]: pcoWebhookSubscriptionTransformer,
   [OfPartialTransformer]: pcoWebhookSubscriptionPartialTransformer,
 })

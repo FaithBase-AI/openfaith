@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoNameSuffixAttributes = Schema.Struct({
@@ -15,5 +15,5 @@ export const PcoNameSuffix = mkPcoEntity({
   links: Schema.Struct({}),
   relationships: Schema.Struct({}),
   type: 'NameSuffix',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-name-suffix' })
+}).annotations({ [OfSkipEntity]: true, title: 'pco-name-suffix' })
 export type PcoNameSuffix = typeof PcoNameSuffix.Type

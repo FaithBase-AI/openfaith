@@ -6,7 +6,6 @@ import {
   OfCustomField,
   OfEntity,
   OfFieldName,
-  OfIdentifier,
   OfPartialTransformer,
   OfTransformer,
 } from '@openfaith/schema'
@@ -118,7 +117,7 @@ export const PcoCampus = mkPcoEntity({
   type: 'Campus',
 }).annotations({
   [OfEntity]: Campus,
-  [OfIdentifier]: 'pco-campus',
+  title: 'pco-campus',
   [OfTransformer]: pcoCampusTransformer,
   [OfPartialTransformer]: pcoCampusPartialTransformer,
 })

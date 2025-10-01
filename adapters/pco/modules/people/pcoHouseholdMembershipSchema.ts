@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoHouseholdMembershipAttributes = Schema.Struct({
@@ -30,6 +30,6 @@ export const PcoHouseholdMembership = mkPcoEntity({
   type: 'HouseholdMembership',
 }).annotations({
   [OfSkipEntity]: true,
-  [OfIdentifier]: 'pco-household-membership',
+  title: 'pco-household-membership',
 })
 export type PcoHouseholdMembership = typeof PcoHouseholdMembership.Type

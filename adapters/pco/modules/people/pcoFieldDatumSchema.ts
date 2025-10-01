@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
+import { OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoFieldDatumAttributes = Schema.Struct({
@@ -41,5 +41,5 @@ export const PcoFieldDatum = mkPcoEntity({
     }),
   }),
   type: 'FieldDatum',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-field-datum' })
+}).annotations({ [OfSkipEntity]: true, title: 'pco-field-datum' })
 export type PcoFieldDatum = typeof PcoFieldDatum.Type

@@ -1,5 +1,5 @@
 import { externalLinksTable } from '@openfaith/db/schema/modules/externalLinksSchema'
-import { type FieldConfig, OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { TimestampToIsoString } from '@openfaith/shared/date'
 import { Schema } from 'effect'
 
@@ -167,7 +167,7 @@ export class BaseExternalLink extends BaseExternalLinkSystemFields.extend<BaseEx
 
 export class ExternalLink extends BaseExternalLink.extend<ExternalLink>('ExternalLink')({}, [
   {
-    [OfEntity]: 'externalLink',
+    title: 'externalLink',
     [OfTable]: externalLinksTable,
     [OfUiConfig]: {
       navigation: {

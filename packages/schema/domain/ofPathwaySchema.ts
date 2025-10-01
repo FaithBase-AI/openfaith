@@ -1,5 +1,5 @@
 import { journeysTable, pathwaysTable } from '@openfaith/db'
-import { type FieldConfig, OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
 import { Schema } from 'effect'
 
@@ -63,7 +63,7 @@ export class BasePathway extends BaseSystemFields.extend<BasePathway>('BasePathw
 
 export class Pathway extends BasePathway.extend<Pathway>('Pathway')(BaseIdentifiedEntity.fields, [
   {
-    [OfEntity]: 'pathway',
+    title: 'pathway',
     [OfTable]: pathwaysTable,
     [OfUiConfig]: {
       navigation: {
@@ -121,7 +121,7 @@ export class BaseJourney extends BaseSystemFields.extend<BaseJourney>('BaseJourn
 
 export class Journey extends BaseJourney.extend<Journey>('Journey')(BaseIdentifiedEntity.fields, [
   {
-    [OfEntity]: 'journey',
+    title: 'journey',
     [OfTable]: journeysTable,
     [OfUiConfig]: {
       navigation: {

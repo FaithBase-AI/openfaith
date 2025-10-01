@@ -13,7 +13,6 @@ export const OfPartialTransformer = Symbol.for('@openfaith/schema/partialTransfo
 // Predicate to filter out entities that have data we don't want to sync.
 export const OfFilterFn = Symbol.for('@openfaith/schema/filterFn')
 export const OfFolderType = Symbol.for('@openfaith/schema/folderType')
-export const OfIdentifier = Symbol.for('@openfaith/schema/identifier')
 export const OfTable = Symbol.for('@openfaith/schema/table')
 export const OfUiConfig = Symbol.for('@openfaith/schema/uiConfig')
 export const OfRelations = Symbol.for('@openfaith/schema/relations')
@@ -134,13 +133,31 @@ declare module 'effect/Schema' {
       [OfFieldName]?: string
       [OfCustomField]?: boolean
       [OfSkipField]?: boolean
-      [OfEntity]?: string
+      [OfEntity]?: Schema.Any
       [OfEdge]?: OfEdgeAnnotation
       [OfFolder]?: OfFolderAnnotation
       [OfSkipEntity]?: boolean
       [OfTransformer]?: unknown
       [OfFolderType]?: string
-      [OfIdentifier]?: string
+      [OfTable]?: unknown
+      [OfUiConfig]?: FieldConfig
+      [OfRelations]?: ReadonlyArray<RelationConfig>
+      [OfForeignKey]?: {
+        targetEntityTag: string
+      }
+      [OfFilterFn]?: (entity: A) => boolean
+    }
+
+    interface Doc<A> extends SchemaAST.Annotations {
+      [OfFieldName]?: string
+      [OfCustomField]?: boolean
+      [OfSkipField]?: boolean
+      [OfEntity]?: Schema.Any
+      [OfEdge]?: OfEdgeAnnotation
+      [OfFolder]?: OfFolderAnnotation
+      [OfSkipEntity]?: boolean
+      [OfTransformer]?: unknown
+      [OfFolderType]?: string
       [OfTable]?: unknown
       [OfUiConfig]?: FieldConfig
       [OfRelations]?: ReadonlyArray<RelationConfig>

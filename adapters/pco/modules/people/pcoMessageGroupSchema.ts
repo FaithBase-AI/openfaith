@@ -1,5 +1,5 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfIdentifier, OfSkipEntity } from '@openfaith/schema'
+import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoMessageGroupAttributes = Schema.Struct({
@@ -55,5 +55,5 @@ export const PcoMessageGroup = mkPcoEntity({
   links: Schema.Struct({}),
   relationships: Schema.Struct({}),
   type: 'MessageGroup',
-}).annotations({ [OfSkipEntity]: true, [OfIdentifier]: 'pco-message-group' })
+}).annotations({ [OfSkipEntity]: true, title: 'pco-message-group' })
 export type PcoMessageGroup = typeof PcoMessageGroup.Type

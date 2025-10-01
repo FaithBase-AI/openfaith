@@ -1,5 +1,5 @@
 import { qualificationsTable } from '@openfaith/db'
-import { type FieldConfig, OfEntity, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
 import { Schema } from 'effect'
 
@@ -35,7 +35,7 @@ export class Qualification extends BaseQualification.extend<Qualification>('Qual
   BaseIdentifiedEntity.fields,
   [
     {
-      [OfEntity]: 'qualification',
+      title: 'qualification',
       [OfTable]: qualificationsTable,
       [OfUiConfig]: {
         navigation: {

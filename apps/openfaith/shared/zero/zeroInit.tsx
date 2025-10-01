@@ -1,4 +1,6 @@
+import type { EntityUiConfig } from '@openfaith/schema'
 import { env } from '@openfaith/shared'
+import { buildSchemaCollectionQuery, useEntityRegistry } from '@openfaith/ui'
 import { createClientMutators, type Mutators, schema, type ZSchema } from '@openfaith/zero'
 import type { Zero } from '@rocicorp/zero'
 import { ZeroProvider } from '@rocicorp/zero/react'
@@ -9,6 +11,7 @@ import { useMemo } from 'react'
 export function ZeroInit({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const initialSession = router.options.context.session
+  const { entities } = useEntityRegistry()
 
   const session = useRouterState({
     select: (state) =>
@@ -34,7 +37,7 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
 
         router.invalidate()
 
-        preload(zero)
+        preload(zero, entities)
       },
       mutators: createClientMutators(
         pipe(
@@ -64,7 +67,7 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
   return <ZeroProvider {...opts}>{children}</ZeroProvider>
 }
 
-function preload(_z: Zero<ZSchema, Mutators>) {
+function preload(z: Zero<ZSchema, Mutators>, entities: Array<EntityUiConfig>) {
   // Delay preload() slightly to avoid blocking UI on first run. We don't need
   // this data to display the UI, it's used by search.
   setTimeout(() => {
@@ -91,8 +94,12 @@ function preload(_z: Zero<ZSchema, Mutators>) {
     // avoid having the UI jostle. So we want to preload in the same order we
     // tend to display in the UI. That way local results are always also the
     // top ranked results.
-    // z.query.artist.orderBy('popularity', 'desc').limit(1_000).preload({
-    //   ttl: '1m',
-    // })
+
+    pipe(
+      entities,
+      Array.forEach((entity) => {
+        buildSchemaCollectionQuery(entity.schema, z, 1000).preload()
+      }),
+    )
   }, 1_000)
 }

@@ -5,7 +5,6 @@ import {
   OfCustomField,
   OfEntity,
   OfFieldName,
-  OfIdentifier,
   OfPartialTransformer,
   OfSkipField,
   OfTransformer,
@@ -99,7 +98,7 @@ export const PcoPhoneNumber = mkPcoEntity({
   type: 'PhoneNumber',
 }).annotations({
   [OfEntity]: PhoneNumber,
-  [OfIdentifier]: 'pco-phone-number',
+  title: 'pco-phone-number',
   [OfTransformer]: pcoPhoneNumberTransformer,
   [OfPartialTransformer]: pcoPhoneNumberPartialTransformer,
   // [OfFilterFn]: (entity: PcoPhoneNumber) => entity.attributes.e164 !== null,
