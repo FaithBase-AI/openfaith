@@ -22,7 +22,8 @@
 
 - [ ] We need to test crud on Campuses, and People.
   - [ ] We need to fully test create / delete pushes to PCO.
-  - [ ] We need to probably disable creation on Address / Phone Numbers, but we can keep edit for it.
+  - [x] We need to probably disable creation on Address / Phone Numbers, but we can keep edit for it.
+  - [x] Disable edit for Edges / External Links. These are view only.
   - [ ] We need to figure out how to auto write custom mutators for all the entities that flow through `mutators.ts`. We need to not hand jam these.
   - [ ] We need to fix the types for our effect based custom mutators. We should need to cast each mutator, `as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError>`.
     - I think this is the number one issue right now, custom mutators

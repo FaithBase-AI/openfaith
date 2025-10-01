@@ -102,6 +102,7 @@ function RouteComponent() {
                     </Button>
                   )
                 }
+                editable={!config.meta.disableEdit}
                 filtering={{
                   filterPlaceHolder: `Search ${pipe(config.navItem.title, String.toLowerCase)}...`,
                 }}
