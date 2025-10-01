@@ -10,7 +10,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: migrate
-        image: ghcr.io/faithbase-ai/openfaith-frontend:master-67c29a9
+        image: ghcr.io/faithbase-ai/openfaith-frontend:master-e1aa265
         command: ["bun", "run", "db:migrate"]
         envFrom:
         - configMapRef:

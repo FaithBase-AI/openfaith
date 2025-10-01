@@ -1,7 +1,7 @@
 'use client'
 
 import type { QuickActionConfig } from '@openfaith/openfaith/features/quickActions/schemaQuickActions'
-import { generateDefaultValues } from '@openfaith/schema'
+import { generateDefaultValues, getCreateSchema } from '@openfaith/schema'
 import {
   QuickActionsHeader,
   QuickActionsTitle,
@@ -73,7 +73,7 @@ export const UniversalQuickAction: FC<UniversalQuickActionProps> = (props) => {
         defaultValues={defaultValues}
         mode={mode}
         onSuccess={() => onOpenChange(false)}
-        schema={quickAction.schema}
+        schema={mode === 'create' ? getCreateSchema(quickAction.schema) : quickAction.schema}
       />
     </QuickActionsWrapper>
   )

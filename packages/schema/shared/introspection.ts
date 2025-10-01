@@ -1,5 +1,6 @@
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
-import { Array, Option, pipe, type Schema, SchemaAST, String } from 'effect'
+import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
+import { Array, Option, pipe, Schema, SchemaAST, String } from 'effect'
 
 /**
  * Helper function to get annotation from schema, handling both old and new formats
@@ -297,4 +298,21 @@ export const extractEntityName = (schema: Schema.Schema.Any): Option.Option<stri
   }
 
   return Option.none()
+}
+
+export const getCreateSchema = <A, I = A, R = never>(
+  schema: Schema.Schema<A, I, R>,
+): Schema.Schema<
+  Omit<A, keyof typeof BaseSystemFields.fields & keyof typeof BaseIdentifiedEntity.fields & '_tag'>,
+  I,
+  R
+> => {
+  return pipe(
+    schema,
+    Schema.omit(
+      ...(Object.keys(BaseSystemFields.fields) as Array<keyof A & keyof I>),
+      ...(Object.keys(BaseIdentifiedEntity.fields) as Array<keyof A & keyof I>),
+      '_tag' as keyof A & keyof I,
+    ),
+  ) as any
 }
