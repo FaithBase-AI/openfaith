@@ -44,6 +44,7 @@
    kubectl apply -f namespace.yaml
    kubectl apply -f secrets.yaml
    kubectl apply -f configmap.yaml
+   kubectl apply -f metrics-server.yaml
    kubectl apply -f redis.yaml
    kubectl apply -f zero-storage.yaml
    kubectl apply -f opentelemetry.yaml

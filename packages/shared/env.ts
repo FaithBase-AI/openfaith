@@ -20,23 +20,11 @@ const nodeEnv = pipe(
   ),
 )
 
-console.log(
-  'yeet',
-  {
-    ...process.env,
-    ...pipe(
-      process.env.npm_lifecycle_script,
-      Option.fromNullable,
-      Option.filter((x) => x === 'drizzle-kit studio'),
-      Option.match({
-        onNone: () => import.meta.env,
-        onSome: () => ({}),
-      }),
-    ),
-  },
+console.log('yeet', {
   nodeEnv,
-  nodeEnv === 'test' || nodeEnv === 'production',
-)
+  skipValidation: nodeEnv === 'test' || nodeEnv === 'production',
+  SS_PRERENDERING: process.env.SS_PRERENDERING,
+})
 
 const serverEnv = {
   // DB
