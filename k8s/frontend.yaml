@@ -27,15 +27,15 @@ spec:
         operator: Equal
         value: frontend
         effect: NoSchedule
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: workload
-                operator: In
-                values:
-                - frontend
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #       - matchExpressions:
+      #         - key: workload
+      #           operator: In
+      #           values:
+      #           - frontend
       containers:
       - name: frontend
         image: ghcr.io/faithbase-ai/openfaith-frontend:master
@@ -51,7 +51,7 @@ spec:
           requests:
             memory: "2Gi"
           limits:
-            memory: "3Gi"
+            memory: "6Gi"
         # Startup probe: gives up to 10 minutes for build to complete
         # Disables liveness checking until first success
         startupProbe:

@@ -23,7 +23,7 @@ const nodeEnv = pipe(
 console.log('yeet', {
   nodeEnv,
   skipValidation: nodeEnv === 'test' || nodeEnv === 'production',
-  SS_PRERENDERING: process.env.SS_PRERENDERING,
+  TSS_PRERENDERING: process.env.TSS_PRERENDERING,
 })
 
 const serverEnv = {
@@ -75,7 +75,7 @@ const serverEnv = {
 
 export const env = createEnv({
   // If we are prerendering,
-  server: process.env.SS_PRERENDERING
+  server: process.env.TSS_PRERENDERING
     ? ({
         // DB
         DB_HOST_PRIMARY: z.string().default(''),
