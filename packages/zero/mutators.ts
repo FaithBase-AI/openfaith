@@ -1,99 +1,166 @@
-import type { AuthData, ZSchema } from '@openfaith/zero/zeroSchema.mts'
-import {
-  convertEffectMutatorsToPromise,
-  type EffectTransaction,
-  ZeroMutatorAuthError,
-  ZeroMutatorValidationError,
-} from '@openfaith/zero-effect/client'
-import type { CustomMutatorDefs } from '@rocicorp/zero'
-import { Effect, Runtime, Schema } from 'effect'
+import { discoverUiEntities, type EntityUiConfig, enrichMutationData } from '@openfaith/schema'
+import { pluralize } from '@openfaith/shared'
+import type { AuthData, ZSchema } from '@openfaith/zero/zeroSchema.mjs'
+import type { CustomMutatorDefs, Transaction } from '@rocicorp/zero'
+import { Effect, type ParseResult, Schema } from 'effect'
 
-export const UpdatePersonInput = Schema.Struct({
-  firstName: Schema.String.pipe(Schema.optional),
-  id: Schema.String,
-  name: Schema.String.pipe(Schema.optional),
+export class MutatorAuthError extends Schema.TaggedError<MutatorAuthError>()('MutatorAuthError', {
+  authData: Schema.Unknown,
+  message: Schema.String,
+}) {}
+
+export class MutatorError extends Schema.TaggedError<MutatorError>()('MutatorError', {
+  cause: Schema.optional(Schema.Unknown),
+  input: Schema.Array(Schema.Unknown),
+  message: Schema.String,
+  operation: Schema.Literal('delete', 'insert', 'update', 'upsert'),
+  orgId: Schema.String,
+  tableName: Schema.String,
+  userId: Schema.String,
+}) {}
+
+export type MutationErrorTypes = MutatorError | MutatorAuthError | ParseResult.ParseError
+
+const effectMutator = Effect.fn('effectMutator')(function* (params: {
+  tx: Transaction<ZSchema>
+  input: Array<any>
+  entity: EntityUiConfig
+  operation: 'delete' | 'insert' | 'update' | 'upsert'
+  orgId: string
+  userId: string
+}) {
+  const { tx, input, entity, operation, orgId, userId } = params
+
+  const tableName = pluralize(entity.tag)
+
+  yield* Effect.log(`Processing ${operation} for ${entity.tag}`, {
+    itemCount: input.length,
+    orgId,
+    tableName,
+    userId,
+  })
+
+  const validatedInput = yield* enrichMutationData({
+    data: input,
+    entityType: entity.tag,
+    operation,
+    orgId,
+    schema: entity.schema,
+    userId,
+  })
+
+  yield* Effect.forEach(
+    validatedInput,
+    (input) =>
+      Effect.tryPromise({
+        catch: (error) =>
+          new MutatorError({
+            cause: error,
+            input,
+            message: `Failed to ${operation} on ${entity.tag}.`,
+            operation,
+            orgId,
+            tableName,
+            userId,
+          }),
+        try: async () => tx.mutate[tableName as keyof typeof tx.mutate][operation](input),
+      }),
+    {
+      concurrency: 'unbounded',
+    },
+  )
+
+  yield* Effect.log(`Successfully processed ${operation} for ${entity.tag}`, {
+    itemCount: input.length,
+    orgId,
+    tableName,
+    userId,
+  })
 })
-export type UpdatePersonInput = typeof UpdatePersonInput.Type
 
-export const UpdateCampusInput = Schema.Struct({
-  id: Schema.String,
-  name: Schema.String.pipe(Schema.optional),
-})
-export type UpdateCampusInput = typeof UpdateCampusInput.Type
+const validateAuth = (authData: Pick<AuthData, 'sub' | 'activeOrganizationId'> | undefined) => {
+  if (!authData) {
+    throw new MutatorAuthError({
+      authData,
+      message: 'Not authenticated',
+    })
+  }
 
-export function createMutators(
-  authData: Pick<AuthData, 'sub' | 'activeOrganizationId'> | undefined,
-) {
+  if (!authData.activeOrganizationId) {
+    throw new MutatorAuthError({
+      authData,
+      message: 'No active organization',
+    })
+  }
+
   return {
-    campuses: {
-      update: (tx: EffectTransaction<ZSchema>, input: UpdateCampusInput) =>
-        Effect.gen(function* () {
-          if (!authData) {
-            return yield* Effect.fail(
-              new ZeroMutatorAuthError({
-                message: 'Not authenticated',
-              }),
-            )
-          }
-
-          const validatedInput = yield* Schema.decodeUnknown(UpdateCampusInput)(input).pipe(
-            Effect.mapError(
-              (error) =>
-                new ZeroMutatorValidationError({
-                  message: `Invalid input: ${String(error)}`,
-                }),
-            ),
-          )
-
-          yield* tx.mutate.campuses.update({
-            ...validatedInput,
-          })
-
-          yield* Effect.log('Campus updated successfully', {
-            id: validatedInput.id,
-          })
-        }) as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError>,
-    },
-    people: {
-      update: (tx: EffectTransaction<ZSchema>, input: UpdatePersonInput) =>
-        Effect.gen(function* () {
-          if (!authData) {
-            return yield* Effect.fail(
-              new ZeroMutatorAuthError({
-                message: 'Not authenticated',
-              }),
-            )
-          }
-
-          const validatedInput = yield* Schema.decodeUnknown(UpdatePersonInput)(input).pipe(
-            Effect.mapError(
-              (error) =>
-                new ZeroMutatorValidationError({
-                  message: `Invalid input: ${String(error)}`,
-                }),
-            ),
-          )
-
-          yield* tx.mutate.people.update({
-            ...validatedInput,
-          })
-
-          yield* Effect.log('Person updated successfully', {
-            id: validatedInput.id,
-          })
-        }) as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError>,
-    },
+    orgId: authData.activeOrganizationId,
+    userId: authData.sub,
   }
 }
 
-export function createClientMutators(
+export function createMutators(
   authData: Pick<AuthData, 'sub' | 'activeOrganizationId'> | undefined,
 ): CustomMutatorDefs<ZSchema> {
-  const effectMutators = createMutators(authData)
+  const entities = discoverUiEntities()
 
-  const clientRuntime = Runtime.defaultRuntime
+  const mutators: CustomMutatorDefs<ZSchema> = {}
 
-  return convertEffectMutatorsToPromise(effectMutators, clientRuntime)
+  for (const entity of entities) {
+    const tableName = pluralize(entity.tag)
+
+    mutators[tableName] = {
+      delete: async (tx: Transaction<ZSchema>, input: Array<any>) => {
+        const { orgId, userId } = validateAuth(authData)
+
+        await effectMutator({
+          entity,
+          input,
+          operation: 'delete',
+          orgId,
+          tx,
+          userId,
+        }).pipe(Effect.runPromise)
+      },
+      insert: async (tx: Transaction<ZSchema>, input: Array<any>) => {
+        const { orgId, userId } = validateAuth(authData)
+
+        await effectMutator({
+          entity,
+          input,
+          operation: 'insert',
+          orgId,
+          tx,
+          userId,
+        }).pipe(Effect.runPromise)
+      },
+      update: async (tx: Transaction<ZSchema>, input: Array<any>) => {
+        const { orgId, userId } = validateAuth(authData)
+
+        await effectMutator({
+          entity,
+          input,
+          operation: 'update',
+          orgId,
+          tx,
+          userId,
+        }).pipe(Effect.runPromise)
+      },
+      upsert: async (tx: Transaction<ZSchema>, input: Array<any>) => {
+        const { orgId, userId } = validateAuth(authData)
+
+        await effectMutator({
+          entity,
+          input,
+          operation: 'upsert',
+          orgId,
+          tx,
+          userId,
+        }).pipe(Effect.runPromise)
+      },
+    }
+  }
+  return mutators
 }
 
-export type Mutators = ReturnType<typeof createClientMutators>
+export type Mutators = ReturnType<typeof createMutators>

@@ -191,8 +191,10 @@ export type PushResponse = typeof PushResponse.Type
 
 // Error schemas
 export class MutatorError extends Schema.TaggedError<MutatorError>()('MutatorError', {
+  cause: Schema.optional(Schema.Unknown),
   message: Schema.String,
-  mutationId: Schema.String.pipe(Schema.optional),
+  payload: Schema.Unknown,
+  urlParams: Schema.Unknown,
 }) {}
 
 export class ValidationError extends Schema.TaggedError<ValidationError>()('ValidationError', {
