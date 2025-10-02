@@ -26,7 +26,9 @@ export interface UniversalFormProps<T> {
  * Universal Form Component that automatically generates forms from Effect Schema
  * Supports both custom submit handlers and built-in Zero mutations
  */
-export function UniversalForm<T>(props: UniversalFormProps<T>) {
+export function UniversalForm<T extends Record<string, any> & { id: string }>(
+  props: UniversalFormProps<T>,
+) {
   const {
     schema,
     defaultValues,
@@ -61,11 +63,11 @@ export function UniversalForm<T>(props: UniversalFormProps<T>) {
       try {
         switch (mode) {
           case 'create': {
-            insertEntity(value)
+            insertEntity([value])
             break
           }
           case 'edit':
-            updateEntity(value as any)
+            updateEntity([value])
             break
           default:
             if (onSubmit) {

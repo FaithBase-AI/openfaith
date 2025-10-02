@@ -1,6 +1,6 @@
 import { Atom, useAtom } from '@effect-atom/atom-react'
-import { getCreateSchema, getDeleteSchema, getUpdateSchema } from '@openfaith/schema'
-import { getEntityId, pluralize } from '@openfaith/shared'
+import { enrichMutationData } from '@openfaith/schema'
+import { pluralize } from '@openfaith/shared'
 import { useZero } from '@openfaith/zero/useZero'
 import { Effect, Schema } from 'effect'
 import { useMemo } from 'react'
@@ -33,12 +33,12 @@ const zeroMutationE = (params: {
 
 type SchemaMutationParams = {
   schema: Schema.Schema<any>
-  data: any
+  data: Array<any>
   z: ReturnType<typeof useZero>
   userId: string
   orgId: string
   entityType: string
-  operation: 'insert' | 'update' | 'delete' | 'upsert'
+  operation: 'delete' | 'insert' | 'update' | 'upsert'
 }
 
 const successMessages = {
@@ -54,7 +54,7 @@ export const schemaMutationAtom = Atom.family((_key: string) => {
       const { schema, data, z, userId, orgId, entityType, operation } = params
 
       // Build enriched data based on operation
-      const parsedData = yield* enrichData({
+      const parsedData = yield* enrichMutationData({
         data,
         entityType,
         operation,
@@ -77,61 +77,6 @@ export const schemaMutationAtom = Atom.family((_key: string) => {
   )
 })
 
-const enrichData = Effect.fn('enrichData')(function* (params: {
-  data: Record<string, any>
-  operation: SchemaMutationParams['operation']
-  orgId: string
-  userId: string
-  entityType: string
-  schema: Schema.Schema<any>
-}) {
-  const { data, operation, orgId, userId, entityType, schema } = params
-  const mutatedAt = new Date().toISOString()
-
-  switch (operation) {
-    case 'upsert':
-    case 'insert': {
-      return yield* Schema.decodeUnknown(getCreateSchema(schema))({
-        // Base data only for insert/upsert operations
-        _tag: entityType,
-        createdAt: mutatedAt,
-        createdBy: userId,
-        customFields: [],
-        externalIds: [],
-        id: getEntityId(entityType),
-        orgId,
-        status: 'active',
-        tags: [],
-
-        ...data,
-
-        // Always update these fields
-        updatedAt: mutatedAt,
-        updatedBy: userId,
-      })
-    }
-
-    case 'update': {
-      const updatedData = yield* Schema.decodeUnknown(getUpdateSchema(schema))({
-        ...data,
-        updatedAt: mutatedAt,
-        updatedBy: userId,
-      })
-
-      return updatedData
-    }
-
-    case 'delete': {
-      return yield* Schema.decodeUnknown(getDeleteSchema(schema))({
-        ...data,
-        deleted: true,
-        deletedAt: mutatedAt,
-        deletedBy: userId,
-      })
-    }
-  }
-})
-
 export const useSchemaInsert = <T>(params: {
   schema: Schema.Schema<T>
   orgId: string
@@ -144,7 +89,7 @@ export const useSchemaInsert = <T>(params: {
   const [result, insert] = useAtom(schemaMutationAtom(`${entityType}-insert`))
 
   const insertFn = useMemo(
-    () => (data: Partial<T>) => {
+    () => (data: Array<Partial<T>>) => {
       insert({ data, entityType, operation: 'insert', orgId, schema, userId, z })
     },
     [insert, entityType, orgId, schema, userId, z],
@@ -165,7 +110,7 @@ export const useSchemaUpdate = <T>(params: {
   const [result, update] = useAtom(schemaMutationAtom(`${entityType}-update`))
 
   const updateFn = useMemo(
-    () => (data: Partial<T> & { id: string }) => {
+    () => (data: Array<Partial<T> & { id: string }>) => {
       update({ data, entityType, operation: 'update', orgId, schema, userId, z })
     },
     [update, entityType, orgId, schema, userId, z],
@@ -186,8 +131,8 @@ export const useSchemaDelete = <T>(params: {
   const [result, deleteEntity] = useAtom(schemaMutationAtom(`${entityType}-delete`))
 
   const deleteFn = useMemo(
-    () => (id: string) => {
-      deleteEntity({ data: { id }, entityType, operation: 'delete', orgId, schema, userId, z })
+    () => (data: Array<{ id: string }>) => {
+      deleteEntity({ data, entityType, operation: 'delete', orgId, schema, userId, z })
     },
     [deleteEntity, entityType, orgId, schema, userId, z],
   )
@@ -207,7 +152,7 @@ export const useSchemaUpsert = <T>(params: {
   const [result, upsert] = useAtom(schemaMutationAtom(`${entityType}-upsert`))
 
   const upsertFn = useMemo(
-    () => (data: Partial<T>) => {
+    () => (data: Array<Partial<T>>) => {
       upsert({ data, entityType, operation: 'upsert', orgId, schema, userId, z })
     },
     [upsert, entityType, orgId, schema, userId, z],

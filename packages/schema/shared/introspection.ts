@@ -1,6 +1,7 @@
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
-import { Array, Option, pipe, Schema, SchemaAST, String } from 'effect'
+import { getEntityId } from '@openfaith/shared'
+import { Array, Effect, Option, pipe, Schema, SchemaAST, String } from 'effect'
 
 /**
  * Helper function to get annotation from schema, handling both old and new formats
@@ -332,3 +333,73 @@ export const getDeleteSchema = <A, I = A, R = never>(_schema: Schema.Schema<A, I
     deletedBy: Schema.String,
     id: Schema.String,
   })
+
+export const enrichMutationData = Effect.fn('enrichData')(function* (params: {
+  data: Array<Record<string, any>>
+  operation: 'delete' | 'insert' | 'update' | 'upsert'
+  orgId: string
+  userId: string
+  entityType: string
+  schema: Schema.Schema<any>
+}) {
+  const { data, operation, orgId, userId, entityType, schema } = params
+  const mutatedAt = new Date().toISOString()
+
+  switch (operation) {
+    case 'upsert':
+    case 'insert': {
+      return yield* Schema.decodeUnknown(Schema.Array(getCreateSchema(schema)))(
+        pipe(
+          data,
+          Array.map((item) => ({
+            // Base data only for insert/upsert operations
+            _tag: entityType,
+            createdAt: mutatedAt,
+            createdBy: userId,
+            customFields: [],
+            externalIds: [],
+            id: getEntityId(entityType),
+            orgId,
+            status: 'active',
+            tags: [],
+
+            ...item,
+
+            // Always update these fields
+            updatedAt: mutatedAt,
+            updatedBy: userId,
+          })),
+        ),
+      )
+    }
+
+    case 'update': {
+      const updatedData = yield* Schema.decodeUnknown(Schema.Array(getUpdateSchema(schema)))(
+        pipe(
+          data,
+          Array.map((item) => ({
+            ...item,
+            updatedAt: mutatedAt,
+            updatedBy: userId,
+          })),
+        ),
+      )
+
+      return updatedData
+    }
+
+    case 'delete': {
+      return yield* Schema.decodeUnknown(Schema.Array(getDeleteSchema(schema)))(
+        pipe(
+          data,
+          Array.map((item) => ({
+            ...item,
+            deleted: true,
+            deletedAt: mutatedAt,
+            deletedBy: userId,
+          })),
+        ),
+      )
+    }
+  }
+})
