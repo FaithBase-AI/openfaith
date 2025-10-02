@@ -17,6 +17,20 @@ spec:
     spec:
       imagePullSecrets:
       - name: ghcr-pull-secret
+      tolerations:
+      - key: workload
+        operator: Equal
+        value: frontend
+        effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: workload
+                operator: In
+                values:
+                - frontend
       containers:
       - name: frontend
         image: ghcr.io/faithbase-ai/openfaith-frontend:master-e1aa265
@@ -28,6 +42,13 @@ spec:
             name: openfaith-config
         - secretRef:
             name: openfaith-secrets
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "3Gi"
+            cpu: "1000m"
 
 ---
 apiVersion: v1
