@@ -5,10 +5,6 @@ metadata:
   namespace: openfaith
   labels:
     app: zero
-  annotations:
-    keel.sh/policy: force
-    keel.sh/trigger: poll
-    keel.sh/pollSchedule: "@every 1m"
 spec:
   replicas: 1
   selector:

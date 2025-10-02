@@ -51,7 +51,7 @@ spec:
             memory: "2Gi"
             cpu: "500m"
           limits:
-            memory: "3Gi"
+            memory: "3500Mi"
             cpu: "1000m"
         # Frontend does a build step at startup, so needs longer initial delay
         livenessProbe:

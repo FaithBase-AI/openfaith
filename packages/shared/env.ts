@@ -3,18 +3,40 @@ import { createEnv } from '@t3-oss/env-core'
 import { Option, pipe } from 'effect'
 import { z } from 'zod'
 
-console.log('yeet', {
-  ...process.env,
-  ...pipe(
-    process.env.npm_lifecycle_script,
-    Option.fromNullable,
-    Option.filter((x) => x === 'drizzle-kit studio'),
-    Option.match({
-      onNone: () => import.meta.env,
-      onSome: () => ({}),
-    }),
+// We need to do this because in kubes we don't have the full env for some reason.
+const nodeEnv = pipe(
+  process.env.NODE_ENV,
+  Option.fromNullable,
+  Option.getOrElse(() =>
+    pipe(
+      process.env.npm_lifecycle_script,
+      Option.fromNullable,
+      Option.filter((x) => x === 'drizzle-kit studio'),
+      Option.match({
+        onNone: () => import.meta.env.NODE_ENV,
+        onSome: () => 'development',
+      }),
+    ),
   ),
-})
+)
+
+console.log(
+  'yeet',
+  {
+    ...process.env,
+    ...pipe(
+      process.env.npm_lifecycle_script,
+      Option.fromNullable,
+      Option.filter((x) => x === 'drizzle-kit studio'),
+      Option.match({
+        onNone: () => import.meta.env,
+        onSome: () => ({}),
+      }),
+    ),
+  },
+  nodeEnv,
+  nodeEnv === 'test' || nodeEnv === 'production',
+)
 export const env = createEnv({
   server: {
     // DB
@@ -116,5 +138,5 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 
-  skipValidation: process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'production',
+  skipValidation: nodeEnv === 'test' || nodeEnv === 'production',
 })

@@ -52,6 +52,7 @@
    kubectl apply -f shard-manager.yaml
    kubectl apply -f frontend.yaml
    kubectl apply -f ingress.yaml
+   kubectl apply -f keel.yaml
    ```
 
 4. **Run Database Migration**:
