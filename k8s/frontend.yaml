@@ -5,6 +5,10 @@ metadata:
   namespace: openfaith
   labels:
     app: frontend
+  annotations:
+    keel.sh/policy: force
+    keel.sh/trigger: poll
+    keel.sh/pollSchedule: "@every 1m"
 spec:
   replicas: 1
   selector:
@@ -17,9 +21,23 @@ spec:
     spec:
       imagePullSecrets:
       - name: ghcr-pull-secret
+      tolerations:
+      - key: workload
+        operator: Equal
+        value: frontend
+        effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: workload
+                operator: In
+                values:
+                - frontend
       containers:
       - name: frontend
-        image: ghcr.io/faithbase-ai/openfaith-frontend:master-e1aa265
+        image: ghcr.io/faithbase-ai/openfaith-frontend:master
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
@@ -28,6 +46,30 @@ spec:
             name: openfaith-config
         - secretRef:
             name: openfaith-secrets
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "3Gi"
+            cpu: "1000m"
+        # Frontend does a build step at startup, so needs longer initial delay
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 180
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
 
 ---
 apiVersion: v1
