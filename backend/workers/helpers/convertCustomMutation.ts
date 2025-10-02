@@ -1,6 +1,15 @@
 import type { CRUDMutation, CRUDOp, CustomMutation } from '@openfaith/domain'
 import { Array, Effect, Option, pipe, Schema } from 'effect'
 
+/**
+ * Converts custom mutations (array-based format) to CRUD entity workflow items.
+ *
+ * Custom mutations now use array format where args[0] is an array of items:
+ * { name: 'people|update', args: [[{ id: '1', name: 'John' }, { id: '2', name: 'Jane' }]] }
+ *
+ * This allows batch operations while maintaining compatibility with the workflow system.
+ */
+
 // Define tagged errors for custom mutation conversion
 export class InvalidMutationNameError extends Schema.TaggedError<InvalidMutationNameError>()(
   'InvalidMutationNameError',
@@ -90,7 +99,7 @@ const createCrudOperation = (
 
 /**
  * Converts a custom mutation to CRUD mutation and operation
- * Uses Effect primitives for error handling and immutable operations
+ * Now handles array-based mutations where args is an array of items
  */
 export const convertCustomMutationToCrudMutation = (
   mutation: CustomMutation,
@@ -123,7 +132,7 @@ export const convertCustomMutationToCrudMutation = (
       )
     }
 
-    // Get the first argument which should contain the data
+    // Get the first argument which should be an array of items
     const mutationDataOpt = pipe(mutation.args, Array.head)
 
     if (Option.isNone(mutationDataOpt)) {
@@ -137,24 +146,12 @@ export const convertCustomMutationToCrudMutation = (
 
     const mutationData = mutationDataOpt.value
 
-    // Validate that mutationData is an object
-    if (typeof mutationData !== 'object' || mutationData === null || Array.isArray(mutationData)) {
+    // Validate that mutationData is an array
+    if (!Array.isArray(mutationData)) {
       return yield* Effect.fail(
         new InvalidMutationDataError({
           mutationName: mutation.name,
-          reason: 'Mutation data must be a non-null object',
-        }),
-      )
-    }
-
-    const dataRecord = mutationData as Record<string, unknown>
-
-    // Validate that the data has an ID for operations that need it
-    if (!('id' in dataRecord) || typeof dataRecord.id !== 'string') {
-      return yield* Effect.fail(
-        new InvalidMutationDataError({
-          mutationName: mutation.name,
-          reason: 'Mutation data must contain a string "id" field',
+          reason: 'Mutation data must be an array of items',
         }),
       )
     }
@@ -162,35 +159,62 @@ export const convertCustomMutationToCrudMutation = (
     // Convert to appropriate CRUD operation based on the operation type
     const tableName = entityName // e.g., "people"
 
-    // Create PrimaryKey in the correct format (Record<string, unknown>)
-    const primaryKey = { id: dataRecord.id } as Record<string, unknown>
+    // Process each item in the array and create entity workflow items
+    const entityWorkflowItems = yield* Effect.forEach(mutationData, (item) =>
+      Effect.gen(function* () {
+        // Validate that item is an object
+        if (typeof item !== 'object' || item === null) {
+          return yield* Effect.fail(
+            new InvalidMutationDataError({
+              mutationName: mutation.name,
+              reason: 'Each item in mutation data array must be a non-null object',
+            }),
+          )
+        }
 
-    // Create CRUD operation based on operation type
-    const crudOp = yield* createCrudOperation(
-      operation,
-      tableName,
-      primaryKey,
-      dataRecord,
-      mutation.name,
+        const dataRecord = item as Record<string, unknown>
+
+        // Validate that the data has an ID for operations that need it
+        if (!('id' in dataRecord) || typeof dataRecord.id !== 'string') {
+          return yield* Effect.fail(
+            new InvalidMutationDataError({
+              mutationName: mutation.name,
+              reason: 'Each item must contain a string "id" field',
+            }),
+          )
+        }
+
+        // Create PrimaryKey in the correct format (Record<string, unknown>)
+        const primaryKey = { id: dataRecord.id } as Record<string, unknown>
+
+        // Create CRUD operation based on operation type
+        const crudOp = yield* createCrudOperation(
+          operation,
+          tableName,
+          primaryKey,
+          dataRecord,
+          mutation.name,
+        )
+
+        // Create a CRUD mutation structure that matches the expected schema
+        const crudMutation: CRUDMutation = {
+          args: [{ ops: [crudOp] }],
+          clientID: mutation.clientID,
+          id: mutation.id,
+          name: '_zero_crud',
+          timestamp: mutation.timestamp,
+          type: 'crud',
+        }
+
+        return {
+          entityName,
+          mutation: crudMutation,
+          op: crudOp,
+        }
+      }),
     )
 
-    // Create a CRUD mutation structure that matches the expected schema
-    const crudMutation: CRUDMutation = {
-      args: [{ ops: [crudOp] }],
-      clientID: mutation.clientID,
-      id: mutation.id,
-      name: '_zero_crud',
-      timestamp: mutation.timestamp,
-      type: 'crud',
-    }
-
-    return [
-      {
-        entityName,
-        mutation: crudMutation,
-        op: crudOp,
-      },
-    ]
+    return entityWorkflowItems
   })
 
 /**
