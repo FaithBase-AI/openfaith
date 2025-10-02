@@ -11,7 +11,7 @@ import {
 import { Effect } from 'effect'
 
 const createBaseMutation = (overrides: Partial<CustomMutation> = {}): CustomMutation => ({
-  args: [{ id: 'person_123', name: 'John Doe' }],
+  args: [[{ id: 'person_123', name: 'John Doe' }]], // Array of items now!
   clientID: 'client_123',
   id: 1,
   name: 'people|update',
@@ -43,7 +43,7 @@ effect('should convert people|update mutation correctly', () =>
 effect('should convert people|create mutation correctly', () =>
   Effect.gen(function* () {
     const mutation = createBaseMutation({
-      args: [{ email: 'jane@example.com', id: 'person_456', name: 'Jane Doe' }],
+      args: [[{ email: 'jane@example.com', id: 'person_456', name: 'Jane Doe' }]],
       name: 'people|create',
     })
     const result = yield* convertCustomMutationToCrudMutation(mutation)
@@ -66,7 +66,7 @@ effect('should convert people|create mutation correctly', () =>
 effect('should convert people|delete mutation correctly', () =>
   Effect.gen(function* () {
     const mutation = createBaseMutation({
-      args: [{ id: 'person_789' }],
+      args: [[{ id: 'person_789' }]],
       name: 'people|delete',
     })
     const result = yield* convertCustomMutationToCrudMutation(mutation)
@@ -85,7 +85,7 @@ effect('should convert people|delete mutation correctly', () =>
 effect('should handle different entity types', () =>
   Effect.gen(function* () {
     const mutation = createBaseMutation({
-      args: [{ id: 'group_123', name: 'Youth Group' }],
+      args: [[{ id: 'group_123', name: 'Youth Group' }]],
       name: 'groups|update',
     })
     const result = yield* convertCustomMutationToCrudMutation(mutation)
@@ -122,7 +122,7 @@ effect('should fail with InvalidMutationDataError for empty args', () =>
 
 effect('should fail with InvalidMutationDataError for missing id', () =>
   Effect.gen(function* () {
-    const mutation = createBaseMutation({ args: [{ name: 'John Doe' }] })
+    const mutation = createBaseMutation({ args: [[{ name: 'John Doe' }]] })
     const result = yield* Effect.flip(convertCustomMutationToCrudMutation(mutation))
 
     expect(result._tag).toBe('InvalidMutationDataError')
@@ -147,12 +147,12 @@ effect('should convert multiple valid mutations', () =>
     const mutations = [
       createBaseMutation({ id: 1, name: 'people|update' }),
       createBaseMutation({
-        args: [{ id: 'group_123', name: 'Youth' }],
+        args: [[{ id: 'group_123', name: 'Youth' }]],
         id: 2,
         name: 'groups|create',
       }),
       createBaseMutation({
-        args: [{ id: 'person_456' }],
+        args: [[{ id: 'person_456' }]],
         id: 3,
         name: 'people|delete',
       }),
@@ -176,7 +176,7 @@ effect('should skip invalid mutations and continue with valid ones', () =>
       createBaseMutation({ id: 1, name: 'people|update' }), // Valid
       createBaseMutation({ id: 2, name: 'invalid-name' }), // Invalid name
       createBaseMutation({
-        args: [{ id: 'group_123', name: 'Youth' }],
+        args: [[{ id: 'group_123', name: 'Youth' }]],
         id: 3,
         name: 'groups|create',
       }), // Valid
@@ -191,5 +191,52 @@ effect('should skip invalid mutations and continue with valid ones', () =>
     expect(result[0]?.op.op).toBe('update')
     expect(result[1]?.entityName).toBe('groups')
     expect(result[1]?.op.op).toBe('insert')
+  }),
+)
+
+// Batch operations
+effect('should handle batch mutations with multiple items in array', () =>
+  Effect.gen(function* () {
+    const mutation = createBaseMutation({
+      args: [
+        [
+          { id: 'person_123', name: 'John Doe' },
+          { id: 'person_456', name: 'Jane Doe' },
+          { id: 'person_789', name: 'Bob Smith' },
+        ],
+      ],
+      name: 'people|update',
+    })
+    const result = yield* convertCustomMutationToCrudMutation(mutation)
+
+    // Should create 3 separate entity workflow items
+    expect(result).toHaveLength(3)
+
+    expect(result[0]?.entityName).toBe('people')
+    expect(result[0]?.op.op).toBe('update')
+    expect(result[0]?.op.primaryKey).toEqual({ id: 'person_123' })
+    expect(result[0]?.op.value).toEqual({ id: 'person_123', name: 'John Doe' })
+
+    expect(result[1]?.entityName).toBe('people')
+    expect(result[1]?.op.op).toBe('update')
+    expect(result[1]?.op.primaryKey).toEqual({ id: 'person_456' })
+    expect(result[1]?.op.value).toEqual({ id: 'person_456', name: 'Jane Doe' })
+
+    expect(result[2]?.entityName).toBe('people')
+    expect(result[2]?.op.op).toBe('update')
+    expect(result[2]?.op.primaryKey).toEqual({ id: 'person_789' })
+    expect(result[2]?.op.value).toEqual({ id: 'person_789', name: 'Bob Smith' })
+  }),
+)
+
+effect('should fail with InvalidMutationDataError if args is not an array', () =>
+  Effect.gen(function* () {
+    const mutation = createBaseMutation({
+      args: [{ id: 'person_123', name: 'John Doe' }] as any, // Not wrapped in array
+    })
+    const result = yield* Effect.flip(convertCustomMutationToCrudMutation(mutation))
+
+    expect(result._tag).toBe('InvalidMutationDataError')
+    expect((result as InvalidMutationDataError).reason).toContain('must be an array')
   }),
 )
