@@ -58,8 +58,6 @@ export function UniversalForm<T extends Record<string, any> & { id: string }>(
   const form = useAppForm({
     defaultValues: (defaultValues ?? {}) as T,
     onSubmit: async ({ value }: { value: T }) => {
-      console.log(value)
-
       try {
         switch (mode) {
           case 'create': {
