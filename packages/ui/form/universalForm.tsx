@@ -1,13 +1,11 @@
 import { getCreateSchema } from '@openfaith/schema'
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
-import { getEntityId, pluralize } from '@openfaith/shared'
 import { useAppForm } from '@openfaith/ui/components/form/tsForm'
 import { QuickActionForm } from '@openfaith/ui/components/quickActions/quickActionsComponents'
 import { Button } from '@openfaith/ui/components/ui/button'
 import { getComponentProps, getFieldComponentName } from '@openfaith/ui/form/fieldComponentMapping'
 import { generateFieldConfigs } from '@openfaith/ui/form/fieldConfigGenerator'
-import { useSchemaInsert, useSchemaUpdate } from '@openfaith/ui/shared/hooks/schemaHooks'
-import { useZero } from '@openfaith/zero'
+import { useSchemaInsert, useSchemaUpdate } from '@openfaith/ui/shared/hooks/schemaMutations'
 import { revalidateLogic } from '@tanstack/react-form'
 import { Array, Order, pipe, Record, Schema } from 'effect'
 import { useMemo } from 'react'
@@ -17,11 +15,8 @@ export interface UniversalFormProps<T> {
   defaultValues?: Partial<T>
   onSubmit?: (data: T) => void | Promise<void>
   mode?: 'create' | 'edit' | 'custom'
-  onSuccess?: (data: T) => void
-  onError?: (error: any) => void
   fieldOverrides?: Partial<Record<keyof T, Partial<FieldConfig['field']>>>
   className?: string
-  loading?: boolean
   entityType: string
   orgId: string
   userId: string
@@ -37,27 +32,25 @@ export function UniversalForm<T>(props: UniversalFormProps<T>) {
     defaultValues,
     onSubmit,
     mode = 'custom',
-    onSuccess,
-    onError,
     fieldOverrides = {},
     className,
-    loading = false,
     entityType,
     orgId,
     userId,
   } = props
   const fieldConfigs = generateFieldConfigs(schema, fieldOverrides)
 
-  const z = useZero()
-  // Use mutation hooks when in create/edit mode
-  const { mutate: _schemaInsert, isPending: isInsertPending } = useSchemaInsert(schema, {
-    onError,
-    onSuccess,
+  const [, updateEntity] = useSchemaUpdate({
+    entityType,
+    orgId,
+    schema,
+    userId,
   })
-
-  const { mutate: schemaUpdate, isPending: isUpdatePending } = useSchemaUpdate(schema, {
-    onError,
-    onSuccess: onSuccess as any,
+  const [, insertEntity] = useSchemaInsert({
+    entityType,
+    orgId,
+    schema,
+    userId,
   })
 
   const form = useAppForm({
@@ -68,33 +61,11 @@ export function UniversalForm<T>(props: UniversalFormProps<T>) {
       try {
         switch (mode) {
           case 'create': {
-            const createdAt = new Date().toISOString()
-            const data = pipe(
-              {
-                ...(value as any),
-                _tag: entityType,
-                createdAt,
-                createdBy: userId,
-                customFields: [],
-                externalIds: [],
-                id: getEntityId(entityType),
-                orgId,
-                status: 'active',
-                tags: [],
-                updatedAt: createdAt,
-                updatedBy: userId,
-                userId,
-              },
-              Schema.decodeUnknownSync(schema),
-            )
-
-            z.mutate[pluralize(entityType) as keyof typeof z.mutate].insert(data as any)
-
-            // schemaInsert(value as any)
+            insertEntity(value)
             break
           }
           case 'edit':
-            schemaUpdate(value as any)
+            updateEntity(value as any)
             break
           default:
             if (onSubmit) {
@@ -114,10 +85,6 @@ export function UniversalForm<T>(props: UniversalFormProps<T>) {
       onDynamic: Schema.standardSchemaV1(mode === 'create' ? getCreateSchema(schema) : schema),
     },
   })
-
-  // Check if any mutation is in progress
-  const isMutating = isInsertPending || isUpdatePending
-  const isSubmitting = form.state.isSubmitting || loading || isMutating
 
   const formFields = pipe(
     fieldConfigs,
@@ -159,19 +126,23 @@ export function UniversalForm<T>(props: UniversalFormProps<T>) {
   return (
     <QuickActionForm
       Actions={
-        <>
-          <Button className='mr-auto' loading={isSubmitting} type='submit'>
-            {submitButtonText}
-          </Button>
-          <Button
-            disabled={isSubmitting}
-            onClick={() => form.reset()}
-            type='button'
-            variant='outline'
-          >
-            Reset
-          </Button>
-        </>
+        <form.Subscribe
+          selector={(state) => ({
+            isDefaultValue: state.isDefaultValue,
+            isSubmitting: state.isSubmitting,
+          })}
+        >
+          {({ isSubmitting, isDefaultValue }) => (
+            <Button
+              className='mr-auto'
+              disabled={isDefaultValue}
+              loading={isSubmitting}
+              type='submit'
+            >
+              {submitButtonText}
+            </Button>
+          )}
+        </form.Subscribe>
       }
       className={className}
       form={form}

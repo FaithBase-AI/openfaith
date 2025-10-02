@@ -1,3 +1,5 @@
+import { useOrgId } from '@openfaith/openfaith/data/users/useOrgId'
+import { useUserId } from '@openfaith/openfaith/data/users/useUserId'
 import { useSchemaQuickActions } from '@openfaith/openfaith/features/quickActions/schemaQuickActions'
 import { noOp, singularize } from '@openfaith/shared'
 import {
@@ -17,6 +19,8 @@ export const Route = createFileRoute('/_app/$group/$entity/')({
 function RouteComponent() {
   const { group, entity } = Route.useParams()
   const { setIsOpen } = useSchemaQuickActions()
+  const orgId = useOrgId()
+  const userId = useUserId()
 
   const entityOpt = useCachedEntityByUrl(group, entity)
 
@@ -106,7 +110,9 @@ function RouteComponent() {
                 filtering={{
                   filterPlaceHolder: `Search ${pipe(config.navItem.title, String.toLowerCase)}...`,
                 }}
+                orgId={orgId}
                 schema={schema}
+                userId={userId}
               />
             ),
           }),

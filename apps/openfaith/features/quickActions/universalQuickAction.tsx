@@ -80,7 +80,7 @@ export const UniversalQuickAction: FC<UniversalQuickActionProps> = (props) => {
         defaultValues={defaultValues}
         entityType={entityType}
         mode={mode}
-        onSuccess={() => onOpenChange(false)}
+        onSubmit={() => onOpenChange(false)}
         orgId={orgId}
         schema={quickAction.schema}
         userId={userId}

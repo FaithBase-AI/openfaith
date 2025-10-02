@@ -17,8 +17,8 @@ import {
   buildEntityRelationshipsForTable,
   useEntityNamesFetcher,
   useSchemaCollection,
-  useSchemaUpdate,
 } from '@openfaith/ui/shared/hooks/schemaHooks'
+import { useSchemaUpdate } from '@openfaith/ui/shared/hooks/schemaMutations'
 import {
   getActionsCell,
   getGridCellContent,
@@ -41,7 +41,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 export interface UniversalDataGridProps<T> {
   schema: Schema.Schema<T>
   onRowClick?: (row: T) => void
-  onEditRow?: (row: T) => void
   onRowsSelected?: (rows: Array<T>) => void
   onCellEdit?: (row: T, field: string, newValue: any) => void
   showRowNumbers?: boolean
@@ -54,6 +53,8 @@ export interface UniversalDataGridProps<T> {
     filterKey?: string
   }
   enableVirtualScrolling?: boolean // Enable virtual scrolling for pagination
+  orgId: string
+  userId: string
 }
 
 export const UniversalDataGrid = <T extends Record<string, any>>(
@@ -62,7 +63,6 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
   const {
     schema,
     onRowClick,
-    // onEditRow: providedOnEditRow,
     onRowsSelected,
     onCellEdit,
     showRowNumbers = true,
@@ -71,12 +71,9 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     editable = true,
     filtering = {},
     enableVirtualScrolling = true,
+    orgId,
+    userId,
   } = props
-
-  // Use auto edit handler if none provided
-  // For now, we don't use edit functionality in the Glide table
-  // const { onEditRow: autoOnEditRow } = useUniversalTableEdit(schema)
-  // const onEditRow = providedOnEditRow || autoOnEditRow
 
   const entityInfo = useMemo(() => {
     return extractEntityInfo(schema)
@@ -93,10 +90,11 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
   const { collection, nextPage, loading, pageSize } = useSchemaCollection({ schema })
 
   // Use the schema update hook for mutations
-  const { mutate: updateEntity } = useSchemaUpdate(schema, {
-    onError: (error) => {
-      console.error('Failed to update cell:', error)
-    },
+  const [, updateEntity] = useSchemaUpdate({
+    entityType: entityInfo.entityName,
+    orgId,
+    schema,
+    userId,
   })
 
   // Use the entity names fetcher hook for managing entity name lookups
