@@ -53,6 +53,15 @@ export const schemaMutationAtom = Atom.family((_key: string) => {
     Effect.fnUntraced(function* (params: SchemaMutationParams) {
       const { schema, data, z, userId, orgId, entityType, operation } = params
 
+      // yield* Effect.log('schemaMutationAtom', {
+      //   data,
+      //   entityType,
+      //   operation,
+      //   orgId,
+      //   schema,
+      //   userId,
+      // })
+
       // Build enriched data based on operation
       const parsedData = yield* enrichMutationData({
         data,
@@ -67,12 +76,16 @@ export const schemaMutationAtom = Atom.family((_key: string) => {
         ),
       )
 
-      yield* zeroMutationE({ entityType, operation, parsedData: parsedData as any, z }).pipe(
+      // yield* Effect.log('parsedData', parsedData)
+
+      yield* zeroMutationE({ entityType, operation, parsedData, z }).pipe(
         Effect.tapError((error) =>
           Effect.sync(() => toast.error(`Failed to ${operation}: ${error.message}`)),
         ),
         Effect.tap(() => Effect.sync(() => toast.success(successMessages[operation]))),
       )
+
+      // yield* Effect.log('zeroMutationE completed', result)
     }),
   )
 })

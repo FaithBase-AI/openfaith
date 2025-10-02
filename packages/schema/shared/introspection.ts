@@ -319,12 +319,25 @@ export const getCreateSchema = <A, I = A, R = never>(
 
 export const getUpdateSchema = <A, I = A, R = never>(
   schema: Schema.Schema<A, I, R>,
-): Schema.Schema<A, I, R> =>
-  Schema.Struct({
-    // @ts-expect-error - We have a struct, should be fine.
-    ...Schema.partial(schema).fields,
-    id: Schema.String,
-  }) as any
+): Schema.Schema<A, I, R> => {
+  // Check if this is a class schema (has .fields property)
+  if ('fields' in schema && typeof schema.fields === 'object') {
+    // For class schemas: omit id, make partial, then extend with required id
+    return Schema.Struct(schema.fields as any).pipe(
+      Schema.omit('id'),
+      Schema.partial,
+      Schema.extend(Schema.Struct({ id: Schema.String })),
+    ) as any
+  }
+
+  // For regular Struct schemas: omit id, make partial, then extend with required id
+  return pipe(
+    schema,
+    Schema.omit('id' as any),
+    Schema.partial,
+    Schema.extend(Schema.Struct({ id: Schema.String })),
+  ) as any
+}
 
 export const getDeleteSchema = <A, I = A, R = never>(_schema: Schema.Schema<A, I, R>) =>
   Schema.Struct({
@@ -374,7 +387,7 @@ export const enrichMutationData = Effect.fn('enrichData')(function* (params: {
     }
 
     case 'update': {
-      const updatedData = yield* Schema.decodeUnknown(Schema.Array(getUpdateSchema(schema)))(
+      return yield* Schema.decodeUnknown(Schema.Array(getUpdateSchema(schema)))(
         pipe(
           data,
           Array.map((item) => ({
@@ -384,8 +397,6 @@ export const enrichMutationData = Effect.fn('enrichData')(function* (params: {
           })),
         ),
       )
-
-      return updatedData
     }
 
     case 'delete': {

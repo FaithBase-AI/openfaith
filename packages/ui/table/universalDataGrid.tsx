@@ -284,7 +284,8 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
         [field.key]: extractedValue,
         id: rowId,
       }
-      updateEntity(updatedData as any)
+
+      updateEntity([updatedData as any])
 
       // Also call the custom callback if provided
       if (onCellEdit) {
