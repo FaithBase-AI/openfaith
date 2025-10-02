@@ -5,6 +5,10 @@ metadata:
   namespace: openfaith
   labels:
     app: frontend
+  annotations:
+    keel.sh/policy: force
+    keel.sh/trigger: poll
+    keel.sh/pollSchedule: "@every 1m"
 spec:
   replicas: 1
   selector:
@@ -33,7 +37,7 @@ spec:
                 - frontend
       containers:
       - name: frontend
-        image: ghcr.io/faithbase-ai/openfaith-frontend:master-e1aa265
+        image: ghcr.io/faithbase-ai/openfaith-frontend:master
         imagePullPolicy: Always
         ports:
         - containerPort: 3000

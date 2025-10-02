@@ -5,6 +5,10 @@ metadata:
   namespace: openfaith
   labels:
     app: workers
+  annotations:
+    keel.sh/policy: force
+    keel.sh/trigger: poll
+    keel.sh/pollSchedule: "@every 1m"
 spec:
   replicas: 2
   selector:
@@ -19,7 +23,7 @@ spec:
       - name: ghcr-pull-secret
       containers:
       - name: workers
-        image: ghcr.io/faithbase-ai/openfaith-workers:master-e1aa265
+        image: ghcr.io/faithbase-ai/openfaith-workers:master
         imagePullPolicy: Always
         ports:
         - containerPort: 3020
