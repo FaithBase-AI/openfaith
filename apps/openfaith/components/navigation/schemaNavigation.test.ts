@@ -270,6 +270,11 @@ effect('should load icon components using the actual loadIcon logic', () =>
     // This tests the real camelCase -> PascalCase conversion logic
     const testEntities: Array<EntityUiConfig> = [
       {
+        meta: {
+          disableCreate: false,
+          disableDelete: false,
+          disableEdit: false,
+        },
         navConfig: {
           enabled: true,
           icon: 'personIcon',
@@ -282,6 +287,11 @@ effect('should load icon components using the actual loadIcon logic', () =>
         tag: 'person',
       },
       {
+        meta: {
+          disableCreate: false,
+          disableDelete: false,
+          disableEdit: false,
+        },
         navConfig: {
           enabled: true,
           icon: 'buildingIcon',
@@ -407,6 +417,11 @@ effect('should handle missing icons by falling back to CircleIcon', () =>
   Effect.gen(function* () {
     // Test with an entity that has an invalid icon name
     const invalidEntity: EntityUiConfig = {
+      meta: {
+        disableCreate: false,
+        disableDelete: false,
+        disableEdit: false,
+      },
       navConfig: {
         enabled: true,
         icon: 'nonExistentIcon',
