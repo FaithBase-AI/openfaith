@@ -4,11 +4,6 @@ metadata:
   name: openfaith-config
   namespace: openfaith
 data:
-  # Database Configuration
-  DB_HOST_PRIMARY: "postgres-service"
-  DB_NAME: "postgres"
-  DB_PORT: "5432"
-  
   # Zero Configuration (Backend/Workers - Server-side)
   ZERO_APP_ID: "openfaith_prod"
   ZERO_NUM_SYNC_WORKERS: "4"
