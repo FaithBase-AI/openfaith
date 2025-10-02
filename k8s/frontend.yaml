@@ -53,6 +53,23 @@ spec:
           limits:
             memory: "3Gi"
             cpu: "1000m"
+        # Frontend does a build step at startup, so needs longer initial delay
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 180
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
 
 ---
 apiVersion: v1
