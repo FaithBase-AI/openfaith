@@ -9,6 +9,7 @@ metadata:
     keel.sh/policy: force
     keel.sh/trigger: poll
     keel.sh/pollSchedule: "@every 1m"
+    keel.sh/match-tag: "true"
 spec:
   replicas: 2
   selector:

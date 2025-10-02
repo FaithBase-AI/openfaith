@@ -9,6 +9,7 @@ metadata:
     keel.sh/policy: force
     keel.sh/trigger: poll
     keel.sh/pollSchedule: "@every 1m"
+    keel.sh/match-tag: "true"
 spec:
   replicas: 1
   selector:
@@ -49,28 +50,34 @@ spec:
         resources:
           requests:
             memory: "2Gi"
-            cpu: "500m"
           limits:
-            memory: "3500Mi"
-            cpu: "1000m"
-        # Frontend does a build step at startup, so needs longer initial delay
+            memory: "3Gi"
+        # Startup probe: gives up to 10 minutes for build to complete
+        # Disables liveness checking until first success
+        startupProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 60
+          timeoutSeconds: 5
+        # Liveness probe: only starts after startup succeeds
         livenessProbe:
           httpGet:
             path: /
             port: 3000
-          initialDelaySeconds: 120
           periodSeconds: 30
           timeoutSeconds: 5
           failureThreshold: 3
+        # Readiness probe: determines when to route traffic
         readinessProbe:
           httpGet:
             path: /
             port: 3000
-          initialDelaySeconds: 180
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
-
 ---
 apiVersion: v1
 kind: Service
