@@ -25,14 +25,14 @@ const ChmsBadge: FC<ChmsBadgeProps> = (props) => {
   return (
     <span
       className={cn(
-        'ml-1 inline-flex flex-shrink-0 items-center whitespace-nowrap rounded-2xl bg-gray-200 pr-2 pl-1',
+        'ml-1 inline-flex flex-shrink-0 items-center whitespace-nowrap rounded-2xl bg-neutral-200 pr-2 pl-1 dark:bg-neutral-700',
         className,
       )}
     >
       <IconWrapper className={cn('ml-1 inline-block', iconClassName)} size={4}>
         {Icon}
       </IconWrapper>
-      <span className={cn('-mt-0 ml-1 font-semibold text-lg', nameClassName)}>{Name}</span>
+      <span className={cn('ml-1 font-semibold text-lg text-primary', nameClassName)}>{Name}</span>
     </span>
   )
 }
