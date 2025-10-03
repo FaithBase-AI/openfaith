@@ -27,6 +27,7 @@ import type {
   OptionColumnIds,
 } from '@openfaith/ui/components/data-table-filter/core/types'
 import { collectionViewsAtom, getCollectionView } from '@openfaith/ui/shared/globalState'
+import { UniversalDropdownMenu } from '@openfaith/ui/table/universalDropdownMenu'
 import { Array, pipe } from 'effect'
 import { useAtom } from 'jotai'
 import { useTheme } from 'next-themes'
@@ -58,6 +59,7 @@ type CollectionDataGridProps<
   filtersOptions?: Partial<Record<OptionColumnIds<TColumns>, Array<ColumnOption> | undefined>>
   totalRows?: number // Optional total row count for virtual scrolling
   enableVirtualScrolling?: boolean // Whether to enable virtual scrolling
+  editable: boolean
 }
 
 export const CollectionDataGrid = <
@@ -87,7 +89,16 @@ export const CollectionDataGrid = <
     filtersOptions,
     totalRows,
     enableVirtualScrolling = false,
+    editable,
   } = props
+
+  const [showMenu, setShowMenu] = useState<
+    | {
+        row: TData
+        bounds: Rectangle
+      }
+    | undefined
+  >()
 
   const [collectionViews] = useAtom(collectionViewsAtom)
   const collectionView = getCollectionView(collectionViews, _tag)
@@ -144,8 +155,19 @@ export const CollectionDataGrid = <
     [data, providedGetCellContent],
   )
 
-  const onRowClicked = useCallback(
+  const localOnCellClicked = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
+      const [col, row] = cell
+      const column = columns[col]
+      const dataRow = data[row]
+
+      if (column?.id === 'actions' && dataRow) {
+        setShowMenu({
+          bounds: event.bounds,
+          row: dataRow,
+        })
+      }
+
       if (onCellClicked) {
         onCellClicked(cell, event)
       } else {
@@ -156,7 +178,7 @@ export const CollectionDataGrid = <
         }
       }
     },
-    [data, onRowClick, onCellClicked],
+    [data, onRowClick, onCellClicked, columns],
   )
 
   // Handle selection change
@@ -224,8 +246,8 @@ export const CollectionDataGrid = <
               getCellContent={getCellContent}
               gridSelection={selection}
               height={gridHeight}
-              onCellClicked={onRowClicked}
-              onCellEdited={onCellEdited}
+              onCellClicked={localOnCellClicked}
+              onCellEdited={editable ? onCellEdited : undefined}
               onColumnResize={onColumnResize}
               onGridSelectionChange={onSelectionChange}
               onVisibleRegionChanged={onVisibleRegionChanged}
@@ -239,6 +261,8 @@ export const CollectionDataGrid = <
           )}
         </div>
       )}
+
+      <UniversalDropdownMenu setShowMenu={setShowMenu} showMenu={showMenu} />
     </div>
   )
 }
