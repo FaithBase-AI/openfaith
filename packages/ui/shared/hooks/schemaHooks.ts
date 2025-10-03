@@ -3,7 +3,7 @@ import {
   discoverUiEntities,
   type EntityUiConfig,
   extractEntityInfo,
-  extractEntityTag,
+  extractEntityTagOpt,
   getSchemaByEntityType as getSchemaByEntityTypeBase,
   OfForeignKey,
   OfRelations,
@@ -11,6 +11,7 @@ import {
 } from '@openfaith/schema'
 import { mkZeroTableName, nullOp, pluralize, singularize } from '@openfaith/shared'
 import { CircleIcon } from '@openfaith/ui/icons/circleIcon'
+import { useStableMemo } from '@openfaith/ui/shared/hooks/memo'
 import { useFilterQuery } from '@openfaith/ui/shared/hooks/useFilterQuery'
 import { getIconComponent } from '@openfaith/ui/shared/iconLoader'
 import type { ZSchema } from '@openfaith/zero'
@@ -22,6 +23,7 @@ import {
   Array,
   Clock,
   Effect,
+  Equivalence,
   HashMap,
   HashSet,
   Option,
@@ -552,10 +554,10 @@ export const buildSchemaCollectionQuery = <T>(
   z: ReturnType<typeof useZero>,
   limit?: number,
 ) => {
-  const entityTag = extractEntityTag(schema.ast)
+  const entityTagOpt = extractEntityTagOpt(schema.ast)
 
   return pipe(
-    entityTag,
+    entityTagOpt,
     Option.match({
       onNone: nullOp,
       onSome: (tag) => {
@@ -612,10 +614,10 @@ const decodeSchemaCollection = <T>(
 export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> }) => {
   const { schema } = params
 
-  const entityTag = extractEntityTag(schema.ast)
+  const entityTagOpt = extractEntityTagOpt(schema.ast)
 
   const filterKey = pipe(
-    entityTag,
+    entityTagOpt,
     Option.match({
       onNone: () => 'default',
       onSome: (tag) => `${pipe(tag, String.toLowerCase)}Filters`,
@@ -1022,22 +1024,31 @@ export const useSchemaEntity = <T>(
 
   const z = useZero()
 
-  const entityTag = useMemo(() => extractEntityTag(schema.ast), [schema])
+  const entityTagOpt = useMemo(() => extractEntityTagOpt(schema.ast), [schema])
 
-  const query = useMemo(() => {
-    if (!enabled || !entityId) return null
+  const query = useStableMemo(
+    () => {
+      if (!enabled || !entityId) return null
 
-    return pipe(
-      entityTag,
-      Option.match({
-        onNone: nullOp,
-        onSome: (tag) => {
-          const tableName = mkZeroTableName(String.capitalize(tag))
-          return getBaseEntityQuery(z, tableName, entityId)
-        },
-      }),
-    )
-  }, [z, entityTag, entityId, enabled])
+      return pipe(
+        entityTagOpt,
+        Option.match({
+          onNone: nullOp,
+          onSome: (tag) => {
+            const tableName = mkZeroTableName(String.capitalize(tag))
+            return getBaseEntityQuery(z, tableName, entityId)
+          },
+        }),
+      )
+    },
+    [z, entityTagOpt, entityId, enabled],
+    Equivalence.tuple(
+      Equivalence.strict(),
+      Option.getEquivalence(Equivalence.string),
+      Equivalence.string,
+      Equivalence.boolean,
+    ),
+  )
 
   const [data, info] = useQuery(query as Parameters<typeof useQuery>[0])
 

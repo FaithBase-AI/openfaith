@@ -5,7 +5,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@openfaith/ui/components/ui/dropdown-menu'
-import { Option, pipe } from 'effect'
+import { EditIcon } from '@openfaith/ui/icons/editIcon'
+import { useUniversalTableEdit } from '@openfaith/ui/table/useUniversalTableEdit'
+import { Option, pipe, type Schema } from 'effect'
 import type { Dispatch, SetStateAction } from 'react'
 
 type UniversalDropdownMenuProps<T> = {
@@ -24,10 +26,14 @@ type UniversalDropdownMenuProps<T> = {
       | undefined
     >
   >
+  schema: Schema.Schema<T>
 }
 
 export const UniversalDropdownMenu = <T,>(props: UniversalDropdownMenuProps<T>) => {
-  const { showMenu, setShowMenu } = props
+  const { showMenu, setShowMenu, schema } = props
+
+  const { onEditRow } = useUniversalTableEdit(schema)
+
   return (
     <DropdownMenu
       onOpenChange={(open) => {
@@ -54,14 +60,23 @@ export const UniversalDropdownMenu = <T,>(props: UniversalDropdownMenuProps<T>) 
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align='start'>
-        <DropdownMenuItem
-          onClick={() => {
-            console.log('Test action clicked for row:', showMenu?.row)
-            setShowMenu(undefined)
-          }}
-        >
-          Test Action
-        </DropdownMenuItem>
+        {pipe(
+          showMenu,
+          Option.fromNullable,
+          Option.match({
+            onNone: () => null,
+            onSome: (x) => (
+              <DropdownMenuItem
+                onClick={() => {
+                  onEditRow(x.row)
+                }}
+              >
+                <EditIcon className={'mr-2 size-4'} />
+                <p className={'mr-auto mb-auto ml-0'}>Edit</p>
+              </DropdownMenuItem>
+            ),
+          }),
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )

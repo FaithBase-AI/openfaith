@@ -224,7 +224,7 @@ export const hasEmailPattern = (ast: SchemaAST.AST): boolean => {
  * Extracts the entity tag from a schema AST
  * Handles both TypeLiteral (old Schema.Struct) and Transformation (class-based) ASTs
  */
-export const extractEntityTag = (ast: SchemaAST.AST): Option.Option<string> => {
+export const extractEntityTagOpt = (ast: SchemaAST.AST): Option.Option<string> => {
   const extractFromTypeLiteral = (typeLiteralAst: SchemaAST.AST): Option.Option<string> => {
     if (!SchemaAST.isTypeLiteral(typeLiteralAst)) {
       return Option.none()
@@ -276,7 +276,7 @@ export const extractEntityInfo = (
   const entityAnnotation = pipe(extractEntityName(schema), Option.getOrUndefined)
 
   // Get entity tag from _tag field if present
-  const entityTag = pipe(extractEntityTag(schema.ast), Option.getOrUndefined)
+  const entityTag = pipe(extractEntityTagOpt(schema.ast), Option.getOrUndefined)
 
   return {
     entityName: entityAnnotation || 'item',

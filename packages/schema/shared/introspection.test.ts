@@ -3,7 +3,7 @@ import { effect } from '@openfaith/bun-test'
 import {
   extractAST,
   extractEntityInfo,
-  extractEntityTag,
+  extractEntityTagOpt,
   extractLiteralOptions,
   extractSchemaFields,
   getUiConfig,
@@ -159,16 +159,16 @@ effect('extractLiteralOptions should return empty array for non-literal types', 
 
 effect('extractEntityTag should extract _tag literal from schema', () =>
   Effect.gen(function* () {
-    const personTag = extractEntityTag(TestPersonSchema.ast)
-    expect(personTag._tag).toBe('Some')
-    if (personTag._tag === 'Some') {
-      expect(personTag.value).toBe('Person')
+    const personTagOpt = extractEntityTagOpt(TestPersonSchema.ast)
+    expect(personTagOpt._tag).toBe('Some')
+    if (personTagOpt._tag === 'Some') {
+      expect(personTagOpt.value).toBe('Person')
     }
 
-    const testEntityTag = extractEntityTag(TestSchemaWithAnnotations.ast)
-    expect(testEntityTag._tag).toBe('Some')
-    if (testEntityTag._tag === 'Some') {
-      expect(testEntityTag.value).toBe('TestEntity')
+    const testEntityTagOpt = extractEntityTagOpt(TestSchemaWithAnnotations.ast)
+    expect(testEntityTagOpt._tag).toBe('Some')
+    if (testEntityTagOpt._tag === 'Some') {
+      expect(testEntityTagOpt.value).toBe('TestEntity')
     }
   }),
 )
@@ -180,16 +180,16 @@ effect('extractEntityTag should return None for schemas without _tag', () =>
       name: Schema.String,
     })
 
-    const tag = extractEntityTag(SchemaWithoutTag.ast)
-    expect(tag._tag).toBe('None')
+    const tagOpt = extractEntityTagOpt(SchemaWithoutTag.ast)
+    expect(tagOpt._tag).toBe('None')
   }),
 )
 
 effect('extractEntityTag should return None for non-TypeLiteral schemas', () =>
   Effect.gen(function* () {
     const stringSchema = Schema.String
-    const tag = extractEntityTag(stringSchema.ast)
-    expect(tag._tag).toBe('None')
+    const tagOpt = extractEntityTagOpt(stringSchema.ast)
+    expect(tagOpt._tag).toBe('None')
   }),
 )
 

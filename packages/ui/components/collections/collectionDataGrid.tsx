@@ -3,6 +3,7 @@
 import '@glideapps/glide-data-grid/dist/index.css'
 
 import {
+  type CellClickedEventArgs,
   CompactSelection,
   DataEditor,
   type GridCell,
@@ -19,20 +20,12 @@ import type {
   OptionColumnIds,
 } from '@openfaith/ui/components/data-table-filter/core/types'
 import { collectionViewsAtom, getCollectionView } from '@openfaith/ui/shared/globalState'
-import { UniversalDropdownMenu } from '@openfaith/ui/table/universalDropdownMenu'
-import { Array, Option, pipe } from 'effect'
+import { Array, pipe } from 'effect'
 import { useAtom } from 'jotai'
 import { useTheme } from 'next-themes'
 import type { ReactNode } from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import useMeasure from 'react-use-measure'
-
-type CellClickedEventArgs = {
-  bounds: Rectangle
-  localEventX: number
-  localEventY: number
-  kind: string
-}
 
 type CollectionDataGridProps<
   TData extends Record<string, any>,
@@ -91,14 +84,6 @@ export const CollectionDataGrid = <
     editable,
   } = props
 
-  const [showMenu, setShowMenu] = useState<
-    | {
-        row: TData
-        bounds: Rectangle
-      }
-    | undefined
-  >()
-
   const [collectionViews] = useAtom(collectionViewsAtom)
   const collectionView = getCollectionView(collectionViews, _tag)
 
@@ -156,17 +141,6 @@ export const CollectionDataGrid = <
 
   const localOnCellClicked = useCallback(
     (cell: Item, event: CellClickedEventArgs) => {
-      const [col, row] = cell
-      const column = columns[col]
-      const dataRow = data[row]
-
-      if (column?.id === 'actions' && dataRow) {
-        setShowMenu({
-          bounds: event.bounds,
-          row: dataRow,
-        })
-      }
-
       if (onCellClicked) {
         onCellClicked(cell, event)
       } else {
@@ -177,7 +151,7 @@ export const CollectionDataGrid = <
         }
       }
     },
-    [data, onRowClick, onCellClicked, columns],
+    [data, onRowClick, onCellClicked],
   )
 
   // Handle selection change
@@ -259,15 +233,6 @@ export const CollectionDataGrid = <
             />
           )}
         </div>
-      )}
-
-      {pipe(
-        columns,
-        Array.findFirst((column) => column.id === 'actions'),
-        Option.match({
-          onNone: () => null,
-          onSome: () => <UniversalDropdownMenu setShowMenu={setShowMenu} showMenu={showMenu} />,
-        }),
       )}
     </div>
   )

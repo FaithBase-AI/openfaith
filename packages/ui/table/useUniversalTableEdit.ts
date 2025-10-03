@@ -1,6 +1,7 @@
 import { useSchemaEditActions } from '@openfaith/openfaith/features/quickActions/schemaQuickActions'
-import { extractEntityTag } from '@openfaith/schema'
-import { Option, pipe, type Schema } from 'effect'
+import { extractEntityTagOpt } from '@openfaith/schema'
+import { Option, type Schema } from 'effect'
+import { useCallback } from 'react'
 
 /**
  * Hook that provides edit functionality for UniversalTable
@@ -9,16 +10,13 @@ import { Option, pipe, type Schema } from 'effect'
 export const useUniversalTableEdit = <T>(schema: Schema.Schema<T>) => {
   const { openEdit } = useSchemaEditActions()
 
-  const entityTag = extractEntityTag(schema.ast)
+  const entityTag = extractEntityTagOpt(schema.ast).pipe(Option.getOrElse(() => ''))
 
-  const onEditRow = pipe(
-    entityTag,
-    Option.match({
-      onNone: () => undefined,
-      onSome: (tag) => (row: T) => {
-        openEdit(tag, row)
-      },
-    }),
+  const onEditRow = useCallback(
+    <T>(row: T) => {
+      openEdit(entityTag, row)
+    },
+    [entityTag, openEdit],
   )
 
   return {
