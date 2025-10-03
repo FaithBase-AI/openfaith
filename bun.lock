@@ -411,26 +411,11 @@
       "version": "0.1.0",
       "dependencies": {
         "@openfaith/shared": "workspace:*",
-        "@openfaith/zero-effect": "workspace:*",
         "@rocicorp/zero": "catalog:",
         "drizzle-zero": "0.12.0",
         "effect": "catalog:",
       },
       "devDependencies": {
-        "typescript": "catalog:",
-      },
-    },
-    "packages/zero-effect": {
-      "name": "@openfaith/zero-effect",
-      "version": "0.1.0",
-      "dependencies": {
-        "@effect/sql": "catalog:",
-        "@effect/sql-pg": "catalog:",
-        "@rocicorp/zero": "catalog:",
-        "effect": "catalog:",
-      },
-      "devDependencies": {
-        "@openfaith/bun-test": "workspace:*",
         "typescript": "catalog:",
       },
     },
@@ -1017,8 +1002,6 @@
     "@openfaith/workers": ["@openfaith/workers@workspace:backend/workers"],
 
     "@openfaith/zero": ["@openfaith/zero@workspace:packages/zero"],
-
-    "@openfaith/zero-effect": ["@openfaith/zero-effect@workspace:packages/zero-effect"],
 
     "@opentelemetry/api": ["@opentelemetry/api@1.9.0", "", {}, "sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg=="],
 

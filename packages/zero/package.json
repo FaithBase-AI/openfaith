@@ -1,7 +1,6 @@
 {
   "dependencies": {
     "@openfaith/shared": "workspace:*",
-    "@openfaith/zero-effect": "workspace:*",
     "@rocicorp/zero": "catalog:",
     "drizzle-zero": "0.12.0",
     "effect": "catalog:"
