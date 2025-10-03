@@ -11,7 +11,7 @@ import {
 import { Effect } from 'effect'
 
 const createBaseMutation = (overrides: Partial<CustomMutation> = {}): CustomMutation => ({
-  args: [[{ id: 'person_123', name: 'John Doe' }]], // Array of items now!
+  args: [[{ id: 'person_123', name: 'John Doe' }]],
   clientID: 'client_123',
   id: 1,
   name: 'people|update',

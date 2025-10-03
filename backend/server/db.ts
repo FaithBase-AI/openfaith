@@ -31,7 +31,6 @@ export class BunSQLConnection implements DBConnection<SQL> {
   }
 
   transaction<TRet>(fn: (tx: DBTransaction<TransactionSQL>) => Promise<TRet>): Promise<TRet> {
-    // Bun SQL transactions use .begin()
     return this.#client.begin((sqlTx) => fn(new BunSQLTransaction(sqlTx))) as Promise<TRet>
   }
 }
@@ -44,7 +43,6 @@ class BunSQLTransaction implements DBTransaction<TransactionSQL> {
   }
 
   query(sql: string, params: Array<unknown>): Promise<Array<Row>> {
-    // Same API as postgres.js!
     return this.wrappedTransaction.unsafe(sql, params)
   }
 }
