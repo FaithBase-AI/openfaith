@@ -12,14 +12,6 @@ import {
   type Item,
   type Rectangle,
 } from '@glideapps/glide-data-grid'
-
-type CellClickedEventArgs = {
-  bounds: Rectangle
-  localEventX: number
-  localEventY: number
-  kind: string
-}
-
 import { CollectionToolbarDataGrid } from '@openfaith/ui/components/collections/collectionToolbarDataGrid'
 import type {
   ColumnConfig,
@@ -28,12 +20,19 @@ import type {
 } from '@openfaith/ui/components/data-table-filter/core/types'
 import { collectionViewsAtom, getCollectionView } from '@openfaith/ui/shared/globalState'
 import { UniversalDropdownMenu } from '@openfaith/ui/table/universalDropdownMenu'
-import { Array, pipe } from 'effect'
+import { Array, Option, pipe } from 'effect'
 import { useAtom } from 'jotai'
 import { useTheme } from 'next-themes'
 import type { ReactNode } from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import useMeasure from 'react-use-measure'
+
+type CellClickedEventArgs = {
+  bounds: Rectangle
+  localEventX: number
+  localEventY: number
+  kind: string
+}
 
 type CollectionDataGridProps<
   TData extends Record<string, any>,
@@ -262,7 +261,14 @@ export const CollectionDataGrid = <
         </div>
       )}
 
-      <UniversalDropdownMenu setShowMenu={setShowMenu} showMenu={showMenu} />
+      {pipe(
+        columns,
+        Array.findFirst((column) => column.id === 'actions'),
+        Option.match({
+          onNone: () => null,
+          onSome: () => <UniversalDropdownMenu setShowMenu={setShowMenu} showMenu={showMenu} />,
+        }),
+      )}
     </div>
   )
 }
