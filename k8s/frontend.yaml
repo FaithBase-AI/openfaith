@@ -51,7 +51,7 @@ spec:
           requests:
             memory: "2Gi"
           limits:
-            memory: "6Gi"
+            memory: "5Gi"
         # Startup probe: gives up to 10 minutes for build to complete
         # Disables liveness checking until first success
         startupProbe:
