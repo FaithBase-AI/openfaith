@@ -11,10 +11,10 @@ import {
   TextFontIcon,
   ViewListIcon,
 } from '@openfaith/ui'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, type LinkComponentProps } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'motion/react'
 import { useTheme } from 'next-themes'
-import type { ComponentProps, FC, ReactNode } from 'react'
+import type { FC, ReactNode } from 'react'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/_marketing/')({
@@ -37,7 +37,7 @@ const cardColors = {
 const heroTextClassName =
   'text-balance font-bold text-4xl sm:text-[54px] md:text-[67px] lg:text-[68px] xl:text-7xl'
 
-type FeatureCardProps = ComponentProps<'div'> & {
+type FeatureCardProps = LinkComponentProps & {
   Icon: ReactNode
   Tagline: ReactNode
 }
@@ -46,12 +46,12 @@ const FeatureCard: FC<FeatureCardProps> = (props) => {
   const { Icon, Tagline, className, ...domProps } = props
 
   return (
-    <div className={cn(cardClassName, className)} {...domProps}>
+    <Link className={cn(cardClassName, className)} {...domProps}>
       {Icon}
       <span className={'inline-flex items-end gap-1'}>
         {Tagline} <ArrowRightIcon className={`size-6`} />
       </span>
-    </div>
+    </Link>
   )
 }
 
@@ -117,26 +117,31 @@ function Home() {
           className={cn(cardColors.red, 'lg:rounded-tr-4xl')}
           Icon={<ViewListIcon />}
           Tagline={'See all your data at once'}
+          to={'/features#see-your-data' as '/features'}
         />
         <FeatureCard
           className={cardColors.green}
           Icon={<EditIcon />}
           Tagline={'Edit anything in 1 click'}
+          to={'/features#edit-anything' as '/features'}
         />
         <FeatureCard
           className={cn(cardColors.yellow, 'lg:rounded-bl-[40px]')}
           Icon={<FilterIcon />}
           Tagline={'Filter to your hearts content'}
+          to={'/features#filter-everything' as '/features'}
         />
         <FeatureCard
           className={cn(cardColors.blue, 'lg:rounded-bl-4xl')}
           Icon={<PlanningCenterIcon />}
           Tagline={'Live sync to Planning Center'}
+          to={'/features#pco-sync' as '/features'}
         />
         <FeatureCard
           className={cardColors.orange}
           Icon={<TextFontIcon />}
           Tagline={'Custom fields for all your data'}
+          to={'/features#custom-fields' as '/features'}
         />
         <FeatureCard
           className={cn(
@@ -145,11 +150,13 @@ function Home() {
           )}
           Icon={<LinkIcon />}
           Tagline={'Link anything to anything'}
+          to={'/features#link-anything' as '/features'}
         />
         <FeatureCard
           className={cn(cardColors.teal, 'rounded-b-4xl lg:rounded-tl-[40px]')}
           Icon={<LeaderIcon />}
           Tagline={'Tools to make disciples'}
+          to={'/features#discipleship' as '/features'}
         />
       </div>
 
