@@ -19,23 +19,28 @@
 
 ### Todo
 
-- [ ] Figure out why the css is loading after the html causing a flash of unstyled content.
-  - Tried a fix for this, but still happening. I think this is due to prerender failing when it's missing the env.
-
 - [ ] We need to test crud on Campuses, and People.
   - [ ] We need to fully test create / delete pushes to PCO.
   - [x] We need to probably disable creation on Address / Phone Numbers, but we can keep edit for it.
   - [x] Disable edit for Edges / External Links. These are view only.
-  - [ ] We need to figure out how to auto write custom mutators for all the entities that flow through `mutators.ts`. We need to not hand jam these.
-  - [ ] We need to fix the types for our effect based custom mutators. We should need to cast each mutator, `as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError>`.
+  - [x] We need to figure out how to auto write custom mutators for all the entities that flow through `mutators.ts`. We need to not hand jam these.
+  - [x] We need to fix the types for our effect based custom mutators. We should need to cast each mutator, `as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError>`.
     - I think this is the number one issue right now, custom mutators
+    - Ended up fully ditching @openfaith/zero-effect. Just wrapping zeros processMutations in a Effect.
 
-- [ ] Update to tanstack start rc. (blocked due to https://discord.com/channels/795981131316985866/1421523535821541447)
+- [ ] Figure out why the css is loading after the html causing a flash of unstyled content.
+  - Tried a fix for this, but still happening. I think this is due to prerender failing when it's missing the env.
+  - After more digging I think it tries to pre render the Shell. For some reason we are still getting some errors in this process, need to test it more locally.
+
+- [ ] Figure out why https://openfaith.app is crashing Arc. It's only happening for me on the home page, idk if it's just me or if its happening to others. Safari / Chrome load fine.
+
 - [ ] We need to map the user that auths with PCO, get their person ID, and then link their profile.
 - [ ] We need to figure out our custom tab / field datams in PCO so we can sync custom data that links to the person back to PCO.
 - [ ] Improve onboarding flow. We need to gather some ministry details. Name / Location
 
 ### Backlog
+
+- [ ] Update to tanstack start rc. (blocked due to https://discord.com/channels/795981131316985866/1421523535821541447)
 
 ## GTM
 
