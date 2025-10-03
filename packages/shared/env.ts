@@ -174,5 +174,6 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 
-  skipValidation: nodeEnv === 'test' || nodeEnv === 'production' || process.env.TSS_PRERENDERING,
+  skipValidation:
+    nodeEnv === 'test' || nodeEnv === 'production' || process.env.TSS_PRERENDERING !== undefined,
 })

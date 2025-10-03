@@ -45,6 +45,11 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
           Option.fromNullable,
           Option.map((data) => ({
             activeOrganizationId: data.activeOrganizationId,
+            role: pipe(
+              data.userRole,
+              Option.fromNullable,
+              Option.getOrElse(() => 'user'),
+            ),
             sub: data.userID,
           })),
           Option.getOrUndefined,

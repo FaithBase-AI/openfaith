@@ -9,18 +9,7 @@ export const AdminHandlerLive = AdminRpc.toLayer(
         Effect.gen(function* () {
           const session = yield* SessionContext
 
-          const role = yield* session.roleOpt.pipe(
-            Effect.mapError(
-              (error) =>
-                new NotAdminError({
-                  cause: error,
-                  message: 'User is not an admin.',
-                  userId: session.userId,
-                }),
-            ),
-          )
-
-          if (role !== 'admin') {
+          if (session.role !== 'admin') {
             return yield* Effect.fail(
               new NotAdminError({
                 message: 'User is not an admin.',

@@ -1,4 +1,4 @@
-import { getCreateSchema } from '@openfaith/schema'
+import { getCreateSchema, getUpdateSchema } from '@openfaith/schema'
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
 import { useAppForm } from '@openfaith/ui/components/form/tsForm'
 import { QuickActionForm } from '@openfaith/ui/components/quickActions/quickActionsComponents'
@@ -82,7 +82,9 @@ export function UniversalForm<T extends Record<string, any> & { id: string }>(
       modeAfterSubmission: 'blur',
     }),
     validators: {
-      onDynamic: Schema.standardSchemaV1(mode === 'create' ? getCreateSchema(schema) : schema),
+      onDynamic: Schema.standardSchemaV1(
+        mode === 'create' ? getCreateSchema(schema) : getUpdateSchema(schema),
+      ),
     },
   })
 

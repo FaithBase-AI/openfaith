@@ -78,7 +78,7 @@ effect('should convert people|delete mutation correctly', () =>
     expect(item?.op.op).toBe('delete')
     expect(item?.op.tableName).toBe('people')
     expect(item?.op.primaryKey).toEqual({ id: 'person_789' })
-    expect(item?.op.value).toEqual({ id: 'person_789' }) // For delete, value is the primary key
+    expect(item?.op.value).toEqual({ id: 'person_789' })
   }),
 )
 
@@ -173,19 +173,18 @@ effect('should convert multiple valid mutations', () =>
 effect('should skip invalid mutations and continue with valid ones', () =>
   Effect.gen(function* () {
     const mutations = [
-      createBaseMutation({ id: 1, name: 'people|update' }), // Valid
-      createBaseMutation({ id: 2, name: 'invalid-name' }), // Invalid name
+      createBaseMutation({ id: 1, name: 'people|update' }),
+      createBaseMutation({ id: 2, name: 'invalid-name' }),
       createBaseMutation({
         args: [[{ id: 'group_123', name: 'Youth' }]],
         id: 3,
         name: 'groups|create',
-      }), // Valid
-      createBaseMutation({ id: 4, name: 'people|unknown' }), // Invalid operation
+      }),
+      createBaseMutation({ id: 4, name: 'people|unknown' }),
     ]
 
     const result = yield* convertCustomMutations(mutations)
 
-    // Should only return the 2 valid mutations
     expect(result).toHaveLength(2)
     expect(result[0]?.entityName).toBe('people')
     expect(result[0]?.op.op).toBe('update')
@@ -209,7 +208,6 @@ effect('should handle batch mutations with multiple items in array', () =>
     })
     const result = yield* convertCustomMutationToCrudMutation(mutation)
 
-    // Should create 3 separate entity workflow items
     expect(result).toHaveLength(3)
 
     expect(result[0]?.entityName).toBe('people')
@@ -232,7 +230,7 @@ effect('should handle batch mutations with multiple items in array', () =>
 effect('should fail with InvalidMutationDataError if args is not an array', () =>
   Effect.gen(function* () {
     const mutation = createBaseMutation({
-      args: [{ id: 'person_123', name: 'John Doe' }] as any, // Not wrapped in array
+      args: [{ id: 'person_123', name: 'John Doe' }] as any,
     })
     const result = yield* Effect.flip(convertCustomMutationToCrudMutation(mutation))
 

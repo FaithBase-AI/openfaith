@@ -345,6 +345,9 @@ export const getDeleteSchema = <A, I = A, R = never>(_schema: Schema.Schema<A, I
     deletedAt: Schema.String,
     deletedBy: Schema.String,
     id: Schema.String,
+    orgId: Schema.String,
+    updatedAt: Schema.String,
+    updatedBy: Schema.String,
   })
 
 export const enrichMutationData = Effect.fn('enrichData')(function* (params: {
@@ -361,7 +364,7 @@ export const enrichMutationData = Effect.fn('enrichData')(function* (params: {
   switch (operation) {
     case 'upsert':
     case 'insert': {
-      return yield* Schema.decodeUnknown(Schema.Array(getCreateSchema(schema)))(
+      const result = yield* Schema.decodeUnknown(Schema.Array(getCreateSchema(schema)))(
         pipe(
           data,
           Array.map((item) => ({
@@ -384,23 +387,33 @@ export const enrichMutationData = Effect.fn('enrichData')(function* (params: {
           })),
         ),
       )
+
+      return result as unknown as ReadonlyArray<{ id: string; updatedBy: string; orgId: string }>
     }
 
     case 'update': {
-      return yield* Schema.decodeUnknown(Schema.Array(getUpdateSchema(schema)))(
+      const result = yield* Schema.decodeUnknown(
+        Schema.Array(
+          pipe(getUpdateSchema(schema), Schema.extend(Schema.Struct({ orgId: Schema.String }))),
+        ),
+      )(
         pipe(
           data,
           Array.map((item) => ({
             ...item,
+            orgId,
             updatedAt: mutatedAt,
             updatedBy: userId,
           })),
         ),
+        {},
       )
+
+      return result as unknown as ReadonlyArray<{ id: string; updatedBy: string; orgId: string }>
     }
 
     case 'delete': {
-      return yield* Schema.decodeUnknown(Schema.Array(getDeleteSchema(schema)))(
+      const result = yield* Schema.decodeUnknown(Schema.Array(getDeleteSchema(schema)))(
         pipe(
           data,
           Array.map((item) => ({
@@ -408,9 +421,14 @@ export const enrichMutationData = Effect.fn('enrichData')(function* (params: {
             deleted: true,
             deletedAt: mutatedAt,
             deletedBy: userId,
+            orgId,
+            updatedAt: mutatedAt,
+            updatedBy: userId,
           })),
         ),
       )
+
+      return result as unknown as ReadonlyArray<{ id: string; updatedBy: string; orgId: string }>
     }
   }
 })

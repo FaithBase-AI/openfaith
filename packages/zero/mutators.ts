@@ -11,7 +11,7 @@ export class MutatorAuthError extends Schema.TaggedError<MutatorAuthError>()('Mu
 
 export class MutatorError extends Schema.TaggedError<MutatorError>()('MutatorError', {
   cause: Schema.optional(Schema.Unknown),
-  input: Schema.Array(Schema.Unknown),
+  input: Schema.Unknown,
   message: Schema.String,
   operation: Schema.Literal('delete', 'insert', 'update', 'upsert'),
   orgId: Schema.String,
@@ -28,8 +28,9 @@ const effectMutator = Effect.fn('effectMutator')(function* (params: {
   operation: 'delete' | 'insert' | 'update' | 'upsert'
   orgId: string
   userId: string
+  role: 'admin' | 'user' | string
 }) {
-  const { tx, input, entity, operation, orgId, userId } = params
+  const { tx, input, entity, operation, orgId, userId, role } = params
 
   const tableName = pluralize(entity.tag)
 
@@ -49,6 +50,19 @@ const effectMutator = Effect.fn('effectMutator')(function* (params: {
     userId,
   })
 
+  // We need to make sure that the mutation data matches the auth data.
+  for (const item of validatedInput) {
+    // If the user isn't an admin, we need to do the auth check.
+    if (role !== 'admin' && (item.updatedBy !== userId || item.orgId !== orgId)) {
+      yield* Effect.fail(
+        new MutatorAuthError({
+          authData: { orgId, userId },
+          message: `Item, ${item.id}, doesn't have matching userId, ${item.updatedBy}, / orgId, ${item.orgId}, with authData.`,
+        }),
+      )
+    }
+  }
+
   yield* Effect.forEach(
     validatedInput,
     (input) =>
@@ -63,7 +77,7 @@ const effectMutator = Effect.fn('effectMutator')(function* (params: {
             tableName,
             userId,
           }),
-        try: async () => tx.mutate[tableName as keyof typeof tx.mutate][operation](input),
+        try: async () => tx.mutate[tableName as keyof typeof tx.mutate][operation](input as any),
       }),
     {
       concurrency: 'unbounded',
@@ -78,7 +92,9 @@ const effectMutator = Effect.fn('effectMutator')(function* (params: {
   })
 })
 
-const validateAuth = (authData: Pick<AuthData, 'sub' | 'activeOrganizationId'> | undefined) => {
+const validateAuth = (
+  authData: Pick<AuthData, 'sub' | 'activeOrganizationId' | 'role'> | undefined,
+) => {
   if (!authData) {
     throw new MutatorAuthError({
       authData,
@@ -95,12 +111,13 @@ const validateAuth = (authData: Pick<AuthData, 'sub' | 'activeOrganizationId'> |
 
   return {
     orgId: authData.activeOrganizationId,
+    role: authData.role,
     userId: authData.sub,
   }
 }
 
 export function createMutators(
-  authData: Pick<AuthData, 'sub' | 'activeOrganizationId'> | undefined,
+  authData: Pick<AuthData, 'sub' | 'activeOrganizationId' | 'role'> | undefined,
 ): CustomMutatorDefs<ZSchema> {
   const entities = discoverUiEntities()
 
@@ -111,49 +128,53 @@ export function createMutators(
 
     mutators[tableName] = {
       delete: async (tx: Transaction<ZSchema>, input: Array<any>) => {
-        const { orgId, userId } = validateAuth(authData)
+        const { orgId, userId, role } = validateAuth(authData)
 
         await effectMutator({
           entity,
           input,
           operation: 'delete',
           orgId,
+          role,
           tx,
           userId,
         }).pipe(Effect.runPromise)
       },
       insert: async (tx: Transaction<ZSchema>, input: Array<any>) => {
-        const { orgId, userId } = validateAuth(authData)
+        const { orgId, userId, role } = validateAuth(authData)
 
         await effectMutator({
           entity,
           input,
           operation: 'insert',
           orgId,
+          role,
           tx,
           userId,
         }).pipe(Effect.runPromise)
       },
       update: async (tx: Transaction<ZSchema>, input: Array<any>) => {
-        const { orgId, userId } = validateAuth(authData)
+        const { orgId, userId, role } = validateAuth(authData)
 
         await effectMutator({
           entity,
           input,
           operation: 'update',
           orgId,
+          role,
           tx,
           userId,
         }).pipe(Effect.runPromise)
       },
       upsert: async (tx: Transaction<ZSchema>, input: Array<any>) => {
-        const { orgId, userId } = validateAuth(authData)
+        const { orgId, userId, role } = validateAuth(authData)
 
         await effectMutator({
           entity,
           input,
           operation: 'upsert',
           orgId,
+          role,
           tx,
           userId,
         }).pipe(Effect.runPromise)

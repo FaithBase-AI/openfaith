@@ -16,6 +16,7 @@ export const ZeroHandlerLive = HttpApiBuilder.group(AppHttpApi, 'zero', (handler
 
       const authData = {
         activeOrganizationId: pipe(session.activeOrganizationIdOpt, Option.getOrNull),
+        role: session.role,
         sub: session.userId,
       }
 
