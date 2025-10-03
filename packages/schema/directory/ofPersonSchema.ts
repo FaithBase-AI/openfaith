@@ -122,6 +122,9 @@ export class BasePerson extends BaseSystemFields.extend<BasePerson>('BasePerson'
   name: Schema.String.annotations({
     description: 'The full name of the person',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         filterable: true,
         order: 1,

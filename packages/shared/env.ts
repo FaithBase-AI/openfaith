@@ -20,12 +20,6 @@ const nodeEnv = pipe(
   ),
 )
 
-console.log('yeet', {
-  nodeEnv,
-  skipValidation: nodeEnv === 'test' || nodeEnv === 'production',
-  TSS_PRERENDERING: process.env.TSS_PRERENDERING,
-})
-
 const serverEnv = {
   // DB
   DB_HOST_PRIMARY: z.string(),
@@ -180,5 +174,6 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 
-  skipValidation: nodeEnv === 'test' || nodeEnv === 'production',
+  skipValidation:
+    nodeEnv === 'test' || nodeEnv === 'production' || process.env.TSS_PRERENDERING !== undefined,
 })

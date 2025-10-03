@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "paths": {
-      "@openfaith/openfaith/*": ["./src/*"]
+      "@openfaith/openfaith/*": ["./*"]
     }
   },
   "extends": "@openfaith/tsconfig/base.json",

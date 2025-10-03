@@ -1,6 +1,7 @@
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
-import { Array, Option, pipe, Schema, SchemaAST, String } from 'effect'
+import { getEntityId } from '@openfaith/shared'
+import { Array, Effect, Option, pipe, Schema, SchemaAST, String } from 'effect'
 
 /**
  * Helper function to get annotation from schema, handling both old and new formats
@@ -223,7 +224,7 @@ export const hasEmailPattern = (ast: SchemaAST.AST): boolean => {
  * Extracts the entity tag from a schema AST
  * Handles both TypeLiteral (old Schema.Struct) and Transformation (class-based) ASTs
  */
-export const extractEntityTag = (ast: SchemaAST.AST): Option.Option<string> => {
+export const extractEntityTagOpt = (ast: SchemaAST.AST): Option.Option<string> => {
   const extractFromTypeLiteral = (typeLiteralAst: SchemaAST.AST): Option.Option<string> => {
     if (!SchemaAST.isTypeLiteral(typeLiteralAst)) {
       return Option.none()
@@ -275,7 +276,7 @@ export const extractEntityInfo = (
   const entityAnnotation = pipe(extractEntityName(schema), Option.getOrUndefined)
 
   // Get entity tag from _tag field if present
-  const entityTag = pipe(extractEntityTag(schema.ast), Option.getOrUndefined)
+  const entityTag = pipe(extractEntityTagOpt(schema.ast), Option.getOrUndefined)
 
   return {
     entityName: entityAnnotation || 'item',
@@ -306,8 +307,8 @@ export const getCreateSchema = <A, I = A, R = never>(
   Omit<A, keyof typeof BaseSystemFields.fields & keyof typeof BaseIdentifiedEntity.fields & '_tag'>,
   I,
   R
-> => {
-  return pipe(
+> =>
+  pipe(
     schema,
     Schema.omit(
       ...(Object.keys(BaseSystemFields.fields) as Array<keyof A & keyof I>),
@@ -315,4 +316,119 @@ export const getCreateSchema = <A, I = A, R = never>(
       '_tag' as keyof A & keyof I,
     ),
   ) as any
+
+export const getUpdateSchema = <A, I = A, R = never>(
+  schema: Schema.Schema<A, I, R>,
+): Schema.Schema<A, I, R> => {
+  // Check if this is a class schema (has .fields property)
+  if ('fields' in schema && typeof schema.fields === 'object') {
+    // For class schemas: omit id, make partial, then extend with required id
+    return Schema.Struct(schema.fields as any).pipe(
+      Schema.omit('id'),
+      Schema.partial,
+      Schema.extend(Schema.Struct({ id: Schema.String })),
+    ) as any
+  }
+
+  // For regular Struct schemas: omit id, make partial, then extend with required id
+  return pipe(
+    schema,
+    Schema.omit('id' as any),
+    Schema.partial,
+    Schema.extend(Schema.Struct({ id: Schema.String })),
+  ) as any
 }
+
+export const getDeleteSchema = <A, I = A, R = never>(_schema: Schema.Schema<A, I, R>) =>
+  Schema.Struct({
+    deleted: Schema.Literal(true),
+    deletedAt: Schema.String,
+    deletedBy: Schema.String,
+    id: Schema.String,
+    orgId: Schema.String,
+    updatedAt: Schema.String,
+    updatedBy: Schema.String,
+  })
+
+export const enrichMutationData = Effect.fn('enrichData')(function* (params: {
+  data: Array<Record<string, any>>
+  operation: 'delete' | 'insert' | 'update' | 'upsert'
+  orgId: string
+  userId: string
+  entityType: string
+  schema: Schema.Schema<any>
+}) {
+  const { data, operation, orgId, userId, entityType, schema } = params
+  const mutatedAt = new Date().toISOString()
+
+  switch (operation) {
+    case 'upsert':
+    case 'insert': {
+      const result = yield* Schema.decodeUnknown(Schema.Array(getCreateSchema(schema)))(
+        pipe(
+          data,
+          Array.map((item) => ({
+            // Base data only for insert/upsert operations
+            _tag: entityType,
+            createdAt: mutatedAt,
+            createdBy: userId,
+            customFields: [],
+            externalIds: [],
+            id: getEntityId(entityType),
+            orgId,
+            status: 'active',
+            tags: [],
+
+            ...item,
+
+            // Always update these fields
+            updatedAt: mutatedAt,
+            updatedBy: userId,
+          })),
+        ),
+      )
+
+      return result as unknown as ReadonlyArray<{ id: string; updatedBy: string; orgId: string }>
+    }
+
+    case 'update': {
+      const result = yield* Schema.decodeUnknown(
+        Schema.Array(
+          pipe(getUpdateSchema(schema), Schema.extend(Schema.Struct({ orgId: Schema.String }))),
+        ),
+      )(
+        pipe(
+          data,
+          Array.map((item) => ({
+            ...item,
+            orgId,
+            updatedAt: mutatedAt,
+            updatedBy: userId,
+          })),
+        ),
+        {},
+      )
+
+      return result as unknown as ReadonlyArray<{ id: string; updatedBy: string; orgId: string }>
+    }
+
+    case 'delete': {
+      const result = yield* Schema.decodeUnknown(Schema.Array(getDeleteSchema(schema)))(
+        pipe(
+          data,
+          Array.map((item) => ({
+            ...item,
+            deleted: true,
+            deletedAt: mutatedAt,
+            deletedBy: userId,
+            orgId,
+            updatedAt: mutatedAt,
+            updatedBy: userId,
+          })),
+        ),
+      )
+
+      return result as unknown as ReadonlyArray<{ id: string; updatedBy: string; orgId: string }>
+    }
+  }
+})

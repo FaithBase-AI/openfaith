@@ -1,6 +1,6 @@
 import { noOp, nullOp } from '@openfaith/shared'
+import { IconWrapper } from '@openfaith/ui/components/icons/iconWrapper'
 import { Card } from '@openfaith/ui/components/ui/card'
-import { IconWrapper } from '@openfaith/ui/icons/iconWrapper'
 import { cva } from 'class-variance-authority'
 import { Boolean, Option, pipe } from 'effect'
 import { isNotNullable } from 'effect/Predicate'

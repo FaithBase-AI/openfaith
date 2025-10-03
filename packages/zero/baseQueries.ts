@@ -86,7 +86,6 @@ export const getBaseMutator = (
   operation: keyof TableMutator<TableSchema>,
 ) => {
   if (entityName in z.mutate) {
-    // @ts-expect-error - This is a valid operation
     return z.mutate[entityName as keyof typeof z.mutate]?.[operation]
   }
 

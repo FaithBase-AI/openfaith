@@ -2,7 +2,7 @@
 
 import '@glideapps/glide-data-grid/dist/index.css'
 
-import type { GridCell, Item, Rectangle } from '@glideapps/glide-data-grid'
+import type { CellClickedEventArgs, GridCell, Item, Rectangle } from '@glideapps/glide-data-grid'
 import { GridCellKind } from '@glideapps/glide-data-grid'
 import type { Edge } from '@openfaith/db'
 import { extractEntityInfo } from '@openfaith/schema'
@@ -11,8 +11,8 @@ import {
   buildEntityRelationshipsForTable,
   useEntityNamesFetcher,
   useSchemaCollection,
-  useSchemaUpdate,
 } from '@openfaith/ui/shared/hooks/schemaHooks'
+import { useSchemaUpdate } from '@openfaith/ui/shared/hooks/schemaMutations'
 import {
   getActionsCell,
   getGridCellContent,
@@ -25,17 +25,17 @@ import {
 } from '@openfaith/ui/table/dataGridRelationColumnGenerator'
 import { generateFilterConfig } from '@openfaith/ui/table/filterGenerator'
 import { getRelatedEntityIds } from '@openfaith/ui/table/relationColumnGenerator'
+import { UniversalDropdownMenu } from '@openfaith/ui/table/universalDropdownMenu'
 import { getBaseEntityRelationshipsQuery } from '@openfaith/zero/baseQueries'
 import { useZero } from '@openfaith/zero/useZero'
 import { useQuery } from '@rocicorp/zero/react'
 import { Array, Option, pipe, type Schema, String } from 'effect'
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 export interface UniversalDataGridProps<T> {
   schema: Schema.Schema<T>
   onRowClick?: (row: T) => void
-  onEditRow?: (row: T) => void
   onRowsSelected?: (rows: Array<T>) => void
   onCellEdit?: (row: T, field: string, newValue: any) => void
   showRowNumbers?: boolean
@@ -48,6 +48,8 @@ export interface UniversalDataGridProps<T> {
     filterKey?: string
   }
   enableVirtualScrolling?: boolean // Enable virtual scrolling for pagination
+  orgId: string
+  userId: string
 }
 
 export const UniversalDataGrid = <T extends Record<string, any>>(
@@ -56,7 +58,6 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
   const {
     schema,
     onRowClick,
-    // onEditRow: providedOnEditRow,
     onRowsSelected,
     onCellEdit,
     showRowNumbers = true,
@@ -65,12 +66,9 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     editable = true,
     filtering = {},
     enableVirtualScrolling = true,
+    orgId,
+    userId,
   } = props
-
-  // Use auto edit handler if none provided
-  // For now, we don't use edit functionality in the Glide table
-  // const { onEditRow: autoOnEditRow } = useUniversalTableEdit(schema)
-  // const onEditRow = providedOnEditRow || autoOnEditRow
 
   const entityInfo = useMemo(() => {
     return extractEntityInfo(schema)
@@ -78,11 +76,20 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
 
   const { collection, nextPage, loading, pageSize } = useSchemaCollection({ schema })
 
+  const [showMenu, setShowMenu] = useState<
+    | {
+        row: T
+        bounds: Rectangle
+      }
+    | undefined
+  >()
+
   // Use the schema update hook for mutations
-  const { mutate: updateEntity } = useSchemaUpdate(schema, {
-    onError: (error) => {
-      console.error('Failed to update cell:', error)
-    },
+  const [, updateEntity] = useSchemaUpdate({
+    entityType: entityInfo.entityName,
+    orgId,
+    schema,
+    userId,
   })
 
   // Use the entity names fetcher hook for managing entity name lookups
@@ -272,7 +279,8 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
         [field.key]: extractedValue,
         id: rowId,
       }
-      updateEntity(updatedData as any)
+
+      updateEntity([updatedData as any])
 
       // Also call the custom callback if provided
       if (onCellEdit) {
@@ -282,16 +290,28 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
     [collection, columns, columnIdToField, updateEntity, onCellEdit],
   )
 
-  // Handle row click with actions column special handling
-  const handleRowClick = useCallback(
-    (row: T) => {
-      // For now, just call the provided onRowClick
-      // In the future, we could show a dropdown menu for the actions column
+  const localOnCellClicked = useCallback(
+    (cell: Item, event: CellClickedEventArgs) => {
+      const [col, row] = cell
+      const dataRow = collection[row]
+      const column = columns[col]
+
+      if (!dataRow) {
+        return
+      }
+
+      if (column?.id === 'actions') {
+        setShowMenu({
+          bounds: event.bounds,
+          row: dataRow,
+        })
+      }
+
       if (onRowClick) {
-        onRowClick(row)
+        onRowClick(dataRow)
       }
     },
-    [onRowClick],
+    [collection, onRowClick, columns],
   )
 
   const entityName = entityInfo.entityName || 'items'
@@ -342,23 +362,37 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
   }, [enableVirtualScrolling, collection.length, pageSize, isLikelyLastPage])
 
   return (
-    <CollectionDataGrid
-      _tag={entityInfo.entityTag || 'default'}
-      Actions={Actions}
-      columns={columns}
-      data={collection}
-      enableVirtualScrolling={enableVirtualScrolling}
-      filterColumnId={filtering.filterColumnId || 'name'}
-      filterKey={filtering.filterKey || `${entityName}-filter`}
-      filterPlaceHolder={filterPlaceHolder}
-      filtersDef={filtersDef}
-      getCellContent={getCellContent}
-      onCellEdited={editable ? handleCellEdited : undefined}
-      onRowClick={handleRowClick}
-      onRowsSelected={onRowsSelected}
-      onVisibleRegionChanged={handleVisibleRegionChanged}
-      showRowNumbers={showRowNumbers}
-      totalRows={virtualRowCount}
-    />
+    <>
+      <CollectionDataGrid
+        _tag={entityInfo.entityTag || 'default'}
+        Actions={Actions}
+        columns={columns}
+        data={collection}
+        editable={editable}
+        enableVirtualScrolling={enableVirtualScrolling}
+        filterColumnId={filtering.filterColumnId || 'name'}
+        filterKey={filtering.filterKey || `${entityName}-filter`}
+        filterPlaceHolder={filterPlaceHolder}
+        filtersDef={filtersDef}
+        getCellContent={getCellContent}
+        onCellClicked={localOnCellClicked}
+        onCellEdited={editable ? handleCellEdited : undefined}
+        onRowClick={onRowClick}
+        onRowsSelected={onRowsSelected}
+        onVisibleRegionChanged={handleVisibleRegionChanged}
+        showRowNumbers={showRowNumbers}
+        totalRows={virtualRowCount}
+      />
+      {pipe(
+        columns,
+        Array.findFirst((column) => column.id === 'actions'),
+        Option.match({
+          onNone: () => null,
+          onSome: () => (
+            <UniversalDropdownMenu schema={schema} setShowMenu={setShowMenu} showMenu={showMenu} />
+          ),
+        }),
+      )}
+    </>
   )
 }

@@ -80,7 +80,7 @@ const setSession = Effect.fn('setSession')(function* (headers: Headers.Headers) 
 
     return {
       activeOrganizationIdOpt: pipe(authData.activeOrganizationId, Option.fromNullable),
-      roleOpt: Option.fromNullable(authData.role),
+      role: authData.role,
       userId: authData.sub,
     }
   }
@@ -101,7 +101,11 @@ const setSession = Effect.fn('setSession')(function* (headers: Headers.Headers) 
 
   return {
     activeOrganizationIdOpt: pipe(session.session.activeOrganizationId, Option.fromNullable),
-    roleOpt: Option.fromNullable(session.user.role),
+    role: pipe(
+      session.user.role,
+      Option.fromNullable,
+      Option.getOrElse(() => 'user'),
+    ),
     userId: session.user.id,
   }
 })

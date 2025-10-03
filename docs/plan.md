@@ -12,7 +12,6 @@
 - [x] We need to figure out what we need to do about Dashboard.
   - Ended up hiding it for now, and we will send people to `/directory/people` for now.
 - [x] We need to move to a cloud instance of supabase
-- [x] Figure out why the css is loading after the html causing a flash of unstyled content.
 - [x] We need to add a separate db instance for cluster / workers, we need to be able to run a local cluster against the prod db and not compete with it.
   - I need to check to see if I can not run shard-manager and talk to local workers.
     - Ended up just doing a separate env for this. Had to do the same thing for zero, needs a local cvr / change db for it to be fast.
@@ -24,16 +23,24 @@
   - [ ] We need to fully test create / delete pushes to PCO.
   - [x] We need to probably disable creation on Address / Phone Numbers, but we can keep edit for it.
   - [x] Disable edit for Edges / External Links. These are view only.
-  - [ ] We need to figure out how to auto write custom mutators for all the entities that flow through `mutators.ts`. We need to not hand jam these.
-  - [ ] We need to fix the types for our effect based custom mutators. We should need to cast each mutator, `as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError>`.
+  - [x] We need to figure out how to auto write custom mutators for all the entities that flow through `mutators.ts`. We need to not hand jam these.
+  - [x] We need to fix the types for our effect based custom mutators. We should need to cast each mutator, `as Effect.Effect<void, ZeroMutatorAuthError | ZeroMutatorValidationError>`.
     - I think this is the number one issue right now, custom mutators
+    - Ended up fully ditching @openfaith/zero-effect. Just wrapping zeros processMutations in a Effect.
 
-- [ ] Update to tanstack start rc. (blocked due to https://discord.com/channels/795981131316985866/1421523535821541447 less pressure on this since I fixed the FOUC issue.)
+- [ ] Figure out why the css is loading after the html causing a flash of unstyled content.
+  - Tried a fix for this, but still happening. I think this is due to prerender failing when it's missing the env.
+  - After more digging I think it tries to pre render the Shell. For some reason we are still getting some errors in this process, need to test it more locally.
+
+- [ ] Figure out why https://openfaith.app is crashing Arc. It's only happening for me on the home page, idk if it's just me or if its happening to others. Safari / Chrome load fine.
+
 - [ ] We need to map the user that auths with PCO, get their person ID, and then link their profile.
 - [ ] We need to figure out our custom tab / field datams in PCO so we can sync custom data that links to the person back to PCO.
 - [ ] Improve onboarding flow. We need to gather some ministry details. Name / Location
 
 ### Backlog
+
+- [ ] Update to tanstack start rc. (blocked due to https://discord.com/channels/795981131316985866/1421523535821541447)
 
 ## GTM
 

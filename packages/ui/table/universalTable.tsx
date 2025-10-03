@@ -121,16 +121,14 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align={'end'} side={'bottom'}>
-            {onEditRow && (
-              <DropdownMenuItem
-                onClick={() => {
-                  onEditRow(row.original)
-                }}
-              >
-                <EditIcon className={'mr-2 size-4'} />
-                <p className={'mr-auto mb-auto ml-0'}>Edit</p>
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem
+              onClick={() => {
+                onEditRow(row.original)
+              }}
+            >
+              <EditIcon className={'mr-2 size-4'} />
+              <p className={'mr-auto mb-auto ml-0'}>Edit</p>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),

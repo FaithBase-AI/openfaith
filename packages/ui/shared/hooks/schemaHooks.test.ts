@@ -14,14 +14,8 @@ import {
   SchemaUpsertError,
   useEntityNamesFetcher,
   useEntitySchema,
-  useSchemaCellUpdate,
   useSchemaCollection,
-  useSchemaDelete,
   useSchemaEntity,
-  useSchemaInsert,
-  useSchemaMutation,
-  useSchemaUpdate,
-  useSchemaUpsert,
 } from '@openfaith/ui/shared/hooks/schemaHooks'
 import { Array, Effect, HashMap, HashSet, Option, pipe, Schema } from 'effect'
 
@@ -479,12 +473,6 @@ effect('Edge case: should handle null and undefined entity types gracefully', ()
 effect('Hook functions should be properly exported', () =>
   Effect.gen(function* () {
     expect(typeof useEntitySchema).toBe('function')
-    expect(typeof useSchemaInsert).toBe('function')
-    expect(typeof useSchemaUpdate).toBe('function')
-    expect(typeof useSchemaDelete).toBe('function')
-    expect(typeof useSchemaUpsert).toBe('function')
-    expect(typeof useSchemaCellUpdate).toBe('function')
-    expect(typeof useSchemaMutation).toBe('function')
     expect(typeof useSchemaCollection).toBe('function')
     expect(typeof useSchemaEntity).toBe('function')
   }),
@@ -692,25 +680,6 @@ effect('Stress test: Error class construction should handle many instances', () 
     // Verify first and last errors
     expect(errors[0]?._tag).toBe('SchemaInsertError')
     expect(errors[999]?._tag).toBe('SchemaUpsertError')
-  }),
-)
-
-// Test for the combined mutation hook
-effect('useSchemaMutation should be properly exported', () =>
-  Effect.gen(function* () {
-    expect(typeof useSchemaMutation).toBe('function')
-    // The hook returns an object with all mutation functions
-    // We can't test the actual functionality without React context,
-    // but we can verify the function exists and is callable
-  }),
-)
-
-// Test for cell update hook
-effect('useSchemaCellUpdate should be properly exported', () =>
-  Effect.gen(function* () {
-    expect(typeof useSchemaCellUpdate).toBe('function')
-    // This hook is optimized for single field updates
-    // Used primarily in table edit-in-place functionality
   }),
 )
 

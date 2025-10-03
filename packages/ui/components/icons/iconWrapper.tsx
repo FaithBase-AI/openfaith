@@ -8,7 +8,7 @@ export const IconWrapper = forwardRef<HTMLSpanElement, IconWrapperProps>((props,
   const { size = 4, className, children, ...domProps } = props
 
   return (
-    <span className={cn(className, `[&>svg]:h-${size} [&>svg]:w-${size}`)} ref={ref} {...domProps}>
+    <span className={cn(className, `[&_svg]:size-${size}`)} ref={ref} {...domProps}>
       {children}
     </span>
   )

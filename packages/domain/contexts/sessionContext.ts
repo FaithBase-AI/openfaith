@@ -8,7 +8,7 @@ export class SessionContext extends Context.Tag('@openfaith/server/SessionContex
   {
     readonly userId: string
     readonly activeOrganizationIdOpt: Option.Option<string>
-    readonly roleOpt: Option.Option<string>
+    readonly role: 'user' | 'admin' | string
   }
 >() {}
 

@@ -14,7 +14,6 @@ import {
   MutationID,
   MutationOk,
   MutationResponse,
-  MutatorError,
   PrimaryKey,
   PushError,
   PushOk,
@@ -26,7 +25,6 @@ import {
   UnsupportedSchemaVersionError,
   UpdateOp,
   UpsertOp,
-  ValidationError,
   ZeroError,
   ZeroMutatorsGroup,
   ZeroPusherError,
@@ -434,42 +432,6 @@ effect('PushResponse should accept both success and error responses', () =>
 
     expect(successResult).toEqual(successResponse)
     expect(errorResult).toEqual(errorResponse)
-  }),
-)
-
-// Test tagged error classes
-effect('MutatorError should create correctly', () =>
-  Effect.gen(function* () {
-    const error = new MutatorError({
-      message: 'Mutator failed',
-      mutationId: 'mut-123',
-    })
-    expect(error._tag).toBe('MutatorError')
-    expect(error.message).toBe('Mutator failed')
-    expect(error.mutationId).toBe('mut-123')
-  }),
-)
-
-effect('ValidationError should create correctly', () =>
-  Effect.gen(function* () {
-    const error = new ValidationError({
-      field: 'name',
-      message: 'Invalid field',
-    })
-    expect(error._tag).toBe('ValidationError')
-    expect(error.message).toBe('Invalid field')
-    expect(error.field).toBe('name')
-  }),
-)
-
-effect('ValidationError should work without optional field', () =>
-  Effect.gen(function* () {
-    const error = new ValidationError({
-      message: 'General validation error',
-    })
-    expect(error._tag).toBe('ValidationError')
-    expect(error.message).toBe('General validation error')
-    expect(error.field).toBeUndefined()
   }),
 )
 

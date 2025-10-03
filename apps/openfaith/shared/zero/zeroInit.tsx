@@ -1,7 +1,7 @@
 import type { EntityUiConfig } from '@openfaith/schema'
 import { env } from '@openfaith/shared'
 import { buildSchemaCollectionQuery, useEntityRegistry } from '@openfaith/ui'
-import { createClientMutators, type Mutators, schema, type ZSchema } from '@openfaith/zero'
+import { createMutators, type Mutators, schema, type ZSchema } from '@openfaith/zero'
 import type { Zero } from '@rocicorp/zero'
 import { ZeroProvider } from '@rocicorp/zero/react'
 import { useRouter, useRouterState } from '@tanstack/react-router'
@@ -39,12 +39,17 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
 
         preload(zero, entities)
       },
-      mutators: createClientMutators(
+      mutators: createMutators(
         pipe(
           session.data,
           Option.fromNullable,
           Option.map((data) => ({
             activeOrganizationId: data.activeOrganizationId,
+            role: pipe(
+              data.userRole,
+              Option.fromNullable,
+              Option.getOrElse(() => 'user'),
+            ),
             sub: data.userID,
           })),
           Option.getOrUndefined,
@@ -67,7 +72,7 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
   return <ZeroProvider {...opts}>{children}</ZeroProvider>
 }
 
-function preload(z: Zero<ZSchema, Mutators>, entities: Array<EntityUiConfig>) {
+function preload(z: Zero<ZSchema, any>, entities: Array<EntityUiConfig>) {
   // Delay preload() slightly to avoid blocking UI on first run. We don't need
   // this data to display the UI, it's used by search.
   setTimeout(() => {

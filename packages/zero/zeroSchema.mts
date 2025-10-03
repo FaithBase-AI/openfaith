@@ -19,7 +19,7 @@ export const AuthData = Schema.Struct({
   image: Schema.Union(Schema.String, Schema.Null),
   iss: Schema.String,
   name: Schema.String,
-  role: Schema.String,
+  role: Schema.Union(Schema.Literal('admin', 'user'), Schema.String),
   sub: Schema.String,
   updatedAt: Schema.String,
 })

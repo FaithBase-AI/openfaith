@@ -1,8 +1,7 @@
 import { HttpApiBuilder } from '@effect/platform'
-import { TokenKey } from '@openfaith/adapter-core/server'
 import { AppHttpApi, MutatorError, SessionContext } from '@openfaith/domain'
+import { zeroPushProcessor } from '@openfaith/server/db'
 import { SessionHttpMiddlewareLayer } from '@openfaith/server/live/sessionMiddlewareLive'
-import { AppZeroStore, ZeroLive } from '@openfaith/server/live/zeroLive'
 import { WorkflowClient } from '@openfaith/workers/api/workflowClient'
 import { createMutators } from '@openfaith/zero'
 import type { ReadonlyJSONObject } from '@rocicorp/zero'
@@ -12,31 +11,30 @@ export const ZeroHandlerLive = HttpApiBuilder.group(AppHttpApi, 'zero', (handler
   handlers.handle('push', (input) =>
     Effect.gen(function* () {
       const session = yield* SessionContext
-      const appZeroStore = yield* AppZeroStore
 
       yield* Effect.log('Processing Zero push request', input.payload.mutations)
 
       const authData = {
         activeOrganizationId: pipe(session.activeOrganizationIdOpt, Option.getOrNull),
+        role: session.role,
         sub: session.userId,
       }
 
-      const result = yield* appZeroStore
-        .processMutations(
-          createMutators(authData),
-          input.urlParams,
-          // Have to cast it to ReadonlyJSONObject because the PushProcessor expects a JSON object
-          input.payload as unknown as ReadonlyJSONObject,
-        )
-        .pipe(
-          Effect.provideService(TokenKey, 'server-token-key'),
-          Effect.mapError(
-            (error) =>
-              new MutatorError({
-                message: `Error processing push request: ${error}`,
-              }),
+      const result = yield* Effect.tryPromise({
+        catch: (error) =>
+          new MutatorError({
+            cause: error,
+            message: `Error processing push request.`,
+            payload: input.payload,
+            urlParams: input.urlParams,
+          }),
+        try: async () =>
+          zeroPushProcessor.process(
+            createMutators(authData),
+            input.urlParams,
+            input.payload as unknown as ReadonlyJSONObject,
           ),
-        )
+      })
 
       yield* Effect.log('Starting daemon fiber for external sync', {
         mutationCount: input.payload.mutations.length,
@@ -77,4 +75,4 @@ export const ZeroHandlerLive = HttpApiBuilder.group(AppHttpApi, 'zero', (handler
       return result
     }),
   ),
-).pipe(Layer.provide(SessionHttpMiddlewareLayer), Layer.provide(ZeroLive))
+).pipe(Layer.provide(SessionHttpMiddlewareLayer))

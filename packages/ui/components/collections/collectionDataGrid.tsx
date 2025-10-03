@@ -3,6 +3,7 @@
 import '@glideapps/glide-data-grid/dist/index.css'
 
 import {
+  type CellClickedEventArgs,
   CompactSelection,
   DataEditor,
   type GridCell,
@@ -12,7 +13,6 @@ import {
   type Item,
   type Rectangle,
 } from '@glideapps/glide-data-grid'
-
 import { CollectionToolbarDataGrid } from '@openfaith/ui/components/collections/collectionToolbarDataGrid'
 import type {
   ColumnConfig,
@@ -41,6 +41,7 @@ type CollectionDataGridProps<
   data: Array<TData>
   getCellContent: (cell: Item) => GridCell
   onRowClick?: (row: TData) => void
+  onCellClicked?: (cell: Item, event: CellClickedEventArgs) => void
   onRowsSelected?: (rows: Array<TData>) => void
   onCellEdited?: (cell: Item, newValue: GridCell) => void
   onVisibleRegionChanged?: (visibleRange: Rectangle) => void
@@ -50,6 +51,7 @@ type CollectionDataGridProps<
   filtersOptions?: Partial<Record<OptionColumnIds<TColumns>, Array<ColumnOption> | undefined>>
   totalRows?: number // Optional total row count for virtual scrolling
   enableVirtualScrolling?: boolean // Whether to enable virtual scrolling
+  editable: boolean
 }
 
 export const CollectionDataGrid = <
@@ -69,6 +71,7 @@ export const CollectionDataGrid = <
     data,
     getCellContent: providedGetCellContent,
     onRowClick,
+    onCellClicked,
     onRowsSelected,
     onCellEdited,
     onVisibleRegionChanged,
@@ -78,6 +81,7 @@ export const CollectionDataGrid = <
     filtersOptions,
     totalRows,
     enableVirtualScrolling = false,
+    editable,
   } = props
 
   const [collectionViews] = useAtom(collectionViewsAtom)
@@ -135,16 +139,19 @@ export const CollectionDataGrid = <
     [data, providedGetCellContent],
   )
 
-  // Handle row click
-  const onRowClicked = useCallback(
-    (cell: Item) => {
-      const [, row] = cell
-      const dataRow = data[row]
-      if (dataRow && onRowClick) {
-        onRowClick(dataRow)
+  const localOnCellClicked = useCallback(
+    (cell: Item, event: CellClickedEventArgs) => {
+      if (onCellClicked) {
+        onCellClicked(cell, event)
+      } else {
+        const [, row] = cell
+        const dataRow = data[row]
+        if (dataRow && onRowClick) {
+          onRowClick(dataRow)
+        }
       }
     },
-    [data, onRowClick],
+    [data, onRowClick, onCellClicked],
   )
 
   // Handle selection change
@@ -212,8 +219,8 @@ export const CollectionDataGrid = <
               getCellContent={getCellContent}
               gridSelection={selection}
               height={gridHeight}
-              onCellClicked={onRowClicked}
-              onCellEdited={onCellEdited}
+              onCellClicked={localOnCellClicked}
+              onCellEdited={editable ? onCellEdited : undefined}
               onColumnResize={onColumnResize}
               onGridSelectionChange={onSelectionChange}
               onVisibleRegionChanged={onVisibleRegionChanged}
