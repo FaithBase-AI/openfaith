@@ -14,9 +14,7 @@ function RouteComponent() {
     <div className={wrapperClassName}>
       <h1 className={headerClassName}>Blog</h1>
 
-      <p className={contentClassName}>
-        OpenFaith is a church software that helps you manage your church data.
-      </p>
+      <p className={contentClassName}>Coming soon.</p>
     </div>
   )
 }

@@ -15,7 +15,9 @@ function RouteComponent() {
       <h1 className={headerClassName}>Pricing</h1>
 
       <p className={contentClassName}>
-        OpenFaith is a church software that helps you manage your church data.
+        OpenFaith is an open source community supported project. Right now during our alpha period,
+        we are free to use for all. We will switch to a paid monthly subscription soon along with a
+        free self hosted option as well.
       </p>
     </div>
   )
