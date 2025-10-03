@@ -3,53 +3,129 @@ import { createEnv } from '@t3-oss/env-core'
 import { Option, pipe } from 'effect'
 import { z } from 'zod'
 
+// We need to do this because in kubes we don't have the full env for some reason.
+const nodeEnv = pipe(
+  process.env.NODE_ENV,
+  Option.fromNullable,
+  Option.getOrElse(() =>
+    pipe(
+      process.env.npm_lifecycle_script,
+      Option.fromNullable,
+      Option.filter((x) => x === 'drizzle-kit studio'),
+      Option.match({
+        onNone: () => import.meta.env.NODE_ENV,
+        onSome: () => 'development',
+      }),
+    ),
+  ),
+)
+
+console.log('yeet', {
+  nodeEnv,
+  skipValidation: nodeEnv === 'test' || nodeEnv === 'production',
+  TSS_PRERENDERING: process.env.TSS_PRERENDERING,
+})
+
+const serverEnv = {
+  // DB
+  DB_HOST_PRIMARY: z.string(),
+  DB_NAME: z.string(),
+  DB_PASSWORD: z.string(),
+  DB_PORT: z.string().transform((x) => Number.parseInt(x, 10)),
+  DB_USERNAME: z.string(),
+
+  // Workflow DB
+  DB_WORKFLOW_HOST_PRIMARY: z.string().optional(), // For local dev when connected to prod db
+  DB_WORKFLOW_NAME: z.string().optional(), // For local dev when connected to prod db
+  DB_WORKFLOW_PASSWORD: z.string().optional(), // For local dev when connected to prod db
+  DB_WORKFLOW_PORT: z
+    .string()
+    .transform((x) => Number.parseInt(x, 10))
+    .optional(), // For local dev when connected to prod db
+  DB_WORKFLOW_USERNAME: z.string().optional(), // For local dev when connected to prod db
+
+  // Zero
+  ZERO_UPSTREAM_DB: z.string(),
+  ZERO_CVR_DB: z.string().optional(), // For local dev when connected to prod upstream db
+  ZERO_CHANGE_DB: z.string().optional(), // For local dev when connected to prod upstream db
+  ZERO_REPLICA_FILE: z.string(),
+  ZERO_AUTH_JWKS_URL: z.string(),
+  ZERO_APP_ID: z.string(),
+  ZERO_LOG_LEVEL: z.string(),
+  ZERO_ADMIN_PASSWORD: z.string(),
+  ZERO_PUSH_URL: z.string(),
+
+  // Cluster / Workers
+  WORKERS_HOST: z.string().optional().default('localhost'),
+  SHARD_MANAGER_HOST: z.string().optional().default('localhost'),
+
+  // Config
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  TUNNEL_URL: z.string().optional(),
+
+  // Auth
+  BETTER_AUTH_SECRET: z.string(),
+
+  // Email
+  RESEND_API_KEY: z.string(),
+
+  // Planning Center
+  PLANNING_CENTER_SECRET: z.string(),
+}
+
 export const env = createEnv({
-  server: {
-    // DB
-    DB_HOST_PRIMARY: z.string(),
-    DB_NAME: z.string(),
-    DB_PASSWORD: z.string(),
-    DB_PORT: z.string().transform((x) => Number.parseInt(x, 10)),
-    DB_USERNAME: z.string(),
+  // If we are prerendering,
+  server: process.env.TSS_PRERENDERING
+    ? ({
+        // DB
+        DB_HOST_PRIMARY: z.string().default(''),
+        DB_NAME: z.string().default(''),
+        DB_PASSWORD: z.string().default(''),
+        DB_PORT: z
+          .string()
+          .default('5432')
+          .transform((x) => Number.parseInt(x, 10)),
+        DB_USERNAME: z.string().default(''),
 
-    // Workflow DB
-    DB_WORKFLOW_HOST_PRIMARY: z.string().optional(), // For local dev when connected to prod db
-    DB_WORKFLOW_NAME: z.string().optional(), // For local dev when connected to prod db
-    DB_WORKFLOW_PASSWORD: z.string().optional(), // For local dev when connected to prod db
-    DB_WORKFLOW_PORT: z
-      .string()
-      .transform((x) => Number.parseInt(x, 10))
-      .optional(), // For local dev when connected to prod db
-    DB_WORKFLOW_USERNAME: z.string().optional(), // For local dev when connected to prod db
+        // Workflow DB
+        DB_WORKFLOW_HOST_PRIMARY: z.string().optional(), // For local dev when connected to prod db
+        DB_WORKFLOW_NAME: z.string().optional(), // For local dev when connected to prod db
+        DB_WORKFLOW_PASSWORD: z.string().optional(), // For local dev when connected to prod db
+        DB_WORKFLOW_PORT: z
+          .string()
+          .transform((x) => Number.parseInt(x, 10))
+          .optional(), // For local dev when connected to prod db
+        DB_WORKFLOW_USERNAME: z.string().optional(), // For local dev when connected to prod db
 
-    // Zero
-    ZERO_UPSTREAM_DB: z.string(),
-    ZERO_CVR_DB: z.string().optional(), // For local dev when connected to prod upstream db
-    ZERO_CHANGE_DB: z.string().optional(), // For local dev when connected to prod upstream db
-    ZERO_REPLICA_FILE: z.string(),
-    ZERO_AUTH_JWKS_URL: z.string(),
-    ZERO_APP_ID: z.string(),
-    ZERO_LOG_LEVEL: z.string(),
-    ZERO_ADMIN_PASSWORD: z.string(),
-    ZERO_PUSH_URL: z.string(),
+        // Zero
+        ZERO_UPSTREAM_DB: z.string().default(''),
+        ZERO_CVR_DB: z.string().optional(), // For local dev when connected to prod upstream db
+        ZERO_CHANGE_DB: z.string().optional(), // For local dev when connected to prod upstream db
+        ZERO_REPLICA_FILE: z.string().default(''),
+        ZERO_AUTH_JWKS_URL: z.string().default(''),
+        ZERO_APP_ID: z.string().default(''),
+        ZERO_LOG_LEVEL: z.string().default(''),
+        ZERO_ADMIN_PASSWORD: z.string().default(''),
+        ZERO_PUSH_URL: z.string().default(''),
 
-    // Cluster / Workers
-    WORKERS_HOST: z.string().optional().default('localhost'),
-    SHARD_MANAGER_HOST: z.string().optional().default('localhost'),
+        // Cluster / Workers
+        WORKERS_HOST: z.string().optional().default('localhost'),
+        SHARD_MANAGER_HOST: z.string().optional().default('localhost'),
 
-    // Config
-    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-    TUNNEL_URL: z.string().optional(),
+        // Config
+        NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+        TUNNEL_URL: z.string().optional(),
 
-    // Auth
-    BETTER_AUTH_SECRET: z.string(),
+        // Auth
+        BETTER_AUTH_SECRET: z.string().default(''),
 
-    // Email
-    RESEND_API_KEY: z.string(),
+        // Email
+        RESEND_API_KEY: z.string().default(''),
 
-    // Planning Center
-    PLANNING_CENTER_SECRET: z.string(),
-  },
+        // Planning Center
+        PLANNING_CENTER_SECRET: z.string().default(''),
+      } as unknown as typeof serverEnv)
+    : serverEnv,
 
   /**
    * The prefix that client-side variables must have. This is enforced both at
@@ -104,5 +180,5 @@ export const env = createEnv({
    */
   emptyStringAsUndefined: true,
 
-  skipValidation: process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'production',
+  skipValidation: nodeEnv === 'test' || nodeEnv === 'production',
 })

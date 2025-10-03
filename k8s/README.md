@@ -19,35 +19,61 @@
    --docker-email=your_email
    ```
 
-2. **Deploy Everything**:
+2. **Taint Frontend Node**:
+   We need to taint a node to just run the frontend, this is to prevent OOM when building. This forces the other services to run on the other node.
+
+   ```bash
+   # list nodes
+   kubectl get nodes
+
+   # pick a node
+
+   # Label the node
+   kubectl label nodes openfaith-poc-2-node-1992ec6551a workload=frontend
+
+   # Taint the node (this repels all pods except frontend)
+   kubectl taint nodes openfaith-poc-2-node-1992ec6551a workload=frontend:NoSchedule
+
+   # Check the node labels and taints
+   kubectl describe node openfaith-poc-2-node-1992ec6551a | grep -A 5 "Taints\|Labels"
+   ```
+
+3. **Deploy Everything**:
 
    ```bash
    kubectl apply -f namespace.yaml
    kubectl apply -f secrets.yaml
    kubectl apply -f configmap.yaml
-   kubectl apply -f frontend-configmap.yaml
-   kubectl apply -f postgres.yaml
+   kubectl apply -f metrics-server.yaml
    kubectl apply -f redis.yaml
    kubectl apply -f zero-storage.yaml
    kubectl apply -f opentelemetry.yaml
-   kubectl apply -f zero.yaml          # ← NEW: Zero cache service (requires DB)
+   kubectl apply -f zero.yaml
    kubectl apply -f workers.yaml
    kubectl apply -f shard-manager.yaml
    kubectl apply -f frontend.yaml
    kubectl apply -f ingress.yaml
+   kubectl apply -f keel.yaml
    ```
 
-3. **Run Database Migration**:
+4. **Run Database Migration**:
 
    ```bash
    kubectl apply -f migrate-job.yaml
    ```
 
-4. **Check Deployment**:
+5. **Check Deployment**:
+
    ```bash
    kubectl get pods -n openfaith
    kubectl get ingress -n openfaith
    ```
+
+6. **Get Public IP address**:
+   ```bash
+   kubectl -n openfaith get svc -o wide
+   ```
+   Copy the public IP for the frontend-service / zero-service and update your dns to point to them.
 
 ## Storage Configuration
 

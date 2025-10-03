@@ -5,6 +5,11 @@ metadata:
   namespace: openfaith
   labels:
     app: frontend
+  annotations:
+    keel.sh/policy: force
+    keel.sh/trigger: poll
+    keel.sh/pollSchedule: "@every 1m"
+    keel.sh/match-tag: "true"
 spec:
   replicas: 1
   selector:
@@ -17,9 +22,23 @@ spec:
     spec:
       imagePullSecrets:
       - name: ghcr-pull-secret
+      tolerations:
+      - key: workload
+        operator: Equal
+        value: frontend
+        effect: NoSchedule
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #       - matchExpressions:
+      #         - key: workload
+      #           operator: In
+      #           values:
+      #           - frontend
       containers:
       - name: frontend
-        image: ghcr.io/faithbase-ai/openfaith-frontend:master-e1aa265
+        image: ghcr.io/faithbase-ai/openfaith-frontend:master
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
@@ -28,7 +47,37 @@ spec:
             name: openfaith-config
         - secretRef:
             name: openfaith-secrets
-
+        resources:
+          requests:
+            memory: "2Gi"
+          limits:
+            memory: "6Gi"
+        # Startup probe: gives up to 10 minutes for build to complete
+        # Disables liveness checking until first success
+        startupProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 60
+          timeoutSeconds: 5
+        # Liveness probe: only starts after startup succeeds
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        # Readiness probe: determines when to route traffic
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service
