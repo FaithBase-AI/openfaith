@@ -13,16 +13,12 @@ COPY . .
 # Install production dependencies directly (excludes dev dependencies for faster builds)
 RUN bun install --no-dev --ignore-scripts
 
-# [optional] tests & build
-ENV NODE_ENV=production
 # Fake resend api key for prerender. This doesn't get baked into the output, but is needed for prerender to succeed 
 # without failing.
-ENV RESEND_API_KEY=re_123 
 # Fake better auth secret key for prerender. This doesn't get baked into the output, but is needed for prerender to   
 # succeed without failing.
-ENV BETTER_AUTH_SECRET=auth_build
 # Build from root using turbo filter
-RUN bun run build --filter=@openfaith/openfaith
+RUN RESEND_API_KEY=re_123 BETTER_AUTH_SECRET=auth_build bun run build --filter=@openfaith/openfaith
 
 # Stay in root directory
 WORKDIR /usr/src/app
