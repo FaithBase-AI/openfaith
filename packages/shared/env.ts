@@ -3,22 +3,11 @@ import { createEnv } from '@t3-oss/env-core'
 import { Option, pipe } from 'effect'
 import { z } from 'zod'
 
-// We need to do this because in kubes we don't have the full env for some reason.
-const nodeEnv = pipe(
-  process.env.NODE_ENV,
-  Option.fromNullable,
-  Option.getOrElse(() =>
-    pipe(
-      process.env.npm_lifecycle_script,
-      Option.fromNullable,
-      Option.filter((x) => x === 'drizzle-kit studio'),
-      Option.match({
-        onNone: () => import.meta.env.NODE_ENV,
-        onSome: () => 'development',
-      }),
-    ),
-  ),
-)
+declare global {
+  interface Window {
+    env: Record<string, string>
+  }
+}
 
 const serverEnv = {
   // DB
@@ -114,7 +103,7 @@ export const env = createEnv({
         BETTER_AUTH_SECRET: z.string().default(''),
 
         // Email
-        RESEND_API_KEY: z.string().default(''),
+        RESEND_API_KEY: z.string(),
 
         // Planning Center
         PLANNING_CENTER_SECRET: z.string().default(''),
@@ -128,15 +117,19 @@ export const env = createEnv({
   clientPrefix: 'VITE_',
 
   client: {
+    // Make sure to update `__root.tsx` if you add / remove any variables here. Vite auto bakes in the client env values
+    // into the build output which runes our goals of being able to publish the frontend docker image. Instead we use
+    // `vite-plugin-runtime` to remove it, and then we insert the env into the frontend with a cheeky script tag.
+
     // Zero
     VITE_ZERO_SERVER: z.string(),
-    VITE_APP_REDIRECT_URL: z.string().optional().default('/directory/people'),
 
     // Config
     VITE_APP_NAME: z.string(),
     VITE_BASE_URL: z.string(),
     VITE_PROD_ROOT_DOMAIN: z.string(),
     VITE_PROD_EMAIL_DOMAIN: z.string(),
+    VITE_APP_REDIRECT_URL: z.string().optional().default('/directory/people'),
 
     // Planning Center
     VITE_PLANNING_CENTER_CLIENT_ID: z.string(),
@@ -147,15 +140,40 @@ export const env = createEnv({
    * `process.env` or `import.meta.env`.
    */
   runtimeEnv: {
-    ...process.env,
+    // This is the client side env from Vite. We need this for local dev.
     ...pipe(
       process.env.npm_lifecycle_script,
       Option.fromNullable,
       Option.filter((x) => x === 'drizzle-kit studio'),
       Option.match({
-        onNone: () => import.meta.env,
+        onNone: () => ({
+          // Zero
+          VITE_ZERO_SERVER: import.meta.env.VITE_ZERO_SERVER,
+
+          // Config
+          VITE_APP_NAME: import.meta.env.VITE_APP_NAME,
+          VITE_BASE_URL: import.meta.env.VITE_BASE_URL,
+          VITE_PROD_ROOT_DOMAIN: import.meta.env.VITE_PROD_ROOT_DOMAIN,
+          VITE_PROD_EMAIL_DOMAIN: import.meta.env.VITE_PROD_EMAIL_DOMAIN,
+          VITE_APP_REDIRECT_URL: import.meta.env.VITE_APP_REDIRECT_URL,
+
+          // Planning Center
+          VITE_PLANNING_CENTER_CLIENT_ID: import.meta.env.VITE_PLANNING_CENTER_CLIENT_ID,
+        }),
         onSome: () => ({}),
       }),
+    ),
+    // This is the server side env. We need the values for `VITE_` to override what we get from the client side.
+    ...process.env,
+    // This is the prod client side env. It comes through the script tag that we add in `__root.tsx`
+    ...pipe(
+      typeof window !== 'undefined'
+        ? pipe(
+            window.env,
+            Option.fromNullable,
+            Option.getOrElse(() => {}),
+          )
+        : {},
     ),
   },
 
@@ -175,5 +193,7 @@ export const env = createEnv({
   emptyStringAsUndefined: true,
 
   skipValidation:
-    nodeEnv === 'test' || nodeEnv === 'production' || process.env.TSS_PRERENDERING !== undefined,
+    process.env.NODE_ENV === 'test' ||
+    process.env.NODE_ENV === 'production' ||
+    process.env.TSS_PRERENDERING !== undefined,
 })

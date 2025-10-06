@@ -13,18 +13,21 @@ COPY . .
 # Install production dependencies directly (excludes dev dependencies for faster builds)
 RUN bun install --no-dev --ignore-scripts
 
+# [optional] tests & build
+ENV NODE_ENV=production
+# Fake resend api key for prerender. This doesn't get baked into the output, but is needed for prerender to succeed 
+# without failing.
+ENV RESEND_API_KEY=re_123 
+# Fake better auth secret key for prerender. This doesn't get baked into the output, but is needed for prerender to   
+# succeed without failing.
+ENV BETTER_AUTH_SECRET=auth_build
+# Build from root using turbo filter
+RUN bun run build --filter=@openfaith/openfaith
+
 # Stay in root directory
 WORKDIR /usr/src/app
-
-# Copy and set up the entrypoint script
-COPY ./apps/openfaith/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# Change ownership of the entire workspace to the bun user
-RUN chown -R bun:bun /usr/src/app
 
 # run the app
 USER bun
 EXPOSE 3000/tcp
-ENV NODE_ENV=production
-ENTRYPOINT [ "entrypoint.sh" ]
+ENTRYPOINT [ "bun", "run", "--filter", "@openfaith/openfaith", "start" ]
