@@ -18,7 +18,7 @@ RUN bun install --no-dev --ignore-scripts
 # Fake better auth secret key for prerender. This doesn't get baked into the output, but is needed for prerender to   
 # succeed without failing.
 # Build from root using turbo filter
-RUN RESEND_API_KEY=re_123 BETTER_AUTH_SECRET=auth_build cd apps/openfaith && bun run build
+RUN cd apps/openfaith && RESEND_API_KEY=re_123 BETTER_AUTH_SECRET=auth_build bun run build
 
 # Stay in root directory
 WORKDIR /usr/src/app
