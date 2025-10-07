@@ -65,8 +65,8 @@ const givingOptions = [
     description: 'Coming soon',
     disabled: true,
     icon: <PushpayIcon className={'size-12'} />,
-    name: 'CCB',
-    value: 'ccb',
+    name: 'PushPay',
+    value: 'pushpay',
   },
 ]
 
