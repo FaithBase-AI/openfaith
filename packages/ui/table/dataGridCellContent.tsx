@@ -90,9 +90,8 @@ export const getGridCellContent = (field: any, value: any, editable = true): Gri
     case 'badge':
       return {
         allowOverlay: isEditable,
-        data: `${value}`,
-        displayData: `${value}`,
-        kind: GridCellKind.Text,
+        data: [`${value}`],
+        kind: GridCellKind.Bubble,
         // Could potentially use bubble/tag styling in the future
       }
 
