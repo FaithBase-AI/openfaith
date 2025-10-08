@@ -130,6 +130,7 @@ export const AdapterHandlerLive = AdapterRpc.toLayer(
               payload: {
                 adapter: adapterImpl._tag,
                 tokenKey: orgId,
+                userId,
               },
             })
             .pipe(
@@ -170,6 +171,7 @@ export const AdapterHandlerLive = AdapterRpc.toLayer(
               payload: {
                 adapter,
                 tokenKey: orgId,
+                userId: session.userId,
               },
             })
             .pipe(

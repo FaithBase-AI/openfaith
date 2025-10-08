@@ -1,11 +1,6 @@
 'use client'
 
-import type { RecordData } from '@openfaith/schema'
 import { BaseAvatar } from '@openfaith/ui/components/avatars/baseAvatar'
-import { OrgAvatar } from '@openfaith/ui/components/avatars/orgAvatar'
-import { UserAvatar } from '@openfaith/ui/components/avatars/userAvatar'
-import { cn } from '@openfaith/ui/shared/utils'
-import { Array, Match, Option, pipe } from 'effect'
 import type { Avatar as AvatarPrimitive } from 'radix-ui'
 import type { ComponentPropsWithoutRef, FC, Ref } from 'react'
 
@@ -30,19 +25,6 @@ const getEntityDisplayName = (record: EntityRecord): string => {
   // Try common name fields in order of preference
   if (record.name) {
     return record.name
-  }
-
-  // For person entities, try to construct name from firstName/lastName
-  if (record._tag === 'person') {
-    const firstName = 'firstName' in record ? record.firstName : undefined
-    const lastName = 'lastName' in record ? record.lastName : undefined
-    if (firstName || lastName) {
-      return pipe(
-        [firstName, lastName] as Array<string | undefined>,
-        Array.filter((name): name is string => Boolean(name)),
-        Array.join(' '),
-      )
-    }
   }
 
   // Fallback to entity type + ID
@@ -72,50 +54,15 @@ const getEntityAvatarUrl = (record: EntityRecord): string | null => {
 export const EntityAvatar: FC<EntityAvatarProps> = (props) => {
   const { record, size = 40, style = {}, className, ref, ...domProps } = props
 
-  // Handle legacy RecordData types (user/org) with specialized components
-  if (record._tag === 'user' || record._tag === 'org') {
-    const recordData = record as RecordData
-
-    return pipe(
-      Match.type<RecordData>(),
-      Match.tag('user', (x) => (
-        <UserAvatar
-          className={cn('rounded-md', className)}
-          name={pipe(
-            x.name,
-            Option.fromNullable,
-            Option.getOrElse(() => ''),
-          )}
-          ref={ref}
-          size={size}
-          style={style}
-          userId={x.id}
-          {...domProps}
-        />
-      )),
-      Match.tag('org', (x) => (
-        <OrgAvatar
-          className={cn('rounded-md', className)}
-          org={x}
-          ref={ref}
-          size={size}
-          style={style}
-          {...domProps}
-        />
-      )),
-      Match.exhaustive,
-    )(recordData)
-  }
-
   // Handle all other entity types with BaseAvatar
   const displayName = getEntityDisplayName(record)
   const avatarUrl = getEntityAvatarUrl(record)
 
   return (
     <BaseAvatar
-      _tag={record._tag === 'user' || record._tag === 'org' ? record._tag : undefined}
+      _tag={record._tag}
       avatar={avatarUrl}
-      className={cn('rounded-md', className)}
+      className={className}
       name={displayName}
       ref={ref}
       size={size}

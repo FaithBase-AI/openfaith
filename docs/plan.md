@@ -16,6 +16,7 @@
   - I need to check to see if I can not run shard-manager and talk to local workers.
     - Ended up just doing a separate env for this. Had to do the same thing for zero, needs a local cvr / change db for it to be fast.
 - [x] Speed up navigation by preloading items.
+- [x] We need to map the user that auths with PCO, get their person ID, and then link their profile.
 
 ### Todo
 
@@ -36,7 +37,6 @@
 - [ ] Figure out why https://openfaith.app is crashing Arc. It's only happening for me on the home page, idk if it's just me or if its happening to others. Safari / Chrome load fine.
   - I think this is fixed now, I think it was connected to pre render failing.
 
-- [ ] We need to map the user that auths with PCO, get their person ID, and then link their profile.
 - [ ] We need to figure out our custom tab / field datams in PCO so we can sync custom data that links to the person back to PCO.
 - [ ] Improve onboarding flow. We need to gather some ministry details. Name / Location
 

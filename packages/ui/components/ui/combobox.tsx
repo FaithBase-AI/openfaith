@@ -1,4 +1,3 @@
-import { idToRecordsTag, type RecordData } from '@openfaith/schema'
 import { noOp, nullOp, removeReadonly } from '@openfaith/shared'
 import { EntityAvatar } from '@openfaith/ui/components/avatars/entityAvatar'
 import { DefaultComboBoxTrigger } from '@openfaith/ui/components/ui/combobox-triggers'
@@ -33,37 +32,6 @@ const itemToString = <T extends BaseComboboxItem = BaseComboboxItem>(item: T | n
     Option.flatMapNullable((x) => x.name),
     Option.getOrElse(() => ''),
   )
-
-const transformComboboxItem = <T extends BaseComboboxItem = BaseComboboxItem>(
-  item: T,
-): RecordData => {
-  const tag = idToRecordsTag(item.id)
-
-  switch (tag) {
-    case 'org':
-      return {
-        _tag: 'org',
-        id: item.id,
-        logo: pipe(item.avatar, Option.fromNullable, Option.getOrNull),
-        name: pipe(
-          item.name,
-          Option.fromNullable,
-          Option.getOrElse(() => ''),
-        ),
-      }
-    case 'user':
-      return {
-        _tag: 'user',
-        id: item.id,
-        image: pipe(item.avatar, Option.fromNullable, Option.getOrNull),
-        name: pipe(
-          item.name,
-          Option.fromNullable,
-          Option.getOrElse(() => ''),
-        ),
-      }
-  }
-}
 
 const ComboboxInput = forwardRef<
   HTMLInputElement,
@@ -520,11 +488,7 @@ const ComboboxContent = <T extends BaseComboboxItem = BaseComboboxItem>(
                               } as HTMLAttributes<HTMLElement>,
                             ),
                           onTrue: () => (
-                            <EntityAvatar
-                              className={'mr-2.5 self-center'}
-                              record={transformComboboxItem(y)}
-                              size={24}
-                            />
+                            <EntityAvatar className={'mr-2.5 self-center'} record={y} size={24} />
                           ),
                         }),
                       )}

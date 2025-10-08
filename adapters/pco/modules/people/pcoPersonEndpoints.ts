@@ -14,7 +14,7 @@ import {
 export const listPeopleDefinition = pcoApiAdapter({
   apiSchema: PcoPerson,
   defaultQuery: {
-    include: ['addresses', 'phone_numbers'],
+    include: ['addresses', 'phone_numbers', 'emails'],
     order: 'created_at',
     per_page: 100,
   },

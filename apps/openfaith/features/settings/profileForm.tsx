@@ -149,11 +149,13 @@ const ProfileForm: FC<InnerProfileFormProps> = (props) => {
                       idB: value.personId,
                     })
 
+                    const createdAt = new Date()
+
                     await tx.edges.insert({
                       _tag: 'edge',
-                      createdAt: Date.now(),
+                      createdAt: createdAt.valueOf(),
                       metadata: {
-                        linkedAt: new Date().toISOString(),
+                        linkedAt: createdAt.toISOString(),
                       },
                       orgId,
                       // We need to deal with this hardcoding down the road. It needs to be generated.

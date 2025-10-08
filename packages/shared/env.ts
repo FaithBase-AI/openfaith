@@ -1,6 +1,6 @@
 /** biome-ignore-all assist/source/useSortedKeys: Keep it organized by category */
 import { createEnv } from '@t3-oss/env-core'
-import { Option, pipe } from 'effect'
+import { Option, pipe, String } from 'effect'
 import { z } from 'zod'
 
 declare global {
@@ -144,7 +144,7 @@ export const env = createEnv({
     ...pipe(
       process.env.npm_lifecycle_script,
       Option.fromNullable,
-      Option.filter((x) => x === 'drizzle-kit studio'),
+      Option.filter((x) => pipe(x, String.includes('drizzle-kit'))),
       Option.match({
         onNone: () => ({
           // Zero

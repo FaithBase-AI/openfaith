@@ -1,6 +1,7 @@
 import { addressesTable } from '@openfaith/db/schema/modules/addressSchema'
 import { campusesTable } from '@openfaith/db/schema/modules/campusesSchema'
 import { edgesTable, entityRelationshipsTable } from '@openfaith/db/schema/modules/edgesSchema'
+import { emailsTable } from '@openfaith/db/schema/modules/emailsSchema'
 import { fieldOptionsTable } from '@openfaith/db/schema/modules/fieldsSchema'
 import { foldersTable } from '@openfaith/db/schema/modules/foldersSchema'
 import { journeysTable, pathwaysTable } from '@openfaith/db/schema/modules/pathwaysSchema'
@@ -29,6 +30,11 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
     fields: [edgesTable.sourceEntityId],
     references: [campusesTable.id],
     relationName: 'CampusSourceEdges',
+  }),
+  sourceEmail: one(emailsTable, {
+    fields: [edgesTable.sourceEntityId],
+    references: [emailsTable.id],
+    relationName: 'EmailSourceEdges',
   }),
   sourceFieldOption: one(fieldOptionsTable, {
     fields: [edgesTable.sourceEntityId],
@@ -75,8 +81,6 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
     references: [sacramentsTable.id],
     relationName: 'SacramentSourceEdges',
   }),
-  // sourcePathwayStep removed
-  // sourceStepProgress removed
   sourceUser: one(usersTable, {
     fields: [edgesTable.sourceEntityId],
     references: [usersTable.id],
@@ -93,6 +97,11 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
     fields: [edgesTable.targetEntityId],
     references: [campusesTable.id],
     relationName: 'CampusTargetEdges',
+  }),
+  targetEmail: one(emailsTable, {
+    fields: [edgesTable.targetEntityId],
+    references: [emailsTable.id],
+    relationName: 'EmailTargetEdges',
   }),
   targetFieldOption: one(fieldOptionsTable, {
     fields: [edgesTable.targetEntityId],
@@ -139,8 +148,6 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
     references: [sacramentsTable.id],
     relationName: 'SacramentTargetEdges',
   }),
-  // targetPathwayStep removed
-  // targetStepProgress removed
   targetUser: one(usersTable, {
     fields: [edgesTable.targetEntityId],
     references: [usersTable.id],

@@ -1,48 +1,66 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName, OfSkipEntity } from '@openfaith/schema'
+import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
+import {
+  BaseEmail,
+  Email,
+  OfEntity,
+  OfFieldName,
+  OfPartialTransformer,
+  OfTransformer,
+} from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoEmailAttributes = Schema.Struct({
-  address: Schema.NullOr(Schema.String).annotations({
+  address: Schema.String.annotations({
     [OfFieldName]: 'address',
-    [OfCustomField]: true,
   }),
   blocked: Schema.Boolean.annotations({
     [OfFieldName]: 'blocked',
-    [OfCustomField]: true,
   }),
-  created_at: Schema.NullOr(Schema.String).annotations({
+  created_at: Schema.String.annotations({
     [OfFieldName]: 'createdAt',
-    [OfCustomField]: true,
   }),
-  location: Schema.NullOr(Schema.String).annotations({
+  location: Schema.NullOr(
+    Schema.Union(Schema.Literal('Home', 'Work', 'Other'), Schema.String),
+  ).annotations({
     [OfFieldName]: 'location',
-    [OfCustomField]: true,
   }),
   primary: Schema.Boolean.annotations({
     [OfFieldName]: 'primary',
-    [OfCustomField]: true,
   }),
-  updated_at: Schema.NullOr(Schema.String).annotations({
+  updated_at: Schema.String.annotations({
     [OfFieldName]: 'updatedAt',
-    [OfCustomField]: true,
   }),
 })
 export type PcoEmailAttributes = typeof PcoEmailAttributes.Type
 
+export const pcoEmailTransformer = pcoToOf(PcoEmailAttributes, BaseEmail, 'email')
+
+export const pcoEmailPartialTransformer = pcoToOf(
+  Schema.partial(PcoEmailAttributes),
+  Schema.partial(Schema.Struct(BaseEmail.fields)),
+  'email',
+)
+
 export const PcoEmail = mkPcoEntity({
   attributes: PcoEmailAttributes,
-  links: Schema.Struct({}),
+  links: Schema.Struct({
+    self: Schema.String,
+  }),
   relationships: Schema.Struct({
     person: Schema.Struct({
-      data: Schema.NullOr(
-        Schema.Struct({
-          id: Schema.String,
-          type: Schema.Literal('Person'),
-        }),
-      ),
+      data: Schema.Struct({
+        id: Schema.String,
+        type: Schema.Literal('Person'),
+      }),
     }),
   }),
   type: 'Email',
-}).annotations({ [OfSkipEntity]: true, title: 'pco-email' })
+}).annotations({
+  [OfEntity]: Email,
+  title: 'pco-email',
+  [OfTransformer]: pcoEmailTransformer,
+  [OfPartialTransformer]: pcoEmailPartialTransformer,
+})
+
 export type PcoEmail = typeof PcoEmail.Type

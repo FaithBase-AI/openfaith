@@ -1,4 +1,5 @@
 import { adapterDetailsTable, adapterTokensTable } from '@openfaith/db/schema/adaptersSchema'
+import { emailsTable } from '@openfaith/db/schema/drizzleSchema'
 import { edgesTable, entityRelationshipsTable } from '@openfaith/db/schema/modules/edgesSchema'
 import { externalLinksTable } from '@openfaith/db/schema/modules/externalLinksSchema'
 import { peopleTable } from '@openfaith/db/schema/modules/peopleSchema'
@@ -18,6 +19,7 @@ export const orgsRelations = relations(orgsTable, ({ many, one }) => ({
   edges: many(edgesTable, {
     relationName: 'OrgEdges',
   }),
+  emails: many(emailsTable),
   entityRelationships: many(entityRelationshipsTable),
   externalLinks: many(externalLinksTable),
   invitations: many(invitationsTable),
