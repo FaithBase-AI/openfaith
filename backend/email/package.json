@@ -2,15 +2,16 @@
   "dependencies": {
     "@openfaith/schema": "workspace:*",
     "@openfaith/shared": "workspace:*",
-    "@react-email/components": "0.0.41",
+    "@react-email/components": "0.5.6",
     "effect": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@react-email/preview-server": "4.3.0",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "react-email": "4.0.15",
+    "react-email": "4.3.0",
     "typescript": "catalog:"
   },
   "license": "MIT",
@@ -18,7 +19,7 @@
   "private": true,
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "email dev",
+    "dev": "email dev --port 3001",
     "format": "biome check",
     "typecheck": "tsgo --noEmit"
   },

@@ -1,2 +1,2 @@
-export * from '@openfaith/email/invitation'
-export * from '@openfaith/email/otp'
+export * from '@openfaith/email/emails/invitation'
+export * from '@openfaith/email/emails/otp'
