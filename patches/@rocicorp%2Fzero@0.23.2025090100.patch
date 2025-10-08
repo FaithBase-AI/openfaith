@@ -1,14 +1,13 @@
 diff --git a/out/zqlite/src/table-source.js b/out/zqlite/src/table-source.js
-index 19275509339001207344aef650f8e40f2dc1902f..c22bde3566e5c636ef9e36d42213aeb2ccbec5f7 100644
+index c314323c0d861809314faf96b2040c4e99cf55e7..6f73d6c823b81139333e76c08ac4f94235dfedab 100644
 --- a/out/zqlite/src/table-source.js
 +++ b/out/zqlite/src/table-source.js
-@@ -490,7 +490,8 @@ function fromSQLiteType(valueType, v, column) {
+@@ -488,7 +488,7 @@ function fromSQLiteType(valueType, v, column) {
          case 'null':
              if (typeof v === 'bigint') {
                  if (v > Number.MAX_SAFE_INTEGER || v < Number.MIN_SAFE_INTEGER) {
 -                    throw new UnsupportedValueError(`value ${v} (in column ${column}) is outside of supported bounds`);
 +                    // throw new UnsupportedValueError(`value ${v} (in column ${column}) is outside of supported bounds`);
-+                  return Number(v);
                  }
                  return Number(v);
              }
