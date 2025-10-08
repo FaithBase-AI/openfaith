@@ -27,6 +27,13 @@ import {
   updateCampusDefinition,
 } from '@openfaith/pco/modules/people/pcoCampusEndpoints'
 import {
+  createEmailDefinition,
+  deleteEmailDefinition,
+  getEmailByIdDefinition,
+  listEmailsDefinition,
+  updateEmailDefinition,
+} from '@openfaith/pco/modules/people/pcoEmailEndpoints'
+import {
   createPersonDefinition,
   deletePersonDefinition,
   getPersonByIdDefinition,
@@ -77,6 +84,13 @@ export const pcoEntityManifest = mkPcoEntityManifest({
     createPhoneNumberDefinition,
     updatePhoneNumberDefinition,
     deletePhoneNumberDefinition,
+
+    // Emails
+    listEmailsDefinition,
+    getEmailByIdDefinition,
+    createEmailDefinition,
+    updateEmailDefinition,
+    deleteEmailDefinition,
 
     // People
     listPeopleDefinition,

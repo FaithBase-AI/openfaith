@@ -4,7 +4,7 @@
     "downlevelIteration": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": ["ES2020"],
+    "lib": ["ES2020", "DOM"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
