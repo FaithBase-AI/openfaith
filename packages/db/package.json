@@ -16,7 +16,8 @@
   "private": true,
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "db:generate": "npx drizzle-kit generate && bun run format --write",
+    "db:generate": "npx drizzle-kit generate --custom && bun run format --write",
+    "db:generate:custom": "npx drizzle-kit generate && bun run format --write",
     "db:migrate": "npx drizzle-kit migrate",
     "dev": "drizzle-kit studio",
     "dev:db-down": "docker compose --env-file .env -f ./docker-compose.yml down",
