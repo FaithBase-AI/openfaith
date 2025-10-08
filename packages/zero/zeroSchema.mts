@@ -146,6 +146,16 @@ export const permissions = definePermissions<AuthData, ZSchema>(schema, () => {
         },
       },
     },
+    emails: {
+      row: {
+        insert: [allowIfAdmin],
+        select: [allowIfOrg],
+        update: {
+          postMutation: [allowIfAdmin],
+          preMutation: [allowIfAdmin],
+        },
+      },
+    },
     entityRelationships: {
       row: {
         select: [allowIfOrg],

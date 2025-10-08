@@ -1,6 +1,5 @@
 'use client'
 
-import type { RecordData } from '@openfaith/schema'
 import { Avatar, AvatarFallback, getAvatarInitials } from '@openfaith/ui/components/ui/avatar'
 import { Skeleton } from '@openfaith/ui/components/ui/skeleton'
 import { cn } from '@openfaith/ui/shared/utils'
@@ -14,16 +13,16 @@ type BaseAvatarProps = {
   ref?: Ref<HTMLElement>
   name: string | null
   avatar?: string | null
-  _tag?: RecordData['_tag']
+  _tag?: string
 } & ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
 
 type BaseAvatarSkeletonProps = {
   size?: number
-  _tag?: RecordData['_tag']
+  _tag?: string
   className?: string
 }
 
-const getAvatarClassName = (_tag?: RecordData['_tag']) =>
+const getAvatarClassName = (_tag?: string) =>
   pipe(
     _tag,
     Option.fromNullable,

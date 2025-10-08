@@ -15,7 +15,10 @@ import { Array, Option, pipe, Schema, type Schema as SchemaType } from 'effect'
 import { type ComponentProps, type ReactNode, useMemo } from 'react'
 
 const BaseOptionSchema = Schema.Struct({
+  _tag: Schema.String,
+  avatar: Schema.String.pipe(Schema.optional),
   id: Schema.String,
+  name: Schema.String.pipe(Schema.optional),
 })
 
 export type SelectSchemaFieldProps = Omit<
@@ -126,16 +129,28 @@ const SelectSchemaFieldInner = <T,>(props: InnerProps<T>) => {
     () =>
       pipe(
         collection,
-        Array.filterMap((entity): Option.Option<BaseComboboxItem> => {
-          return pipe(
-            Schema.decodeUnknownOption(BaseOptionSchema)(entity, { onExcessProperty: 'preserve' }),
-            Option.map((x) => ({
-              id: x.id,
-              name: extractEntityDisplayName(entity, schemaName, x.id),
-            })),
-          )
-        }),
-        Array.appendAll(includeNone ? [{ id: '', name: noneLabel }] : []),
+        Array.filterMap(
+          (entity): Option.Option<BaseComboboxItem> =>
+            pipe(
+              Schema.decodeUnknownOption(BaseOptionSchema)(entity, {
+                onExcessProperty: 'preserve',
+              }),
+              Option.map((x) => ({
+                _tag: x._tag,
+                id: x.id,
+                name: extractEntityDisplayName(entity, schemaName, x.id),
+                ...pipe(
+                  x.avatar as any,
+                  Option.fromNullable,
+                  Option.match({
+                    onNone: () => ({}),
+                    onSome: (y) => ({ avatar: y }),
+                  }),
+                ),
+              })),
+            ),
+        ),
+        Array.appendAll(includeNone ? [{ _tag: 'none', id: '', name: noneLabel }] : []),
       ),
     [collection, includeNone, noneLabel, schemaName],
   )

@@ -2,6 +2,7 @@ import { discoverUiEntities, type EntityUiConfig, enrichMutationData } from '@op
 import { pluralize } from '@openfaith/shared'
 import type { AuthData, ZSchema } from '@openfaith/zero/zeroSchema.mjs'
 import type { CustomMutatorDefs, Transaction } from '@rocicorp/zero'
+
 import { Effect, type ParseResult, Schema } from 'effect'
 
 export class MutatorAuthError extends Schema.TaggedError<MutatorAuthError>()('MutatorAuthError', {
@@ -118,16 +119,16 @@ const validateAuth = (
 
 export function createMutators(
   authData: Pick<AuthData, 'sub' | 'activeOrganizationId' | 'role'> | undefined,
-): CustomMutatorDefs<ZSchema> {
+): CustomMutatorDefs {
   const entities = discoverUiEntities()
 
-  const mutators: CustomMutatorDefs<ZSchema> = {}
+  const mutators: CustomMutatorDefs = {}
 
   for (const entity of entities) {
     const tableName = pluralize(entity.tag)
 
     mutators[tableName] = {
-      delete: async (tx: Transaction<ZSchema>, input: Array<any>) => {
+      delete: async (tx, input: Array<any>) => {
         const { orgId, userId, role } = validateAuth(authData)
 
         await effectMutator({
@@ -140,7 +141,7 @@ export function createMutators(
           userId,
         }).pipe(Effect.runPromise)
       },
-      insert: async (tx: Transaction<ZSchema>, input: Array<any>) => {
+      insert: async (tx, input: Array<any>) => {
         const { orgId, userId, role } = validateAuth(authData)
 
         await effectMutator({
@@ -153,7 +154,7 @@ export function createMutators(
           userId,
         }).pipe(Effect.runPromise)
       },
-      update: async (tx: Transaction<ZSchema>, input: Array<any>) => {
+      update: async (tx, input: Array<any>) => {
         const { orgId, userId, role } = validateAuth(authData)
 
         await effectMutator({
@@ -166,7 +167,7 @@ export function createMutators(
           userId,
         }).pipe(Effect.runPromise)
       },
-      upsert: async (tx: Transaction<ZSchema>, input: Array<any>) => {
+      upsert: async (tx, input: Array<any>) => {
         const { orgId, userId, role } = validateAuth(authData)
 
         await effectMutator({

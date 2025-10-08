@@ -107,7 +107,7 @@ export const CreateOrgWorkflowLayer = CreateOrgWorkflow.toLayer(
           relationships: [
             {
               sourceEntityTypeTag: 'person',
-              targetEntityTypeTags: ['person', 'phoneNumber', 'address', 'campus', 'user', 'email'],
+              targetEntityTypeTags: ['phoneNumber', 'address', 'campus', 'user', 'email'],
             },
           ],
         }).pipe(
