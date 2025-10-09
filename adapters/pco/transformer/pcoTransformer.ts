@@ -35,6 +35,34 @@ const findAnnotationInAST = <T>(annotationKey: symbol, ast: SchemaAST.AST): Opti
   return Option.none()
 }
 
+// Helper function to check if an AST represents a nullable type (NullOr)
+const isNullableType = (ast: SchemaAST.AST): boolean => {
+  // Check if it's a union type containing null
+  if (ast._tag === 'Union') {
+    const unionTypes = (ast as any).types || []
+    for (const type of unionTypes) {
+      if (type._tag === 'Literal' && (type as any).literal === null) {
+        return true
+      }
+    }
+    return false
+  }
+
+  // Check nested structures for transformed schemas
+  if (ast._tag === 'Transformation') {
+    const fromAst = (ast as any).from
+    const toAst = (ast as any).to
+    return isNullableType(fromAst) || isNullableType(toAst)
+  }
+
+  // Check refinements
+  if (ast._tag === 'Refinement') {
+    return isNullableType((ast as any).from)
+  }
+
+  return false
+}
+
 type MergeShape = Record<string, unknown> & {
   customFields: Array<CustomFieldSchema>
 }
@@ -262,14 +290,20 @@ export const pcoToOf = <From extends Schema.Schema.Any, To extends Schema.Schema
 
           return pipe(
             fieldKeyOpt,
-            Option.flatMap((OfFieldName) =>
-              pipe(
-                OfFieldName in (rest as any)
-                  ? Option.some((rest as any)[OfFieldName])
-                  : Option.none(),
-                Option.map((value) => [pcoKey, value] as const),
-              ),
-            ),
+            Option.flatMap((OfFieldName) => {
+              // Check if field exists in OF data
+              if (OfFieldName in (rest as any)) {
+                return Option.some([pcoKey, (rest as any)[OfFieldName]] as const)
+              }
+
+              // Field doesn't exist - check if PCO schema accepts null
+              // If the field is nullable, provide null instead of skipping
+              if (isNullableType(fieldAst)) {
+                return Option.some([pcoKey, null] as const)
+              }
+
+              return Option.none()
+            }),
           )
         }),
         Array.reduce({}, (b, [key, value]) => {
@@ -297,10 +331,26 @@ export const pcoToOf = <From extends Schema.Schema.Any, To extends Schema.Schema
         }),
       )
 
-      return {
+      const result = {
         ...standardFields,
         ...customFieldsDecoded,
       }
+
+      // Transform gender format from OF back to PCO format
+      if ('gender' in result && result.gender) {
+        switch (result.gender) {
+          case 'male':
+            result.gender = 'Male'
+            break
+          case 'female':
+            result.gender = 'Female'
+            break
+          default:
+            break
+        }
+      }
+
+      return result
     },
     strict: false,
   })

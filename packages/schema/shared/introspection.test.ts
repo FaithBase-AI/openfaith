@@ -284,7 +284,7 @@ effect('extractEntityInfo should handle schema with multiple annotations', () =>
   }),
 )
 
-effect('getServerMutationSchema should detect and transform TimestampToIsoString fields', () =>
+effect('getZeroMutationSchema should detect and transform TimestampToIsoString fields', () =>
   Effect.gen(function* () {
     const TestSchemaWithTimestamp = Schema.Struct({
       createdAt: TimestampToIsoString,
@@ -316,7 +316,7 @@ effect('getServerMutationSchema should detect and transform TimestampToIsoString
   }),
 )
 
-effect('getServerMutationSchema should handle optional timestamp fields', () =>
+effect('getZeroMutationSchema should handle optional timestamp fields', () =>
   Effect.gen(function* () {
     const TestSchemaWithOptionalTimestamp = Schema.Struct({
       createdAt: TimestampToIsoString,
@@ -353,7 +353,7 @@ effect('getServerMutationSchema should handle optional timestamp fields', () =>
   }),
 )
 
-effect('getServerMutationSchema should work with Campus schema', () =>
+effect('getZeroMutationSchema should work with Campus schema', () =>
   Effect.gen(function* () {
     const serverSchema = getZeroMutationSchema(Campus)
 
@@ -385,7 +385,7 @@ effect('getServerMutationSchema should work with Campus schema', () =>
   }),
 )
 
-effect('getServerMutationSchema should preserve non-timestamp fields correctly', () =>
+effect('getZeroMutationSchema should preserve non-timestamp fields correctly', () =>
   Effect.gen(function* () {
     const TestMixedSchema = Schema.Struct({
       active: Schema.Boolean,
@@ -423,5 +423,39 @@ effect('getServerMutationSchema should preserve non-timestamp fields correctly',
     expect(encoded.age).toBe(25)
     expect(encoded.count).toBe(42)
     expect(encoded.tags).toEqual(['tag1', 'tag2'])
+  }),
+)
+
+effect('getZeroMutationSchema should accept both ISO strings and numbers for timestamps', () =>
+  Effect.gen(function* () {
+    const TestSchemaWithTimestamp = Schema.Struct({
+      createdAt: TimestampToIsoString,
+      id: Schema.String,
+      name: Schema.String,
+    })
+
+    const serverSchema = getZeroMutationSchema(TestSchemaWithTimestamp)
+
+    const testDataWithString = {
+      createdAt: '2025-10-08T19:00:23Z',
+      id: 'test_123',
+      name: 'Test Item',
+    }
+
+    const encodedFromString = yield* Schema.decodeUnknown(serverSchema)(testDataWithString)
+    expect(typeof encodedFromString.createdAt).toBe('number')
+    expect(encodedFromString.createdAt).toBe(new Date('2025-10-08T19:00:23Z').getTime())
+
+    const testDataWithNumber = {
+      createdAt: new Date('2025-10-08T19:00:23Z').getTime(),
+      id: 'test_456',
+      name: 'Test Item 2',
+    }
+
+    const encodedFromNumber = yield* Schema.decodeUnknown(serverSchema)(testDataWithNumber)
+    expect(typeof encodedFromNumber.createdAt).toBe('number')
+    expect(encodedFromNumber.createdAt).toBe(new Date('2025-10-08T19:00:23Z').getTime())
+
+    expect(encodedFromString.createdAt).toBe(encodedFromNumber.createdAt)
   }),
 )

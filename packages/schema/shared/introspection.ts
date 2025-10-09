@@ -376,11 +376,15 @@ export const getZeroMutationSchema = <A, I = A, R = never>(
   for (const field of fields) {
     const fieldAst = extractAST(field.schema)
 
-    const baseTransform = Schema.transform(Schema.String, Schema.Number, {
-      decode: (isoString: string, _original: string) => new Date(isoString).getTime(),
-      encode: (timestamp: number, _original: number) => new Date(timestamp).toISOString(),
-      strict: true,
-    })
+    const baseTransform = Schema.transform(
+      Schema.Union(Schema.String, Schema.Number),
+      Schema.Number,
+      {
+        decode: (input: string | number) => new Date(input).getTime(),
+        encode: (timestamp: number) => new Date(timestamp).toISOString().replace(/\.\d{3}Z$/, 'Z'),
+        strict: true,
+      },
+    )
 
     if (isTimestampToIsoStringField(fieldAst)) {
       if (field.isOptional) {

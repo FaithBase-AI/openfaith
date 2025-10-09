@@ -36,7 +36,7 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
         sortable: true,
       },
     },
-  }).pipe(Schema.NullOr, Schema.optional),
+  }),
   country: Schema.String.annotations({
     description: 'Country',
     [OfUiConfig]: {
@@ -104,7 +104,7 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
         sortable: true,
       },
     },
-  }).pipe(Schema.NullOr, Schema.optional),
+  }),
   street: Schema.String.annotations({
     description: 'Street address',
     [OfUiConfig]: {
@@ -116,7 +116,7 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
         sortable: true,
       },
     },
-  }).pipe(Schema.NullOr, Schema.optional),
+  }),
   url: Schema.String.annotations({
     description: 'Website URL',
     [OfUiConfig]: {
@@ -142,7 +142,7 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
         sortable: true,
       },
     },
-  }).pipe(Schema.NullOr, Schema.optional),
+  }),
 }) {}
 
 export class Campus extends BaseCampus.extend<Campus>('Campus')(BaseIdentifiedEntity.fields, [

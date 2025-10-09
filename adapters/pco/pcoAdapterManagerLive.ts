@@ -1178,10 +1178,11 @@ export const transformPartialEntityDataE = Effect.fn('transformPartialEntityData
     ),
   )
 
-  const partialTransformer = yield* getAnnotationFromSchema<Schema.transform<any, any>>(
-    OfPartialTransformer,
-    entitySchema.ast,
-  ).pipe(
+  const partialTransformer = yield* getAnnotationFromSchema<
+    Schema.Struct<{
+      id: typeof Schema.String
+    }>
+  >(OfPartialTransformer, entitySchema.ast).pipe(
     Effect.mapError((error) =>
       Effect.fail(
         new AdapterTransformError({
@@ -1194,16 +1195,31 @@ export const transformPartialEntityDataE = Effect.fn('transformPartialEntityData
     ),
   )
 
-  return yield* Schema.encode(partialTransformer as unknown as typeof pcoPersonPartialTransformer)({
-    ...partialData,
-  })
+  return yield* Schema.encode(partialTransformer as unknown as typeof pcoPersonPartialTransformer)(
+    {
+      ...partialData,
+    },
+    {
+      errors: 'all',
+    },
+  ).pipe(
+    Effect.mapError(
+      (error) =>
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entityName,
+          message: `Failed to encode transformer for ${entityName}`,
+        }),
+    ),
+  )
 })
 
 export const transformEntityDataE = Effect.fn('transformPartialEntityDataE')(function* (
   entityName: string,
-  partialData: Record<string, unknown>,
+  data: Record<string, unknown>,
 ) {
-  const entitySchema = yield* getEntitySchemaOpt(entityName).pipe(
+  const pcoEntitySchema = yield* getEntitySchemaOpt(entityName).pipe(
     Effect.mapError(
       (error) =>
         new AdapterTransformError({
@@ -1215,10 +1231,28 @@ export const transformEntityDataE = Effect.fn('transformPartialEntityDataE')(fun
     ),
   )
 
-  const transformer = yield* getAnnotationFromSchema<Schema.transform<any, any>>(
-    OfTransformer,
-    entitySchema.ast,
-  ).pipe(
+  const ofEntitySchema = yield* getAnnotationFromSchema<
+    Schema.Struct<{
+      id: typeof Schema.String
+    }>
+  >(OfEntity, pcoEntitySchema.ast).pipe(
+    Effect.mapError((error) =>
+      Effect.fail(
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entityName,
+          message: `No OfEntity schema found for ${entityName}`,
+        }),
+      ),
+    ),
+  )
+
+  const transformer = yield* getAnnotationFromSchema<
+    Schema.Struct<{
+      id: typeof Schema.String
+    }>
+  >(OfTransformer, pcoEntitySchema.ast).pipe(
     Effect.mapError((error) =>
       Effect.fail(
         new AdapterTransformError({
@@ -1231,9 +1265,34 @@ export const transformEntityDataE = Effect.fn('transformPartialEntityDataE')(fun
     ),
   )
 
-  return yield* Schema.encodeUnknown(transformer as unknown as typeof pcoPersonTransformer)({
-    ...partialData,
-  })
+  const { id: _id, ...parsedData } = yield* Schema.decodeUnknown(ofEntitySchema)(data).pipe(
+    Effect.mapError(
+      (error) =>
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entityName,
+          message: `Failed to decode transformer for ${entityName}`,
+        }),
+    ),
+  )
+
+  return yield* Schema.encodeUnknown(transformer as unknown as typeof pcoPersonTransformer)(
+    parsedData,
+    {
+      errors: 'all',
+    },
+  ).pipe(
+    Effect.mapError(
+      (error) =>
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entityName,
+          message: `Failed to encode transformer for ${entityName}`,
+        }),
+    ),
+  )
 })
 
 // Enhanced version that handles missing external links
