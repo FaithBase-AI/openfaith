@@ -153,7 +153,7 @@ function Home() {
           to={'/features#link-anything' as '/features'}
         />
         <FeatureCard
-          className={cn(cardColors.teal, 'rounded-b-4xl lg:rounded-tl-[40px]')}
+          className={cn(cardColors.teal, 'rounded-b-4xl lg:rounded-tl-[40px] lg:rounded-bl-xl')}
           Icon={<LeaderIcon />}
           Tagline={'Tools to make disciples'}
           to={'/features#discipleship' as '/features'}
