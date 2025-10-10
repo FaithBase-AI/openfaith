@@ -35,6 +35,98 @@ const findAnnotationInAST = <T>(annotationKey: symbol, ast: SchemaAST.AST): Opti
   return Option.none()
 }
 
+// Helper function to check if an AST represents a nullable type (NullOr)
+const isNullableType = (ast: SchemaAST.AST): boolean => {
+  // Check if it's a union type containing null
+  if (ast._tag === 'Union') {
+    const unionTypes = (ast as any).types || []
+    for (const type of unionTypes) {
+      if (type._tag === 'Literal' && (type as any).literal === null) {
+        return true
+      }
+    }
+    return false
+  }
+
+  // Check nested structures for transformed schemas
+  if (ast._tag === 'Transformation') {
+    const fromAst = (ast as any).from
+    const toAst = (ast as any).to
+    return isNullableType(fromAst) || isNullableType(toAst)
+  }
+
+  // Check refinements
+  if (ast._tag === 'Refinement') {
+    return isNullableType((ast as any).from)
+  }
+
+  return false
+}
+
+// Helper function to get the base type of an AST (Boolean, String, Number, etc.)
+const getBaseType = (ast: SchemaAST.AST): string => {
+  // Handle direct types
+  if (ast._tag === 'BooleanKeyword') {
+    return 'boolean'
+  }
+  if (ast._tag === 'StringKeyword') {
+    return 'string'
+  }
+  if (ast._tag === 'NumberKeyword') {
+    return 'number'
+  }
+
+  // Handle unions (like NullOr which creates String | null)
+  if (ast._tag === 'Union') {
+    const unionTypes = (ast as any).types || []
+    for (const type of unionTypes) {
+      // Skip null literals, find the actual type
+      if (type._tag !== 'Literal' || (type as any).literal !== null) {
+        const baseType = getBaseType(type)
+        if (baseType !== 'unknown') {
+          return baseType
+        }
+      }
+    }
+  }
+
+  // Handle transformations
+  if (ast._tag === 'Transformation') {
+    const fromAst = (ast as any).from
+    return getBaseType(fromAst)
+  }
+
+  // Handle refinements
+  if (ast._tag === 'Refinement') {
+    return getBaseType((ast as any).from)
+  }
+
+  return 'unknown'
+}
+
+// Helper function to get default value for a custom field based on its type
+const getDefaultValueForCustomField = (ast: SchemaAST.AST): unknown => {
+  const baseType = getBaseType(ast)
+  const nullable = isNullableType(ast)
+
+  // If nullable, default to null
+  if (nullable) {
+    return null
+  }
+
+  // For non-nullable types, provide appropriate defaults
+  switch (baseType) {
+    case 'boolean':
+      return false
+    case 'number':
+      return 0
+    case 'string':
+      return ''
+    default:
+      return null
+  }
+}
+
 type MergeShape = Record<string, unknown> & {
   customFields: Array<CustomFieldSchema>
 }
@@ -262,14 +354,20 @@ export const pcoToOf = <From extends Schema.Schema.Any, To extends Schema.Schema
 
           return pipe(
             fieldKeyOpt,
-            Option.flatMap((OfFieldName) =>
-              pipe(
-                OfFieldName in (rest as any)
-                  ? Option.some((rest as any)[OfFieldName])
-                  : Option.none(),
-                Option.map((value) => [pcoKey, value] as const),
-              ),
-            ),
+            Option.flatMap((OfFieldName) => {
+              // Check if field exists in OF data
+              if (OfFieldName in (rest as any)) {
+                return Option.some([pcoKey, (rest as any)[OfFieldName]] as const)
+              }
+
+              // Field doesn't exist - check if PCO schema accepts null
+              // If the field is nullable, provide null instead of skipping
+              if (isNullableType(fieldAst)) {
+                return Option.some([pcoKey, null] as const)
+              }
+
+              return Option.none()
+            }),
           )
         }),
         Array.reduce({}, (b, [key, value]) => {
@@ -297,10 +395,62 @@ export const pcoToOf = <From extends Schema.Schema.Any, To extends Schema.Schema
         }),
       )
 
-      return {
+      // Handle missing custom fields - provide defaults for required custom fields
+      const missingCustomFields = pipe(
+        extractFields(from),
+        Record.toEntries,
+        Array.filterMap(([pcoKey, field]) => {
+          const fieldAst = 'ast' in field ? field.ast : field
+          const customField = SchemaAST.getAnnotation<boolean>(OfCustomField)(
+            fieldAst as SchemaAST.Annotated,
+          ).pipe(Option.getOrElse(() => false))
+          const skipField = SchemaAST.getAnnotation<boolean>(OfSkipField)(
+            fieldAst as SchemaAST.Annotated,
+          ).pipe(Option.getOrElse(() => false))
+
+          // Only process custom fields that aren't skipped
+          if (!customField || skipField) {
+            return Option.none()
+          }
+
+          // Check if this custom field is already in the decoded data
+          if (pcoKey in customFieldsDecoded) {
+            return Option.none()
+          }
+
+          // Provide a default value for this missing custom field
+          const defaultValue = getDefaultValueForCustomField(fieldAst)
+          return Option.some([pcoKey, defaultValue] as const)
+        }),
+        Array.reduce({}, (b, [key, value]) => {
+          return {
+            ...b,
+            [key]: value,
+          }
+        }),
+      )
+
+      const result = {
         ...standardFields,
         ...customFieldsDecoded,
+        ...missingCustomFields,
       }
+
+      // Transform gender format from OF back to PCO format
+      if ('gender' in result && result.gender) {
+        switch (result.gender) {
+          case 'male':
+            result.gender = 'Male'
+            break
+          case 'female':
+            result.gender = 'Female'
+            break
+          default:
+            break
+        }
+      }
+
+      return result
     },
     strict: false,
   })

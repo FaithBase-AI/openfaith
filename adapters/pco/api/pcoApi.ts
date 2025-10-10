@@ -98,35 +98,56 @@ const handlePcoError = (
     case 403:
     case 404:
     case 409:
-    case 422:
     case 429:
-      return Effect.fail(
-        new HttpClientError.ResponseError({
-          reason: 'StatusCode',
-          request: response.request,
-          response,
-        }),
+    case 422:
+      return pipe(
+        response.json,
+        Effect.orElse(() => Effect.succeed({ message: 'Failed to parse body' })),
+        Effect.flatMap((body) =>
+          Effect.fail(
+            new HttpClientError.ResponseError({
+              cause: body,
+              reason: 'StatusCode',
+              request: response.request,
+              response,
+            }),
+          ),
+        ),
       )
 
     case 500:
     case 503:
     case 504:
-      return Effect.fail(
-        new HttpClientError.ResponseError({
-          reason: 'StatusCode',
-          request: response.request,
-          response,
-        }),
+      return pipe(
+        response.json,
+        Effect.orElse(() => Effect.succeed({ message: 'Failed to parse body' })),
+        Effect.flatMap((body) =>
+          Effect.fail(
+            new HttpClientError.ResponseError({
+              cause: body,
+              reason: 'StatusCode',
+              request: response.request,
+              response,
+            }),
+          ),
+        ),
       )
 
     default:
       if (response.status >= 400) {
-        return Effect.fail(
-          new HttpClientError.ResponseError({
-            reason: 'StatusCode',
-            request: response.request,
-            response,
-          }),
+        return pipe(
+          response.json,
+          Effect.orElse(() => Effect.succeed({ message: 'Failed to parse body' })),
+          Effect.flatMap((body) =>
+            Effect.fail(
+              new HttpClientError.ResponseError({
+                cause: body,
+                reason: 'StatusCode',
+                request: response.request,
+                response,
+              }),
+            ),
+          ),
         )
       }
       return Effect.succeed(response)
@@ -163,6 +184,12 @@ export class PcoHttpClient extends Effect.Service<PcoHttpClient>()('PcoHttpClien
       HttpClient.transformResponse((responseEffect) => {
         return pipe(
           responseEffect,
+          Effect.tap((response) =>
+            Effect.gen(function* () {
+              const body = yield* response.json
+              yield* Effect.log('body', JSON.stringify(body))
+            }),
+          ),
           Effect.flatMap(handlePcoError),
           Effect.retry({
             schedule: Schedule.identity<HttpClientError.ResponseError>().pipe(
