@@ -1,9 +1,7 @@
-import { discoverUiEntities, type EntityUiConfig, enrichMutationData } from '@openfaith/schema'
 import { discoverUiEntities, type EntityUiConfig, validateMutationData } from '@openfaith/schema'
 import { pluralize } from '@openfaith/shared'
 import type { AuthData, ZSchema } from '@openfaith/zero/zeroSchema.mjs'
 import type { CustomMutatorDefs, Transaction } from '@rocicorp/zero'
-
 import { Effect, type ParseResult, Schema } from 'effect'
 
 export class MutatorAuthError extends Schema.TaggedError<MutatorAuthError>()('MutatorAuthError', {
