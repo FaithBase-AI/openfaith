@@ -49,7 +49,7 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
         sortable: true,
       },
     },
-  }).pipe(Schema.NullOr, Schema.optional),
+  }),
   description: Schema.String.annotations({
     description: 'Description of the campus',
     [OfUiConfig]: {

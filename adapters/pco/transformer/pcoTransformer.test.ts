@@ -801,6 +801,104 @@ effect('pcoToOf encode: campus with missing optional fields (real-world scenario
   }),
 )
 
+effect('pcoToOf encode: handles missing custom fields with appropriate defaults', () =>
+  Effect.gen(function* () {
+    // Test schema with required custom fields
+    const PcoWithCustomFields = Schema.Struct({
+      active: Schema.Boolean.annotations({
+        [OfFieldName]: 'active',
+        [OfCustomField]: true,
+      }),
+      count: Schema.Number.annotations({
+        [OfFieldName]: 'count',
+        [OfCustomField]: true,
+      }),
+      description: Schema.NullOr(Schema.String).annotations({
+        [OfFieldName]: 'description',
+        [OfCustomField]: true,
+      }),
+      name: Schema.String.annotations({
+        [OfFieldName]: 'name',
+      }),
+    })
+
+    const OfWithCustomFields = Schema.Struct({
+      customFields: Schema.Array(CustomFieldSchema),
+      name: Schema.String,
+    })
+
+    const transformer = pcoToOf(PcoWithCustomFields, OfWithCustomFields, 'test')
+
+    // OF data with no custom fields
+    const ofData = {
+      customFields: [],
+      name: 'Test',
+    }
+
+    // When encoding to PCO, missing custom fields should get defaults:
+    // - Boolean: false
+    // - Number: 0
+    // - Nullable String: null
+    const result = Schema.encodeSync(transformer)(ofData)
+
+    expect(result).toEqual({
+      active: false,
+      count: 0,
+      description: null,
+      name: 'Test',
+    })
+  }),
+)
+
+effect('pcoToOf encode: preserves existing custom field values', () =>
+  Effect.gen(function* () {
+    // Test that existing custom fields are preserved and only missing ones get defaults
+    const PcoWithCustomFields = Schema.Struct({
+      active: Schema.Boolean.annotations({
+        [OfFieldName]: 'active',
+        [OfCustomField]: true,
+      }),
+      count: Schema.Number.annotations({
+        [OfFieldName]: 'count',
+        [OfCustomField]: true,
+      }),
+      name: Schema.String.annotations({
+        [OfFieldName]: 'name',
+      }),
+    })
+
+    const OfWithCustomFields = Schema.Struct({
+      customFields: Schema.Array(CustomFieldSchema),
+      name: Schema.String,
+    })
+
+    const transformer = pcoToOf(PcoWithCustomFields, OfWithCustomFields, 'test')
+
+    // OF data with one custom field
+    const ofData = {
+      customFields: [
+        {
+          _tag: 'boolean' as const,
+          name: 'pco_active',
+          source: 'pco' as const,
+          value: true,
+        },
+      ],
+      name: 'Test',
+    }
+
+    // When encoding to PCO, existing custom field should be preserved,
+    // missing ones should get defaults
+    const result = Schema.encodeSync(transformer)(ofData)
+
+    expect(result).toEqual({
+      active: true,
+      count: 0,
+      name: 'Test',
+    })
+  }),
+)
+
 // Helper function to extract fields (copied from pcoTransformer.ts for testing)
 const extractFields = (schema: Schema.Schema.Any): Record<string, { ast: SchemaAST.AST }> => {
   const ast = schema.ast

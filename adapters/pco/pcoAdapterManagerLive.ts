@@ -601,12 +601,17 @@ export const PcoAdapterManagerLive = Layer.effect(
 
           const transformedData = yield* transformEntityDataE(entityType, data)
 
-          const createResponse = yield* createMethod({
-            payload: {
-              data: transformedData as unknown as Parameters<
+          const payload: Parameters<typeof pcoClient.Person.create>[0]['payload'] = {
+            data: {
+              attributes: transformedData as unknown as Parameters<
                 typeof pcoClient.Person.create
-              >[0]['payload']['data'],
+              >[0]['payload']['data']['attributes'],
+              type: entityType as 'Person',
             },
+          }
+
+          const createResponse = yield* createMethod({
+            payload,
           })
 
           yield* processPcoData({
