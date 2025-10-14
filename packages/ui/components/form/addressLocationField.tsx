@@ -1,4 +1,5 @@
 import { Atom, Result, useAtomValue } from '@effect-atom/atom-react'
+import { env } from '@openfaith/shared/env'
 import { getFieldErrors } from '@openfaith/ui/components/form/fieldHelpers'
 import { useFieldContext } from '@openfaith/ui/components/form/tsField'
 import { Combobox } from '@openfaith/ui/components/ui/combobox'
@@ -12,55 +13,44 @@ import type { ComponentProps, ReactNode } from 'react'
 import { useCallback, useState } from 'react'
 import { useDebounce } from 'use-debounce'
 
-export class PhotonApiError extends Schema.TaggedError<PhotonApiError>()('PhotonApiError', {
-  cause: Schema.optional(Schema.Unknown),
-  message: Schema.String,
-  query: Schema.String,
-}) {}
-
-const CoordinatesSchema = Schema.transform(
-  Schema.Tuple(Schema.Number, Schema.Number),
-  Schema.Struct({
-    latitude: Schema.Number,
-    longitude: Schema.Number,
-  }),
+export class GooglePlacesApiError extends Schema.TaggedError<GooglePlacesApiError>()(
+  'GooglePlacesApiError',
   {
-    decode: ([longitude, latitude]) => ({ latitude, longitude }),
-    encode: ({ longitude, latitude }) => [longitude, latitude] as const,
-    strict: true,
+    cause: Schema.optional(Schema.Unknown),
+    message: Schema.String,
+    query: Schema.String,
   },
-)
+) {}
 
-const PhotonFeatureSchema = Schema.Struct({
-  geometry: Schema.Struct({
-    coordinates: CoordinatesSchema,
-    type: Schema.Literal('Point'),
-  }),
-  properties: Schema.Struct({
-    city: Schema.optional(Schema.String),
-    country: Schema.optional(Schema.String),
-    countrycode: Schema.optional(Schema.String),
-    county: Schema.optional(Schema.String),
-    housenumber: Schema.optional(Schema.String),
-    name: Schema.optional(Schema.String),
-    osm_id: Schema.Number,
-    osm_key: Schema.String,
-    osm_type: Schema.String,
-    osm_value: Schema.String,
-    postcode: Schema.optional(Schema.String),
-    state: Schema.optional(Schema.String),
-    street: Schema.optional(Schema.String),
-  }),
-  type: Schema.Literal('Feature'),
+const GooglePlaceLocationSchema = Schema.Struct({
+  latitude: Schema.Number,
+  longitude: Schema.Number,
 })
 
-const PhotonResponseSchema = Schema.Struct({
-  features: Schema.Array(PhotonFeatureSchema),
-  type: Schema.Literal('FeatureCollection'),
+const GooglePlaceAddressComponentSchema = Schema.Struct({
+  longText: Schema.String,
+  shortText: Schema.optional(Schema.String),
+  types: Schema.Array(Schema.String),
 })
 
-export type PhotonFeature = Schema.Schema.Type<typeof PhotonFeatureSchema>
-export type PhotonResponse = Schema.Schema.Type<typeof PhotonResponseSchema>
+const GooglePlaceDisplayNameSchema = Schema.Struct({
+  text: Schema.String,
+})
+
+const GooglePlaceSchema = Schema.Struct({
+  addressComponents: Schema.optional(Schema.Array(GooglePlaceAddressComponentSchema)),
+  displayName: Schema.optional(GooglePlaceDisplayNameSchema),
+  formattedAddress: Schema.String,
+  id: Schema.String,
+  location: GooglePlaceLocationSchema,
+})
+
+const GooglePlacesResponseSchema = Schema.Struct({
+  places: Schema.optional(Schema.Array(GooglePlaceSchema)),
+})
+
+export type GooglePlace = Schema.Schema.Type<typeof GooglePlaceSchema>
+export type GooglePlacesResponse = Schema.Schema.Type<typeof GooglePlacesResponseSchema>
 
 export type AddressLocation = {
   id: string
@@ -78,45 +68,80 @@ export type AddressLocation = {
     latitude: number
     longitude: number
   }
-  osmId: number
+  placeId: string
 }
 
-const formatAddressName = (feature: PhotonFeature): string => {
-  const props = feature.properties
-
-  if (props.housenumber && props.street) {
-    return `${props.housenumber} ${props.street}`
+const getAddressComponent = (place: GooglePlace, types: Array<string>): string | undefined => {
+  if (!place.addressComponents) {
+    return undefined
   }
 
-  if (props.street) {
-    return props.street
-  }
+  const componentOpt = pipe(
+    place.addressComponents,
+    Array.findFirst((component) =>
+      pipe(
+        types,
+        Array.some((type) => pipe(component.types, Array.contains(type))),
+      ),
+    ),
+  )
 
-  if (props.name) {
-    return props.name
-  }
-
-  return 'Unknown Location'
+  return pipe(
+    componentOpt,
+    Option.map((component) => component.longText),
+    Option.getOrUndefined,
+  )
 }
 
-const formatAddressByLine = (feature: PhotonFeature): string => {
-  const props = feature.properties
+const formatAddressName = (place: GooglePlace): string => {
+  if (place.displayName) {
+    return place.displayName.text
+  }
+
+  const streetNumber = getAddressComponent(place, ['street_number'])
+  const route = getAddressComponent(place, ['route'])
+
+  if (streetNumber && route) {
+    return `${streetNumber} ${route}`
+  }
+
+  if (route) {
+    return route
+  }
+
+  const parts = pipe(place.formattedAddress, String.split(','))
+  return pipe(
+    parts,
+    Array.head,
+    Option.getOrElse(() => 'Unknown Location'),
+  )
+}
+
+const formatAddressByLine = (place: GooglePlace): string => {
+  const city = getAddressComponent(place, ['locality', 'postal_town'])
+  const state = getAddressComponent(place, [
+    'administrative_area_level_1',
+    'administrative_area_level_2',
+  ])
+  const postcode = getAddressComponent(place, ['postal_code'])
+  const country = getAddressComponent(place, ['country'])
+
   const parts: Array<string> = []
 
-  if (props.city) {
-    parts.push(props.city)
+  if (city) {
+    parts.push(city)
   }
 
-  if (props.state) {
-    parts.push(props.state)
+  if (state) {
+    parts.push(state)
   }
 
-  if (props.postcode) {
-    parts.push(props.postcode)
+  if (postcode) {
+    parts.push(postcode)
   }
 
-  if (props.country) {
-    parts.push(props.country)
+  if (country) {
+    parts.push(country)
   }
 
   return pipe(
@@ -128,44 +153,62 @@ const formatAddressByLine = (feature: PhotonFeature): string => {
   )
 }
 
-const featureToAddressLocation = (feature: PhotonFeature): AddressLocation => {
-  const props = feature.properties
+const placeToAddressLocation = (place: GooglePlace): AddressLocation => {
   return {
-    byLine: formatAddressByLine(feature),
-    city: props.city,
-    coordinates: feature.geometry.coordinates,
-    country: props.country,
-    countrycode: props.countrycode,
-    county: props.county,
-    housenumber: props.housenumber,
-    id: `${feature.properties.osm_type}-${feature.properties.osm_id}`,
-    name: props.name || formatAddressName(feature),
-    osmId: props.osm_id,
-    postcode: props.postcode,
-    state: props.state,
-    street: props.street,
+    byLine: formatAddressByLine(place),
+    city: getAddressComponent(place, ['locality', 'postal_town']),
+    coordinates: place.location,
+    country: getAddressComponent(place, ['country']),
+    countrycode: getAddressComponent(place, ['country']),
+    county: getAddressComponent(place, ['administrative_area_level_2']),
+    housenumber: getAddressComponent(place, ['street_number']),
+    id: place.id,
+    name: formatAddressName(place),
+    placeId: place.id,
+    postcode: getAddressComponent(place, ['postal_code']),
+    state: getAddressComponent(place, [
+      'administrative_area_level_1',
+      'administrative_area_level_2',
+    ]),
+    street: getAddressComponent(place, ['route']),
   }
 }
 
-const searchPhotonApi = Effect.fn('searchPhotonApi')(function* (query: string) {
+const searchGooglePlaces = Effect.fn('searchGooglePlaces')(function* (query: string) {
   yield* Effect.annotateCurrentSpan('query', query)
 
   if (pipe(query, String.trim, String.isEmpty)) {
     return []
   }
 
-  const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=10`
+  const url = 'https://places.googleapis.com/v1/places:searchText'
 
   const response = yield* Effect.tryPromise({
     catch: (cause) =>
-      new PhotonApiError({ cause, message: 'Failed to fetch from Photon API', query }),
-    try: () => fetch(url),
+      new GooglePlacesApiError({
+        cause,
+        message: 'Failed to fetch from Google Places API',
+        query,
+      }),
+    try: () =>
+      fetch(url, {
+        body: JSON.stringify({
+          textQuery: query,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': env.VITE_GOOGLE_PLACES_API_KEY,
+          'X-Goog-FieldMask':
+            'places.id,places.formattedAddress,places.addressComponents,places.location,places.displayName',
+        },
+        method: 'POST',
+      }),
   })
 
   if (!response.ok) {
     return yield* Effect.fail(
-      new PhotonApiError({
-        message: `Photon API returned status ${response.status}`,
+      new GooglePlacesApiError({
+        message: `Google Places API returned status ${response.status}`,
         query,
       }),
     )
@@ -173,16 +216,27 @@ const searchPhotonApi = Effect.fn('searchPhotonApi')(function* (query: string) {
 
   const json = yield* Effect.tryPromise({
     catch: (cause) =>
-      new PhotonApiError({ cause, message: 'Failed to parse Photon API response', query }),
+      new GooglePlacesApiError({
+        cause,
+        message: 'Failed to parse Google Places API response',
+        query,
+      }),
     try: () => response.json(),
   })
 
-  const validated = yield* Schema.decodeUnknown(PhotonResponseSchema)(json)
+  const validated = yield* Schema.decodeUnknown(GooglePlacesResponseSchema)(json)
 
-  return pipe(validated.features, Array.map(featureToAddressLocation))
+  return pipe(
+    validated.places,
+    Option.fromNullable,
+    Option.match({
+      onNone: () => [],
+      onSome: (places) => pipe(places, Array.map(placeToAddressLocation)),
+    }),
+  )
 })
 
-const searchAtom = Atom.family((query: string) => Atom.make(searchPhotonApi(query)))
+const searchAtom = Atom.family((query: string) => Atom.make(searchGooglePlaces(query)))
 
 export type AddressLocationFieldProps = Omit<
   ComponentProps<typeof Combobox>,

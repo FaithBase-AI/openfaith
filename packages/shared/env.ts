@@ -133,6 +133,9 @@ export const env = createEnv({
 
     // Planning Center
     VITE_PLANNING_CENTER_CLIENT_ID: z.string(),
+
+    // Maps
+    VITE_GOOGLE_PLACES_API_KEY: z.string(),
   },
 
   /**
@@ -159,6 +162,9 @@ export const env = createEnv({
 
           // Planning Center
           VITE_PLANNING_CENTER_CLIENT_ID: import.meta.env.VITE_PLANNING_CENTER_CLIENT_ID,
+
+          // Maps
+          VITE_GOOGLE_PLACES_API_KEY: import.meta.env.VITE_GOOGLE_PLACES_API_KEY,
         }),
         onSome: () => ({}),
       }),
