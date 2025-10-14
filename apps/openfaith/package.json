@@ -44,6 +44,7 @@
     "superjson": "catalog:",
     "tailwindcss": "catalog:",
     "tw-animate-css": "1.3.8",
+    "use-debounce": "10.0.6",
     "vite": "7.1.5"
   },
   "devDependencies": {

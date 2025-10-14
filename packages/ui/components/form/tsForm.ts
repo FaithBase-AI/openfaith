@@ -1,3 +1,4 @@
+import { AddressLocationField } from '@openfaith/ui/components/form/addressLocationField'
 import { ComboboxField } from '@openfaith/ui/components/form/comboboxField'
 import { DatePickerField } from '@openfaith/ui/components/form/datePickerField'
 import { DateTimeField } from '@openfaith/ui/components/form/dateTimeField'
@@ -14,6 +15,7 @@ import { createFormHook } from '@tanstack/react-form'
 
 export const { useAppForm, withForm } = createFormHook({
   fieldComponents: {
+    AddressLocationField,
     ComboboxField,
     DatePickerField,
     DateTimeField,

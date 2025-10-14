@@ -102,6 +102,7 @@ export type ComboboxProps<T extends BaseComboboxItem = BaseComboboxItem> = {
     searchValue: string
     setOpen: Dispatch<SetStateAction<boolean>>
   }) => void
+  showAllOptions?: boolean
 }
 
 const Combobox = <T extends BaseComboboxItem = BaseComboboxItem>(
@@ -132,6 +133,7 @@ const Combobox = <T extends BaseComboboxItem = BaseComboboxItem>(
     bottomItems,
     createItem,
     onSearchChange,
+    showAllOptions = false,
   } = props
 
   const [searchValue, setSearchValue] = useState('')
@@ -224,7 +226,7 @@ const Combobox = <T extends BaseComboboxItem = BaseComboboxItem>(
           bottomItems={bottomItems}
           createItem={createItem}
           hideAvatar={hideAvatar}
-          matchOptions={matchOptions}
+          matchOptions={showAllOptions ? options : matchOptions}
           mode={mode}
           removeItem={removeItem}
           searchValue={searchValue}
