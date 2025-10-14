@@ -5,45 +5,10 @@ import {
   fieldSupportsOptions,
   fieldSupportsSearch,
   getComponentProps,
-  getFieldComponent,
 } from '@openfaith/ui/form/fieldComponentMapping'
 import { Effect } from 'effect'
 
 // Mock components are not needed for these tests since we're testing the mapping functions directly
-
-effect('getFieldComponent - returns correct components for each field type', () =>
-  Effect.gen(function* () {
-    // Test all field types
-    expect(getFieldComponent('text')).toBeDefined()
-    expect(getFieldComponent('email')).toBeDefined()
-    expect(getFieldComponent('password')).toBeDefined()
-    expect(getFieldComponent('number')).toBeDefined()
-    expect(getFieldComponent('textarea')).toBeDefined()
-    expect(getFieldComponent('select')).toBeDefined()
-    expect(getFieldComponent('combobox')).toBeDefined()
-    expect(getFieldComponent('singleCombobox')).toBeDefined()
-    expect(getFieldComponent('tags')).toBeDefined()
-    expect(getFieldComponent('switch')).toBeDefined()
-    expect(getFieldComponent('date')).toBeDefined()
-    expect(getFieldComponent('datetime')).toBeDefined()
-    expect(getFieldComponent('otp')).toBeDefined()
-    expect(getFieldComponent('slug')).toBeDefined()
-  }),
-)
-
-effect('getFieldComponent - returns InputField for undefined field type', () =>
-  Effect.gen(function* () {
-    const component = getFieldComponent(undefined)
-    expect(component).toBeDefined()
-  }),
-)
-
-effect('getFieldComponent - returns InputField for unknown field type', () =>
-  Effect.gen(function* () {
-    const component = getFieldComponent('unknown' as any)
-    expect(component).toBeDefined()
-  }),
-)
 
 effect('getComponentProps - returns base props for all field types', () =>
   Effect.gen(function* () {

@@ -12,7 +12,7 @@ import { InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
 import { cn } from '@openfaith/ui/shared/utils'
 import { Array, Effect, Option, pipe, Schema, String } from 'effect'
 import type { ComponentProps, ReactNode } from 'react'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useDebounce } from 'use-debounce'
 
 export class GooglePlacesApiError extends Schema.TaggedError<GooglePlacesApiError>()(
@@ -203,6 +203,7 @@ export type AddressLocationFieldProps = Omit<
   className?: string
   required?: boolean
   onLocationSelect?: (location: AddressLocation | null) => void
+  composite?: Array<string>
 }
 
 export const AddressLocationField = (props: AddressLocationFieldProps) => {
@@ -218,19 +219,40 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
     onLocationSelect,
     popOverContentClassName,
     alignOffset = 0,
+    composite,
     ...domProps
   } = props
 
   const field = useFieldContext<CompositeAddressValue | null>()
+  const form = field.form
   const [searchQuery, setSearchQuery] = useState('')
 
   const [debouncedSearchQuery] = useDebounce(searchQuery, 250)
 
-  const value = pipe(
-    field.state.value,
-    Option.fromNullable,
-    Option.getOrElse((): CompositeAddressValue | null => null),
-  )
+  const currentCompositeValue = useMemo(() => {
+    if (!composite || composite.length === 0) {
+      return pipe(
+        field.state.value,
+        Option.fromNullable,
+        Option.getOrElse((): CompositeAddressValue | null => null),
+      )
+    }
+
+    const compositeValue: Record<string, any> = {}
+    pipe(
+      composite,
+      Array.forEach((fieldName) => {
+        const value = (form as any).getFieldValue(fieldName)
+        if (value !== undefined && value !== null) {
+          compositeValue[fieldName] = value
+        }
+      }),
+    )
+
+    return Object.keys(compositeValue).length > 0 ? (compositeValue as CompositeAddressValue) : null
+  }, [composite, field.state.value, form])
+
+  const value = currentCompositeValue
 
   const { processedError } = getFieldErrors(field.state.meta.errors)
 
@@ -308,7 +330,17 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
         selectedLocationOpt,
         Option.match({
           onNone: () => {
-            field.handleChange(null)
+            if (composite && composite.length > 0) {
+              pipe(
+                composite,
+                Array.forEach((fieldName) => {
+                  form.setFieldValue(fieldName, undefined)
+                }),
+              )
+            } else {
+              field.handleChange(null)
+            }
+
             if (onLocationSelect) {
               onLocationSelect(null)
             }
@@ -328,7 +360,18 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
               zip: location.postcode,
             }
 
-            field.handleChange(compositeValue)
+            if (composite && composite.length > 0) {
+              pipe(
+                composite,
+                Array.forEach((fieldName) => {
+                  const value = compositeValue[fieldName as keyof CompositeAddressValue]
+                  form.setFieldValue(fieldName, value)
+                }),
+              )
+            } else {
+              field.handleChange(compositeValue)
+            }
+
             if (onLocationSelect) {
               onLocationSelect(location)
             }
@@ -336,15 +379,25 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
         }),
       )
     },
-    [locations, field, onLocationSelect],
+    [locations, field, onLocationSelect, composite, form],
   )
 
   const handleRemoveItem = useCallback(() => {
-    field.handleChange(null)
+    if (composite && composite.length > 0) {
+      pipe(
+        composite,
+        Array.forEach((fieldName) => {
+          form.setFieldValue(fieldName, undefined)
+        }),
+      )
+    } else {
+      field.handleChange(null)
+    }
+
     if (onLocationSelect) {
       onLocationSelect(null)
     }
-  }, [field, onLocationSelect])
+  }, [field, onLocationSelect, composite, form])
 
   return (
     <InputWrapper

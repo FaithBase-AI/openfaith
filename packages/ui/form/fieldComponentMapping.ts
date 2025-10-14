@@ -1,49 +1,7 @@
-import { AddressLocationField } from '@openfaith/ui/components/form/addressLocationField'
-import { ComboboxField } from '@openfaith/ui/components/form/comboboxField'
-import { DatePickerField } from '@openfaith/ui/components/form/datePickerField'
-import { DateTimeField } from '@openfaith/ui/components/form/dateTimeField'
-import { InputField, SlugInputField } from '@openfaith/ui/components/form/inputField'
-import { OTPField } from '@openfaith/ui/components/form/otpField'
-import { SelectField } from '@openfaith/ui/components/form/selectField'
-import { SingleComboboxField } from '@openfaith/ui/components/form/singleComboboxField'
-import { SwitchField } from '@openfaith/ui/components/form/switchField'
-import { TagInputField } from '@openfaith/ui/components/form/tagInputField'
-import { TextareaField } from '@openfaith/ui/components/form/textareaField'
 import type { RequiredFieldConfig } from '@openfaith/ui/form/fieldConfigGenerator'
-import type { ComponentType } from 'react'
 
 type FieldConfigType = RequiredFieldConfig
 type FieldType = FieldConfigType['type']
-
-/**
- * Maps field types to their corresponding React components
- */
-export const getFieldComponent = (fieldType?: FieldType): ComponentType<any> => {
-  const componentMap = {
-    addressLocation: AddressLocationField,
-    combobox: ComboboxField,
-    date: DatePickerField,
-    datetime: DateTimeField,
-    email: InputField,
-    number: InputField,
-    otp: OTPField,
-    password: InputField,
-    select: SelectField,
-    singleCombobox: SingleComboboxField,
-    slug: SlugInputField,
-    switch: SwitchField,
-    tags: TagInputField,
-    text: InputField,
-    textarea: TextareaField,
-  } as const
-
-  if (!fieldType) {
-    return InputField
-  }
-
-  return componentMap[fieldType] || InputField
-}
-
 /**
  * Maps field types to their corresponding component names for TanStack Form
  */

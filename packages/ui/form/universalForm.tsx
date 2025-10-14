@@ -58,8 +58,46 @@ export function UniversalForm<T extends Record<string, any> & { id: string }>(
     userId,
   })
 
+  const transformedDefaultValues = useMemo(() => {
+    if (!defaultValues) {
+      return {} as T
+    }
+
+    return pipe(
+      fieldConfigs,
+      Record.toEntries,
+      Array.reduce({ ...defaultValues } as Record<string, any>, (acc, [key, config]) => {
+        const typedConfig = config as RequiredFieldConfig
+
+        if (typedConfig.composite && typedConfig.composite.length > 0) {
+          const hasAnyCompositeValue = pipe(
+            typedConfig.composite,
+            Array.some((fieldName) => fieldName in acc && acc[fieldName] != null),
+          )
+
+          if (hasAnyCompositeValue) {
+            const compositeValue: Record<string, any> = {}
+
+            pipe(
+              typedConfig.composite,
+              Array.forEach((fieldName) => {
+                if (fieldName in acc) {
+                  compositeValue[fieldName] = acc[fieldName]
+                }
+              }),
+            )
+
+            acc[key] = compositeValue
+          }
+        }
+
+        return acc
+      }),
+    ) as T
+  }, [defaultValues, fieldConfigs])
+
   const form = useAppForm({
-    defaultValues: (defaultValues ?? {}) as T,
+    defaultValues: transformedDefaultValues,
     onSubmit: async ({ value }: { value: T }) => {
       try {
         switch (mode) {
@@ -106,11 +144,16 @@ export function UniversalForm<T extends Record<string, any> & { id: string }>(
       const componentProps = getComponentProps(typedConfig)
       const componentName = getFieldComponentName(typedConfig.type)
 
+      const additionalProps =
+        typedConfig.composite && typedConfig.composite.length > 0
+          ? { composite: typedConfig.composite }
+          : {}
+
       return (
         <form.AppField key={String(key)} name={key as string}>
           {(field) => {
             const FieldComponent = (field as any)[componentName]
-            return <FieldComponent {...componentProps} />
+            return <FieldComponent {...componentProps} {...additionalProps} />
           }}
         </form.AppField>
       )

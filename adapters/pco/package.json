@@ -5,6 +5,7 @@
     "@openfaith/schema": "workspace:*",
     "@openfaith/shared": "workspace:*",
     "effect": "catalog:",
+    "geo-tz": "8.1.4",
     "jotai": "catalog:",
     "qs": "catalog:"
   },
