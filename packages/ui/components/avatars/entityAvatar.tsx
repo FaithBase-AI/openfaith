@@ -2,7 +2,7 @@
 
 import { BaseAvatar } from '@openfaith/ui/components/avatars/baseAvatar'
 import type { Avatar as AvatarPrimitive } from 'radix-ui'
-import type { ComponentPropsWithoutRef, FC, Ref } from 'react'
+import type { ComponentPropsWithoutRef, ReactNode, Ref } from 'react'
 
 // Type for any entity with _tag, id, name, and optional avatar
 type EntityRecord = {
@@ -10,18 +10,16 @@ type EntityRecord = {
   id: string
   name?: string | null
   avatar?: string | null
-  // Allow additional properties for specific entity types
-  [key: string]: unknown
 }
 
-type EntityAvatarProps = {
-  record: EntityRecord
+type EntityAvatarProps<T extends EntityRecord> = {
+  record: T
   size?: number
   ref?: Ref<HTMLElement>
 } & ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
 
 // Helper function to get entity display name
-const getEntityDisplayName = (record: EntityRecord): string => {
+const getEntityDisplayName = <T extends EntityRecord>(record: T): string => {
   // Try common name fields in order of preference
   if (record.name) {
     return record.name
@@ -32,7 +30,7 @@ const getEntityDisplayName = (record: EntityRecord): string => {
 }
 
 // Helper function to get avatar URL
-const getEntityAvatarUrl = (record: EntityRecord): string | null => {
+const getEntityAvatarUrl = <T extends EntityRecord>(record: T): string | null => {
   // Try common avatar fields
   if (record.avatar) {
     return record.avatar
@@ -51,7 +49,7 @@ const getEntityAvatarUrl = (record: EntityRecord): string | null => {
   return null
 }
 
-export const EntityAvatar: FC<EntityAvatarProps> = (props) => {
+export const EntityAvatar = <T extends EntityRecord>(props: EntityAvatarProps<T>): ReactNode => {
   const { record, size = 40, style = {}, className, ref, ...domProps } = props
 
   // Handle all other entity types with BaseAvatar
@@ -71,4 +69,3 @@ export const EntityAvatar: FC<EntityAvatarProps> = (props) => {
     />
   )
 }
-EntityAvatar.displayName = 'EntityAvatar'

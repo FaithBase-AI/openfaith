@@ -1,11 +1,12 @@
 import { noOp, nullOp, removeReadonly } from '@openfaith/shared'
-import { EntityAvatar } from '@openfaith/ui/components/avatars/entityAvatar'
+import {
+  type ComboboxItemProps,
+  DefaultComboboxItem,
+} from '@openfaith/ui/components/ui/combobox-items'
 import { DefaultComboBoxTrigger } from '@openfaith/ui/components/ui/combobox-triggers'
 import type { BaseComboboxItem } from '@openfaith/ui/components/ui/combobox-types'
 import { Popover, PopoverContent, PopoverTrigger } from '@openfaith/ui/components/ui/popover'
 import { ScrollArea } from '@openfaith/ui/components/ui/scroll-area'
-import { CheckIcon } from '@openfaith/ui/icons/checkIcon'
-import { PlusIcon } from '@openfaith/ui/icons/plusIcon'
 import { SearchIcon } from '@openfaith/ui/icons/searchIcon'
 import { cn } from '@openfaith/ui/shared/utils'
 import { useVirtualizer } from '@tanstack/react-virtual'
@@ -16,16 +17,14 @@ import type {
   ComponentPropsWithoutRef,
   Dispatch,
   ForwardedRef,
-  HTMLAttributes,
   InputHTMLAttributes,
   MouseEventHandler,
-  ReactElement,
   ReactNode,
   SetStateAction,
 } from 'react'
-import { cloneElement, forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-const itemToString = <T extends BaseComboboxItem = BaseComboboxItem>(item: T | null): string =>
+const itemToString = <T extends BaseComboboxItem>(item: T | null): string =>
   pipe(
     item,
     Option.fromNullable,
@@ -71,7 +70,7 @@ const ComboboxInput = forwardRef<
 ))
 ComboboxInput.displayName = 'ComboboxInput'
 
-export type ComboboxProps<T extends BaseComboboxItem = BaseComboboxItem> = {
+export type ComboboxProps<T extends BaseComboboxItem> = {
   options: ReadonlyArray<T>
   selectedOptions: ReadonlyArray<T>
   onMouseEnter?: MouseEventHandler<HTMLElement> | undefined
@@ -82,6 +81,7 @@ export type ComboboxProps<T extends BaseComboboxItem = BaseComboboxItem> = {
   emptyText: string
   emptyTextClassName?: string
   ComboboxTrigger?: typeof DefaultComboBoxTrigger
+  ComboboxItem?: (props: ComboboxItemProps<T>) => ReactNode
   onClose?: () => void
   mode?: 'single' | 'multiple'
   alignOffset?: number
@@ -103,12 +103,10 @@ export type ComboboxProps<T extends BaseComboboxItem = BaseComboboxItem> = {
     setOpen: Dispatch<SetStateAction<boolean>>
   }) => void
   showAllOptions?: boolean
+  ref?: ForwardedRef<HTMLButtonElement>
 }
 
-const Combobox = <T extends BaseComboboxItem = BaseComboboxItem>(
-  props: ComboboxProps<T>,
-  ref: ForwardedRef<HTMLButtonElement>,
-) => {
+export const Combobox = <T extends BaseComboboxItem>(props: ComboboxProps<T>) => {
   const {
     options,
     selectedOptions,
@@ -121,6 +119,7 @@ const Combobox = <T extends BaseComboboxItem = BaseComboboxItem>(
     emptyText,
     emptyTextClassName,
     ComboboxTrigger = DefaultComboBoxTrigger,
+    ComboboxItem = DefaultComboboxItem,
     onClose = noOp,
     mode = 'multiple',
     alignOffset = -4,
@@ -134,6 +133,7 @@ const Combobox = <T extends BaseComboboxItem = BaseComboboxItem>(
     createItem,
     onSearchChange,
     showAllOptions = false,
+    ref,
   } = props
 
   const [searchValue, setSearchValue] = useState('')
@@ -224,6 +224,7 @@ const Combobox = <T extends BaseComboboxItem = BaseComboboxItem>(
         <ComboboxContent
           addItem={addItem}
           bottomItems={bottomItems}
+          ComboboxItem={ComboboxItem}
           createItem={createItem}
           hideAvatar={hideAvatar}
           matchOptions={showAllOptions ? options : matchOptions}
@@ -240,11 +241,11 @@ const Combobox = <T extends BaseComboboxItem = BaseComboboxItem>(
   )
 }
 
-type ComboboxContentProps<T extends BaseComboboxItem = BaseComboboxItem> = Pick<
+type ComboboxContentProps<T extends BaseComboboxItem> = Pick<
   ComboboxProps<T>,
   'addItem' | 'removeItem' | 'selectedOptions' | 'bottomItems' | 'createItem'
 > &
-  NonNullable<Pick<ComboboxProps<T>, 'mode'>> & {
+  Required<Pick<ComboboxProps<T>, 'mode' | 'ComboboxItem'>> & {
     searchValue: string
     setSearchValue: (value: string) => void
     setOpen: Dispatch<SetStateAction<boolean>>
@@ -253,9 +254,7 @@ type ComboboxContentProps<T extends BaseComboboxItem = BaseComboboxItem> = Pick<
     hideAvatar: boolean
   }
 
-const ComboboxContent = <T extends BaseComboboxItem = BaseComboboxItem>(
-  props: ComboboxContentProps<T>,
-) => {
+const ComboboxContent = <T extends BaseComboboxItem>(props: ComboboxContentProps<T>) => {
   'use no memo'
 
   const {
@@ -271,6 +270,7 @@ const ComboboxContent = <T extends BaseComboboxItem = BaseComboboxItem>(
     hideAvatar,
     bottomItems,
     createItem,
+    ComboboxItem,
   } = props
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -440,63 +440,18 @@ const ComboboxContent = <T extends BaseComboboxItem = BaseComboboxItem>(
                     Option.isSome,
                   )
 
-                  const isCreateItem = y.id === '__create__'
-
                   return (
-                    <div
+                    <ComboboxItem
+                      createItem={createItem}
+                      getItemProps={getItemProps}
+                      hideAvatar={hideAvatar}
+                      highlighted={highlightedIndex === x.index}
+                      item={y}
                       key={y.id}
-                      style={{
-                        transform: `translateY(${x.start}px)`,
-                      }}
-                      {...getItemProps({
-                        'aria-selected': highlightedIndex === x.index,
-                        index: x.index,
-                        item: y,
-                      })}
-                      className={
-                        'absolute flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-hidden aria-selected:bg-accent aria-selected:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50'
-                      }
-                      data-index={x.index}
-                      ref={rowVirtualizer.measureElement}
-                    >
-                      {!isCreateItem && (
-                        <CheckIcon
-                          className={cn(
-                            'mr-2 size-4 shrink-0',
-                            pipe(
-                              selected,
-                              Boolean.match({
-                                onFalse: () => 'opacity-0',
-                                onTrue: () => 'opacity-100',
-                              }),
-                            ),
-                          )}
-                        />
-                      )}
-
-                      {pipe(
-                        !isCreateItem && y.id !== 'all' && !hideAvatar,
-                        Boolean.match({
-                          onFalse: () =>
-                            isCreateItem &&
-                            cloneElement(
-                              pipe(
-                                createItem?.icon,
-                                Option.fromNullable,
-                                Option.getOrElse(() => <PlusIcon />),
-                              ) as Parameters<typeof cloneElement>[0],
-                              {
-                                className: 'mr-2 size-4 shrink-0',
-                              } as HTMLAttributes<HTMLElement>,
-                            ),
-                          onTrue: () => (
-                            <EntityAvatar className={'mr-2.5 self-center'} record={y} size={24} />
-                          ),
-                        }),
-                      )}
-
-                      <span className={'line-clamp-2'}>{y.name}</span>
-                    </div>
+                      rowVirtualizer={rowVirtualizer}
+                      selected={selected}
+                      virtualItem={x}
+                    />
                   )
                 }),
               ),
@@ -516,11 +471,3 @@ const ComboboxContent = <T extends BaseComboboxItem = BaseComboboxItem>(
     </>
   )
 }
-
-const ForwardRefCombobox = forwardRef(Combobox) as unknown as <
-  T extends BaseComboboxItem = BaseComboboxItem,
->(
-  props: ComboboxProps<T> & { ref?: ForwardedRef<HTMLButtonElement> },
-) => ReactElement
-
-export { ForwardRefCombobox as Combobox }

@@ -2,8 +2,9 @@ import { Atom, Result, useAtomValue } from '@effect-atom/atom-react'
 import { getFieldErrors } from '@openfaith/ui/components/form/fieldHelpers'
 import { useFieldContext } from '@openfaith/ui/components/form/tsField'
 import { Combobox } from '@openfaith/ui/components/ui/combobox'
+import { ByLineComboboxItemComponent } from '@openfaith/ui/components/ui/combobox-items'
 import { SelectComboBoxTrigger } from '@openfaith/ui/components/ui/combobox-triggers'
-import type { BaseComboboxItem } from '@openfaith/ui/components/ui/combobox-types'
+import type { ByLineComboboxItem } from '@openfaith/ui/components/ui/combobox-types'
 import { InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
 import { cn } from '@openfaith/ui/shared/utils'
 import { Array, Effect, Option, pipe, Schema, String } from 'effect'
@@ -64,6 +65,7 @@ export type PhotonResponse = Schema.Schema.Type<typeof PhotonResponseSchema>
 export type AddressLocation = {
   id: string
   name: string
+  byLine: string
   street?: string
   housenumber?: string
   city?: string
@@ -79,17 +81,27 @@ export type AddressLocation = {
   osmId: number
 }
 
-const formatAddressDisplay = (feature: PhotonFeature): string => {
+const formatAddressName = (feature: PhotonFeature): string => {
   const props = feature.properties
-  const parts: Array<string> = []
 
   if (props.housenumber && props.street) {
-    parts.push(`${props.housenumber} ${props.street}`)
-  } else if (props.street) {
-    parts.push(props.street)
-  } else if (props.name) {
-    parts.push(props.name)
+    return `${props.housenumber} ${props.street}`
   }
+
+  if (props.street) {
+    return props.street
+  }
+
+  if (props.name) {
+    return props.name
+  }
+
+  return 'Unknown Location'
+}
+
+const formatAddressByLine = (feature: PhotonFeature): string => {
+  const props = feature.properties
+  const parts: Array<string> = []
 
   if (props.city) {
     parts.push(props.city)
@@ -110,7 +122,7 @@ const formatAddressDisplay = (feature: PhotonFeature): string => {
   return pipe(
     parts,
     Array.match({
-      onEmpty: () => 'Unknown Location',
+      onEmpty: () => '',
       onNonEmpty: (items) => pipe(items, Array.join(', ')),
     }),
   )
@@ -119,6 +131,7 @@ const formatAddressDisplay = (feature: PhotonFeature): string => {
 const featureToAddressLocation = (feature: PhotonFeature): AddressLocation => {
   const props = feature.properties
   return {
+    byLine: formatAddressByLine(feature),
     city: props.city,
     coordinates: feature.geometry.coordinates,
     country: props.country,
@@ -126,7 +139,7 @@ const featureToAddressLocation = (feature: PhotonFeature): AddressLocation => {
     county: props.county,
     housenumber: props.housenumber,
     id: `${feature.properties.osm_type}-${feature.properties.osm_id}`,
-    name: props.name || formatAddressDisplay(feature),
+    name: props.name || formatAddressName(feature),
     osmId: props.osm_id,
     postcode: props.postcode,
     state: props.state,
@@ -222,10 +235,11 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
     onSuccess: (result) => result.value,
   })
 
-  const options: Array<BaseComboboxItem & { location?: AddressLocation }> = pipe(
+  const options: Array<ByLineComboboxItem & { location?: AddressLocation }> = pipe(
     locations,
     Array.map((location) => ({
       _tag: 'address' as const,
+      byLine: location.byLine,
       id: location.id,
       location,
       name: location.name,
@@ -236,10 +250,11 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
     value,
     Option.fromNullable,
     Option.match({
-      onNone: () => [] as Array<BaseComboboxItem>,
+      onNone: () => [] as Array<ByLineComboboxItem>,
       onSome: (location) => [
         {
           _tag: 'address' as const,
+          byLine: location.byLine,
           id: location.id,
           name: location.name,
         },
@@ -296,9 +311,10 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
       processedError={processedError}
       required={required}
     >
-      <Combobox
+      <Combobox<ByLineComboboxItem>
         addItem={handleAddItem}
         alignOffset={alignOffset}
+        ComboboxItem={ByLineComboboxItemComponent}
         ComboboxTrigger={SelectComboBoxTrigger}
         className={className}
         disabled={disabled}

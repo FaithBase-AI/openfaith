@@ -17,15 +17,8 @@ import { PlusIcon } from '@openfaith/ui/icons/plusIcon'
 import { XIcon } from '@openfaith/ui/icons/xIcon'
 import { cn } from '@openfaith/ui/shared/utils'
 import { Array, Boolean, Option, pipe } from 'effect'
-import type {
-  ButtonHTMLAttributes,
-  Dispatch,
-  ForwardedRef,
-  ReactElement,
-  ReactNode,
-  SetStateAction,
-} from 'react'
-import { forwardRef, useState } from 'react'
+import type { ButtonHTMLAttributes, Dispatch, ReactNode, SetStateAction } from 'react'
+import { useState } from 'react'
 
 export type ComboBoxTriggerProps<T extends BaseComboboxItem = BaseComboboxItem> =
   ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -37,6 +30,7 @@ export type ComboBoxTriggerProps<T extends BaseComboboxItem = BaseComboboxItem> 
     handleUnselect: (t: T) => void
     disabled: boolean
     hideAvatar: boolean
+    ref?: React.Ref<HTMLButtonElement>
   }
 
 const displayArrayOfStrings = (placeholder: string) => (x: ReadonlyArray<string | null>) =>
@@ -73,9 +67,8 @@ const displayArrayOfStrings = (placeholder: string) => (x: ReadonlyArray<string 
     }),
   )
 
-const DefaultComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
+export const DefaultComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
   props: ComboBoxTriggerProps<T>,
-  ref: ForwardedRef<HTMLButtonElement>,
 ): ReactNode => {
   const {
     setOpen,
@@ -86,6 +79,7 @@ const DefaultComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
     emptyText,
     handleUnselect,
     hideAvatar,
+    ref,
     ...domProps
   } = props
 
@@ -186,15 +180,8 @@ const DefaultComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
   )
 }
 
-const ForwardRefDefaultComboBoxTrigger = forwardRef(DefaultComboBoxTrigger) as unknown as <
-  T extends BaseComboboxItem = BaseComboboxItem,
->(
-  props: ComboBoxTriggerProps<T> & { ref?: ForwardedRef<HTMLButtonElement> },
-) => ReactElement
-
-const SelectComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
+export const SelectComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
   props: ComboBoxTriggerProps<T>,
-  ref: ForwardedRef<HTMLButtonElement>,
 ): ReactNode => {
   const {
     setOpen,
@@ -205,6 +192,7 @@ const SelectComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
     emptyText,
     handleUnselect,
     hideAvatar,
+    ref,
     ...domProps
   } = props
 
@@ -314,15 +302,8 @@ const SelectComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
   )
 }
 
-const ForwardRefSelectComboBoxTrigger = forwardRef(SelectComboBoxTrigger) as unknown as <
-  T extends BaseComboboxItem = BaseComboboxItem,
->(
-  props: ComboBoxTriggerProps<T> & { ref?: ForwardedRef<HTMLButtonElement> },
-) => ReactElement
-
-const AssignedToComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
+export const AssignedToComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
   props: ComboBoxTriggerProps<T>,
-  ref: ForwardedRef<HTMLButtonElement>,
 ): ReactNode => {
   const {
     setOpen,
@@ -332,6 +313,7 @@ const AssignedToComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem
     emptyTextClassName,
     emptyText,
     handleUnselect: _handleUnselect,
+    ref,
     ...domProps
   } = props
 
@@ -381,17 +363,8 @@ const AssignedToComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem
   )
 }
 
-const ForwardRefAssignedToComboBoxTrigger = forwardRef(AssignedToComboBoxTrigger) as unknown as <
-  T extends BaseComboboxItem = BaseComboboxItem,
->(
-  props: ComboBoxTriggerProps<T> & { ref?: ForwardedRef<HTMLButtonElement> },
-) => ReactElement
-
-export { ForwardRefAssignedToComboBoxTrigger as AssignedToComboBoxTrigger }
-
-const LinkedRecordsComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
+export const LinkedRecordsComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
   props: ComboBoxTriggerProps<T>,
-  ref: ForwardedRef<HTMLButtonElement>,
 ): ReactNode => {
   const {
     setOpen,
@@ -401,6 +374,7 @@ const LinkedRecordsComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxI
     emptyTextClassName,
     emptyText,
     handleUnselect: _handleUnselect,
+    ref,
     ...domProps
   } = props
 
@@ -452,17 +426,10 @@ const LinkedRecordsComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxI
   )
 }
 
-const ForwardRefLinkedRecordsComboBoxTrigger = forwardRef(
-  LinkedRecordsComboBoxTrigger,
-) as unknown as <T extends BaseComboboxItem = BaseComboboxItem>(
-  props: ComboBoxTriggerProps<T> & { ref?: ForwardedRef<HTMLButtonElement> },
-) => ReactElement
-
-const SortableComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
+export const SortableComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
   props: ComboBoxTriggerProps<T>,
-  ref: ForwardedRef<HTMLButtonElement>,
 ): ReactNode => {
-  const { setOpen, className, open, selectedOptions, handleUnselect, ...domProps } = props
+  const { setOpen, className, open, selectedOptions, handleUnselect, ref, ...domProps } = props
 
   const [items, setItems] = useState(selectedOptions.map((option) => option.id))
 
@@ -521,17 +488,4 @@ const SortableComboBoxTrigger = <T extends BaseComboboxItem = BaseComboboxItem>(
       </SortableList>
     </div>
   )
-}
-
-const ForwardRefSortableComboBoxTrigger = forwardRef(SortableComboBoxTrigger) as unknown as <
-  T extends BaseComboboxItem = BaseComboboxItem,
->(
-  props: ComboBoxTriggerProps<T> & { ref?: ForwardedRef<HTMLButtonElement> },
-) => ReactElement
-
-export {
-  ForwardRefDefaultComboBoxTrigger as DefaultComboBoxTrigger,
-  ForwardRefLinkedRecordsComboBoxTrigger as LinkedRecordsComboBoxTrigger,
-  ForwardRefSelectComboBoxTrigger as SelectComboBoxTrigger,
-  ForwardRefSortableComboBoxTrigger as SortableComboBoxTrigger,
 }
