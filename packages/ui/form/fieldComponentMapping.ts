@@ -1,4 +1,4 @@
-import type { FieldConfig } from '@openfaith/schema/shared/schema'
+import { AddressLocationField } from '@openfaith/ui/components/form/addressLocationField'
 import { ComboboxField } from '@openfaith/ui/components/form/comboboxField'
 import { DatePickerField } from '@openfaith/ui/components/form/datePickerField'
 import { DateTimeField } from '@openfaith/ui/components/form/dateTimeField'
@@ -9,9 +9,10 @@ import { SingleComboboxField } from '@openfaith/ui/components/form/singleCombobo
 import { SwitchField } from '@openfaith/ui/components/form/switchField'
 import { TagInputField } from '@openfaith/ui/components/form/tagInputField'
 import { TextareaField } from '@openfaith/ui/components/form/textareaField'
+import type { RequiredFieldConfig } from '@openfaith/ui/form/fieldConfigGenerator'
 import type { ComponentType } from 'react'
 
-type FieldConfigType = Required<NonNullable<FieldConfig['field']>>
+type FieldConfigType = RequiredFieldConfig
 type FieldType = FieldConfigType['type']
 
 /**
@@ -19,6 +20,7 @@ type FieldType = FieldConfigType['type']
  */
 export const getFieldComponent = (fieldType?: FieldType): ComponentType<any> => {
   const componentMap = {
+    addressLocation: AddressLocationField,
     combobox: ComboboxField,
     date: DatePickerField,
     datetime: DateTimeField,
@@ -35,7 +37,9 @@ export const getFieldComponent = (fieldType?: FieldType): ComponentType<any> => 
     textarea: TextareaField,
   } as const
 
-  if (!fieldType) return InputField
+  if (!fieldType) {
+    return InputField
+  }
 
   return componentMap[fieldType] || InputField
 }
@@ -45,6 +49,7 @@ export const getFieldComponent = (fieldType?: FieldType): ComponentType<any> => 
  */
 export const getFieldComponentName = (fieldType?: FieldType): string => {
   const componentNameMap = {
+    addressLocation: 'AddressLocationField',
     combobox: 'ComboboxField',
     date: 'DatePickerField',
     datetime: 'DateTimeField',
@@ -61,7 +66,9 @@ export const getFieldComponentName = (fieldType?: FieldType): string => {
     textarea: 'TextareaField',
   } as const
 
-  if (!fieldType) return 'InputField'
+  if (!fieldType) {
+    return 'InputField'
+  }
 
   return componentNameMap[fieldType] || 'InputField'
 }
@@ -146,6 +153,12 @@ export const getComponentProps = (config: FieldConfigType) => {
       return {
         ...baseProps,
         // Slug-specific props would go here
+      }
+
+    case 'addressLocation':
+      return {
+        ...baseProps,
+        // AddressLocation-specific props would go here
       }
 
     default:

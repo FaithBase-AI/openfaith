@@ -1,11 +1,13 @@
 import { Atom, Result, useAtomValue } from '@effect-atom/atom-react'
+import type { CompositeAddressValue } from '@openfaith/shared'
+import { formatAddress } from '@openfaith/shared'
 import { env } from '@openfaith/shared/env'
 import { getFieldErrors } from '@openfaith/ui/components/form/fieldHelpers'
 import { useFieldContext } from '@openfaith/ui/components/form/tsField'
 import { Combobox } from '@openfaith/ui/components/ui/combobox'
-import { ByLineComboboxItemComponent } from '@openfaith/ui/components/ui/combobox-items'
+import { AddressComboboxItemComponent } from '@openfaith/ui/components/ui/combobox-items'
 import { SelectComboBoxTrigger } from '@openfaith/ui/components/ui/combobox-triggers'
-import type { ByLineComboboxItem } from '@openfaith/ui/components/ui/combobox-types'
+import type { AddressComboboxItem } from '@openfaith/ui/components/ui/combobox-types'
 import { InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
 import { cn } from '@openfaith/ui/shared/utils'
 import { Array, Effect, Option, pipe, Schema, String } from 'effect'
@@ -55,7 +57,6 @@ export type GooglePlacesResponse = Schema.Schema.Type<typeof GooglePlacesRespons
 export type AddressLocation = {
   id: string
   name: string
-  byLine: string
   street?: string
   housenumber?: string
   city?: string
@@ -93,84 +94,36 @@ const getAddressComponent = (place: GooglePlace, types: Array<string>): string |
   )
 }
 
-const formatAddressName = (place: GooglePlace): string => {
-  if (place.displayName) {
-    return place.displayName.text
-  }
-
+const placeToAddressLocation = (place: GooglePlace): AddressLocation => {
   const streetNumber = getAddressComponent(place, ['street_number'])
   const route = getAddressComponent(place, ['route'])
 
-  if (streetNumber && route) {
-    return `${streetNumber} ${route}`
-  }
+  const streetParts = [streetNumber, route]
+  const street = pipe(streetParts, Array.filterMap(Option.fromNullable), Array.join(' '))
 
-  if (route) {
-    return route
-  }
-
-  const parts = pipe(place.formattedAddress, String.split(','))
-  return pipe(
-    parts,
-    Array.head,
+  const placeName = pipe(
+    Option.fromNullable(place.displayName?.text),
+    Option.orElse(() => Option.fromNullable(street)),
+    Option.orElse(() => pipe(place.formattedAddress, String.split(','), Array.head)),
     Option.getOrElse(() => 'Unknown Location'),
   )
-}
 
-const formatAddressByLine = (place: GooglePlace): string => {
-  const city = getAddressComponent(place, ['locality', 'postal_town'])
-  const state = getAddressComponent(place, [
-    'administrative_area_level_1',
-    'administrative_area_level_2',
-  ])
-  const postcode = getAddressComponent(place, ['postal_code'])
-  const country = getAddressComponent(place, ['country'])
-
-  const parts: Array<string> = []
-
-  if (city) {
-    parts.push(city)
-  }
-
-  if (state) {
-    parts.push(state)
-  }
-
-  if (postcode) {
-    parts.push(postcode)
-  }
-
-  if (country) {
-    parts.push(country)
-  }
-
-  return pipe(
-    parts,
-    Array.match({
-      onEmpty: () => '',
-      onNonEmpty: (items) => pipe(items, Array.join(', ')),
-    }),
-  )
-}
-
-const placeToAddressLocation = (place: GooglePlace): AddressLocation => {
   return {
-    byLine: formatAddressByLine(place),
     city: getAddressComponent(place, ['locality', 'postal_town']),
     coordinates: place.location,
     country: getAddressComponent(place, ['country']),
     countrycode: getAddressComponent(place, ['country']),
     county: getAddressComponent(place, ['administrative_area_level_2']),
-    housenumber: getAddressComponent(place, ['street_number']),
+    housenumber: streetNumber,
     id: place.id,
-    name: formatAddressName(place),
+    name: placeName,
     placeId: place.id,
     postcode: getAddressComponent(place, ['postal_code']),
     state: getAddressComponent(place, [
       'administrative_area_level_1',
       'administrative_area_level_2',
     ]),
-    street: getAddressComponent(place, ['route']),
+    street: route,
   }
 }
 
@@ -268,7 +221,7 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
     ...domProps
   } = props
 
-  const field = useFieldContext<AddressLocation | null>()
+  const field = useFieldContext<CompositeAddressValue | null>()
   const [searchQuery, setSearchQuery] = useState('')
 
   const [debouncedSearchQuery] = useDebounce(searchQuery, 250)
@@ -276,7 +229,7 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
   const value = pipe(
     field.state.value,
     Option.fromNullable,
-    Option.getOrElse((): AddressLocation | null => null),
+    Option.getOrElse((): CompositeAddressValue | null => null),
   )
 
   const { processedError } = getFieldErrors(field.state.meta.errors)
@@ -289,30 +242,54 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
     onSuccess: (result) => result.value,
   })
 
-  const options: Array<ByLineComboboxItem & { location?: AddressLocation }> = pipe(
+  const options: Array<AddressComboboxItem & { location?: AddressLocation }> = pipe(
     locations,
-    Array.map((location) => ({
-      _tag: 'address' as const,
-      byLine: location.byLine,
-      id: location.id,
-      location,
-      name: location.name,
-    })),
+    Array.map((location) => {
+      const compositeValue: CompositeAddressValue = {
+        city: location.city,
+        country: location.country,
+        latitude: location.coordinates.latitude,
+        longitude: location.coordinates.longitude,
+        state: location.state,
+        street: pipe(
+          [location.housenumber, location.street],
+          Array.filterMap((part) => Option.fromNullable(part)),
+          Array.join(' '),
+        ),
+        zip: location.postcode,
+      }
+
+      const { line1, line2 } = formatAddress(compositeValue)
+
+      return {
+        _tag: 'address' as const,
+        id: location.id,
+        line1,
+        line2,
+        location,
+        name: location.name,
+      }
+    }),
   )
 
   const selectedOptions = pipe(
     value,
     Option.fromNullable,
     Option.match({
-      onNone: () => [] as Array<ByLineComboboxItem>,
-      onSome: (location) => [
-        {
-          _tag: 'address' as const,
-          byLine: location.byLine,
-          id: location.id,
-          name: location.name,
-        },
-      ],
+      onNone: () => [] as Array<AddressComboboxItem>,
+      onSome: (compositeValue) => {
+        const { line1, line2 } = formatAddress(compositeValue)
+
+        return [
+          {
+            _tag: 'address' as const,
+            id: 'current',
+            line1,
+            line2,
+            name: line1 || 'Unknown Location',
+          },
+        ]
+      },
     }),
   )
 
@@ -337,7 +314,21 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
             }
           },
           onSome: (location) => {
-            field.handleChange(location)
+            const compositeValue: CompositeAddressValue = {
+              city: location.city,
+              country: location.country,
+              latitude: location.coordinates.latitude,
+              longitude: location.coordinates.longitude,
+              state: location.state,
+              street: pipe(
+                [location.housenumber, location.street],
+                Array.filterMap(Option.fromNullable),
+                Array.join(' '),
+              ),
+              zip: location.postcode,
+            }
+
+            field.handleChange(compositeValue)
             if (onLocationSelect) {
               onLocationSelect(location)
             }
@@ -365,10 +356,10 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
       processedError={processedError}
       required={required}
     >
-      <Combobox<ByLineComboboxItem>
+      <Combobox<AddressComboboxItem>
         addItem={handleAddItem}
         alignOffset={alignOffset}
-        ComboboxItem={ByLineComboboxItemComponent}
+        ComboboxItem={AddressComboboxItemComponent}
         ComboboxTrigger={SelectComboBoxTrigger}
         className={className}
         disabled={disabled}

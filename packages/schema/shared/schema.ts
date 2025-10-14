@@ -44,6 +44,7 @@ export interface FieldConfig {
       | 'datetime'
       | 'tags'
       | 'otp'
+      | 'addressLocation'
     label?: string
     placeholder?: string
     required?: boolean
@@ -57,6 +58,7 @@ export interface FieldConfig {
     max?: number | string
     step?: number
     order?: number
+    composite?: Array<string>
   }
   table?: {
     header?: string

@@ -48,6 +48,7 @@ effect('getFieldComponent - returns InputField for unknown field type', () =>
 effect('getComponentProps - returns base props for all field types', () =>
   Effect.gen(function* () {
     const baseConfig = {
+      composite: undefined,
       creatable: false,
       hidden: false,
       label: 'Test Field',

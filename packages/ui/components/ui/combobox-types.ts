@@ -6,6 +6,7 @@ export interface BaseComboboxItem {
 }
 
 // For some reason these props need to be optional for ts to pass.
-export interface ByLineComboboxItem extends BaseComboboxItem {
-  byLine?: string
+export interface AddressComboboxItem extends BaseComboboxItem {
+  line1?: string
+  line2?: string
 }

@@ -4,7 +4,10 @@ import { useAppForm } from '@openfaith/ui/components/form/tsForm'
 import { QuickActionForm } from '@openfaith/ui/components/quickActions/quickActionsComponents'
 import { Button } from '@openfaith/ui/components/ui/button'
 import { getComponentProps, getFieldComponentName } from '@openfaith/ui/form/fieldComponentMapping'
-import { generateFieldConfigs } from '@openfaith/ui/form/fieldConfigGenerator'
+import {
+  generateFieldConfigs,
+  type RequiredFieldConfig,
+} from '@openfaith/ui/form/fieldConfigGenerator'
 import { useSchemaInsert, useSchemaUpdate } from '@openfaith/ui/shared/hooks/schemaMutations'
 import { revalidateLogic } from '@tanstack/react-form'
 import { Array, Order, pipe, Record, Schema } from 'effect'
@@ -98,7 +101,7 @@ export function UniversalForm<T extends Record<string, any> & { id: string }>(
     })),
     Array.sort(Order.struct({ order: Order.number })),
     Array.map(({ key, config }) => {
-      const typedConfig = config as Required<NonNullable<FieldConfig['field']>>
+      const typedConfig = config as RequiredFieldConfig
 
       const componentProps = getComponentProps(typedConfig)
       const componentName = getFieldComponentName(typedConfig.type)

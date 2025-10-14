@@ -1,7 +1,7 @@
 import { EntityAvatar } from '@openfaith/ui/components/avatars/entityAvatar'
 import type {
+  AddressComboboxItem,
   BaseComboboxItem,
-  ByLineComboboxItem,
 } from '@openfaith/ui/components/ui/combobox-types'
 import { CheckIcon } from '@openfaith/ui/icons/checkIcon'
 import { PlusIcon } from '@openfaith/ui/icons/plusIcon'
@@ -139,7 +139,7 @@ export const DefaultComboboxItem = <T extends BaseComboboxItem>(
   )
 }
 
-export const ByLineComboboxItemComponent = <T extends ByLineComboboxItem>(
+export const AddressComboboxItemComponent = <T extends AddressComboboxItem>(
   props: ComboboxItemProps<T>,
 ): ReactNode => {
   const {
@@ -187,8 +187,11 @@ export const ByLineComboboxItemComponent = <T extends ByLineComboboxItem>(
       )}
 
       <div className={'flex flex-col'}>
-        <span className={'line-clamp-1 text-sm'}>{item.name}</span>
-        <span className={'line-clamp-1 text-muted-foreground text-xs'}>{item.byLine}</span>
+        <span className={'line-clamp-1 text-sm'}>
+          {item.name}
+          {item.name === item.line1 ? null : `, ${item.line1}`}
+        </span>
+        <span className={'line-clamp-1 text-muted-foreground text-xs'}>{item.line2}</span>
       </div>
     </ComboboxItemWrapper>
   )
