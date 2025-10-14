@@ -10,7 +10,7 @@ export const campusesTable = pgTable(
 
     avatar: d.text(),
     city: d.text().notNull(),
-    country: d.text(),
+    countryCode: d.text(),
     description: d.text(),
     latitude: d.doublePrecision(),
     longitude: d.doublePrecision(),

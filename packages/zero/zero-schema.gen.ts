@@ -1252,11 +1252,11 @@ export const schema = {
           optional: false,
           type: 'string',
         },
-        country: {
+        countryCode: {
           customType: null as unknown as ZeroCustomType<
             typeof zeroSchema,
             'campusesTable',
-            'country'
+            'countryCode'
           >,
           optional: true,
           type: 'string',

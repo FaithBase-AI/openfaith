@@ -119,6 +119,7 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
     [OfUiConfig]: {
       field: {
         composite: ['street', 'city', 'state', 'zip', 'country', 'latitude', 'longitude'],
+        label: 'Address',
         order: 4,
         placeholder: 'Search for campus address...',
         type: 'addressLocation',
