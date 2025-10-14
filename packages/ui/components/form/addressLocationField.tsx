@@ -247,7 +247,7 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
     Array.map((location) => {
       const compositeValue: CompositeAddressValue = {
         city: location.city,
-        country: location.country,
+        countryCode: location.countrycode,
         latitude: location.coordinates.latitude,
         longitude: location.coordinates.longitude,
         state: location.state,
@@ -316,7 +316,7 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
           onSome: (location) => {
             const compositeValue: CompositeAddressValue = {
               city: location.city,
-              country: location.country,
+              countryCode: location.country,
               latitude: location.coordinates.latitude,
               longitude: location.coordinates.longitude,
               state: location.state,

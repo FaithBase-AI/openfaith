@@ -3,6 +3,7 @@ import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
 import {
   Address,
   BaseAddress,
+  OfCustomField,
   OfEntity,
   OfFieldName,
   OfPartialTransformer,
@@ -19,6 +20,7 @@ export const PcoAddressAttributes = Schema.Struct({
   }),
   country_name: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'countryName',
+    [OfCustomField]: true,
   }),
   created_at: Schema.String.annotations({
     [OfFieldName]: 'createdAt',

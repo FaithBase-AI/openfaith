@@ -10,7 +10,6 @@ export const addressesTable = pgTable(
 
     city: d.text(),
     countryCode: d.text(),
-    countryName: d.text(),
     location: d.text(),
     primary: d.boolean().notNull().default(false),
     state: d.text(),

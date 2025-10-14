@@ -244,7 +244,7 @@ export type CompositeAddressValue = {
   city?: string
   state?: string
   zip?: string
-  country?: string
+  countryCode?: string
   latitude?: number | null
   longitude?: number | null
 }
@@ -262,7 +262,7 @@ export const formatAddress = (address: CompositeAddressValue): FormattedAddress 
   )
 
   const line2 = pipe(
-    [address.city, address.state, address.zip, address.country],
+    [address.city, address.state, address.zip, address.countryCode],
     Array.filterMap(Option.fromNullable),
     Array.join(', '),
   )

@@ -1045,15 +1045,6 @@ export const schema = {
           optional: true,
           type: 'string',
         },
-        countryName: {
-          customType: null as unknown as ZeroCustomType<
-            typeof zeroSchema,
-            'addressesTable',
-            'countryName'
-          >,
-          optional: true,
-          type: 'string',
-        },
         createdAt: {
           customType: null as unknown as ZeroCustomType<
             typeof zeroSchema,
@@ -1258,7 +1249,7 @@ export const schema = {
         },
         city: {
           customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'campusesTable', 'city'>,
-          optional: true,
+          optional: false,
           type: 'string',
         },
         country: {
@@ -1394,7 +1385,7 @@ export const schema = {
             'campusesTable',
             'state'
           >,
-          optional: true,
+          optional: false,
           type: 'string',
         },
         status: {
@@ -1412,7 +1403,7 @@ export const schema = {
             'campusesTable',
             'street'
           >,
-          optional: true,
+          optional: false,
           type: 'string',
         },
         tags: {
@@ -1450,7 +1441,7 @@ export const schema = {
         },
         zip: {
           customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'campusesTable', 'zip'>,
-          optional: true,
+          optional: false,
           type: 'string',
         },
       },

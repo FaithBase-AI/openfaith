@@ -38,7 +38,7 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
       },
     },
   }),
-  country: Schema.String.annotations({
+  countryCode: Schema.String.annotations({
     description: 'Country',
     [OfUiConfig]: {
       field: {

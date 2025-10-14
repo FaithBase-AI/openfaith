@@ -28,7 +28,7 @@ export const PcoCampusAttributes = Schema.Struct({
     [OfCustomField]: true,
   }),
   country: Schema.NullOr(Schema.String).annotations({
-    [OfFieldName]: 'country',
+    [OfFieldName]: 'countryCode',
   }),
   created_at: Schema.String.annotations({
     [OfFieldName]: 'createdAt',
