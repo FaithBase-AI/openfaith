@@ -254,15 +254,14 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
     OfTransformer,
     entitySchema.ast,
   ).pipe(
-    Effect.mapError((error) =>
-      Effect.fail(
+    Effect.mapError(
+      (error) =>
         new AdapterTransformError({
           adapter: 'pco',
           cause: error,
           entityType: entity.type,
           message: `No transformer found for ${entity.type}`,
         }),
-      ),
     ),
   )
 
@@ -597,6 +596,16 @@ export const PcoAdapterManagerLive = Layer.effect(
 
           const createMethod = yield* Option.fromNullable(
             entityClient.create as typeof pcoClient.Person.create,
+          ).pipe(
+            Effect.mapError(
+              (error) =>
+                new AdapterEntityNotFoundError({
+                  adapter: 'pco',
+                  cause: error,
+                  entityType,
+                  message: `No create method found for ${entityType}`,
+                }),
+            ),
           )
 
           const transformedData = yield* transformEntityDataE(entityType, data)
@@ -612,7 +621,18 @@ export const PcoAdapterManagerLive = Layer.effect(
 
           const createResponse = yield* createMethod({
             payload,
-          })
+          }).pipe(
+            Effect.mapError(
+              (error) =>
+                new AdapterFetchError({
+                  adapter: 'pco',
+                  cause: error,
+                  entityType,
+                  message: `Failed to create ${entityType}`,
+                  operation: 'create',
+                }),
+            ),
+          )
 
           yield* processPcoData({
             data: normalizeResponse(createResponse),
@@ -620,7 +640,17 @@ export const PcoAdapterManagerLive = Layer.effect(
             processExternalLinks,
             processRelationships,
             tokenKey,
-          })
+          }).pipe(
+            Effect.mapError(
+              (cause) =>
+                new AdapterTransformError({
+                  adapter: 'pco',
+                  cause,
+                  entityType,
+                  message: `Failed to process ${entityType} data`,
+                }),
+            ),
+          )
         }),
 
       deleteEntity: (params) =>
@@ -1188,15 +1218,14 @@ export const transformPartialEntityDataE = Effect.fn('transformPartialEntityData
       id: typeof Schema.String
     }>
   >(OfPartialTransformer, entitySchema.ast).pipe(
-    Effect.mapError((error) =>
-      Effect.fail(
+    Effect.mapError(
+      (error) =>
         new AdapterTransformError({
           adapter: 'pco',
           cause: error,
           entityType: entityName,
           message: `No transformer found for ${entityName}`,
         }),
-      ),
     ),
   )
 
@@ -1241,15 +1270,14 @@ export const transformEntityDataE = Effect.fn('transformPartialEntityDataE')(fun
       id: typeof Schema.String
     }>
   >(OfEntity, pcoEntitySchema.ast).pipe(
-    Effect.mapError((error) =>
-      Effect.fail(
+    Effect.mapError(
+      (error) =>
         new AdapterTransformError({
           adapter: 'pco',
           cause: error,
           entityType: entityName,
           message: `No OfEntity schema found for ${entityName}`,
         }),
-      ),
     ),
   )
 
@@ -1258,15 +1286,14 @@ export const transformEntityDataE = Effect.fn('transformPartialEntityDataE')(fun
       id: typeof Schema.String
     }>
   >(OfTransformer, pcoEntitySchema.ast).pipe(
-    Effect.mapError((error) =>
-      Effect.fail(
+    Effect.mapError(
+      (error) =>
         new AdapterTransformError({
           adapter: 'pco',
           cause: error,
           entityType: entityName,
           message: `No transformer found for ${entityName}`,
         }),
-      ),
     ),
   )
 
