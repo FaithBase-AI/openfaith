@@ -184,12 +184,6 @@ export class PcoHttpClient extends Effect.Service<PcoHttpClient>()('PcoHttpClien
       HttpClient.transformResponse((responseEffect) => {
         return pipe(
           responseEffect,
-          Effect.tap((response) =>
-            Effect.gen(function* () {
-              const body = yield* response.json
-              yield* Effect.log('body', JSON.stringify(body))
-            }),
-          ),
           Effect.flatMap(handlePcoError),
           Effect.retry({
             schedule: Schedule.identity<HttpClientError.ResponseError>().pipe(
