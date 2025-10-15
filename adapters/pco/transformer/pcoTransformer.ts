@@ -3,6 +3,7 @@ import {
   getUnderlyingType,
   mkCustomField,
   OfCustomField,
+  OfDefaultValueFn,
   OfFieldName,
   OfSkipField,
 } from '@openfaith/schema'
@@ -105,7 +106,16 @@ const getBaseType = (ast: SchemaAST.AST): string => {
 }
 
 // Helper function to get default value for a custom field based on its type
-const getDefaultValueForCustomField = (ast: SchemaAST.AST): unknown => {
+const getDefaultValueForCustomField = (ast: SchemaAST.AST, sourceObj?: unknown): unknown => {
+  // Check if there's a custom default value function
+  const defaultValueFnOpt = SchemaAST.getAnnotation<(obj: any) => unknown>(OfDefaultValueFn)(
+    ast as SchemaAST.Annotated,
+  )
+
+  if (defaultValueFnOpt._tag === 'Some' && sourceObj !== undefined) {
+    return defaultValueFnOpt.value(sourceObj)
+  }
+
   const baseType = getBaseType(ast)
   const nullable = isNullableType(ast)
 
@@ -395,6 +405,12 @@ export const pcoToOf = <From extends Schema.Schema.Any, To extends Schema.Schema
         }),
       )
 
+      // Build intermediate result to pass to default value functions
+      const intermediateResult = {
+        ...standardFields,
+        ...customFieldsDecoded,
+      }
+
       // Handle missing custom fields - provide defaults for required custom fields
       const missingCustomFields = pipe(
         extractFields(from),
@@ -419,7 +435,8 @@ export const pcoToOf = <From extends Schema.Schema.Any, To extends Schema.Schema
           }
 
           // Provide a default value for this missing custom field
-          const defaultValue = getDefaultValueForCustomField(fieldAst)
+          // Pass intermediateResult so the function can access other processed fields
+          const defaultValue = getDefaultValueForCustomField(fieldAst, intermediateResult)
           return Option.some([pcoKey, defaultValue] as const)
         }),
         Array.reduce({}, (b, [key, value]) => {
@@ -431,8 +448,7 @@ export const pcoToOf = <From extends Schema.Schema.Any, To extends Schema.Schema
       )
 
       const result = {
-        ...standardFields,
-        ...customFieldsDecoded,
+        ...intermediateResult,
         ...missingCustomFields,
       }
 

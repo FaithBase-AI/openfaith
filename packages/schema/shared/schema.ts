@@ -9,6 +9,7 @@ export const OfFolder = Symbol.for('@openfaith/schema/folder')
 export const OfSkipEntity = Symbol.for('@openfaith/schema/skipEntity')
 export const OfTransformer = Symbol.for('@openfaith/schema/transformer')
 export const OfPartialTransformer = Symbol.for('@openfaith/schema/partialTransformer')
+export const OfDefaultValueFn = Symbol.for('@openfaith/schema/defaultValueFn')
 
 // Predicate to filter out entities that have data we don't want to sync.
 export const OfFilterFn = Symbol.for('@openfaith/schema/filterFn')
@@ -154,6 +155,7 @@ declare module 'effect/Schema' {
         targetEntityTag: string
       }
       [OfFilterFn]?: (entity: A) => boolean
+      [OfDefaultValueFn]?: (entity: any) => unknown
     }
 
     interface Doc<A> extends SchemaAST.Annotations {
@@ -173,6 +175,7 @@ declare module 'effect/Schema' {
         targetEntityTag: string
       }
       [OfFilterFn]?: (entity: A) => boolean
+      [OfDefaultValueFn]?: (entity: any) => unknown
     }
   }
 }
