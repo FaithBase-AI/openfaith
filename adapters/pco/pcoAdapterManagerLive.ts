@@ -350,8 +350,16 @@ const processPcoData = Effect.fn('processPcoData')(function* (params: {
   processExternalLinks: ProcessExternalLinks
   processEntities: ProcessEntities
   processRelationships: ProcessRelationships
+  forceUpdate?: boolean
 }) {
-  const { data, processExternalLinks, processEntities, processRelationships, tokenKey } = params
+  const {
+    data,
+    processExternalLinks,
+    processEntities,
+    processRelationships,
+    tokenKey,
+    forceUpdate = false,
+  } = params
 
   // yield* Effect.annotateLogs(Effect.log('Processing PCO data'), {
   //   data,
@@ -359,10 +367,10 @@ const processPcoData = Effect.fn('processPcoData')(function* (params: {
   // })
 
   // Create external links for all entities
-  const { allExternalLinks, changedExternalLinks } = yield* processExternalLinks([
-    ...createExternalLinks(data.data),
-    ...createExternalLinks(data.included),
-  ])
+  const { allExternalLinks, changedExternalLinks } = yield* processExternalLinks(
+    [...createExternalLinks(data.data), ...createExternalLinks(data.included)],
+    forceUpdate,
+  )
 
   const entityData = yield* Effect.all(
     pipe(
@@ -589,8 +597,14 @@ export const PcoAdapterManagerLive = Layer.effect(
 
       createEntity: (params) =>
         Effect.gen(function* () {
-          const { entityType, data, processEntities, processExternalLinks, processRelationships } =
-            params
+          const {
+            entityType,
+            data,
+            processEntities,
+            processExternalLinks,
+            processRelationships,
+            internalId,
+          } = params
 
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
 
@@ -635,7 +649,16 @@ export const PcoAdapterManagerLive = Layer.effect(
           )
 
           yield* processPcoData({
-            data: normalizeResponse(createResponse),
+            data: normalizeResponse({
+              ...createResponse,
+              data: {
+                ...createResponse.data,
+                // We put the internalId because it needs to get passed into `processExternalLinks` so
+                // we can make the correct external link.
+                entityId: internalId,
+              },
+            }),
+            forceUpdate: true,
             processEntities,
             processExternalLinks,
             processRelationships,
@@ -1172,8 +1195,8 @@ export const PcoAdapterManagerLive = Layer.effect(
               ...updateResponse,
               data: {
                 ...updateResponse.data,
-                // We put the internalId because it needs to get passed into `processExternalLinks` so we can make the
-                // correct external link.
+                // We put the internalId because it needs to get passed into `processExternalLinks` so
+                // we can make the correct external link.
                 entityId: internalId,
               },
             }),
