@@ -270,15 +270,15 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
   })
 
   const processedAttributes = yield* Schema.decodeUnknown(attributesSchema)(entity.attributes).pipe(
-    Effect.mapError((error) => {
-      console.log('processedAttributes error', error)
-      return new AdapterTransformError({
-        adapter: 'pco',
-        cause: error,
-        entityType: entity.type,
-        message: `Failed to decode attributes for ${entity.type}`,
-      })
-    }),
+    Effect.mapError(
+      (error) =>
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entity.type,
+          message: `Failed to decode attributes for ${entity.type}`,
+        }),
+    ),
   )
 
   // For webhooks, we need to include the externalWebhookId
@@ -291,15 +291,15 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
     yield* Schema.decodeUnknown(transformer as unknown as typeof pcoPersonTransformer)(
       attributesToTransform,
     ).pipe(
-      Effect.mapError((error) => {
-        console.log('attributesToTransform error', error)
-        return new AdapterTransformError({
-          adapter: 'pco',
-          cause: error,
-          entityType: entity.type,
-          message: `Failed to decode transformer for ${entity.type}`,
-        })
-      }),
+      Effect.mapError(
+        (error) =>
+          new AdapterTransformError({
+            adapter: 'pco',
+            cause: error,
+            entityType: entity.type,
+            message: `Failed to decode transformer for ${entity.type}`,
+          }),
+      ),
     )
 
   const baseEntity = {
