@@ -41,14 +41,11 @@ const effectMutator = Effect.fn('effectMutator')(function* (params: {
     userId,
   })
 
-  const validatedInput = yield* enrichMutationData({
   const validatedInput = yield* validateMutationData({
     data: input,
     operation,
     schema: entity.schema,
-    userId,
   })
-  }).pipe(Effect.tapError((error) => Effect.log('validateMutationData error', error)))
 
   // We need to make sure that the mutation data matches the auth data.
   for (const item of validatedInput) {

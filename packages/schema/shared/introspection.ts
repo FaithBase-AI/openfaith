@@ -1,6 +1,6 @@
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
-import { getEntityId } from '@openfaith/shared'
+import { getEntityId, IsoStringToTimestamp } from '@openfaith/shared'
 import { Array, Effect, Option, pipe, Schema, SchemaAST, String } from 'effect'
 
 /**
@@ -376,23 +376,13 @@ export const getZeroMutationSchema = <A, I = A, R = never>(
   for (const field of fields) {
     const fieldAst = extractAST(field.schema)
 
-    const baseTransform = Schema.transform(
-      Schema.Union(Schema.String, Schema.Number),
-      Schema.Number,
-      {
-        decode: (input: string | number) => new Date(input).getTime(),
-        encode: (timestamp: number) => new Date(timestamp).toISOString().replace(/\.\d{3}Z$/, 'Z'),
-        strict: true,
-      },
-    )
-
     if (isTimestampToIsoStringField(fieldAst)) {
       if (field.isOptional) {
-        transformedFields[field.key] = Schema.optionalWith(baseTransform, { exact: true })
+        transformedFields[field.key] = Schema.optionalWith(IsoStringToTimestamp, { exact: true })
       } else if (field.isNullable) {
-        transformedFields[field.key] = pipe(baseTransform, Schema.NullOr)
+        transformedFields[field.key] = pipe(IsoStringToTimestamp, Schema.NullOr)
       } else {
-        transformedFields[field.key] = baseTransform
+        transformedFields[field.key] = IsoStringToTimestamp
       }
     } else {
       transformedFields[field.key] = Schema.make(fieldAst)
@@ -475,7 +465,7 @@ export const enrichMutationData = Effect.fn('enrichMutationData')(function* (par
             updatedBy: userId,
           })),
         ),
-      ).pipe(Effect.tapError((error) => Effect.log('decodeUnknown error', error)))
+      )
 
       return result as unknown as ReadonlyArray<{ id: string; updatedBy: string; orgId: string }>
     }
@@ -546,7 +536,7 @@ export const validateMutationData = Effect.fn('validateMutationData')(function* 
       const result = yield* Schema.decodeUnknown(Schema.Array(getZeroMutationSchema(schema)), {
         errors: 'all',
         onExcessProperty: 'preserve',
-      })(data).pipe(Effect.tapError((error) => Effect.log('decodeUnknown error', error)))
+      })(data)
 
       return result as unknown as ReadonlyArray<{ id: string; updatedBy: string; orgId: string }>
     }

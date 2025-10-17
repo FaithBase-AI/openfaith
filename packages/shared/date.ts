@@ -1,5 +1,9 @@
 import { Schema } from 'effect'
 
+export const normalizeIsoString = (dateValue: number | string | Date): string => {
+  return new Date(dateValue).toISOString().replace(/\.\d{3}Z$/, 'Z')
+}
+
 /**
  * Schema transformer that converts timestamp (number) or ISO string to ISO string and vice versa.
  * Useful for database fields that store timestamps as numbers but need to be
@@ -16,7 +20,17 @@ export const TimestampToIsoString = Schema.transform(
   Schema.Union(Schema.Number, Schema.String),
   Schema.String,
   {
-    decode: (input) => new Date(input).toISOString().replace(/\.\d{3}Z$/, 'Z'),
-    encode: (isoString) => new Date(isoString).toISOString().replace(/\.\d{3}Z$/, 'Z'),
+    decode: normalizeIsoString,
+    encode: normalizeIsoString,
+  },
+)
+
+export const IsoStringToTimestamp = Schema.transform(
+  Schema.Union(Schema.String, Schema.Number),
+  Schema.Number,
+  {
+    decode: (input: string | number) => new Date(input).getTime(),
+    encode: normalizeIsoString,
+    strict: true,
   },
 )

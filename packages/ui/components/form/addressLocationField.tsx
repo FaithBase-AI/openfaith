@@ -238,14 +238,15 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
       )
     }
 
-    const compositeValue: Record<string, any> = {}
-    pipe(
+    const compositeValue = pipe(
       composite,
-      Array.forEach((fieldName) => {
-        const value = (form as any).getFieldValue(fieldName)
+      Array.reduce({} as Record<string, unknown>, (b, a) => {
+        const value = (form as any).getFieldValue(a)
         if (value !== undefined && value !== null) {
-          compositeValue[fieldName] = value
+          b[a] = value
         }
+
+        return b
       }),
     )
 

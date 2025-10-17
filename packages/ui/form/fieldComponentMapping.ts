@@ -90,57 +90,21 @@ export const getComponentProps = (config: FieldConfigType) => {
 
     case 'date':
     case 'datetime':
-      return {
-        ...baseProps,
-        // Date-specific props would go here
-      }
+      return baseProps
 
     case 'switch':
-      return {
-        ...baseProps,
-        // Switch-specific props would go here
-      }
+      return baseProps
 
     case 'otp':
-      return {
-        ...baseProps,
-        // OTP-specific props would go here
-      }
+      return baseProps
 
     case 'slug':
-      return {
-        ...baseProps,
-        // Slug-specific props would go here
-      }
+      return baseProps
 
     case 'addressLocation':
-      return {
-        ...baseProps,
-        // AddressLocation-specific props would go here
-      }
+      return baseProps
 
     default:
       return baseProps
   }
-}
-
-/**
- * Type guard to check if a field type supports options
- */
-export const fieldSupportsOptions = (fieldType?: FieldType): boolean => {
-  return ['select', 'combobox', 'singleCombobox', 'tags'].includes(fieldType || '')
-}
-
-/**
- * Type guard to check if a field type supports multiple values
- */
-export const fieldSupportsMultiple = (fieldType?: FieldType): boolean => {
-  return ['combobox', 'tags'].includes(fieldType || '')
-}
-
-/**
- * Type guard to check if a field type supports search
- */
-export const fieldSupportsSearch = (fieldType?: FieldType): boolean => {
-  return ['combobox', 'singleCombobox'].includes(fieldType || '')
 }

@@ -83,6 +83,8 @@ export const processMutation = Effect.fn('processMutation')(function* (op: CRUDO
         Option.match({
           onNone: () =>
             adapterManager.createEntity({
+              // We need to pass in the ID because we are using our schemas to morph the shape into the adapters shape,
+              // and it needs the ID to do that.
               data: op.value,
               entityType,
               internalId,
@@ -92,6 +94,8 @@ export const processMutation = Effect.fn('processMutation')(function* (op: CRUDO
             }),
           onSome: (externalLink) =>
             adapterManager.updateEntity({
+              // We need to pass in the ID because we are using our schemas to morph the shape into the adapters shape,
+              // and it needs the ID to do that.
               data: op.value,
               entityType,
               externalId: externalLink.externalId,
