@@ -3,13 +3,13 @@
     "@openfaith/schema": "workspace:*",
     "@openfaith/shared": "workspace:*",
     "@react-email/components": "0.5.7",
+    "@react-email/render": "1.4.0",
     "effect": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
   "devDependencies": {
     "@react-email/preview-server": "4.3.1",
-    "@react-email/render": "1.4.0",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "react-email": "4.3.1",
