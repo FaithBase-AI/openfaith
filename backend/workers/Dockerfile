@@ -16,6 +16,13 @@ ENV NODE_ENV=production
 # Build from root using turbo filter
 RUN bun run build --filter=@openfaith/workers
 
+# Copy geo-tz data directory (CRITICAL - needed at runtime)
+RUN mkdir -p /usr/src/app/geo-tz-data && \
+    cp -r /usr/src/app/node_modules/geo-tz/data /usr/src/app/geo-tz-data/
+
+# Set environment variable for geo-tz to find its data
+ENV GEO_TZ_DATA_PATH=/usr/src/app/geo-tz-data/data
+
 # Stay in root directory
 WORKDIR /usr/src/app
 

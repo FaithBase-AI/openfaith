@@ -12,7 +12,7 @@ import {
 } from '@openfaith/schema'
 import { StringOrNumberToNumber } from '@openfaith/shared'
 import { Array, Option, pipe, Record, Schema } from 'effect'
-import * as geoTx from 'geo-tz'
+import * as geoTz from 'geo-tz'
 
 // All of this is because PCO has issues when you send back a valid timezone in your post. They return a valid timezone
 // when you get an entity, but they only support one of these options for timezones.
@@ -196,7 +196,7 @@ export const PcoCampusAttributes = Schema.Struct({
     // We need to get a valid default timezone from the lat / long because PCO only supports one of these options for
     // timezones when you create an entity.
     [OfDefaultValueFn]: (attrs: { latitude: number; longitude: number }) => {
-      const timezones = geoTx.find(attrs.latitude, attrs.longitude)
+      const timezones = geoTz.find(attrs.latitude, attrs.longitude)
 
       const timezoneOffset = pipe(
         timezones,
