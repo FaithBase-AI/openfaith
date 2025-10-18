@@ -108,11 +108,10 @@ export function UniversalForm<T extends Record<string, any> & { id: string }>(
           case 'edit':
             updateEntity([value])
             break
-          default:
-            if (onSubmit) {
-              await onSubmit(value)
-            }
-            break
+        }
+
+        if (onSubmit) {
+          await onSubmit(value)
         }
       } catch (error) {
         console.error(error)
