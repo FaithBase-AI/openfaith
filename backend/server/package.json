@@ -9,6 +9,7 @@
     "@openfaith/schema": "workspace:*",
     "@openfaith/shared": "workspace:*",
     "@openfaith/zero": "workspace:*",
+    "@react-email/render": "1.4.0",
     "@rocicorp/zero": "catalog:",
     "date-fns": "catalog:",
     "drizzle-orm": "catalog:",
