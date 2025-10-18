@@ -29,7 +29,7 @@
   "name": "@openfaith/workers",
   "private": true,
   "scripts": {
-    "build": "bun build runner.ts --outfile dist/runner.js --target bun",
+    "build": "bun build runner.ts --outfile dist/runner.js --target bun --external geo-tz",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "bun run --watch runner.ts",
     "format": "biome check",
