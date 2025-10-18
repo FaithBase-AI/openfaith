@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@react-email/preview-server": "4.3.1",
+    "@react-email/render": "1.4.0",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "react-email": "4.3.1",
