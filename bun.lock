@@ -87,6 +87,7 @@
         "@openfaith/be-shared": "workspace:*",
         "@openfaith/db": "workspace:*",
         "@openfaith/domain": "workspace:*",
+        "@openfaith/email": "workspace:*",
         "@openfaith/pco": "workspace:*",
         "@openfaith/schema": "workspace:*",
         "@openfaith/server": "workspace:*",
