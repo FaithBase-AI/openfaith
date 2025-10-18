@@ -1,50 +1,13 @@
-import type { FieldConfig } from '@openfaith/schema/shared/schema'
-import { ComboboxField } from '@openfaith/ui/components/form/comboboxField'
-import { DatePickerField } from '@openfaith/ui/components/form/datePickerField'
-import { DateTimeField } from '@openfaith/ui/components/form/dateTimeField'
-import { InputField, SlugInputField } from '@openfaith/ui/components/form/inputField'
-import { OTPField } from '@openfaith/ui/components/form/otpField'
-import { SelectField } from '@openfaith/ui/components/form/selectField'
-import { SingleComboboxField } from '@openfaith/ui/components/form/singleComboboxField'
-import { SwitchField } from '@openfaith/ui/components/form/switchField'
-import { TagInputField } from '@openfaith/ui/components/form/tagInputField'
-import { TextareaField } from '@openfaith/ui/components/form/textareaField'
-import type { ComponentType } from 'react'
+import type { RequiredFieldConfig } from '@openfaith/ui/form/fieldConfigGenerator'
 
-type FieldConfigType = Required<NonNullable<FieldConfig['field']>>
+type FieldConfigType = RequiredFieldConfig
 type FieldType = FieldConfigType['type']
-
-/**
- * Maps field types to their corresponding React components
- */
-export const getFieldComponent = (fieldType?: FieldType): ComponentType<any> => {
-  const componentMap = {
-    combobox: ComboboxField,
-    date: DatePickerField,
-    datetime: DateTimeField,
-    email: InputField,
-    number: InputField,
-    otp: OTPField,
-    password: InputField,
-    select: SelectField,
-    singleCombobox: SingleComboboxField,
-    slug: SlugInputField,
-    switch: SwitchField,
-    tags: TagInputField,
-    text: InputField,
-    textarea: TextareaField,
-  } as const
-
-  if (!fieldType) return InputField
-
-  return componentMap[fieldType] || InputField
-}
-
 /**
  * Maps field types to their corresponding component names for TanStack Form
  */
 export const getFieldComponentName = (fieldType?: FieldType): string => {
   const componentNameMap = {
+    addressLocation: 'AddressLocationField',
     combobox: 'ComboboxField',
     date: 'DatePickerField',
     datetime: 'DateTimeField',
@@ -61,7 +24,9 @@ export const getFieldComponentName = (fieldType?: FieldType): string => {
     textarea: 'TextareaField',
   } as const
 
-  if (!fieldType) return 'InputField'
+  if (!fieldType) {
+    return 'InputField'
+  }
 
   return componentNameMap[fieldType] || 'InputField'
 }
@@ -125,51 +90,21 @@ export const getComponentProps = (config: FieldConfigType) => {
 
     case 'date':
     case 'datetime':
-      return {
-        ...baseProps,
-        // Date-specific props would go here
-      }
+      return baseProps
 
     case 'switch':
-      return {
-        ...baseProps,
-        // Switch-specific props would go here
-      }
+      return baseProps
 
     case 'otp':
-      return {
-        ...baseProps,
-        // OTP-specific props would go here
-      }
+      return baseProps
 
     case 'slug':
-      return {
-        ...baseProps,
-        // Slug-specific props would go here
-      }
+      return baseProps
+
+    case 'addressLocation':
+      return baseProps
 
     default:
       return baseProps
   }
-}
-
-/**
- * Type guard to check if a field type supports options
- */
-export const fieldSupportsOptions = (fieldType?: FieldType): boolean => {
-  return ['select', 'combobox', 'singleCombobox', 'tags'].includes(fieldType || '')
-}
-
-/**
- * Type guard to check if a field type supports multiple values
- */
-export const fieldSupportsMultiple = (fieldType?: FieldType): boolean => {
-  return ['combobox', 'tags'].includes(fieldType || '')
-}
-
-/**
- * Type guard to check if a field type supports search
- */
-export const fieldSupportsSearch = (fieldType?: FieldType): boolean => {
-  return ['combobox', 'singleCombobox'].includes(fieldType || '')
 }

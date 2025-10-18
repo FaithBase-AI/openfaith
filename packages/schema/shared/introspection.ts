@@ -1,6 +1,6 @@
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
-import { getEntityId } from '@openfaith/shared'
+import { getEntityId, IsoStringToTimestamp } from '@openfaith/shared'
 import { Array, Effect, Option, pipe, Schema, SchemaAST, String } from 'effect'
 
 /**
@@ -350,7 +350,83 @@ export const getDeleteSchema = <A, I = A, R = never>(_schema: Schema.Schema<A, I
     updatedBy: Schema.String,
   })
 
-export const enrichMutationData = Effect.fn('enrichData')(function* (params: {
+/**
+ * Transforms a schema for server-side Zero mutations by converting timestamp fields
+ * from ISO strings to Unix timestamps (numbers).
+ *
+ * Zero expects timestamps as numbers (milliseconds since epoch) and converts them to
+ * PostgreSQL timestamps using `to_timestamp(value / 1000.0)`.
+ *
+ * This function:
+ * 1. Extracts all fields from the schema
+ * 2. Identifies fields using TimestampToIsoString transformation
+ * 3. Replaces them with a schema that accepts ISO strings and encodes to numbers
+ * 4. Preserves all other fields as-is
+ *
+ * @param schema - The entity schema with TimestampToIsoString fields
+ * @returns A new schema that converts ISO strings to numbers for Zero
+ */
+export const getZeroMutationSchema = <A, I = A, R = never>(
+  schema: Schema.Schema<A, I, R>,
+): Schema.Schema<any, any, R> => {
+  const fields = extractSchemaFields(schema)
+
+  const transformedFields: Record<string, any> = {}
+
+  for (const field of fields) {
+    const fieldAst = extractAST(field.schema)
+
+    if (isTimestampToIsoStringField(fieldAst)) {
+      if (field.isOptional) {
+        transformedFields[field.key] = Schema.optionalWith(IsoStringToTimestamp, { exact: true })
+      } else if (field.isNullable) {
+        transformedFields[field.key] = pipe(IsoStringToTimestamp, Schema.NullOr)
+      } else {
+        transformedFields[field.key] = IsoStringToTimestamp
+      }
+    } else {
+      transformedFields[field.key] = Schema.make(fieldAst)
+    }
+  }
+
+  return Schema.Struct(transformedFields) as any
+}
+
+/**
+ * Helper function to detect if a field uses TimestampToIsoString transformation
+ */
+const isTimestampToIsoStringField = (ast: SchemaAST.AST): boolean => {
+  if (ast._tag === 'Transformation') {
+    const from = ast.from
+    const to = ast.to
+
+    if (
+      from._tag === 'Union' &&
+      to._tag === 'StringKeyword' &&
+      pipe(
+        from.types,
+        Array.some((type) => type._tag === 'NumberKeyword'),
+      ) &&
+      pipe(
+        from.types,
+        Array.some((type) => type._tag === 'StringKeyword'),
+      )
+    ) {
+      return true
+    }
+  }
+
+  if (ast._tag === 'Union') {
+    return pipe(
+      ast.types,
+      Array.some((type) => isTimestampToIsoStringField(type)),
+    )
+  }
+
+  return false
+}
+
+export const enrichMutationData = Effect.fn('enrichMutationData')(function* (params: {
   data: Array<Record<string, any>>
   operation: 'delete' | 'insert' | 'update' | 'upsert'
   orgId: string
@@ -364,7 +440,10 @@ export const enrichMutationData = Effect.fn('enrichData')(function* (params: {
   switch (operation) {
     case 'upsert':
     case 'insert': {
-      const result = yield* Schema.decodeUnknown(Schema.Array(getCreateSchema(schema)))(
+      const result = yield* Schema.decodeUnknown(Schema.Array(getZeroMutationSchema(schema)), {
+        errors: 'all',
+        onExcessProperty: 'preserve',
+      })(
         pipe(
           data,
           Array.map((item) => ({
@@ -394,8 +473,14 @@ export const enrichMutationData = Effect.fn('enrichData')(function* (params: {
     case 'update': {
       const result = yield* Schema.decodeUnknown(
         Schema.Array(
-          pipe(getUpdateSchema(schema), Schema.extend(Schema.Struct({ orgId: Schema.String }))),
+          getZeroMutationSchema(
+            pipe(getUpdateSchema(schema), Schema.extend(Schema.Struct({ orgId: Schema.String }))),
+          ),
         ),
+        {
+          errors: 'all',
+          onExcessProperty: 'preserve',
+        },
       )(
         pipe(
           data,
@@ -406,14 +491,19 @@ export const enrichMutationData = Effect.fn('enrichData')(function* (params: {
             updatedBy: userId,
           })),
         ),
-        {},
       )
 
       return result as unknown as ReadonlyArray<{ id: string; updatedBy: string; orgId: string }>
     }
 
     case 'delete': {
-      const result = yield* Schema.decodeUnknown(Schema.Array(getDeleteSchema(schema)))(
+      const result = yield* Schema.decodeUnknown(
+        Schema.Array(getZeroMutationSchema(getDeleteSchema(schema))),
+        {
+          errors: 'all',
+          onExcessProperty: 'preserve',
+        },
+      )(
         pipe(
           data,
           Array.map((item) => ({
@@ -427,6 +517,54 @@ export const enrichMutationData = Effect.fn('enrichData')(function* (params: {
           })),
         ),
       )
+
+      return result as unknown as ReadonlyArray<{ id: string; updatedBy: string; orgId: string }>
+    }
+  }
+})
+
+export const validateMutationData = Effect.fn('validateMutationData')(function* (params: {
+  data: Array<Record<string, any>>
+  operation: 'delete' | 'insert' | 'update' | 'upsert'
+  schema: Schema.Schema<any>
+}) {
+  const { data, operation, schema } = params
+
+  switch (operation) {
+    case 'upsert':
+    case 'insert': {
+      const result = yield* Schema.decodeUnknown(Schema.Array(getZeroMutationSchema(schema)), {
+        errors: 'all',
+        onExcessProperty: 'preserve',
+      })(data)
+
+      return result as unknown as ReadonlyArray<{ id: string; updatedBy: string; orgId: string }>
+    }
+
+    case 'update': {
+      const result = yield* Schema.decodeUnknown(
+        Schema.Array(
+          getZeroMutationSchema(
+            pipe(getUpdateSchema(schema), Schema.extend(Schema.Struct({ orgId: Schema.String }))),
+          ),
+        ),
+        {
+          errors: 'all',
+          onExcessProperty: 'preserve',
+        },
+      )(data, {})
+
+      return result as unknown as ReadonlyArray<{ id: string; updatedBy: string; orgId: string }>
+    }
+
+    case 'delete': {
+      const result = yield* Schema.decodeUnknown(
+        Schema.Array(getZeroMutationSchema(getDeleteSchema(schema))),
+        {
+          errors: 'all',
+          onExcessProperty: 'preserve',
+        },
+      )(data)
 
       return result as unknown as ReadonlyArray<{ id: string; updatedBy: string; orgId: string }>
     }

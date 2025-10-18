@@ -182,6 +182,7 @@ export interface ExternalLinkInput {
 
 export type ProcessExternalLinks = (
   externalLinks: Array<ExternalLinkInput>,
+  forceUpdate?: boolean,
 ) => Effect.Effect<
   { allExternalLinks: Array<ExternalLink>; changedExternalLinks: Array<ExternalLink> },
   ExternalLinkUpsertError

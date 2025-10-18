@@ -31,16 +31,6 @@ export class BaseAddress extends BaseSystemFields.extend<BaseAddress>('BaseAddre
       },
     },
   }).pipe(Schema.NullOr),
-  countryName: Schema.String.annotations({
-    description: 'The country name of the address',
-    [OfUiConfig]: {
-      table: {
-        filterable: true,
-        order: 5,
-        sortable: true,
-      },
-    },
-  }).pipe(Schema.NullOr),
   location: Schema.String.annotations({
     description: 'The location type of the address (e.g., Home, Work, Other)',
     [OfUiConfig]: {

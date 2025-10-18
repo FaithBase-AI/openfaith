@@ -24,7 +24,7 @@ export const StringOrNumberToNumber = Schema.transformOrFail(
       }
       return ParseResult.succeed(parsed)
     },
-    encode: (value) => ParseResult.succeed(String(value)),
+    encode: (value) => ParseResult.succeed(value),
     strict: true,
   },
 )

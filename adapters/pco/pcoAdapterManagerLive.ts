@@ -254,15 +254,14 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
     OfTransformer,
     entitySchema.ast,
   ).pipe(
-    Effect.mapError((error) =>
-      Effect.fail(
+    Effect.mapError(
+      (error) =>
         new AdapterTransformError({
           adapter: 'pco',
           cause: error,
           entityType: entity.type,
           message: `No transformer found for ${entity.type}`,
         }),
-      ),
     ),
   )
 
@@ -271,15 +270,15 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
   })
 
   const processedAttributes = yield* Schema.decodeUnknown(attributesSchema)(entity.attributes).pipe(
-    Effect.mapError((error) => {
-      console.log('processedAttributes error', error)
-      return new AdapterTransformError({
-        adapter: 'pco',
-        cause: error,
-        entityType: entity.type,
-        message: `Failed to decode attributes for ${entity.type}`,
-      })
-    }),
+    Effect.mapError(
+      (error) =>
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entity.type,
+          message: `Failed to decode attributes for ${entity.type}`,
+        }),
+    ),
   )
 
   // For webhooks, we need to include the externalWebhookId
@@ -292,15 +291,15 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
     yield* Schema.decodeUnknown(transformer as unknown as typeof pcoPersonTransformer)(
       attributesToTransform,
     ).pipe(
-      Effect.mapError((error) => {
-        console.log('attributesToTransform error', error)
-        return new AdapterTransformError({
-          adapter: 'pco',
-          cause: error,
-          entityType: entity.type,
-          message: `Failed to decode transformer for ${entity.type}`,
-        })
-      }),
+      Effect.mapError(
+        (error) =>
+          new AdapterTransformError({
+            adapter: 'pco',
+            cause: error,
+            entityType: entity.type,
+            message: `Failed to decode transformer for ${entity.type}`,
+          }),
+      ),
     )
 
   const baseEntity = {
@@ -351,8 +350,16 @@ const processPcoData = Effect.fn('processPcoData')(function* (params: {
   processExternalLinks: ProcessExternalLinks
   processEntities: ProcessEntities
   processRelationships: ProcessRelationships
+  forceUpdate?: boolean
 }) {
-  const { data, processExternalLinks, processEntities, processRelationships, tokenKey } = params
+  const {
+    data,
+    processExternalLinks,
+    processEntities,
+    processRelationships,
+    tokenKey,
+    forceUpdate = false,
+  } = params
 
   // yield* Effect.annotateLogs(Effect.log('Processing PCO data'), {
   //   data,
@@ -360,10 +367,10 @@ const processPcoData = Effect.fn('processPcoData')(function* (params: {
   // })
 
   // Create external links for all entities
-  const { allExternalLinks, changedExternalLinks } = yield* processExternalLinks([
-    ...createExternalLinks(data.data),
-    ...createExternalLinks(data.included),
-  ])
+  const { allExternalLinks, changedExternalLinks } = yield* processExternalLinks(
+    [...createExternalLinks(data.data), ...createExternalLinks(data.included)],
+    forceUpdate,
+  )
 
   const entityData = yield* Effect.all(
     pipe(
@@ -590,32 +597,83 @@ export const PcoAdapterManagerLive = Layer.effect(
 
       createEntity: (params) =>
         Effect.gen(function* () {
-          const { entityType, data, processEntities, processExternalLinks, processRelationships } =
-            params
+          const {
+            entityType,
+            data,
+            processEntities,
+            processExternalLinks,
+            processRelationships,
+            internalId,
+          } = params
 
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
 
           const createMethod = yield* Option.fromNullable(
             entityClient.create as typeof pcoClient.Person.create,
+          ).pipe(
+            Effect.mapError(
+              (error) =>
+                new AdapterEntityNotFoundError({
+                  adapter: 'pco',
+                  cause: error,
+                  entityType,
+                  message: `No create method found for ${entityType}`,
+                }),
+            ),
           )
 
           const transformedData = yield* transformEntityDataE(entityType, data)
 
-          const createResponse = yield* createMethod({
-            payload: {
-              data: transformedData as unknown as Parameters<
+          const payload: Parameters<typeof pcoClient.Person.create>[0]['payload'] = {
+            data: {
+              attributes: transformedData as unknown as Parameters<
                 typeof pcoClient.Person.create
-              >[0]['payload']['data'],
+              >[0]['payload']['data']['attributes'],
+              type: entityType as 'Person',
             },
-          })
+          }
+
+          const createResponse = yield* createMethod({
+            payload,
+          }).pipe(
+            Effect.mapError(
+              (error) =>
+                new AdapterFetchError({
+                  adapter: 'pco',
+                  cause: error,
+                  entityType,
+                  message: `Failed to create ${entityType}`,
+                  operation: 'create',
+                }),
+            ),
+          )
 
           yield* processPcoData({
-            data: normalizeResponse(createResponse),
+            data: normalizeResponse({
+              ...createResponse,
+              data: {
+                ...createResponse.data,
+                // We put the internalId because it needs to get passed into `processExternalLinks` so
+                // we can make the correct external link.
+                entityId: internalId,
+              },
+            }),
+            forceUpdate: true,
             processEntities,
             processExternalLinks,
             processRelationships,
             tokenKey,
-          })
+          }).pipe(
+            Effect.mapError(
+              (cause) =>
+                new AdapterTransformError({
+                  adapter: 'pco',
+                  cause,
+                  entityType,
+                  message: `Failed to process ${entityType} data`,
+                }),
+            ),
+          )
         }),
 
       deleteEntity: (params) =>
@@ -1137,8 +1195,8 @@ export const PcoAdapterManagerLive = Layer.effect(
               ...updateResponse,
               data: {
                 ...updateResponse.data,
-                // We put the internalId because it needs to get passed into `processExternalLinks` so we can make the
-                // correct external link.
+                // We put the internalId because it needs to get passed into `processExternalLinks` so
+                // we can make the correct external link.
                 entityId: internalId,
               },
             }),
@@ -1178,32 +1236,47 @@ export const transformPartialEntityDataE = Effect.fn('transformPartialEntityData
     ),
   )
 
-  const partialTransformer = yield* getAnnotationFromSchema<Schema.transform<any, any>>(
-    OfPartialTransformer,
-    entitySchema.ast,
-  ).pipe(
-    Effect.mapError((error) =>
-      Effect.fail(
+  const partialTransformer = yield* getAnnotationFromSchema<
+    Schema.Struct<{
+      id: typeof Schema.String
+    }>
+  >(OfPartialTransformer, entitySchema.ast).pipe(
+    Effect.mapError(
+      (error) =>
         new AdapterTransformError({
           adapter: 'pco',
           cause: error,
           entityType: entityName,
           message: `No transformer found for ${entityName}`,
         }),
-      ),
     ),
   )
 
-  return yield* Schema.encode(partialTransformer as unknown as typeof pcoPersonPartialTransformer)({
-    ...partialData,
-  })
+  return yield* Schema.encode(partialTransformer as unknown as typeof pcoPersonPartialTransformer)(
+    {
+      ...partialData,
+    },
+    {
+      errors: 'all',
+    },
+  ).pipe(
+    Effect.mapError(
+      (error) =>
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entityName,
+          message: `Failed to encode transformer for ${entityName}`,
+        }),
+    ),
+  )
 })
 
 export const transformEntityDataE = Effect.fn('transformPartialEntityDataE')(function* (
   entityName: string,
-  partialData: Record<string, unknown>,
+  data: Record<string, unknown>,
 ) {
-  const entitySchema = yield* getEntitySchemaOpt(entityName).pipe(
+  const pcoEntitySchema = yield* getEntitySchemaOpt(entityName).pipe(
     Effect.mapError(
       (error) =>
         new AdapterTransformError({
@@ -1215,25 +1288,66 @@ export const transformEntityDataE = Effect.fn('transformPartialEntityDataE')(fun
     ),
   )
 
-  const transformer = yield* getAnnotationFromSchema<Schema.transform<any, any>>(
-    OfTransformer,
-    entitySchema.ast,
-  ).pipe(
-    Effect.mapError((error) =>
-      Effect.fail(
+  const ofEntitySchema = yield* getAnnotationFromSchema<
+    Schema.Struct<{
+      id: typeof Schema.String
+    }>
+  >(OfEntity, pcoEntitySchema.ast).pipe(
+    Effect.mapError(
+      (error) =>
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entityName,
+          message: `No OfEntity schema found for ${entityName}`,
+        }),
+    ),
+  )
+
+  const transformer = yield* getAnnotationFromSchema<
+    Schema.Struct<{
+      id: typeof Schema.String
+    }>
+  >(OfTransformer, pcoEntitySchema.ast).pipe(
+    Effect.mapError(
+      (error) =>
         new AdapterTransformError({
           adapter: 'pco',
           cause: error,
           entityType: entityName,
           message: `No transformer found for ${entityName}`,
         }),
-      ),
     ),
   )
 
-  return yield* Schema.encodeUnknown(transformer as unknown as typeof pcoPersonTransformer)({
-    ...partialData,
-  })
+  const { id: _id, ...parsedData } = yield* Schema.decodeUnknown(ofEntitySchema)(data).pipe(
+    Effect.mapError(
+      (error) =>
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entityName,
+          message: `Failed to decode transformer for ${entityName}`,
+        }),
+    ),
+  )
+
+  return yield* Schema.encodeUnknown(transformer as unknown as typeof pcoPersonTransformer)(
+    parsedData,
+    {
+      errors: 'all',
+    },
+  ).pipe(
+    Effect.mapError(
+      (error) =>
+        new AdapterTransformError({
+          adapter: 'pco',
+          cause: error,
+          entityType: entityName,
+          message: `Failed to encode transformer for ${entityName}`,
+        }),
+    ),
+  )
 })
 
 // Enhanced version that handles missing external links

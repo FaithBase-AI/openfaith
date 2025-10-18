@@ -28,6 +28,7 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
     description: 'City',
     [OfUiConfig]: {
       field: {
+        hidden: true,
         order: 5,
       },
       table: {
@@ -36,11 +37,12 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
         sortable: true,
       },
     },
-  }).pipe(Schema.NullOr, Schema.optional),
-  country: Schema.String.annotations({
+  }),
+  countryCode: Schema.String.annotations({
     description: 'Country',
     [OfUiConfig]: {
       field: {
+        hidden: true,
         order: 8,
       },
       table: {
@@ -49,7 +51,7 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
         sortable: true,
       },
     },
-  }).pipe(Schema.NullOr, Schema.optional),
+  }),
   description: Schema.String.annotations({
     description: 'Description of the campus',
     [OfUiConfig]: {
@@ -65,6 +67,9 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
   latitude: Schema.Number.annotations({
     description: 'Latitude of the campus',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         hidden: true,
       },
@@ -73,6 +78,9 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
   longitude: Schema.Number.annotations({
     description: 'Longitude of the campus',
     [OfUiConfig]: {
+      field: {
+        hidden: true,
+      },
       table: {
         hidden: true,
       },
@@ -96,6 +104,7 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
     description: 'State',
     [OfUiConfig]: {
       field: {
+        hidden: true,
         order: 6,
       },
       table: {
@@ -104,19 +113,23 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
         sortable: true,
       },
     },
-  }).pipe(Schema.NullOr, Schema.optional),
+  }),
   street: Schema.String.annotations({
     description: 'Street address',
     [OfUiConfig]: {
       field: {
+        composite: ['street', 'city', 'state', 'zip', 'countryCode', 'latitude', 'longitude'],
+        label: 'Address',
         order: 4,
+        placeholder: 'Search for campus address...',
+        type: 'addressLocation',
       },
       table: {
         order: 9,
         sortable: true,
       },
     },
-  }).pipe(Schema.NullOr, Schema.optional),
+  }),
   url: Schema.String.annotations({
     description: 'Website URL',
     [OfUiConfig]: {
@@ -134,6 +147,7 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
 
     [OfUiConfig]: {
       field: {
+        hidden: true,
         order: 7,
       },
       table: {
@@ -142,7 +156,7 @@ export class BaseCampus extends BaseSystemFields.extend<BaseCampus>('BaseCampus'
         sortable: true,
       },
     },
-  }).pipe(Schema.NullOr, Schema.optional),
+  }),
 }) {}
 
 export class Campus extends BaseCampus.extend<Campus>('Campus')(BaseIdentifiedEntity.fields, [

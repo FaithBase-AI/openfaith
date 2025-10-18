@@ -107,8 +107,9 @@ const getProcessEntityExternalLinks = Effect.fn('getProcessEntityExternalLinks')
   return Effect.fn(function* (params: {
     entityLinks: Array<ExternalLinkInput>
     lastProcessedAt: Date
+    forceUpdate?: boolean
   }) {
-    const { entityLinks, lastProcessedAt } = params
+    const { entityLinks, lastProcessedAt, forceUpdate = false } = params
 
     if (entityLinks.length === 0) {
       yield* Effect.annotateLogs(Effect.log('No entity links to process'), {
@@ -198,7 +199,9 @@ const getProcessEntityExternalLinks = Effect.fn('getProcessEntityExternalLinks')
       })
 
     // Filter to only return external links that were newly inserted or had their updatedAt changed
-    const changedEntityLinks = filterChangedMainEntityLinks(entityResults, lastProcessedAt)
+    const changedEntityLinks = forceUpdate
+      ? entityResults
+      : filterChangedMainEntityLinks(entityResults, lastProcessedAt)
 
     yield* Effect.annotateLogs(Effect.log('Entity external links processed'), {
       changedCount: changedEntityLinks.length,
@@ -221,8 +224,9 @@ const getProcessReferenceExternalLinks = Effect.fn('getProcessReferenceExternalL
     return Effect.fn(function* (params: {
       referenceLinks: Array<ExternalLinkInput>
       lastProcessedAt: Date
+      forceUpdate?: boolean
     }) {
-      const { referenceLinks, lastProcessedAt } = params
+      const { referenceLinks, lastProcessedAt, forceUpdate = false } = params
 
       if (referenceLinks.length === 0) {
         yield* Effect.annotateLogs(Effect.log('No reference links to process'), {
@@ -288,7 +292,9 @@ const getProcessReferenceExternalLinks = Effect.fn('getProcessReferenceExternalL
           updatedAt: externalLinksTable.updatedAt,
         })
 
-      const changedReferenceLinks = filterChangedMainEntityLinks(referenceResults, lastProcessedAt)
+      const changedReferenceLinks = forceUpdate
+        ? referenceResults
+        : filterChangedMainEntityLinks(referenceResults, lastProcessedAt)
 
       yield* Effect.annotateLogs(Effect.log('Reference external links processed'), {
         changedCount: changedReferenceLinks.length,
@@ -904,7 +910,7 @@ export const InternalManagerLive = Layer.effect(
        * 1. Entity sync with full data (with conditional updates and filtering)
        * 2. Reference link creation (with do-nothing conflict resolution)
        */
-      processExternalLinks: (externalLinks) =>
+      processExternalLinks: (externalLinks, forceUpdate = false) =>
         Effect.gen(function* () {
           const lastProcessedAt = new Date()
 
@@ -918,9 +924,11 @@ export const InternalManagerLive = Layer.effect(
             {
               entityLinkResults: processEntityExternalLinks({
                 entityLinks,
+                forceUpdate,
                 lastProcessedAt,
               }),
               referenceLinkResults: processReferenceExternalLinks({
+                forceUpdate,
                 lastProcessedAt,
                 referenceLinks,
               }),

@@ -10,13 +10,17 @@ import type { FieldConfig } from '@openfaith/schema/shared/schema'
 import { formatLabel } from '@openfaith/shared'
 import { Array, Order, pipe, type Schema } from 'effect'
 
+export type RequiredFieldConfig = Required<Omit<NonNullable<FieldConfig['field']>, 'composite'>> & {
+  composite?: NonNullable<FieldConfig['field']>['composite']
+}
+
 /**
  * Generates field configurations for all fields in a schema
  */
 export const generateFieldConfigs = <T>(
   schema: Schema.Schema<T>,
   overrides: Partial<Record<keyof T, Partial<FieldConfig['field']>>> = {},
-): Record<keyof T, Required<FieldConfig['field']>> => {
+): Record<keyof T, RequiredFieldConfig> => {
   const fields = extractSchemaFields(schema)
   const visibleFields = getVisibleFields(fields, 'form') // Use shared filtering logic
 
@@ -54,8 +58,9 @@ export const generateFieldConfigs = <T>(
       } as const
 
       // Only set hidden if it's explicitly provided, otherwise default to false
-      const finalConfig: Required<FieldConfig['field']> = {
+      const finalConfig: RequiredFieldConfig = {
         ...baseConfig,
+        composite: baseConfig.composite,
         hidden: baseConfig.hidden ?? false,
         order: baseConfig.order ?? 999,
       }
@@ -70,7 +75,7 @@ export const generateFieldConfigs = <T>(
   return pipe(
     fieldsWithOrder,
     Array.sort(Order.struct({ order: Order.number })),
-    Array.reduce({} as Record<keyof T, Required<FieldConfig['field']>>, (acc, { key, config }) => ({
+    Array.reduce({} as Record<keyof T, RequiredFieldConfig>, (acc, { key, config }) => ({
       ...acc,
       [key]: config,
     })),
@@ -136,7 +141,7 @@ export const generateUiConfigs = <T>(
   fieldOverrides: Partial<Record<keyof T, Partial<FieldConfig['field']>>> = {},
   tableOverrides: Partial<Record<keyof T, Partial<FieldConfig['table']>>> = {},
 ): {
-  fields: Record<keyof T, Required<FieldConfig['field']>>
+  fields: Record<keyof T, RequiredFieldConfig>
   columns: Record<keyof T, Required<FieldConfig['table']>>
 } => {
   return {
@@ -152,7 +157,7 @@ export const getFieldConfig = <T>(
   schema: Schema.Schema<T>,
   fieldName: keyof T,
   overrides: Partial<FieldConfig['field']> = {},
-): Required<FieldConfig['field']> => {
+): RequiredFieldConfig => {
   const configs = generateFieldConfigs(schema, {
     [fieldName]: overrides,
   } as any)

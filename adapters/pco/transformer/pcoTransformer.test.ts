@@ -162,6 +162,43 @@ effect('pcoToOf handles missing fields correctly', () =>
   }),
 )
 
+effect('pcoToOf encode: provides null for missing optional nullable fields', () =>
+  Effect.gen(function* () {
+    // Test schema with optional fields on OF side but required nullable on PCO side
+    const PcoWithNullable = Schema.Struct({
+      avatar_url: Schema.NullOr(Schema.String).annotations({
+        [OfFieldName]: 'avatar',
+      }),
+      name: Schema.String.annotations({
+        [OfFieldName]: 'name',
+      }),
+    })
+
+    const OfWithOptional = Schema.Struct({
+      avatar: Schema.NullOr(Schema.String).pipe(Schema.optional),
+      customFields: Schema.Array(CustomFieldSchema),
+      name: Schema.String,
+    })
+
+    const transformer = pcoToOf(PcoWithNullable, OfWithOptional, 'withNullable')
+
+    // OF data without the optional avatar field
+    const ofData = {
+      customFields: [],
+      name: 'Test Campus',
+      // avatar is missing (optional field)
+    }
+
+    // When encoding to PCO, avatar_url should be provided as null
+    const result = Schema.encodeSync(transformer)(ofData)
+
+    expect(result).toEqual({
+      avatar_url: null,
+      name: 'Test Campus',
+    })
+  }),
+)
+
 effect('pcoToOf skips fields marked with OFSkipField', () =>
   Effect.gen(function* () {
     const transformer = pcoToOf(PcoItemWithSkipField, OfItemWithPhone, 'itemWithPhone')
@@ -707,6 +744,157 @@ effect('pcoToOf handles Schema.optionalWith with default values', () =>
       adapter: 'pco',
       name: 'test-webhook',
       verification_method: 'hmac-sha256',
+    })
+  }),
+)
+
+effect('pcoToOf encode: campus with missing optional fields (real-world scenario)', () =>
+  Effect.gen(function* () {
+    // Test the real campus scenario from the issue
+    const PcoCampusTest = Schema.Struct({
+      avatar_url: Schema.NullOr(Schema.String).annotations({
+        [OfFieldName]: 'avatar',
+      }),
+      city: Schema.NullOr(Schema.String).annotations({
+        [OfFieldName]: 'city',
+      }),
+      created_at: Schema.String.annotations({
+        [OfFieldName]: 'createdAt',
+      }),
+      name: Schema.NullOr(Schema.String).annotations({
+        [OfFieldName]: 'name',
+      }),
+      updated_at: Schema.String.annotations({
+        [OfFieldName]: 'updatedAt',
+      }),
+    })
+
+    const OfCampusTest = Schema.Struct({
+      avatar: Schema.NullOr(Schema.String).pipe(Schema.optional),
+      city: Schema.NullOr(Schema.String).pipe(Schema.optional),
+      createdAt: Schema.String,
+      customFields: Schema.Array(CustomFieldSchema),
+      name: Schema.String,
+      updatedAt: Schema.String,
+    })
+
+    const transformer = pcoToOf(PcoCampusTest, OfCampusTest, 'campus')
+
+    const ofCampusData = {
+      createdAt: '2025-01-01T00:00:00Z',
+      customFields: [],
+      name: 'Test Campus',
+      updatedAt: '2025-01-01T00:00:00Z',
+      // avatar and city are missing (optional fields)
+    }
+
+    // When encoding to PCO, nullable fields should be provided as null
+    const result = Schema.encodeSync(transformer)(ofCampusData)
+
+    expect(result).toEqual({
+      avatar_url: null,
+      city: null,
+      created_at: '2025-01-01T00:00:00Z',
+      name: 'Test Campus',
+      updated_at: '2025-01-01T00:00:00Z',
+    })
+  }),
+)
+
+effect('pcoToOf encode: handles missing custom fields with appropriate defaults', () =>
+  Effect.gen(function* () {
+    // Test schema with required custom fields
+    const PcoWithCustomFields = Schema.Struct({
+      active: Schema.Boolean.annotations({
+        [OfFieldName]: 'active',
+        [OfCustomField]: true,
+      }),
+      count: Schema.Number.annotations({
+        [OfFieldName]: 'count',
+        [OfCustomField]: true,
+      }),
+      description: Schema.NullOr(Schema.String).annotations({
+        [OfFieldName]: 'description',
+        [OfCustomField]: true,
+      }),
+      name: Schema.String.annotations({
+        [OfFieldName]: 'name',
+      }),
+    })
+
+    const OfWithCustomFields = Schema.Struct({
+      customFields: Schema.Array(CustomFieldSchema),
+      name: Schema.String,
+    })
+
+    const transformer = pcoToOf(PcoWithCustomFields, OfWithCustomFields, 'test')
+
+    // OF data with no custom fields
+    const ofData = {
+      customFields: [],
+      name: 'Test',
+    }
+
+    // When encoding to PCO, missing custom fields should get defaults:
+    // - Boolean: false
+    // - Number: 0
+    // - Nullable String: null
+    const result = Schema.encodeSync(transformer)(ofData)
+
+    expect(result).toEqual({
+      active: false,
+      count: 0,
+      description: null,
+      name: 'Test',
+    })
+  }),
+)
+
+effect('pcoToOf encode: preserves existing custom field values', () =>
+  Effect.gen(function* () {
+    // Test that existing custom fields are preserved and only missing ones get defaults
+    const PcoWithCustomFields = Schema.Struct({
+      active: Schema.Boolean.annotations({
+        [OfFieldName]: 'active',
+        [OfCustomField]: true,
+      }),
+      count: Schema.Number.annotations({
+        [OfFieldName]: 'count',
+        [OfCustomField]: true,
+      }),
+      name: Schema.String.annotations({
+        [OfFieldName]: 'name',
+      }),
+    })
+
+    const OfWithCustomFields = Schema.Struct({
+      customFields: Schema.Array(CustomFieldSchema),
+      name: Schema.String,
+    })
+
+    const transformer = pcoToOf(PcoWithCustomFields, OfWithCustomFields, 'test')
+
+    // OF data with one custom field
+    const ofData = {
+      customFields: [
+        {
+          _tag: 'boolean' as const,
+          name: 'pco_active',
+          source: 'pco' as const,
+          value: true,
+        },
+      ],
+      name: 'Test',
+    }
+
+    // When encoding to PCO, existing custom field should be preserved,
+    // missing ones should get defaults
+    const result = Schema.encodeSync(transformer)(ofData)
+
+    expect(result).toEqual({
+      active: true,
+      count: 0,
+      name: 'Test',
     })
   }),
 )

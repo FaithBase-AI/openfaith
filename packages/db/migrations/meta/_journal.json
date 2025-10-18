@@ -175,6 +175,20 @@
       "tag": "0024_mute_eddie_brock",
       "version": "7",
       "when": 1759916408296
+    },
+    {
+      "breakpoints": true,
+      "idx": 25,
+      "tag": "0025_flashy_triton",
+      "version": "7",
+      "when": 1760471734812
+    },
+    {
+      "breakpoints": true,
+      "idx": 26,
+      "tag": "0026_sloppy_squirrel_girl",
+      "version": "7",
+      "when": 1760472156065
     }
   ],
   "version": "7"

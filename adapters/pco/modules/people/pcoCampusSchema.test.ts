@@ -34,7 +34,7 @@ effect('PcoCampus transformation: transforms PCO campus to BaseCampus with custo
     // Check that regular fields are mapped correctly
     expect(result.avatar).toBe('https://example.com/avatar.jpg')
     expect(result.city).toBe('Austin')
-    expect(result.country).toBe('USA')
+    expect(result.countryCode).toBe('USA')
     expect(result.description).toBe('Main campus')
     expect(result.latitude).toBe(30.2672) // Should be converted to number
     expect(result.longitude).toBe(-97.7431) // Should be converted to number
@@ -99,7 +99,7 @@ effect('PcoCampus transformation: handles null values correctly', () =>
 
     expect(result.avatar).toBeNull()
     expect(result.city).toBeNull()
-    expect(result.country).toBeNull()
+    expect(result.countryCode).toBeNull()
     expect(result.description).toBeNull()
     expect(result.latitude).toBeNull()
     expect(result.longitude).toBeNull()

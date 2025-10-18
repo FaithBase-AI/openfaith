@@ -214,3 +214,61 @@ export const formatLabel = (fieldName: string): string =>
 
 //  this is the same regex that better-auth uses for email validation
 export const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+
+export const formatPhoneNumber = (phoneNumber: string) => {
+  if (phoneNumber === 'No Number') {
+    return ''
+  }
+  // Drop the +1 and then strip out everything.
+  const stripedPhoneNumber = pipe(phoneNumber, String.replace('+1', ''), String.replace(/\D/g, ''))
+  if (stripedPhoneNumber.length === 10) {
+    return `+1${stripedPhoneNumber}`
+  }
+  return ''
+}
+
+export const getDisplayPhoneNumber = (phoneNumber: string): string =>
+  pipe(
+    phoneNumber,
+    String.replace('+1', ''),
+    (stripped) => [
+      pipe(stripped, String.slice(0, 3)),
+      pipe(stripped, String.slice(3, 6)),
+      pipe(stripped, String.slice(6, pipe(stripped, String.length))),
+    ],
+    Array.join('.'),
+  )
+
+export type CompositeAddressValue = {
+  street?: string
+  city?: string
+  state?: string
+  zip?: string
+  countryCode?: string
+  latitude?: number | null
+  longitude?: number | null
+}
+
+export type FormattedAddress = {
+  line1: string
+  line2: string
+}
+
+export const formatAddress = (address: CompositeAddressValue): FormattedAddress => {
+  const line1 = pipe(
+    address.street,
+    Option.fromNullable,
+    Option.getOrElse(() => ''),
+  )
+
+  const line2 = pipe(
+    [address.city, address.state, address.zip, address.countryCode],
+    Array.filterMap(Option.fromNullable),
+    Array.join(', '),
+  )
+
+  return {
+    line1,
+    line2,
+  }
+}

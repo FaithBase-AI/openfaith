@@ -1,53 +1,14 @@
 import { expect } from 'bun:test'
 import { effect } from '@openfaith/bun-test'
-import {
-  fieldSupportsMultiple,
-  fieldSupportsOptions,
-  fieldSupportsSearch,
-  getComponentProps,
-  getFieldComponent,
-} from '@openfaith/ui/form/fieldComponentMapping'
+import { getComponentProps } from '@openfaith/ui/form/fieldComponentMapping'
 import { Effect } from 'effect'
 
 // Mock components are not needed for these tests since we're testing the mapping functions directly
 
-effect('getFieldComponent - returns correct components for each field type', () =>
-  Effect.gen(function* () {
-    // Test all field types
-    expect(getFieldComponent('text')).toBeDefined()
-    expect(getFieldComponent('email')).toBeDefined()
-    expect(getFieldComponent('password')).toBeDefined()
-    expect(getFieldComponent('number')).toBeDefined()
-    expect(getFieldComponent('textarea')).toBeDefined()
-    expect(getFieldComponent('select')).toBeDefined()
-    expect(getFieldComponent('combobox')).toBeDefined()
-    expect(getFieldComponent('singleCombobox')).toBeDefined()
-    expect(getFieldComponent('tags')).toBeDefined()
-    expect(getFieldComponent('switch')).toBeDefined()
-    expect(getFieldComponent('date')).toBeDefined()
-    expect(getFieldComponent('datetime')).toBeDefined()
-    expect(getFieldComponent('otp')).toBeDefined()
-    expect(getFieldComponent('slug')).toBeDefined()
-  }),
-)
-
-effect('getFieldComponent - returns InputField for undefined field type', () =>
-  Effect.gen(function* () {
-    const component = getFieldComponent(undefined)
-    expect(component).toBeDefined()
-  }),
-)
-
-effect('getFieldComponent - returns InputField for unknown field type', () =>
-  Effect.gen(function* () {
-    const component = getFieldComponent('unknown' as any)
-    expect(component).toBeDefined()
-  }),
-)
-
 effect('getComponentProps - returns base props for all field types', () =>
   Effect.gen(function* () {
     const baseConfig = {
+      composite: undefined,
       creatable: false,
       hidden: false,
       label: 'Test Field',
@@ -452,80 +413,5 @@ effect('getComponentProps - default case returns base props', () =>
     expect((props as any).type).toBeUndefined()
     expect((props as any).rows).toBeUndefined()
     expect((props as any).min).toBeUndefined()
-  }),
-)
-
-effect('fieldSupportsOptions - returns true for option-based field types', () =>
-  Effect.gen(function* () {
-    expect(fieldSupportsOptions('select')).toBe(true)
-    expect(fieldSupportsOptions('combobox')).toBe(true)
-    expect(fieldSupportsOptions('singleCombobox')).toBe(true)
-    expect(fieldSupportsOptions('tags')).toBe(true)
-  }),
-)
-
-effect('fieldSupportsOptions - returns false for non-option field types', () =>
-  Effect.gen(function* () {
-    expect(fieldSupportsOptions('text')).toBe(false)
-    expect(fieldSupportsOptions('email')).toBe(false)
-    expect(fieldSupportsOptions('password')).toBe(false)
-    expect(fieldSupportsOptions('number')).toBe(false)
-    expect(fieldSupportsOptions('textarea')).toBe(false)
-    expect(fieldSupportsOptions('switch')).toBe(false)
-    expect(fieldSupportsOptions('date')).toBe(false)
-    expect(fieldSupportsOptions('datetime')).toBe(false)
-    expect(fieldSupportsOptions('otp')).toBe(false)
-    expect(fieldSupportsOptions('slug')).toBe(false)
-    expect(fieldSupportsOptions(undefined)).toBe(false)
-  }),
-)
-
-effect('fieldSupportsMultiple - returns true for multiple-value field types', () =>
-  Effect.gen(function* () {
-    expect(fieldSupportsMultiple('combobox')).toBe(true)
-    expect(fieldSupportsMultiple('tags')).toBe(true)
-  }),
-)
-
-effect('fieldSupportsMultiple - returns false for single-value field types', () =>
-  Effect.gen(function* () {
-    expect(fieldSupportsMultiple('text')).toBe(false)
-    expect(fieldSupportsMultiple('email')).toBe(false)
-    expect(fieldSupportsMultiple('password')).toBe(false)
-    expect(fieldSupportsMultiple('number')).toBe(false)
-    expect(fieldSupportsMultiple('textarea')).toBe(false)
-    expect(fieldSupportsMultiple('select')).toBe(false)
-    expect(fieldSupportsMultiple('singleCombobox')).toBe(false)
-    expect(fieldSupportsMultiple('switch')).toBe(false)
-    expect(fieldSupportsMultiple('date')).toBe(false)
-    expect(fieldSupportsMultiple('datetime')).toBe(false)
-    expect(fieldSupportsMultiple('otp')).toBe(false)
-    expect(fieldSupportsMultiple('slug')).toBe(false)
-    expect(fieldSupportsMultiple(undefined)).toBe(false)
-  }),
-)
-
-effect('fieldSupportsSearch - returns true for searchable field types', () =>
-  Effect.gen(function* () {
-    expect(fieldSupportsSearch('combobox')).toBe(true)
-    expect(fieldSupportsSearch('singleCombobox')).toBe(true)
-  }),
-)
-
-effect('fieldSupportsSearch - returns false for non-searchable field types', () =>
-  Effect.gen(function* () {
-    expect(fieldSupportsSearch('text')).toBe(false)
-    expect(fieldSupportsSearch('email')).toBe(false)
-    expect(fieldSupportsSearch('password')).toBe(false)
-    expect(fieldSupportsSearch('number')).toBe(false)
-    expect(fieldSupportsSearch('textarea')).toBe(false)
-    expect(fieldSupportsSearch('select')).toBe(false)
-    expect(fieldSupportsSearch('tags')).toBe(false)
-    expect(fieldSupportsSearch('switch')).toBe(false)
-    expect(fieldSupportsSearch('date')).toBe(false)
-    expect(fieldSupportsSearch('datetime')).toBe(false)
-    expect(fieldSupportsSearch('otp')).toBe(false)
-    expect(fieldSupportsSearch('slug')).toBe(false)
-    expect(fieldSupportsSearch(undefined)).toBe(false)
   }),
 )

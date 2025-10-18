@@ -74,7 +74,7 @@
       "@effect/workflow": "0.9.5",
       "@opentelemetry/sdk-trace-base": "2.0.1",
       "@rocicorp/zero": "0.23.2025090100",
-      "@tanstack/react-form": "1.20.0",
+      "@tanstack/react-form": "1.23.7",
       "@tanstack/react-router": "1.131.44",
       "@tanstack/react-table": "8.21.3",
       "@tanstack/react-virtual": "3.13.12",

@@ -1,0 +1,1 @@
+ALTER TABLE "openfaith_campuses" RENAME COLUMN "country" TO "countryCode";

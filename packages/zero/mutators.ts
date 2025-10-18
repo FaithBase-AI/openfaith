@@ -1,8 +1,7 @@
-import { discoverUiEntities, type EntityUiConfig, enrichMutationData } from '@openfaith/schema'
+import { discoverUiEntities, type EntityUiConfig, validateMutationData } from '@openfaith/schema'
 import { pluralize } from '@openfaith/shared'
 import type { AuthData, ZSchema } from '@openfaith/zero/zeroSchema.mjs'
 import type { CustomMutatorDefs, Transaction } from '@rocicorp/zero'
-
 import { Effect, type ParseResult, Schema } from 'effect'
 
 export class MutatorAuthError extends Schema.TaggedError<MutatorAuthError>()('MutatorAuthError', {
@@ -42,13 +41,10 @@ const effectMutator = Effect.fn('effectMutator')(function* (params: {
     userId,
   })
 
-  const validatedInput = yield* enrichMutationData({
+  const validatedInput = yield* validateMutationData({
     data: input,
-    entityType: entity.tag,
     operation,
-    orgId,
     schema: entity.schema,
-    userId,
   })
 
   // We need to make sure that the mutation data matches the auth data.
