@@ -72,7 +72,11 @@ export type AddressLocation = {
   placeId: string
 }
 
-const getAddressComponent = (place: GooglePlace, types: Array<string>): string | undefined => {
+const getAddressComponent = (
+  place: GooglePlace,
+  types: Array<string>,
+  getShortText = false,
+): string | undefined => {
   if (!place.addressComponents) {
     return undefined
   }
@@ -92,7 +96,7 @@ const getAddressComponent = (place: GooglePlace, types: Array<string>): string |
 
   return pipe(
     componentOpt,
-    Option.map((component) => component.longText),
+    Option.map((component) => (getShortText ? component.shortText : component.longText)),
     Option.getOrUndefined,
   )
 }
@@ -115,7 +119,7 @@ const placeToAddressLocation = (place: GooglePlace): AddressLocation => {
     city: getAddressComponent(place, ['locality', 'postal_town']),
     coordinates: place.location,
     country: getAddressComponent(place, ['country']),
-    countrycode: getAddressComponent(place, ['country']),
+    countrycode: getAddressComponent(place, ['country'], true),
     county: getAddressComponent(place, ['administrative_area_level_2']),
     housenumber: streetNumber,
     id: place.id,
@@ -314,7 +318,7 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
           onSome: (location) => {
             const compositeValue: CompositeAddressValue = {
               city: location.city,
-              countryCode: location.country,
+              countryCode: location.countrycode,
               latitude: location.coordinates.latitude,
               longitude: location.coordinates.longitude,
               state: location.state,
