@@ -98,7 +98,7 @@
       "react": "19.1.1",
       "react-dom": "19.1.1",
       "react-hotkeys-hook": "5.1.0",
-      "resend": "4.5.1",
+      "resend": "6.2.0",
       "superjson": "2.2.2",
       "tailwindcss": "4.1.12",
       "testcontainers": "11.5.1",

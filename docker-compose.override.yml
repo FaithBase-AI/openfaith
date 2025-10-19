@@ -53,6 +53,9 @@ services:
       # Workflow communication
       - WORKERS_HOST=openfaith-workers
       - SHARD_MANAGER_HOST=openfaith-shard-manager
+      # Maps
+      - VITE_GOOGLE_PLACES_API_KEY=""
+
     restart: unless-stopped
 
   # Zero Cache Service
