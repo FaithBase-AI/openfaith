@@ -1,4 +1,9 @@
-import { getCreateSchema, getUpdateSchema } from '@openfaith/schema'
+import {
+  extractAST,
+  extractSchemaFields,
+  getCreateSchema,
+  getUpdateSchema,
+} from '@openfaith/schema'
 import type { FieldConfig } from '@openfaith/schema/shared/schema'
 import { useAppForm } from '@openfaith/ui/components/form/tsForm'
 import { QuickActionForm } from '@openfaith/ui/components/quickActions/quickActionsComponents'
@@ -10,8 +15,121 @@ import {
 } from '@openfaith/ui/form/fieldConfigGenerator'
 import { useSchemaInsert, useSchemaUpdate } from '@openfaith/ui/shared/hooks/schemaMutations'
 import { revalidateLogic } from '@tanstack/react-form'
-import { Array, Order, pipe, Record, Schema } from 'effect'
+import { Array, HashSet, Option, Order, pipe, Record, Schema } from 'effect'
 import { useMemo } from 'react'
+
+/**
+ * Transforms a schema to handle composite fields for form validation
+ * Replaces individual composite fields with a single nested object schema
+ *
+ * Based on the pattern used in getZeroMutationSchema from @openfaith/schema
+ */
+const getFormValidationSchema = <T,>(
+  baseSchema: Schema.Schema<T>,
+  fieldConfigs: Record<keyof T, RequiredFieldConfig>,
+): Schema.Schema<any> => {
+  const fields = extractSchemaFields(baseSchema)
+
+  // Track which fields are part of composite groups using HashSet
+  let compositeFieldsToRemove = HashSet.empty<string>()
+
+  // Build composite schemas
+  const compositeSchemas: Record<string, any> = {}
+
+  // First pass: identify composite fields and build composite schemas
+  pipe(
+    fieldConfigs,
+    Record.toEntries,
+    Array.forEach(([key, config]) => {
+      const typedConfig = config as RequiredFieldConfig
+
+      if (typedConfig.composite && typedConfig.composite.length > 0) {
+        // Mark individual composite fields for removal
+        pipe(
+          typedConfig.composite,
+          Array.forEach((fieldName) => {
+            compositeFieldsToRemove = pipe(compositeFieldsToRemove, HashSet.add(fieldName))
+          }),
+        )
+
+        // Build the composite object schema from the individual field schemas
+        const compositeFields: Record<string, any> = {}
+
+        pipe(
+          typedConfig.composite,
+          Array.forEach((fieldName) => {
+            const fieldOpt = pipe(
+              fields,
+              Array.findFirst((f) => f.key === fieldName),
+            )
+
+            pipe(
+              fieldOpt,
+              Option.match({
+                onNone: () => {},
+                onSome: (field) => {
+                  const fieldAst = extractAST(field.schema)
+
+                  // Create schema from AST, respecting optional/nullable
+                  // Use optionalWith for struct fields (not Schema.optional which returns wrapped type)
+                  if (field.isOptional) {
+                    compositeFields[fieldName] = Schema.optionalWith(Schema.make(fieldAst), {
+                      exact: true,
+                    })
+                  } else if (field.isNullable) {
+                    compositeFields[fieldName] = pipe(Schema.make(fieldAst), Schema.NullOr)
+                  } else {
+                    compositeFields[fieldName] = Schema.make(fieldAst)
+                  }
+                },
+              }),
+            )
+          }),
+        )
+
+        // Create the composite object schema (optional since form might not have it set)
+        compositeSchemas[key as string] = Schema.optionalWith(Schema.Struct(compositeFields), {
+          exact: true,
+        })
+      }
+    }),
+  )
+
+  // Second pass: build new schema with composite fields
+  const transformedFields: Record<string, any> = {}
+
+  pipe(
+    fields,
+    Array.forEach((field) => {
+      // Skip fields that are part of a composite group
+      if (pipe(compositeFieldsToRemove, HashSet.has(field.key))) {
+        return
+      }
+
+      const fieldAst = extractAST(field.schema)
+
+      // Add regular field, preserving optional/nullable
+      if (field.isOptional) {
+        transformedFields[field.key] = Schema.optionalWith(Schema.make(fieldAst), { exact: true })
+      } else if (field.isNullable) {
+        transformedFields[field.key] = pipe(Schema.make(fieldAst), Schema.NullOr)
+      } else {
+        transformedFields[field.key] = Schema.make(fieldAst)
+      }
+    }),
+  )
+
+  // Add composite schemas
+  pipe(
+    compositeSchemas,
+    Record.toEntries,
+    Array.forEach(([key, schema]) => {
+      transformedFields[key] = schema
+    }),
+  )
+
+  return Schema.Struct(transformedFields) as any
+}
 
 export interface UniversalFormProps<T> {
   schema: Schema.Schema<T>
@@ -70,23 +188,20 @@ export function UniversalForm<T extends Record<string, any> & { id: string }>(
         const typedConfig = config as RequiredFieldConfig
 
         if (typedConfig.composite && typedConfig.composite.length > 0) {
-          const hasAnyCompositeValue = pipe(
+          const compositeValue: Record<string, any> = {}
+
+          pipe(
             typedConfig.composite,
-            Array.some((fieldName) => fieldName in acc && acc[fieldName] != null),
+            Array.forEach((fieldName) => {
+              if (fieldName in acc && acc[fieldName] != null) {
+                compositeValue[fieldName] = acc[fieldName]
+                delete acc[fieldName] // Remove individual field
+              }
+            }),
           )
 
-          if (hasAnyCompositeValue) {
-            const compositeValue: Record<string, any> = {}
-
-            pipe(
-              typedConfig.composite,
-              Array.forEach((fieldName) => {
-                if (fieldName in acc) {
-                  compositeValue[fieldName] = acc[fieldName]
-                }
-              }),
-            )
-
+          if (!pipe(compositeValue, Record.isEmptyRecord)) {
+            // Only set composite if it has values
             acc[key] = compositeValue
           }
         }
@@ -99,19 +214,42 @@ export function UniversalForm<T extends Record<string, any> & { id: string }>(
   const form = useAppForm({
     defaultValues: transformedDefaultValues,
     onSubmit: async ({ value }: { value: T }) => {
+      const flattenedValue = pipe(
+        fieldConfigs,
+        Record.toEntries,
+        Array.reduce({ ...value } as Record<string, any>, (acc, [key, config]) => {
+          const typedConfig = config as RequiredFieldConfig
+          if (typedConfig.composite && typedConfig.composite.length > 0) {
+            const compositeValue = acc[key]
+            if (compositeValue && typeof compositeValue === 'object') {
+              pipe(
+                typedConfig.composite,
+                Array.forEach((fieldName) => {
+                  if (fieldName in compositeValue) {
+                    acc[fieldName] = compositeValue[fieldName]
+                  }
+                }),
+              )
+            }
+          }
+
+          return acc
+        }),
+      )
+
       try {
         switch (mode) {
           case 'create': {
-            insertEntity([value])
+            insertEntity([flattenedValue as Partial<T>])
             break
           }
           case 'edit':
-            updateEntity([value])
+            updateEntity([flattenedValue as Partial<T> & { id: string }])
             break
         }
 
         if (onSubmit) {
-          await onSubmit(value)
+          await onSubmit(flattenedValue as T)
         }
       } catch (error) {
         console.error(error)
@@ -123,7 +261,10 @@ export function UniversalForm<T extends Record<string, any> & { id: string }>(
     }),
     validators: {
       onDynamic: Schema.standardSchemaV1(
-        mode === 'create' ? getCreateSchema(schema) : getUpdateSchema(schema),
+        getFormValidationSchema(
+          mode === 'create' ? getCreateSchema(schema) : getUpdateSchema(schema),
+          fieldConfigs,
+        ),
       ),
     },
   })
@@ -143,16 +284,11 @@ export function UniversalForm<T extends Record<string, any> & { id: string }>(
       const componentProps = getComponentProps(typedConfig)
       const componentName = getFieldComponentName(typedConfig.type)
 
-      const additionalProps =
-        typedConfig.composite && typedConfig.composite.length > 0
-          ? { composite: typedConfig.composite }
-          : {}
-
       return (
         <form.AppField key={String(key)} name={key as string}>
           {(field) => {
             const FieldComponent = (field as any)[componentName]
-            return <FieldComponent {...componentProps} {...additionalProps} />
+            return <FieldComponent {...componentProps} />
           }}
         </form.AppField>
       )

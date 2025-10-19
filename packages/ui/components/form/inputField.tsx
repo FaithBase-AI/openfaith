@@ -5,7 +5,7 @@ import { useFieldContext } from '@openfaith/ui/components/form/tsField'
 import { Input, inputClassName } from '@openfaith/ui/components/ui/input'
 import { InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
 import { cn } from '@openfaith/ui/shared/utils'
-import { pipe, String } from 'effect'
+import { Option, pipe, String } from 'effect'
 import type { ComponentProps, ReactNode } from 'react'
 import { IMaskInput } from 'react-imask'
 
@@ -46,7 +46,12 @@ export function InputField(props: InputFieldProps) {
         id={field.name}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
-        value={field.state.value}
+        // Input requires a string value.
+        value={pipe(
+          field.state.value,
+          Option.fromNullable,
+          Option.getOrElse(() => ''),
+        )}
         {...domProps}
       />
     </InputWrapper>
@@ -94,7 +99,12 @@ export function SlugInputField(props: SlugInputFieldProps) {
         onAccept={(value) => field.handleChange(value)}
         onBlur={field.handleBlur}
         prepare={(str) => pipe(str, String.toLowerCase, String.replaceAll(' ', '-'))}
-        value={field.state.value}
+        // IMaskInput requires a string value.
+        value={pipe(
+          field.state.value,
+          Option.fromNullable,
+          Option.getOrElse(() => ''),
+        )}
         {...domProps}
       />
     </InputWrapper>

@@ -12,7 +12,7 @@ import { InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
 import { cn } from '@openfaith/ui/shared/utils'
 import { Array, Effect, Option, pipe, Schema, String } from 'effect'
 import type { ComponentProps, ReactNode } from 'react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useDebounce } from 'use-debounce'
 
 export class GooglePlacesApiError extends Schema.TaggedError<GooglePlacesApiError>()(
@@ -77,14 +77,17 @@ const getAddressComponent = (place: GooglePlace, types: Array<string>): string |
     return undefined
   }
 
+  // We need to map through the types first since they have priority order over the order of addressComponents.
   const componentOpt = pipe(
-    place.addressComponents,
-    Array.findFirst((component) =>
+    types,
+    Array.map((type) =>
       pipe(
-        types,
-        Array.some((type) => pipe(component.types, Array.contains(type))),
+        place.addressComponents || [],
+        Array.findFirst((component) => pipe(component.types, Array.contains(type))),
       ),
     ),
+    Array.getSomes,
+    Array.head,
   )
 
   return pipe(
@@ -203,7 +206,6 @@ export type AddressLocationFieldProps = Omit<
   className?: string
   required?: boolean
   onLocationSelect?: (location: AddressLocation | null) => void
-  composite?: Array<string>
 }
 
 export const AddressLocationField = (props: AddressLocationFieldProps) => {
@@ -219,41 +221,13 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
     onLocationSelect,
     popOverContentClassName,
     alignOffset = 0,
-    composite,
     ...domProps
   } = props
 
   const field = useFieldContext<CompositeAddressValue | null>()
-  const form = field.form
   const [searchQuery, setSearchQuery] = useState('')
 
   const [debouncedSearchQuery] = useDebounce(searchQuery, 250)
-
-  const currentCompositeValue = useMemo(() => {
-    if (!composite || composite.length === 0) {
-      return pipe(
-        field.state.value,
-        Option.fromNullable,
-        Option.getOrElse((): CompositeAddressValue | null => null),
-      )
-    }
-
-    const compositeValue = pipe(
-      composite,
-      Array.reduce({} as Record<string, unknown>, (b, a) => {
-        const value = (form as any).getFieldValue(a)
-        if (value !== undefined && value !== null) {
-          b[a] = value
-        }
-
-        return b
-      }),
-    )
-
-    return Object.keys(compositeValue).length > 0 ? (compositeValue as CompositeAddressValue) : null
-  }, [composite, field.state.value, form])
-
-  const value = currentCompositeValue
 
   const { processedError } = getFieldErrors(field.state.meta.errors)
 
@@ -296,7 +270,7 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
   )
 
   const selectedOptions = pipe(
-    value,
+    field.state.value,
     Option.fromNullable,
     Option.match({
       onNone: () => [] as Array<AddressComboboxItem>,
@@ -331,16 +305,7 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
         selectedLocationOpt,
         Option.match({
           onNone: () => {
-            if (composite && composite.length > 0) {
-              pipe(
-                composite,
-                Array.forEach((fieldName) => {
-                  form.setFieldValue(fieldName, undefined)
-                }),
-              )
-            } else {
-              field.handleChange(null)
-            }
+            field.handleChange(null)
 
             if (onLocationSelect) {
               onLocationSelect(null)
@@ -361,17 +326,7 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
               zip: location.postcode,
             }
 
-            if (composite && composite.length > 0) {
-              pipe(
-                composite,
-                Array.forEach((fieldName) => {
-                  const value = compositeValue[fieldName as keyof CompositeAddressValue]
-                  form.setFieldValue(fieldName, value)
-                }),
-              )
-            } else {
-              field.handleChange(compositeValue)
-            }
+            field.handleChange(compositeValue)
 
             if (onLocationSelect) {
               onLocationSelect(location)
@@ -380,25 +335,16 @@ export const AddressLocationField = (props: AddressLocationFieldProps) => {
         }),
       )
     },
-    [locations, field, onLocationSelect, composite, form],
+    [locations, field, onLocationSelect],
   )
 
   const handleRemoveItem = useCallback(() => {
-    if (composite && composite.length > 0) {
-      pipe(
-        composite,
-        Array.forEach((fieldName) => {
-          form.setFieldValue(fieldName, undefined)
-        }),
-      )
-    } else {
-      field.handleChange(null)
-    }
+    field.handleChange(null)
 
     if (onLocationSelect) {
       onLocationSelect(null)
     }
-  }, [field, onLocationSelect, composite, form])
+  }, [field, onLocationSelect])
 
   return (
     <InputWrapper

@@ -4,6 +4,7 @@ import { getFieldErrors } from '@openfaith/ui/components/form/fieldHelpers'
 import { useFieldContext } from '@openfaith/ui/components/form/tsField'
 import { InputWrapper } from '@openfaith/ui/components/ui/input-wrapper'
 import { Textarea } from '@openfaith/ui/components/ui/textarea'
+import { Option, pipe } from 'effect'
 import type { ComponentProps, ReactNode } from 'react'
 
 type TextareaFieldProps = {
@@ -42,7 +43,12 @@ export function TextareaField(props: TextareaFieldProps) {
         id={field.name}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
-        value={field.state.value}
+        // Textarea requires a string value.
+        value={pipe(
+          field.state.value,
+          Option.fromNullable,
+          Option.getOrElse(() => ''),
+        )}
         {...domProps}
       />
     </InputWrapper>
