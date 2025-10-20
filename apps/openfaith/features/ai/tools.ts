@@ -412,11 +412,11 @@ Edges connect ANY two entities with a \`relationshipType\`. The system uses **de
 **Example Queries:**
 
 \`\`\`sql
--- Count people by gender
-SELECT gender, COUNT(*) as count
+-- Count people by gender (note: ALL column names must be quoted)
+SELECT "gender", COUNT(*) as count
 FROM openfaith_people
-WHERE status = 'active'
-GROUP BY gender;
+WHERE "status" = 'active'
+GROUP BY "gender";
 
 -- Find people in a specific group (handles bidirectional edges)
 -- IMPORTANT: Edges may be stored in either direction based on ID ordering
@@ -424,64 +424,64 @@ SELECT DISTINCT p.*
 FROM openfaith_people p
 JOIN openfaith_edges e ON (
   -- Person could be source or target depending on ID ordering
-  (e.sourceEntityId = p.id AND e.targetEntityId = 'group_xyz' AND e.sourceEntityTypeTag = 'person') OR
-  (e.targetEntityId = p.id AND e.sourceEntityId = 'group_xyz' AND e.targetEntityTypeTag = 'person')
+  (e."sourceEntityId" = p."id" AND e."targetEntityId" = 'group_xyz' AND e."sourceEntityTypeTag" = 'person') OR
+  (e."targetEntityId" = p."id" AND e."sourceEntityId" = 'group_xyz' AND e."targetEntityTypeTag" = 'person')
 )
-WHERE e.relationshipType LIKE '%member_of%';
+WHERE e."relationshipType" LIKE '%member_of%';
 
 -- Simplified: People with phone numbers (person ID < phonenumber ID usually)
-SELECT p.firstName, p.lastName, ph.number, ph.type
+SELECT p."firstName", p."lastName", ph."number", ph."type"
 FROM openfaith_people p
 JOIN openfaith_edges e ON (
-  (e.sourceEntityId = p.id AND e.targetEntityId = ph.id) OR
-  (e.targetEntityId = p.id AND e.sourceEntityId = ph.id)
+  (e."sourceEntityId" = p."id" AND e."targetEntityId" = ph."id") OR
+  (e."targetEntityId" = p."id" AND e."sourceEntityId" = ph."id")
 )
 JOIN openfaith_phoneNumbers ph ON (
-  ph.id = e.targetEntityId OR ph.id = e.sourceEntityId
+  ph."id" = e."targetEntityId" OR ph."id" = e."sourceEntityId"
 )
-WHERE e.relationshipType LIKE '%has_phonenumber%'
-  AND ph.id != p.id;  -- Exclude the person from phone results;
+WHERE e."relationshipType" LIKE '%has_phonenumber%'
+  AND ph."id" != p."id";  -- Exclude the person from phone results;
 
 -- People with their primary email
-SELECT p.firstName, p.lastName, em.address
+SELECT p."firstName", p."lastName", em."address"
 FROM openfaith_people p
 JOIN openfaith_edges e ON (
-  (e.sourceEntityId = p.id AND e.sourceEntityTypeTag = 'person') OR
-  (e.targetEntityId = p.id AND e.targetEntityTypeTag = 'person')
+  (e."sourceEntityId" = p."id" AND e."sourceEntityTypeTag" = 'person') OR
+  (e."targetEntityId" = p."id" AND e."targetEntityTypeTag" = 'person')
 )
 JOIN openfaith_emails em ON (
-  (em.id = e.targetEntityId AND e.targetEntityTypeTag = 'email') OR
-  (em.id = e.sourceEntityId AND e.sourceEntityTypeTag = 'email')
+  (em."id" = e."targetEntityId" AND e."targetEntityTypeTag" = 'email') OR
+  (em."id" = e."sourceEntityId" AND e."sourceEntityTypeTag" = 'email')
 )
-WHERE e.relationshipType LIKE '%has_email%'
-  AND em.primary = true;
+WHERE e."relationshipType" LIKE '%has_email%'
+  AND em."primary" = true;
 
 -- Groups with member counts
 SELECT
   CASE
-    WHEN e.sourceEntityTypeTag = 'group' THEN e.sourceEntityId
-    ELSE e.targetEntityId
+    WHEN e."sourceEntityTypeTag" = 'group' THEN e."sourceEntityId"
+    ELSE e."targetEntityId"
   END as group_id,
   COUNT(*) as member_count
 FROM openfaith_edges e
-WHERE e.relationshipType LIKE '%member_of%'
-  AND (e.sourceEntityTypeTag = 'group' OR e.targetEntityTypeTag = 'group')
-  AND (e.sourceEntityTypeTag = 'person' OR e.targetEntityTypeTag = 'person')
+WHERE e."relationshipType" LIKE '%member_of%'
+  AND (e."sourceEntityTypeTag" = 'group' OR e."targetEntityTypeTag" = 'group')
+  AND (e."sourceEntityTypeTag" = 'person' OR e."targetEntityTypeTag" = 'person')
 GROUP BY group_id;
 
 -- People at a specific campus (via edges)
 SELECT DISTINCT p.*
 FROM openfaith_people p
 JOIN openfaith_edges e ON (
-  (e.sourceEntityId = p.id AND e.sourceEntityTypeTag = 'person') OR
-  (e.targetEntityId = p.id AND e.targetEntityTypeTag = 'person')
+  (e."sourceEntityId" = p."id" AND e."sourceEntityTypeTag" = 'person') OR
+  (e."targetEntityId" = p."id" AND e."targetEntityTypeTag" = 'person')
 )
 JOIN openfaith_campuses c ON (
-  (c.id = e.targetEntityId AND e.targetEntityTypeTag = 'campus') OR
-  (c.id = e.sourceEntityId AND e.sourceEntityTypeTag = 'campus')
+  (c."id" = e."targetEntityId" AND e."targetEntityTypeTag" = 'campus') OR
+  (c."id" = e."sourceEntityId" AND e."sourceEntityTypeTag" = 'campus')
 )
-WHERE e.relationshipType LIKE '%attends%'
-  AND c.name = 'Downtown Campus';
+WHERE e."relationshipType" LIKE '%attends%'
+  AND c."name" = 'Downtown Campus';
 \`\`\`
 
 **Helper Function for Edge Queries:**
@@ -491,17 +491,18 @@ When querying edges, you often need to check both directions. Use this pattern:
 \`\`\`sql
 -- Generic pattern for finding entities related via edges
 -- Replace {entityA}, {entityB}, {typeA}, {typeB}, {relationship} with actual values
+-- REMEMBER: Quote all column names!
 
 SELECT DISTINCT entity.*
 FROM openfaith_{entityB} entity
 JOIN openfaith_edges e ON (
   -- Check both possible directions
-  (e.sourceEntityId = entity.id AND e.sourceEntityTypeTag = '{typeB}' AND
-   e.targetEntityId = '{entityA_id}' AND e.targetEntityTypeTag = '{typeA}') OR
-  (e.targetEntityId = entity.id AND e.targetEntityTypeTag = '{typeB}' AND
-   e.sourceEntityId = '{entityA_id}' AND e.sourceEntityTypeTag = '{typeA}')
+  (e."sourceEntityId" = entity."id" AND e."sourceEntityTypeTag" = '{typeB}' AND
+   e."targetEntityId" = '{entityA_id}' AND e."targetEntityTypeTag" = '{typeA}') OR
+  (e."targetEntityId" = entity."id" AND e."targetEntityTypeTag" = '{typeB}' AND
+   e."sourceEntityId" = '{entityA_id}' AND e."sourceEntityTypeTag" = '{typeA}')
 )
-WHERE e.relationshipType LIKE '%{relationship}%';
+WHERE e."relationshipType" LIKE '%{relationship}%';
 \`\`\`
 
 **JSONB Fields:**
@@ -533,6 +534,14 @@ export const generateQuery = async (params: { query: string }): Promise<{ query:
       ${tableSchema}
 
     Only retrieval queries are allowed.
+
+    CRITICAL: PostgreSQL is case-sensitive. ALL column names MUST be wrapped in double quotes. For example:
+    - CORRECT: SELECT "firstName", "lastName" FROM openfaith_people
+    - WRONG: SELECT firstName, lastName FROM openfaith_people
+    - CORRECT: WHERE e."sourceEntityId" = p.id
+    - WRONG: WHERE e.sourceEntityId = p.id
+    
+    This applies to ALL column references including in WHERE, JOIN, ORDER BY, GROUP BY, and SELECT clauses.
 
     If the user asks for 'over time' data, return by month.
 
@@ -626,6 +635,8 @@ export const explainQuery = async (input: string, sqlQuery: string) => {
 
     When you explain you must take a section of the query, and then explain it. Each "section" should be unique. So in a query like: "SELECT * FROM openfaith_people limit 20", the sections could be "SELECT *", "FROM openfaith_people", "LIMIT 20".
     If a section doesn't have any explanation, include it, but leave the explanation empty.
+    
+    Note: All column names are wrapped in double quotes because PostgreSQL is case-sensitive.
 
     `,
     })
