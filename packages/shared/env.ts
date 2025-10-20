@@ -57,6 +57,7 @@ const serverEnv = {
 
   // AI
   AI_GATEWAY_API_KEY: z.string(),
+  ANTHROPIC_API_KEY: z.string(),
 }
 
 export const env = createEnv({
@@ -113,6 +114,7 @@ export const env = createEnv({
 
         // AI
         AI_GATEWAY_API_KEY: z.string().default(''),
+        ANTHROPIC_API_KEY: z.string().default(''),
       } as unknown as typeof serverEnv)
     : serverEnv,
 
