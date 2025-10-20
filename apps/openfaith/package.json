@@ -45,6 +45,7 @@
     "react-cookie": "8.0.1",
     "react-dom": "catalog:",
     "react-hotkeys-hook": "catalog:",
+    "recharts": "3.3.0",
     "superjson": "catalog:",
     "tailwindcss": "catalog:",
     "tw-animate-css": "1.3.8",

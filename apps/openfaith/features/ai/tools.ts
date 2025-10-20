@@ -51,8 +51,8 @@ export const configSchema = z
   })
   .describe('Chart configuration object')
 
-const Result = z.record(z.string(), z.union([z.string(), z.number()]))
-type Result = z.infer<typeof Result>
+export const Result = z.record(z.string(), z.union([z.string(), z.number()]))
+export type Result = z.infer<typeof Result>
 
 export type Config = z.infer<typeof configSchema>
 
@@ -386,28 +386,15 @@ CREATE TABLE openfaith_externalLinks (
 
 **Edge Relationships:**
 
-Edges connect ANY two entities with a \`relationshipType\`. The system uses **deterministic source/target assignment** based on ID alphabetical ordering to ensure consistency:
+Edges connect ANY two entities. The system uses **deterministic source/target assignment** based on ID alphabetical ordering to ensure consistency:
 
 1. **Alpha Range Rule**: Compare first character of each ID
    - A-M range vs N-Z range: A-M becomes source, N-Z becomes target
    - Same range: Lexicographically smaller ID becomes source
    - Identical IDs: Allows self-linking (source = target)
 
-2. **Relationship Type Naming**:
-   - Format: \`{sourceEntityType}_{relationship}_{targetEntityType}\`
-   - Examples: \`person_member_of_group\`, \`person_has_email\`, \`folder_contains_document\`
-   - Simple has relationships: \`person_has_phonenumber\`
-
 3. **Querying Edges**: Always account for bidirectional logic since edge direction is determined by ID, not semantic meaning
 
-**Common Relationship Types:**
-
-- \`person_member_of_group\` - Group membership
-- \`person_has_email\` - Email ownership
-- \`person_has_phonenumber\` - Phone ownership
-- \`person_lives_at_address\` - Address association
-- \`person_leads_group\` - Leadership relationship
-- \`folder_contains_{entity}\` - Folder organization
 
 **Example Queries:**
 
@@ -426,8 +413,7 @@ JOIN openfaith_edges e ON (
   -- Person could be source or target depending on ID ordering
   (e."sourceEntityId" = p."id" AND e."targetEntityId" = 'group_xyz' AND e."sourceEntityTypeTag" = 'person') OR
   (e."targetEntityId" = p."id" AND e."sourceEntityId" = 'group_xyz' AND e."targetEntityTypeTag" = 'person')
-)
-WHERE e."relationshipType" LIKE '%member_of%';
+);
 
 -- Simplified: People with phone numbers (person ID < phonenumber ID usually)
 SELECT p."firstName", p."lastName", ph."number", ph."type"
@@ -439,8 +425,7 @@ JOIN openfaith_edges e ON (
 JOIN openfaith_phoneNumbers ph ON (
   ph."id" = e."targetEntityId" OR ph."id" = e."sourceEntityId"
 )
-WHERE e."relationshipType" LIKE '%has_phonenumber%'
-  AND ph."id" != p."id";  -- Exclude the person from phone results;
+WHERE ph."id" != p."id";  -- Exclude the person from phone results;
 
 -- People with their primary email
 SELECT p."firstName", p."lastName", em."address"
@@ -453,21 +438,44 @@ JOIN openfaith_emails em ON (
   (em."id" = e."targetEntityId" AND e."targetEntityTypeTag" = 'email') OR
   (em."id" = e."sourceEntityId" AND e."sourceEntityTypeTag" = 'email')
 )
-WHERE e."relationshipType" LIKE '%has_email%'
-  AND em."primary" = true;
+WHERE em."primary" = true;
 
--- Groups with member counts
+-- Groups with member counts (includes groups with no members using LEFT JOIN)
 SELECT
-  CASE
-    WHEN e."sourceEntityTypeTag" = 'group' THEN e."sourceEntityId"
-    ELSE e."targetEntityId"
-  END as group_id,
-  COUNT(*) as member_count
-FROM openfaith_edges e
-WHERE e."relationshipType" LIKE '%member_of%'
-  AND (e."sourceEntityTypeTag" = 'group' OR e."targetEntityTypeTag" = 'group')
-  AND (e."sourceEntityTypeTag" = 'person' OR e."targetEntityTypeTag" = 'person')
-GROUP BY group_id;
+  g."id",
+  g."name",
+  COALESCE(COUNT(DISTINCT CASE 
+    WHEN e."sourceEntityTypeTag" = 'person' THEN e."sourceEntityId"
+    WHEN e."targetEntityTypeTag" = 'person' THEN e."targetEntityId"
+  END), 0) as member_count
+FROM openfaith_folders g
+LEFT JOIN openfaith_edges e ON (
+  ((e."sourceEntityId" = g."id" AND e."sourceEntityTypeTag" = 'folder') OR
+   (e."targetEntityId" = g."id" AND e."targetEntityTypeTag" = 'folder'))
+)
+WHERE g."folderType" = 'group'
+  AND g."status" = 'active'
+GROUP BY g."id", g."name"
+ORDER BY member_count DESC;
+
+-- Campuses with people counts (includes campuses with no people using LEFT JOIN)
+SELECT 
+  c."id",
+  c."name" as campus_name,
+  COALESCE(COUNT(DISTINCT p."id"), 0) as people_count
+FROM openfaith_campuses c
+LEFT JOIN openfaith_edges e ON (
+  (e."sourceEntityId" = c."id" AND e."sourceEntityTypeTag" = 'campus') OR
+  (e."targetEntityId" = c."id" AND e."targetEntityTypeTag" = 'campus')
+)
+LEFT JOIN openfaith_people p ON (
+  ((p."id" = e."targetEntityId" AND e."targetEntityTypeTag" = 'person') OR
+   (p."id" = e."sourceEntityId" AND e."sourceEntityTypeTag" = 'person')) AND
+  p."status" = 'active'
+)
+WHERE c."status" = 'active'
+GROUP BY c."id", c."name"
+ORDER BY people_count DESC;
 
 -- People at a specific campus (via edges)
 SELECT DISTINCT p.*
@@ -480,8 +488,8 @@ JOIN openfaith_campuses c ON (
   (c."id" = e."targetEntityId" AND e."targetEntityTypeTag" = 'campus') OR
   (c."id" = e."sourceEntityId" AND e."sourceEntityTypeTag" = 'campus')
 )
-WHERE e."relationshipType" LIKE '%attends%'
-  AND c."name" = 'Downtown Campus';
+WHERE c."name" = 'Downtown Campus'
+  AND p."status" = 'active';
 \`\`\`
 
 **Helper Function for Edge Queries:**
@@ -501,8 +509,7 @@ JOIN openfaith_edges e ON (
    e."targetEntityId" = '{entityA_id}' AND e."targetEntityTypeTag" = '{typeA}') OR
   (e."targetEntityId" = entity."id" AND e."targetEntityTypeTag" = '{typeB}' AND
    e."sourceEntityId" = '{entityA_id}' AND e."sourceEntityTypeTag" = '{typeA}')
-)
-WHERE e."relationshipType" LIKE '%{relationship}%';
+);
 \`\`\`
 
 **JSONB Fields:**
@@ -538,10 +545,16 @@ export const generateQuery = async (params: { query: string }): Promise<{ query:
     CRITICAL: PostgreSQL is case-sensitive. ALL column names MUST be wrapped in double quotes. For example:
     - CORRECT: SELECT "firstName", "lastName" FROM openfaith_people
     - WRONG: SELECT firstName, lastName FROM openfaith_people
-    - CORRECT: WHERE e."sourceEntityId" = p.id
+    - CORRECT: WHERE e."sourceEntityId" = p."id"
     - WRONG: WHERE e.sourceEntityId = p.id
     
     This applies to ALL column references including in WHERE, JOIN, ORDER BY, GROUP BY, and SELECT clauses.
+
+    CRITICAL: When counting relationships via edges, ALWAYS use LEFT JOIN to include entities with zero relationships.
+    - CORRECT: FROM openfaith_campuses c LEFT JOIN openfaith_edges e ON (...)
+    - WRONG: FROM openfaith_campuses c JOIN openfaith_edges e ON (...)
+    - Use COALESCE(COUNT(DISTINCT related_entity."id"), 0) to ensure zero counts are shown
+    - This ensures entities without relationships are included in results (e.g., campuses with no people)
 
     If the user asks for 'over time' data, return by month.
 
