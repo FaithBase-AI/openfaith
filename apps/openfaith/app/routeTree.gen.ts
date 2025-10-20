@@ -25,6 +25,7 @@ import { Route as MarketingFeaturesRouteImport } from './routes/_marketing/featu
 import { Route as MarketingBlogRouteImport } from './routes/_marketing/blog'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppAiRouteRouteImport } from './routes/_app/ai/route'
 import { Route as AppGroupRouteRouteImport } from './routes/_app/$group/route'
 import { Route as AppSettingsTeamRouteImport } from './routes/_app/settings/team'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
@@ -108,6 +109,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppAiRouteRoute = AppAiRouteRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppGroupRouteRoute = AppGroupRouteRouteImport.update({
   id: '/$group',
   path: '/$group',
@@ -181,6 +187,7 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/$group': typeof AppGroupRouteRouteWithChildren
+  '/ai': typeof AppAiRouteRoute
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
   '/blog': typeof MarketingBlogRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/$group': typeof AppGroupRouteRouteWithChildren
+  '/ai': typeof AppAiRouteRoute
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
   '/blog': typeof MarketingBlogRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/_marketing': typeof MarketingRouteRouteWithChildren
   '/_onboarding': typeof OnboardingRouteRouteWithChildren
   '/_app/$group': typeof AppGroupRouteRouteWithChildren
+  '/_app/ai': typeof AppAiRouteRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_marketing/blog': typeof MarketingBlogRoute
@@ -256,6 +265,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/$group'
+    | '/ai'
     | '/dashboard'
     | '/sign-in'
     | '/blog'
@@ -279,6 +289,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/$group'
+    | '/ai'
     | '/dashboard'
     | '/sign-in'
     | '/blog'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/_marketing'
     | '/_onboarding'
     | '/_app/$group'
+    | '/_app/ai'
     | '/_app/dashboard'
     | '/_auth/sign-in'
     | '/_marketing/blog'
@@ -464,6 +476,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/ai': {
+      id: '/_app/ai'
+      path: '/ai'
+      fullPath: '/ai'
+      preLoaderRoute: typeof AppAiRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_app/$group': {
       id: '/_app/$group'
       path: '/$group'
@@ -596,6 +615,7 @@ const AppGroupRouteRouteWithChildren = AppGroupRouteRoute._addFileChildren(
 
 interface AppRouteRouteChildren {
   AppGroupRouteRoute: typeof AppGroupRouteRouteWithChildren
+  AppAiRouteRoute: typeof AppAiRouteRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppAdminOrgsRoute: typeof AppAdminOrgsRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
@@ -608,6 +628,7 @@ interface AppRouteRouteChildren {
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppGroupRouteRoute: AppGroupRouteRouteWithChildren,
+  AppAiRouteRoute: AppAiRouteRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppAdminOrgsRoute: AppAdminOrgsRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
