@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@ai-sdk/react": "catalog:",
     "@effect-atom/atom-react": "catalog:",
     "@effect/platform": "catalog:",
     "@effect/rpc": "catalog:",
@@ -29,6 +30,7 @@
     "@tanstack/react-table": "catalog:",
     "@tanstack/react-virtual": "catalog:",
     "@tanstack/router-plugin": "1.131.44",
+    "ai": "catalog:",
     "effect": "catalog:",
     "input-otp": "catalog:",
     "jose": "catalog:",

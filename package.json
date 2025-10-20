@@ -61,6 +61,7 @@
   "type": "module",
   "workspaces": {
     "catalog": {
+      "@ai-sdk/react": "2.0.76",
       "@effect-atom/atom-react": "0.3.0",
       "@effect/cluster": "0.48.5",
       "@effect/opentelemetry": "0.56.6",
