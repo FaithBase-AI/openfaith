@@ -1,6 +1,6 @@
 'use client'
 
-import { formatLabel } from '@openfaith/shared'
+import { formatLabel, nullOp } from '@openfaith/shared'
 import { EntityAvatar } from '@openfaith/ui/components/avatars/entityAvatar'
 import { BadgeSkeleton } from '@openfaith/ui/components/badges/badgeSkeleton'
 import { Badge, entityBadgeClassName } from '@openfaith/ui/components/ui/badge'
@@ -173,7 +173,7 @@ export const EntityBadge: FC<EntityBadgeProps> = (props) => {
       {pipe(
         showAvatar,
         Boolean.match({
-          onFalse: () => null,
+          onFalse: nullOp,
           onTrue: () => (
             <EntityAvatar
               className='-ml-1.5 relative mr-1.5 size-6 rounded-md'

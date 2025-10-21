@@ -1,5 +1,6 @@
 import type { Rectangle } from '@glideapps/glide-data-grid'
 import type { EntityUiConfig } from '@openfaith/schema'
+import { nullOp } from '@openfaith/shared'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,7 +68,7 @@ export const UniversalDropdownMenu = <T,>(props: UniversalDropdownMenuProps<T>) 
           showMenu,
           Option.fromNullable,
           Option.match({
-            onNone: () => null,
+            onNone: nullOp,
             onSome: (x) => (
               <DropdownMenuItem
                 onClick={() => {

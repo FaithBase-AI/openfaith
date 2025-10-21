@@ -1,3 +1,4 @@
+import { nullOp } from '@openfaith/shared'
 import { DetailsShell } from '@openfaith/ui/components/detailsPane/detailsShell'
 import { EntityDetails } from '@openfaith/ui/components/detailsPane/entityDetails'
 import { EntityDetailsHeader } from '@openfaith/ui/components/detailsPane/entityDetailsHeader'
@@ -36,7 +37,7 @@ export const EntityDetailsPane: FC<EntityDetailsPaneProps> = (props) => {
       header={<EntityDetailsHeader entityId={entityId} entityType={entityType} />}
       tabBar={<EntityDetailsTabBar activeTab={tab} entityId={entityId} entityType={entityType} />}
       topBarButtons={Option.match(schemaOpt, {
-        onNone: () => null,
+        onNone: nullOp,
         onSome: (schema) => (
           <EntityTopBarButtons entityId={entityId} entityType={entityType} schema={schema} />
         ),

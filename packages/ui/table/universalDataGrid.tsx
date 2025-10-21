@@ -6,6 +6,7 @@ import type { CellClickedEventArgs, GridCell, Item, Rectangle } from '@glideapps
 import { GridCellKind } from '@glideapps/glide-data-grid'
 import type { Edge } from '@openfaith/db'
 import { type EntityUiConfig, extractEntityInfo } from '@openfaith/schema'
+import { nullOp } from '@openfaith/shared'
 import { CollectionDataGrid } from '@openfaith/ui/components/collections/collectionDataGrid'
 import {
   buildEntityRelationshipsForTable,
@@ -389,7 +390,7 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
         columns,
         Array.findFirst((column) => column.id === 'actions'),
         Option.match({
-          onNone: () => null,
+          onNone: nullOp,
           onSome: () => (
             <UniversalDropdownMenu config={config} setShowMenu={setShowMenu} showMenu={showMenu} />
           ),
