@@ -24,25 +24,6 @@ function RouteComponent() {
 
   const entityOpt = useCachedEntityByUrl(group, entity)
 
-  const entitySchemaOpt = useStableMemo(
-    () =>
-      pipe(
-        entityOpt,
-        Option.map((config) => config.schema),
-      ),
-    [entityOpt],
-    Equivalence.tuple(
-      Option.getEquivalence(
-        Equivalence.struct({
-          navItem: Equivalence.struct({
-            title: Equivalence.string,
-            url: Equivalence.string,
-          }),
-        }),
-      ),
-    ),
-  )
-
   const quickActionKeyOpt = useStableMemo(
     () =>
       pipe(
@@ -87,36 +68,25 @@ function RouteComponent() {
           </p>
         </div>
       ),
-      onSome: (config) =>
-        pipe(
-          entitySchemaOpt,
-          Option.match({
-            onNone: () => (
-              <div>
-                <p>Schema not found for entity: {config.tag}</p>
-              </div>
-            ),
-            onSome: (schema) => (
-              <UniversalDataGrid
-                Actions={
-                  config.meta.disableCreate ? null : (
-                    <Button className='ml-auto' onClick={handleCreateClick} size='sm'>
-                      <PlusIcon />
-                      Create {pipe(config.navItem.title, singularize)}
-                    </Button>
-                  )
-                }
-                editable={!config.meta.disableEdit}
-                filtering={{
-                  filterPlaceHolder: `Search ${pipe(config.navItem.title, String.toLowerCase)}...`,
-                }}
-                orgId={orgId}
-                schema={schema}
-                userId={userId}
-              />
-            ),
-          }),
-        ),
+      onSome: (config) => (
+        <UniversalDataGrid
+          Actions={
+            config.meta.disableCreate ? null : (
+              <Button className='ml-auto' onClick={handleCreateClick} size='sm'>
+                <PlusIcon />
+                Create {pipe(config.navItem.title, singularize)}
+              </Button>
+            )
+          }
+          config={config}
+          editable={!config.meta.disableEdit}
+          filtering={{
+            filterPlaceHolder: `Search ${pipe(config.navItem.title, String.toLowerCase)}...`,
+          }}
+          orgId={orgId}
+          userId={userId}
+        />
+      ),
     }),
   )
 }
