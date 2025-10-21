@@ -1,6 +1,6 @@
 import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
-import { getEntityId, IsoStringToTimestamp } from '@openfaith/shared'
+import { getEntityId, IsoStringToTimestamp, TimestampToIsoString } from '@openfaith/shared'
 import { Array, Effect, Option, pipe, Schema, SchemaAST, String } from 'effect'
 
 /**
@@ -341,12 +341,11 @@ export const getUpdateSchema = <A, I = A, R = never>(
 
 export const getDeleteSchema = <A, I = A, R = never>(_schema: Schema.Schema<A, I, R>) =>
   Schema.Struct({
-    deleted: Schema.Literal(true),
-    deletedAt: Schema.String,
+    deletedAt: TimestampToIsoString,
     deletedBy: Schema.String,
     id: Schema.String,
     orgId: Schema.String,
-    updatedAt: Schema.String,
+    updatedAt: TimestampToIsoString,
     updatedBy: Schema.String,
   })
 
@@ -508,7 +507,6 @@ export const enrichMutationData = Effect.fn('enrichMutationData')(function* (par
           data,
           Array.map((item) => ({
             ...item,
-            deleted: true,
             deletedAt: mutatedAt,
             deletedBy: userId,
             orgId,
