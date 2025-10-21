@@ -74,6 +74,8 @@ export class PhoneNumber extends BasePhoneNumber.extend<PhoneNumber>('PhoneNumbe
       [OfUiConfig]: {
         meta: {
           disableCreate: true,
+          disableDelete: true,
+          disableEdit: true,
         },
         navigation: {
           description: 'Manage contact phone numbers',

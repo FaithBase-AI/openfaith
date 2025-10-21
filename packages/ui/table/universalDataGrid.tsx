@@ -143,11 +143,11 @@ export const UniversalDataGrid = <T extends { id: string }>(
   }, [showRelations, transformedRelationships, entityInfo.entityName])
 
   // Add actions column
-  const actionsColumn = createDataGridActionsColumn()
+  const actionsColumn = createDataGridActionsColumn(config)
 
   // Combine all columns
   const columns = useMemo(() => {
-    return pipe(baseColumns, Array.appendAll(relationColumns), Array.append(actionsColumn))
+    return pipe(baseColumns, Array.appendAll(relationColumns), Array.appendAll(actionsColumn))
   }, [baseColumns, relationColumns, actionsColumn])
 
   // Get cell content callback

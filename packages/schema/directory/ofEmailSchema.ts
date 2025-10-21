@@ -74,6 +74,8 @@ export class Email extends BaseEmail.extend<Email>('Email')(BaseIdentifiedEntity
     [OfUiConfig]: {
       meta: {
         disableCreate: true,
+        disableDelete: true,
+        disableEdit: true,
       },
       navigation: {
         description: 'Manage contact email addresses',

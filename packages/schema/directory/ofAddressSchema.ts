@@ -111,6 +111,8 @@ export class Address extends BaseAddress.extend<Address>('Address')(BaseIdentifi
     [OfUiConfig]: {
       meta: {
         disableCreate: true,
+        disableDelete: true,
+        disableEdit: true,
       },
       navigation: {
         description: 'Manage contact addresses',
