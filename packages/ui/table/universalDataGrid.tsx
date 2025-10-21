@@ -34,7 +34,7 @@ import { Array, Option, pipe, String } from 'effect'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-export interface UniversalDataGridProps<T> {
+export interface UniversalDataGridProps<T extends { id: string }> {
   onRowClick?: (row: T) => void
   onRowsSelected?: (rows: Array<T>) => void
   onCellEdit?: (row: T, field: string, newValue: any) => void
@@ -53,7 +53,7 @@ export interface UniversalDataGridProps<T> {
   config: EntityUiConfig<T>
 }
 
-export const UniversalDataGrid = <T extends Record<string, any>>(
+export const UniversalDataGrid = <T extends { id: string }>(
   props: UniversalDataGridProps<T>,
 ): ReactNode => {
   const {
@@ -392,7 +392,13 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
         Option.match({
           onNone: nullOp,
           onSome: () => (
-            <UniversalDropdownMenu config={config} setShowMenu={setShowMenu} showMenu={showMenu} />
+            <UniversalDropdownMenu
+              config={config}
+              orgId={orgId}
+              setShowMenu={setShowMenu}
+              showMenu={showMenu}
+              userId={userId}
+            />
           ),
         }),
       )}
