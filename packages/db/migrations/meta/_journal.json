@@ -189,6 +189,13 @@
       "tag": "0026_sloppy_squirrel_girl",
       "version": "7",
       "when": 1760472156065
+    },
+    {
+      "breakpoints": true,
+      "idx": 27,
+      "tag": "0027_glorious_norman_osborn",
+      "version": "7",
+      "when": 1761072756280
     }
   ],
   "version": "7"
