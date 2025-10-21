@@ -1,6 +1,7 @@
 import { anthropic } from '@ai-sdk/anthropic'
 import { dbConnection } from '@openfaith/server'
 import { generateObject, tool } from 'ai'
+import { Array, pipe } from 'effect'
 import { z } from 'zod'
 
 export const explanationSchema = z.object({
@@ -585,18 +586,31 @@ export const runGenerateSQLQuery = async (params: { query: string }) => {
   const { query } = params
 
   console.log('runGenerateSQLQuery query', query)
+
+  // Use word boundary regex to avoid false positives (e.g., "createdAt" containing "create")
+  const dangerousKeywords = [
+    /\bdrop\b/i,
+    /\bdelete\b/i,
+    /\binsert\b/i,
+    /\bupdate\b/i,
+    /\balter\b/i,
+    /\btruncate\b/i,
+    /\bcreate\s+table\b/i,
+    /\bcreate\s+index\b/i,
+    /\bcreate\s+view\b/i,
+    /\bcreate\s+schema\b/i,
+    /\bgrant\b/i,
+    /\brevoke\b/i,
+  ]
+
   if (
     !query.trim().toLowerCase().startsWith('select') ||
-    query.trim().toLowerCase().includes('drop') ||
-    query.trim().toLowerCase().includes('delete') ||
-    query.trim().toLowerCase().includes('insert') ||
-    query.trim().toLowerCase().includes('update') ||
-    query.trim().toLowerCase().includes('alter') ||
-    query.trim().toLowerCase().includes('truncate') ||
-    query.trim().toLowerCase().includes('create') ||
-    query.trim().toLowerCase().includes('grant') ||
-    query.trim().toLowerCase().includes('revoke')
+    pipe(
+      dangerousKeywords,
+      Array.some((keyword) => keyword.test(query)),
+    )
   ) {
+    console.log('runGenerateSQLQuery query is not a SELECT query', query)
     throw new Error('Only SELECT queries are allowed')
   }
 
@@ -615,8 +629,7 @@ export const runGenerateSQLQuery = async (params: { query: string }) => {
   }
 
   console.log('runGenerateSQLQuery data', data)
-
-  return data as Array<Result>
+  return data
 }
 
 export const runQueryTool = tool({
