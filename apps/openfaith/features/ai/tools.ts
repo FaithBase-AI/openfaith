@@ -629,6 +629,7 @@ export const runGenerateSQLQuery = async (params: { query: string }) => {
   }
 
   console.log('runGenerateSQLQuery data', data)
+
   return data
 }
 
