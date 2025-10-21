@@ -1,5 +1,6 @@
 import { addressesTable } from '@openfaith/db/schema/modules/addressSchema'
 import { campusesTable } from '@openfaith/db/schema/modules/campusesSchema'
+import { circlesTable } from '@openfaith/db/schema/modules/circlesSchema'
 import { edgesTable, entityRelationshipsTable } from '@openfaith/db/schema/modules/edgesSchema'
 import { emailsTable } from '@openfaith/db/schema/modules/emailsSchema'
 import { fieldOptionsTable } from '@openfaith/db/schema/modules/fieldsSchema'
@@ -30,6 +31,11 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
     fields: [edgesTable.sourceEntityId],
     references: [campusesTable.id],
     relationName: 'CampusSourceEdges',
+  }),
+  sourceCircle: one(circlesTable, {
+    fields: [edgesTable.sourceEntityId],
+    references: [circlesTable.id],
+    relationName: 'CircleSourceEdges',
   }),
   sourceEmail: one(emailsTable, {
     fields: [edgesTable.sourceEntityId],
@@ -97,6 +103,11 @@ export const edgeRelations = relations(edgesTable, ({ one }) => ({
     fields: [edgesTable.targetEntityId],
     references: [campusesTable.id],
     relationName: 'CampusTargetEdges',
+  }),
+  targetCircle: one(circlesTable, {
+    fields: [edgesTable.targetEntityId],
+    references: [circlesTable.id],
+    relationName: 'CircleTargetEdges',
   }),
   targetEmail: one(emailsTable, {
     fields: [edgesTable.targetEntityId],
