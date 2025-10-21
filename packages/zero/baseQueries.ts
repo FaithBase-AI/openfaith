@@ -42,7 +42,9 @@ export const getBaseEntitiesQuery = (z: ReturnType<typeof useZero>, entityName: 
       })
     }
 
-    const baseQuery = z.query[entityName as keyof typeof z.query]
+    // Filter out soft deleted items for now
+    // @ts-expect-error - this is the way
+    const baseQuery = z.query[entityName as keyof typeof z.query].where('deletedAt', 'IS', null)
 
     // Try to access the schema from the query object to check for relationships
     const queryWithSchema = baseQuery as any

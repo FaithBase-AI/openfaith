@@ -1,4 +1,5 @@
 import type { GridColumn } from '@glideapps/glide-data-grid'
+import type { EntityUiConfig } from '@openfaith/schema'
 import { formatLabel } from '@openfaith/shared'
 import type { UiEntityRelationships } from '@openfaith/ui/shared/hooks/schemaHooks'
 import { Array, pipe } from 'effect'
@@ -37,11 +38,17 @@ export const generateDataGridRelationColumns = (
 /**
  * Creates the actions column for Data Grid
  */
-export const createDataGridActionsColumn = (): GridColumn => {
-  return {
-    icon: 'headerCode',
-    id: 'actions',
-    title: '',
-    width: 56,
+export const createDataGridActionsColumn = <T,>(config: EntityUiConfig<T>): Array<GridColumn> => {
+  if (config.meta.disableDelete || config.meta.disableEdit) {
+    return []
   }
+
+  return [
+    {
+      icon: 'headerCode',
+      id: 'actions',
+      title: '',
+      width: 56,
+    },
+  ]
 }

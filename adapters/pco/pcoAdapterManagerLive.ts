@@ -40,7 +40,7 @@ import {
   OfSkipEntity,
   OfTransformer,
 } from '@openfaith/schema'
-import { EdgeDirectionSchema, env, mkUrlParamName } from '@openfaith/shared'
+import { EdgeDirectionSchema, env, mkUrlParamName, nullOp } from '@openfaith/shared'
 import {
   Array,
   Chunk,
@@ -309,7 +309,7 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
       deletedAt,
       Option.fromNullable,
       Option.match({
-        onNone: () => null,
+        onNone: nullOp,
         onSome: (x) => new Date(x),
       }),
     ),
@@ -318,7 +318,7 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
       inactivatedAt,
       Option.fromNullable,
       Option.match({
-        onNone: () => null,
+        onNone: nullOp,
         onSome: (x) => new Date(x),
       }),
     ),
@@ -327,7 +327,7 @@ const transformSingleEntity = Effect.fn('transformSingleEntity')(function* (para
       updatedAt,
       Option.fromNullable,
       Option.match({
-        onNone: () => null,
+        onNone: nullOp,
         onSome: (x) => new Date(x),
       }),
     ),

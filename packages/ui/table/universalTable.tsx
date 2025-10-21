@@ -1,4 +1,5 @@
 import { extractEntityInfo } from '@openfaith/schema'
+import { nullOp } from '@openfaith/shared'
 import { Collection } from '@openfaith/ui/components/collections/collection'
 import { Button } from '@openfaith/ui/components/ui/button'
 import {
@@ -134,7 +135,7 @@ export const UniversalTable = <T,>(props: UniversalTableProps<T>) => {
       ),
       enableHiding: false,
       enableSorting: false,
-      header: () => null,
+      header: nullOp,
       id: 'actions',
       size: 56,
     }

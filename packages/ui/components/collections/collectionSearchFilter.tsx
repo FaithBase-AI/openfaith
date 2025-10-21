@@ -1,3 +1,4 @@
+import { nullOp } from '@openfaith/shared'
 import {
   type FiltersState,
   filtersSchema,
@@ -111,7 +112,7 @@ export const CollectionSearchFilter = <T,>(props: CollectionSearchFilterProps<T>
         inputValue,
         String.isNonEmpty,
         Boolean.match({
-          onFalse: () => null,
+          onFalse: nullOp,
           onTrue: () => (
             <Button
               aria-label='Clear search'

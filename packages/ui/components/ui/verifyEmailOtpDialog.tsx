@@ -1,5 +1,6 @@
 'use client'
 
+import { nullOp } from '@openfaith/shared'
 import {
   Dialog,
   DialogContent,
@@ -107,7 +108,7 @@ export const VerifyEmailOtpDialog = (props: VerifyEmailOtpDialogProps) => {
               email,
               Option.fromNullable,
               Option.match({
-                onNone: () => null,
+                onNone: nullOp,
                 onSome: (e) => (
                   <>
                     <br />

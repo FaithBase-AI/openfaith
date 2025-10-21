@@ -60,6 +60,9 @@ const effectMutator = Effect.fn('effectMutator')(function* (params: {
     }
   }
 
+  // We do soft deletes, so we need to update the item instead of deleting it.
+  const localOperation = operation === 'delete' ? 'update' : operation
+
   yield* Effect.forEach(
     validatedInput,
     (input) =>
@@ -74,7 +77,8 @@ const effectMutator = Effect.fn('effectMutator')(function* (params: {
             tableName,
             userId,
           }),
-        try: async () => tx.mutate[tableName as keyof typeof tx.mutate][operation](input as any),
+        try: async () =>
+          tx.mutate[tableName as keyof typeof tx.mutate][localOperation](input as any),
       }),
     {
       concurrency: 'unbounded',
