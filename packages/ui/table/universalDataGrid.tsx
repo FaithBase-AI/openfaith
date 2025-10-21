@@ -49,7 +49,7 @@ export interface UniversalDataGridProps<T> {
   enableVirtualScrolling?: boolean // Enable virtual scrolling for pagination
   orgId: string
   userId: string
-  config: EntityUiConfig
+  config: EntityUiConfig<T>
 }
 
 export const UniversalDataGrid = <T extends Record<string, any>>(
@@ -391,7 +391,7 @@ export const UniversalDataGrid = <T extends Record<string, any>>(
         Option.match({
           onNone: () => null,
           onSome: () => (
-            <UniversalDropdownMenu schema={schema} setShowMenu={setShowMenu} showMenu={showMenu} />
+            <UniversalDropdownMenu config={config} setShowMenu={setShowMenu} showMenu={showMenu} />
           ),
         }),
       )}

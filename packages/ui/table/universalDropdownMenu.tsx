@@ -1,4 +1,5 @@
 import type { Rectangle } from '@glideapps/glide-data-grid'
+import type { EntityUiConfig } from '@openfaith/schema'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,7 +8,7 @@ import {
 } from '@openfaith/ui/components/ui/dropdown-menu'
 import { EditIcon } from '@openfaith/ui/icons/editIcon'
 import { useUniversalTableEdit } from '@openfaith/ui/table/useUniversalTableEdit'
-import { Option, pipe, type Schema } from 'effect'
+import { Option, pipe } from 'effect'
 import type { Dispatch, SetStateAction } from 'react'
 
 type UniversalDropdownMenuProps<T> = {
@@ -26,11 +27,13 @@ type UniversalDropdownMenuProps<T> = {
       | undefined
     >
   >
-  schema: Schema.Schema<T>
+  config: EntityUiConfig<T>
 }
 
 export const UniversalDropdownMenu = <T,>(props: UniversalDropdownMenuProps<T>) => {
-  const { showMenu, setShowMenu, schema } = props
+  const { showMenu, setShowMenu, config } = props
+
+  const { schema } = config
 
   const { onEditRow } = useUniversalTableEdit(schema)
 

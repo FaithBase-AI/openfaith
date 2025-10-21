@@ -99,8 +99,8 @@ export const getSchemaByEntityType = (
   )
 }
 
-export interface EntityUiConfig {
-  schema: Schema.Schema<any, any, never>
+export interface EntityUiConfig<T = { id: string } & Record<string, any>> {
+  schema: Schema.Schema<T>
   tag: string
   navConfig: NonNullable<FieldConfig['navigation']>
   navItem: {

@@ -13,12 +13,16 @@ type EntityDetailsHeaderProps = {
   entityType: string
 }
 
-interface EntityData {
-  id: string
-  name?: string
-  title?: string
-  [key: string]: unknown
-}
+const fallbackSchema = Schema.Struct(
+  {
+    id: Schema.String,
+    name: Schema.optional(Schema.String),
+    title: Schema.optional(Schema.String),
+  },
+  { key: Schema.String, value: Schema.Unknown },
+)
+
+type EntityData = typeof fallbackSchema.Type
 
 export const EntityDetailsHeader: FC<EntityDetailsHeaderProps> = (props) => {
   const { entityId, entityType } = props
@@ -27,9 +31,11 @@ export const EntityDetailsHeader: FC<EntityDetailsHeaderProps> = (props) => {
   const { IconComponent } = useEntityIcon(entityType)
 
   // Always call the hook, but conditionally enable it
-  const fallbackSchema = Schema.Struct({ id: Schema.String })
-  const { entityOpt } = useSchemaEntity(
-    Option.getOrElse(schemaOpt, () => fallbackSchema),
+  const { entityOpt } = useSchemaEntity<EntityData>(
+    Option.getOrElse(
+      schemaOpt as unknown as Option.Option<typeof fallbackSchema>,
+      () => fallbackSchema,
+    ),
     entityId,
     { enabled: Option.isSome(schemaOpt) },
   )
