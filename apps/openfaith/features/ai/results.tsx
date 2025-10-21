@@ -13,14 +13,13 @@ import {
   TabsList,
   TabsTrigger,
 } from '@openfaith/ui'
+import { Array, pipe, Record } from 'effect'
 
 export const Results = ({
   results,
-  columns,
   chartConfig,
 }: {
   results: Array<Result>
-  columns: Array<string>
   chartConfig: Config | null
 }) => {
   const formatColumnTitle = (title: string) => {
@@ -53,6 +52,13 @@ export const Results = ({
     }
     return String(value)
   }
+
+  const columns = pipe(
+    results,
+    Array.map(({ id, ...result }) => pipe(result, Record.keys)),
+    Array.flatten,
+    Array.dedupe,
+  )
 
   return (
     <div className='flex flex-grow flex-col'>

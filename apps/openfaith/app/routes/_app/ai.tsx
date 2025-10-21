@@ -1,4 +1,6 @@
 import { useChat } from '@ai-sdk/react'
+import { Results } from '@openfaith/openfaith/features/ai/results'
+import type { Config, Result } from '@openfaith/openfaith/features/ai/tools'
 import {
   Action,
   Actions,
@@ -25,6 +27,7 @@ import {
   Reasoning,
   ReasoningContent,
   ReasoningTrigger,
+  RefreshIcon,
   Response,
   Source,
   Sources,
@@ -33,7 +36,7 @@ import {
 } from '@openfaith/ui'
 import { createFileRoute } from '@tanstack/react-router'
 import { DefaultChatTransport } from 'ai'
-import { RefreshCcwIcon } from 'lucide-react'
+import { Array, pipe } from 'effect'
 import { Fragment, useState } from 'react'
 
 export const Route = createFileRoute('/_app/ai')({
@@ -67,69 +70,96 @@ function RouteComponent() {
       <div className='flex h-full flex-col'>
         <Conversation className='h-full'>
           <ConversationContent>
-            {messages.map((message) => (
-              <div key={message.id}>
-                {message.role === 'assistant' &&
-                  message.parts.filter((part) => part.type === 'source-url').length > 0 && (
-                    <Sources>
-                      <SourcesTrigger
-                        count={message.parts.filter((part) => part.type === 'source-url').length}
-                      />
-                      {message.parts
-                        .filter((part) => part.type === 'source-url')
-                        .map((part, i) => (
-                          <SourcesContent key={`${message.id}-${i}`}>
-                            <Source href={part.url} key={`${message.id}-${i}`} title={part.url} />
-                          </SourcesContent>
-                        ))}
-                    </Sources>
-                  )}
-                {message.parts.map((part, i) => {
-                  switch (part.type) {
-                    case 'text':
-                      return (
-                        <Fragment key={`${message.id}-${i}`}>
-                          <Message from={message.role}>
-                            <MessageContent>
-                              <Response>{part.text}</Response>
-                            </MessageContent>
-                          </Message>
-                          {message.role === 'assistant' && i === messages.length - 1 && (
-                            <Actions className='mt-2'>
-                              <Action label='Retry' onClick={() => regenerate()}>
-                                <RefreshCcwIcon className='size-3' />
-                              </Action>
-                              <Action
-                                label='Copy'
-                                onClick={() => navigator.clipboard.writeText(part.text)}
-                              >
-                                <CopyIcon className='size-3' />
-                              </Action>
-                            </Actions>
-                          )}
-                        </Fragment>
-                      )
-                    case 'reasoning':
-                      return (
-                        <Reasoning
-                          className='w-full'
-                          isStreaming={
-                            status === 'streaming' &&
-                            i === message.parts.length - 1 &&
-                            message.id === messages.at(-1)?.id
+            {pipe(
+              messages,
+              Array.map((message) => (
+                <div key={message.id}>
+                  {message.role === 'assistant' &&
+                    pipe(
+                      message.parts,
+                      Array.filter((part) => part.type === 'source-url'),
+                      Array.length,
+                    ) > 0 && (
+                      <Sources>
+                        <SourcesTrigger
+                          count={message.parts.filter((part) => part.type === 'source-url').length}
+                        />
+                        {pipe(
+                          message.parts,
+                          Array.filter((part) => part.type === 'source-url'),
+                          Array.map((part, i) => (
+                            <SourcesContent key={`${message.id}-${i}`}>
+                              <Source href={part.url} key={`${message.id}-${i}`} title={part.url} />
+                            </SourcesContent>
+                          )),
+                        )}
+                      </Sources>
+                    )}
+                  {pipe(
+                    message.parts,
+                    Array.map((part, i) => {
+                      switch (part.type) {
+                        case 'text':
+                          return (
+                            <Fragment key={`${message.id}-${i}`}>
+                              <Message from={message.role}>
+                                <MessageContent>
+                                  <Response>{part.text}</Response>
+                                </MessageContent>
+                              </Message>
+                              {message.role === 'assistant' && i === messages.length - 1 && (
+                                <Actions className='mt-2'>
+                                  <Action label='Retry' onClick={() => regenerate()}>
+                                    <RefreshIcon className='size-3' />
+                                  </Action>
+                                  <Action
+                                    label='Copy'
+                                    onClick={() => navigator.clipboard.writeText(part.text)}
+                                  >
+                                    <CopyIcon className='size-3' />
+                                  </Action>
+                                </Actions>
+                              )}
+                            </Fragment>
+                          )
+                        case 'tool-generateChartConfig': {
+                          const output = part.output as { config?: Config } | undefined
+                          const input = part.input as { results?: Array<Result> } | undefined
+
+                          if (output && output.config && input && input.results) {
+                            return (
+                              <Message from='assistant' key={part.toolCallId}>
+                                <MessageContent className='w-full'>
+                                  <Results chartConfig={output.config} results={input.results} />
+                                </MessageContent>
+                              </Message>
+                            )
                           }
-                          key={`${message.id}-${i}`}
-                        >
-                          <ReasoningTrigger />
-                          <ReasoningContent>{part.text}</ReasoningContent>
-                        </Reasoning>
-                      )
-                    default:
-                      return null
-                  }
-                })}
-              </div>
-            ))}
+                          return null
+                        }
+                        case 'reasoning':
+                          return (
+                            <Reasoning
+                              className='w-full'
+                              isStreaming={
+                                status === 'streaming' &&
+                                i === message.parts.length - 1 &&
+                                message.id === messages.at(-1)?.id
+                              }
+                              key={`${message.id}-${i}`}
+                            >
+                              <ReasoningTrigger />
+                              <ReasoningContent>{part.text}</ReasoningContent>
+                            </Reasoning>
+                          )
+                        default:
+                          return null
+                      }
+                    }),
+                  )}
+                </div>
+              )),
+            )}
             {status === 'submitted' && <Loader />}
           </ConversationContent>
           <ConversationScrollButton />
