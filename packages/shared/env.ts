@@ -56,7 +56,6 @@ const serverEnv = {
   PLANNING_CENTER_SECRET: z.string(),
 
   // AI
-  AI_GATEWAY_API_KEY: z.string(),
   ANTHROPIC_API_KEY: z.string(),
 }
 
@@ -113,7 +112,6 @@ export const env = createEnv({
         PLANNING_CENTER_SECRET: z.string().default(''),
 
         // AI
-        AI_GATEWAY_API_KEY: z.string().default(''),
         ANTHROPIC_API_KEY: z.string().default(''),
       } as unknown as typeof serverEnv)
     : serverEnv,
