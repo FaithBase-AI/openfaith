@@ -11,7 +11,7 @@ import {
 import { SQL, type TransactionSQL } from 'bun'
 import { drizzle } from 'drizzle-orm/bun-sql'
 
-const connection = new SQL({
+export const dbConnection = new SQL({
   database: env.DB_NAME,
   host: env.DB_HOST_PRIMARY,
   password: env.DB_PASSWORD,
@@ -20,7 +20,7 @@ const connection = new SQL({
   user: env.DB_USERNAME,
 })
 
-export const db = drizzle(connection, {
+export const db = drizzle(dbConnection, {
   schema,
 })
 
@@ -47,6 +47,6 @@ class BunSQLTransaction implements DBTransaction<TransactionSQL> {
   }
 }
 
-const zeroDb = new ZQLDatabase(new BunSQLConnection(connection), zSchema)
+const zeroDb = new ZQLDatabase(new BunSQLConnection(dbConnection), zSchema)
 
 export const zeroPushProcessor = new PushProcessor(zeroDb)

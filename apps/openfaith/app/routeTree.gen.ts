@@ -25,6 +25,7 @@ import { Route as MarketingFeaturesRouteImport } from './routes/_marketing/featu
 import { Route as MarketingBlogRouteImport } from './routes/_marketing/blog'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppAiRouteImport } from './routes/_app/ai'
 import { Route as AppGroupRouteRouteImport } from './routes/_app/$group/route'
 import { Route as AppSettingsTeamRouteImport } from './routes/_app/settings/team'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
@@ -39,6 +40,7 @@ import { Route as AppGroupEntityEntityIdRouteImport } from './routes/_app/$group
 import { ServerRoute as ApiSplatServerRouteImport } from './routes/api/$'
 import { ServerRoute as ApiAuthRefreshServerRouteImport } from './routes/api/auth/refresh'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
+import { ServerRoute as ApiAiChatServerRouteImport } from './routes/api/ai/chat'
 
 const rootServerRouteImport = createServerRootRoute()
 
@@ -106,6 +108,11 @@ const AuthSignInRoute = AuthSignInRouteImport.update({
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppAiRoute = AppAiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppGroupRouteRoute = AppGroupRouteRouteImport.update({
@@ -178,9 +185,15 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootServerRouteImport,
 } as any)
+const ApiAiChatServerRoute = ApiAiChatServerRouteImport.update({
+  id: '/api/ai/chat',
+  path: '/api/ai/chat',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/$group': typeof AppGroupRouteRouteWithChildren
+  '/ai': typeof AppAiRoute
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
   '/blog': typeof MarketingBlogRoute
@@ -204,6 +217,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/$group': typeof AppGroupRouteRouteWithChildren
+  '/ai': typeof AppAiRoute
   '/dashboard': typeof AppDashboardRoute
   '/sign-in': typeof AuthSignInRoute
   '/blog': typeof MarketingBlogRoute
@@ -231,6 +245,7 @@ export interface FileRoutesById {
   '/_marketing': typeof MarketingRouteRouteWithChildren
   '/_onboarding': typeof OnboardingRouteRouteWithChildren
   '/_app/$group': typeof AppGroupRouteRouteWithChildren
+  '/_app/ai': typeof AppAiRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_marketing/blog': typeof MarketingBlogRoute
@@ -256,6 +271,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/$group'
+    | '/ai'
     | '/dashboard'
     | '/sign-in'
     | '/blog'
@@ -279,6 +295,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/$group'
+    | '/ai'
     | '/dashboard'
     | '/sign-in'
     | '/blog'
@@ -305,6 +322,7 @@ export interface FileRouteTypes {
     | '/_marketing'
     | '/_onboarding'
     | '/_app/$group'
+    | '/_app/ai'
     | '/_app/dashboard'
     | '/_auth/sign-in'
     | '/_marketing/blog'
@@ -336,30 +354,39 @@ export interface RootRouteChildren {
 }
 export interface FileServerRoutesByFullPath {
   '/api/$': typeof ApiSplatServerRoute
+  '/api/ai/chat': typeof ApiAiChatServerRoute
   '/api/auth/$': typeof ApiAuthSplatServerRoute
   '/api/auth/refresh': typeof ApiAuthRefreshServerRoute
 }
 export interface FileServerRoutesByTo {
   '/api/$': typeof ApiSplatServerRoute
+  '/api/ai/chat': typeof ApiAiChatServerRoute
   '/api/auth/$': typeof ApiAuthSplatServerRoute
   '/api/auth/refresh': typeof ApiAuthRefreshServerRoute
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
   '/api/$': typeof ApiSplatServerRoute
+  '/api/ai/chat': typeof ApiAiChatServerRoute
   '/api/auth/$': typeof ApiAuthSplatServerRoute
   '/api/auth/refresh': typeof ApiAuthRefreshServerRoute
 }
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/$' | '/api/auth/$' | '/api/auth/refresh'
+  fullPaths: '/api/$' | '/api/ai/chat' | '/api/auth/$' | '/api/auth/refresh'
   fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/$' | '/api/auth/$' | '/api/auth/refresh'
-  id: '__root__' | '/api/$' | '/api/auth/$' | '/api/auth/refresh'
+  to: '/api/$' | '/api/ai/chat' | '/api/auth/$' | '/api/auth/refresh'
+  id:
+    | '__root__'
+    | '/api/$'
+    | '/api/ai/chat'
+    | '/api/auth/$'
+    | '/api/auth/refresh'
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
   ApiSplatServerRoute: typeof ApiSplatServerRoute
+  ApiAiChatServerRoute: typeof ApiAiChatServerRoute
   ApiAuthSplatServerRoute: typeof ApiAuthSplatServerRoute
   ApiAuthRefreshServerRoute: typeof ApiAuthRefreshServerRoute
 }
@@ -464,6 +491,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/ai': {
+      id: '/_app/ai'
+      path: '/ai'
+      fullPath: '/ai'
+      preLoaderRoute: typeof AppAiRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_app/$group': {
       id: '/_app/$group'
       path: '/$group'
@@ -566,6 +600,13 @@ declare module '@tanstack/react-start/server' {
       preLoaderRoute: typeof ApiAuthSplatServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
+    '/api/ai/chat': {
+      id: '/api/ai/chat'
+      path: '/api/ai/chat'
+      fullPath: '/api/ai/chat'
+      preLoaderRoute: typeof ApiAiChatServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
   }
 }
 
@@ -596,6 +637,7 @@ const AppGroupRouteRouteWithChildren = AppGroupRouteRoute._addFileChildren(
 
 interface AppRouteRouteChildren {
   AppGroupRouteRoute: typeof AppGroupRouteRouteWithChildren
+  AppAiRoute: typeof AppAiRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppAdminOrgsRoute: typeof AppAdminOrgsRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
@@ -608,6 +650,7 @@ interface AppRouteRouteChildren {
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppGroupRouteRoute: AppGroupRouteRouteWithChildren,
+  AppAiRoute: AppAiRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppAdminOrgsRoute: AppAdminOrgsRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
@@ -680,6 +723,7 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 const rootServerRouteChildren: RootServerRouteChildren = {
   ApiSplatServerRoute: ApiSplatServerRoute,
+  ApiAiChatServerRoute: ApiAiChatServerRoute,
   ApiAuthSplatServerRoute: ApiAuthSplatServerRoute,
   ApiAuthRefreshServerRoute: ApiAuthRefreshServerRoute,
 }

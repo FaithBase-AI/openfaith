@@ -54,6 +54,9 @@ const serverEnv = {
 
   // Planning Center
   PLANNING_CENTER_SECRET: z.string(),
+
+  // AI
+  ANTHROPIC_API_KEY: z.string(),
 }
 
 export const env = createEnv({
@@ -107,6 +110,9 @@ export const env = createEnv({
 
         // Planning Center
         PLANNING_CENTER_SECRET: z.string().default(''),
+
+        // AI
+        ANTHROPIC_API_KEY: z.string().default(''),
       } as unknown as typeof serverEnv)
     : serverEnv,
 

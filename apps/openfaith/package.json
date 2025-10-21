@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "@ai-sdk/anthropic": "catalog:",
+    "@ai-sdk/react": "catalog:",
     "@effect-atom/atom-react": "catalog:",
     "@effect/platform": "catalog:",
     "@effect/rpc": "catalog:",
@@ -29,6 +31,7 @@
     "@tanstack/react-table": "catalog:",
     "@tanstack/react-virtual": "catalog:",
     "@tanstack/router-plugin": "1.131.44",
+    "ai": "catalog:",
     "effect": "catalog:",
     "input-otp": "catalog:",
     "jose": "catalog:",
@@ -42,11 +45,13 @@
     "react-cookie": "8.0.1",
     "react-dom": "catalog:",
     "react-hotkeys-hook": "catalog:",
+    "recharts": "3.3.0",
     "superjson": "catalog:",
     "tailwindcss": "catalog:",
     "tw-animate-css": "1.3.8",
     "use-debounce": "10.0.6",
-    "vite": "7.1.5"
+    "vite": "7.1.5",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@openfaith/bun-test": "workspace:*",
