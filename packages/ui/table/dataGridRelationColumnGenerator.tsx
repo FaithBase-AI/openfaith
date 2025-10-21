@@ -38,7 +38,7 @@ export const generateDataGridRelationColumns = (
 /**
  * Creates the actions column for Data Grid
  */
-export const createDataGridActionsColumn = (config: EntityUiConfig): Array<GridColumn> => {
+export const createDataGridActionsColumn = <T,>(config: EntityUiConfig<T>): Array<GridColumn> => {
   if (config.meta.disableDelete || config.meta.disableEdit) {
     return []
   }
