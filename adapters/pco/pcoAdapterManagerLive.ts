@@ -608,6 +608,16 @@ export const PcoAdapterManagerLive = Layer.effect(
 
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
 
+          if (!('create' in entityClient)) {
+            return yield* Effect.fail(
+              new AdapterEntityNotFoundError({
+                adapter: 'pco',
+                entityType,
+                message: `No create method found for ${entityType}`,
+              }),
+            )
+          }
+
           const createMethod = yield* Option.fromNullable(
             entityClient.create as typeof pcoClient.Person.create,
           ).pipe(
@@ -681,6 +691,16 @@ export const PcoAdapterManagerLive = Layer.effect(
           const { entityType, externalId, internalId, deleteEntity } = params
 
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
+
+          if (!('delete' in entityClient)) {
+            return yield* Effect.fail(
+              new AdapterEntityNotFoundError({
+                adapter: 'pco',
+                entityType,
+                message: `No delete method found for ${entityType}`,
+              }),
+            )
+          }
 
           const deleteMethod = yield* Option.fromNullable(
             entityClient.delete as typeof pcoClient.Person.delete,
@@ -1171,8 +1191,28 @@ export const PcoAdapterManagerLive = Layer.effect(
 
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
 
+          if (!('update' in entityClient)) {
+            return yield* Effect.fail(
+              new AdapterEntityNotFoundError({
+                adapter: 'pco',
+                entityType,
+                message: `No update method found for ${entityType}`,
+              }),
+            )
+          }
+
           const updateMethod = yield* Option.fromNullable(
             entityClient.update as typeof pcoClient.Person.update,
+          ).pipe(
+            Effect.mapError(
+              (error) =>
+                new AdapterEntityNotFoundError({
+                  adapter: 'pco',
+                  cause: error,
+                  entityType,
+                  message: `No update method found for ${entityType}`,
+                }),
+            ),
           )
 
           const transformedData = yield* transformPartialEntityDataE(entityType, data)

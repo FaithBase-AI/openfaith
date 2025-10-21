@@ -12,6 +12,10 @@ import {
 } from '@openfaith/pco/api/pcoApiErrors'
 import { mkPcoEntityManifest } from '@openfaith/pco/api/pcoMkEntityManifest'
 import {
+  getGroupByIdDefinition,
+  listGroupsDefinition,
+} from '@openfaith/pco/modules/groups/pcoGroupEndpoints'
+import {
   createAddressDefinition,
   deleteAddressDefinition,
   getAddressByIdDefinition,
@@ -52,6 +56,10 @@ import {
   listPhoneNumbersDefinition,
   updatePhoneNumberDefinition,
 } from '@openfaith/pco/modules/people/pcoPhoneNumberEndpoints'
+import {
+  getTeamByIdDefinition,
+  listTeamsDefinition,
+} from '@openfaith/pco/modules/services/pcoTeamEndpoints'
 import {
   createWebhookSubscriptionDefinition,
   deleteWebhookSubscriptionDefinition,
@@ -98,6 +106,14 @@ export const pcoEntityManifest = mkPcoEntityManifest({
     createPersonDefinition,
     updatePersonDefinition,
     deletePersonDefinition,
+
+    // Groups
+    listGroupsDefinition,
+    getGroupByIdDefinition,
+
+    // Teams
+    listTeamsDefinition,
+    getTeamByIdDefinition,
 
     // Webhook Subscriptions
     listWebhookSubscriptionsDefinition,

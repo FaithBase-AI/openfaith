@@ -1,8 +1,24 @@
 import { mkPcoEntity } from '@openfaith/pco/modules/pcoBaseSchema'
-import { OfCustomField, OfFieldName } from '@openfaith/schema'
+import { pcoToOf } from '@openfaith/pco/transformer/pcoTransformer'
+import {
+  BaseCircle,
+  Circle,
+  OfCustomField,
+  OfDefaultValueFn,
+  OfEntity,
+  OfFieldName,
+  OfPartialTransformer,
+  OfSkipField,
+  OfTransformer,
+} from '@openfaith/schema'
 import { Schema } from 'effect'
 
 export const PcoTeamAttributes = Schema.Struct({
+  _circle_type: Schema.optional(Schema.Literal('team')).annotations({
+    [OfFieldName]: 'type',
+    [OfSkipField]: true,
+    [OfDefaultValueFn]: () => 'team',
+  }),
   archived_at: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'archivedAt',
     [OfCustomField]: true,
@@ -26,80 +42,96 @@ export const PcoTeamAttributes = Schema.Struct({
     [OfFieldName]: 'lastPlanFrom',
     [OfCustomField]: true,
   }),
-  name: Schema.String.pipe(Schema.minLength(1)).annotations({
+  name: Schema.String.annotations({
     [OfFieldName]: 'name',
   }),
-  rehearsal_team: Schema.Boolean.annotations({
-    [OfFieldName]: 'rehearsalTeam',
-    [OfCustomField]: true,
-  }),
-  schedule_to: Schema.NullOr(Schema.Literal('plan', 'time')).annotations({
+  schedule_to: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'scheduleTo',
     [OfCustomField]: true,
   }),
-  secure_team: Schema.Boolean.annotations({
-    [OfFieldName]: 'secureTeam',
-    [OfCustomField]: true,
-  }),
-  sequence: Schema.Number.annotations({
+  sequence: Schema.NullOr(Schema.Number).annotations({
     [OfFieldName]: 'sequence',
     [OfCustomField]: true,
   }),
-  stage_color: Schema.NullOr(Schema.String).annotations({
-    [OfFieldName]: 'stageColor',
-    [OfCustomField]: true,
-  }),
-  stage_variant: Schema.NullOr(Schema.String).annotations({
-    [OfFieldName]: 'stageVariant',
-    [OfCustomField]: true,
-  }),
-  updated_at: Schema.String.annotations({
+  updated_at: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'updatedAt',
-  }),
-  viewers_see: Schema.Number.annotations({
-    [OfFieldName]: 'viewersSee',
-    [OfCustomField]: true,
   }),
 })
 export type PcoTeamAttributes = typeof PcoTeamAttributes.Type
 
+export const pcoTeamTransformer = pcoToOf(PcoTeamAttributes, BaseCircle, 'circle')
+
+export const pcoTeamPartialTransformer = pcoToOf(
+  Schema.partial(PcoTeamAttributes),
+  Schema.partial(Schema.Struct(BaseCircle.fields)),
+  'circle',
+)
+
 export const PcoTeam = mkPcoEntity({
   attributes: PcoTeamAttributes,
   links: Schema.Struct({
-    people: Schema.optional(Schema.NullOr(Schema.String)),
-    person_team_position_assignments: Schema.optional(Schema.NullOr(Schema.String)),
     self: Schema.String,
-    service_types: Schema.optional(Schema.NullOr(Schema.String)),
-    team_leaders: Schema.optional(Schema.NullOr(Schema.String)),
-    team_positions: Schema.optional(Schema.NullOr(Schema.String)),
   }),
   relationships: Schema.Struct({
     default_responds_to: Schema.Struct({
-      data: Schema.NullOr(
-        Schema.Struct({
-          id: Schema.String,
-          type: Schema.Literal('Person'),
-        }),
-      ),
+      data: Schema.Struct({
+        id: Schema.String,
+        type: Schema.Literal('Person'),
+      }),
     }),
+    people: Schema.optional(
+      Schema.Struct({
+        data: Schema.Array(
+          Schema.Struct({
+            id: Schema.String,
+            type: Schema.Literal('Person'),
+          }),
+        ),
+      }),
+    ),
+    person_team_position_assignments: Schema.optional(
+      Schema.Struct({
+        data: Schema.Array(
+          Schema.Struct({
+            id: Schema.String,
+            type: Schema.Literal('PersonTeamPositionAssignment'),
+          }),
+        ),
+      }),
+    ),
     service_type: Schema.Struct({
-      data: Schema.NullOr(
-        Schema.Struct({
-          id: Schema.String,
-          type: Schema.Literal('ServiceType'),
-        }),
-      ),
+      data: Schema.Struct({
+        id: Schema.String,
+        type: Schema.Literal('ServiceType'),
+      }),
     }),
-    service_types: Schema.Struct({
-      data: Schema.NullOr(
-        Schema.Struct({
-          id: Schema.String,
-          type: Schema.Literal('ServiceType'),
-        }),
-      ),
-    }),
+    team_leaders: Schema.optional(
+      Schema.Struct({
+        data: Schema.Array(
+          Schema.Struct({
+            id: Schema.String,
+            type: Schema.Literal('TeamLeader'),
+          }),
+        ),
+      }),
+    ),
+    team_positions: Schema.optional(
+      Schema.Struct({
+        data: Schema.Array(
+          Schema.Struct({
+            id: Schema.String,
+            type: Schema.Literal('TeamPosition'),
+          }),
+        ),
+      }),
+    ),
   }),
   type: 'Team',
+}).annotations({
+  [OfEntity]: Circle,
+  title: 'pco-team',
+  [OfTransformer]: pcoTeamTransformer,
+  [OfPartialTransformer]: pcoTeamPartialTransformer,
 })
 export type PcoTeamSchema = typeof PcoTeam
 export type PcoTeam = typeof PcoTeam.Type
