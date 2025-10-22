@@ -473,7 +473,11 @@ export const enrichMutationData = Effect.fn('enrichMutationData')(function* (par
       const result = yield* Schema.decodeUnknown(
         Schema.Array(
           getZeroMutationSchema(
-            pipe(getUpdateSchema(schema), Schema.extend(Schema.Struct({ orgId: Schema.String }))),
+            pipe(
+              getUpdateSchema(schema),
+              Schema.omit('orgId'),
+              Schema.extend(Schema.Struct({ orgId: Schema.String })),
+            ),
           ),
         ),
         {
@@ -543,7 +547,11 @@ export const validateMutationData = Effect.fn('validateMutationData')(function* 
       const result = yield* Schema.decodeUnknown(
         Schema.Array(
           getZeroMutationSchema(
-            pipe(getUpdateSchema(schema), Schema.extend(Schema.Struct({ orgId: Schema.String }))),
+            pipe(
+              getUpdateSchema(schema),
+              Schema.omit('orgId'),
+              Schema.extend(Schema.Struct({ orgId: Schema.String })),
+            ),
           ),
         ),
         {
