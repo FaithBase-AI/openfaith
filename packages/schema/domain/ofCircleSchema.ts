@@ -1,4 +1,5 @@
-import { type FieldConfig, OfUiConfig } from '@openfaith/schema/shared/schema'
+import { circlesTable } from '@openfaith/db'
+import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
 import { BaseIdentifiedEntity, BaseSystemFields } from '@openfaith/schema/shared/systemSchema'
 import { Schema } from 'effect'
 
@@ -56,6 +57,7 @@ export class BaseCircle extends BaseSystemFields.extend<BaseCircle>('BaseCircle'
 export class Circle extends BaseCircle.extend<Circle>('Circle')(BaseIdentifiedEntity.fields, [
   {
     title: 'circle',
+    [OfTable]: circlesTable,
     [OfUiConfig]: {
       navigation: {
         description: 'Manage groups and teams of people',

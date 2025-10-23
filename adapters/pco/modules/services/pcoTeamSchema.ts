@@ -13,10 +13,6 @@ import {
 import { Schema } from 'effect'
 
 export const PcoTeamAttributes = Schema.Struct({
-  _circle_type: Schema.optional(Schema.Literal('team')).annotations({
-    [OfFieldName]: 'type',
-    [OfDefaultValueFn]: () => 'team',
-  }),
   archived_at: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'archivedAt',
     [OfCustomField]: true,
@@ -50,6 +46,13 @@ export const PcoTeamAttributes = Schema.Struct({
   sequence: Schema.NullOr(Schema.Number).annotations({
     [OfFieldName]: 'sequence',
     [OfCustomField]: true,
+  }),
+  type: Schema.transform(Schema.Any, Schema.Literal('team'), {
+    decode: () => 'team' as const,
+    encode: () => 'team' as const,
+  }).annotations({
+    [OfFieldName]: 'type',
+    [OfDefaultValueFn]: () => 'team',
   }),
   updated_at: Schema.NullOr(Schema.String).annotations({
     [OfFieldName]: 'updatedAt',

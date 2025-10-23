@@ -251,14 +251,26 @@ export const pcoToOf = <From extends Schema.Schema.Any, To extends Schema.Schema
             field.ast as SchemaAST.Annotated,
           ).pipe(Option.getOrElse(() => false))
 
+          // Try to get the default value function annotation first
+          const defaultValueFnOpt = SchemaAST.getAnnotation<(obj: any) => unknown>(
+            OfDefaultValueFn,
+          )(field.ast as SchemaAST.Annotated)
+
           const type = getUnderlyingType(field.ast as SchemaAST.AST)
 
-          if (type === 'unknown' || skipField) {
+          // Skip fields with unknown type UNLESS they have a default value function
+          if (skipField || (type === 'unknown' && defaultValueFnOpt._tag === 'None')) {
             return Option.none()
           }
 
-          const value =
-            key in (fromItem as any) ? Option.some((fromItem as any)[key]) : Option.none()
+          const value = pipe(
+            key in (fromItem as any)
+              ? Option.some((fromItem as any)[key])
+              : pipe(
+                  defaultValueFnOpt,
+                  Option.map((fn) => fn(fromItem)),
+                ),
+          )
 
           return pipe(
             value,
@@ -270,8 +282,23 @@ export const pcoToOf = <From extends Schema.Schema.Any, To extends Schema.Schema
                     customField,
                     Boolean.match<FieldShape<typeof x>>({
                       onFalse: () => [y, x],
-                      onTrue: () =>
-                        mkCustomField(type, `pco_${key}`, x as string | number | boolean, 'pco'),
+                      onTrue: () => {
+                        // For custom fields, infer type from value if underlying type is unknown
+                        const effectiveType =
+                          type === 'unknown'
+                            ? typeof x === 'number'
+                              ? 'number'
+                              : typeof x === 'boolean'
+                                ? 'boolean'
+                                : 'string'
+                            : type
+                        return mkCustomField(
+                          effectiveType,
+                          `pco_${key}`,
+                          x as string | number | boolean,
+                          'pco',
+                        )
+                      },
                     }),
                   ),
                 ),

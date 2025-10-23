@@ -78,7 +78,7 @@ export const getBaseEntitiesQuery = (z: ReturnType<typeof useZero>, entityName: 
       }
     }
 
-    return baseQuery
+    return baseQuery as any
   }).pipe(Effect.runSync)
 }
 export const getBaseEntityQuery = (

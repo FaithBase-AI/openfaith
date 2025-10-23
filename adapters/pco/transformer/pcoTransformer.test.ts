@@ -10,6 +10,7 @@ import {
   BasePerson,
   CustomFieldSchema,
   OfCustomField,
+  OfDefaultValueFn,
   OfFieldName,
   OfSkipField,
 } from '@openfaith/schema'
@@ -896,6 +897,50 @@ effect('pcoToOf encode: preserves existing custom field values', () =>
       count: 0,
       name: 'Test',
     })
+  }),
+)
+
+effect('pcoToOf: Schema.transform with OfDefaultValueFn when field missing from input', () =>
+  Effect.gen(function* () {
+    // Test schema simulating the Team scenario:
+    // - Input data doesn't have a 'type' field
+    // - Schema defines 'type' as a transform that always returns 'team'
+    // - Has OfDefaultValueFn annotation
+    const PcoWithTransform = Schema.Struct({
+      name: Schema.String.annotations({
+        [OfFieldName]: 'name',
+      }),
+      type: Schema.transform(Schema.Any, Schema.Literal('team'), {
+        decode: () => 'team' as const,
+        encode: () => 'team' as const,
+      }).annotations({
+        [OfFieldName]: 'type',
+        [OfDefaultValueFn]: () => 'team',
+      }),
+    })
+
+    const OfWithType = Schema.Struct({
+      customFields: Schema.Array(CustomFieldSchema),
+      name: Schema.String,
+      type: Schema.String,
+    })
+
+    const transformer = pcoToOf(PcoWithTransform, OfWithType, 'test')
+
+    // Input data does NOT have a 'type' field - cast as any to bypass type checking
+    const inputData = {
+      name: 'Test Team',
+    } as any
+
+    console.log('Input data:', JSON.stringify(inputData, null, 2))
+
+    const result = Schema.decodeSync(transformer)(inputData)
+
+    console.log('Decoded result:', JSON.stringify(result, null, 2))
+
+    // The 'type' field should be 'team', not 'default'
+    expect(result.type).toBe('team')
+    expect(result.name).toBe('Test Team')
   }),
 )
 
