@@ -55,6 +55,7 @@ export class BaseCircle extends BaseSystemFields.extend<BaseCircle>('BaseCircle'
 
 export class Circle extends BaseCircle.extend<Circle>('Circle')(BaseIdentifiedEntity.fields, [
   {
+    title: 'circle',
     [OfUiConfig]: {
       navigation: {
         description: 'Manage groups and teams of people',
@@ -65,6 +66,5 @@ export class Circle extends BaseCircle.extend<Circle>('Circle')(BaseIdentifiedEn
         title: 'Circles',
       },
     } satisfies FieldConfig,
-    title: 'Circle',
   },
 ]) {}
