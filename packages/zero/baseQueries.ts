@@ -43,33 +43,41 @@ export const getBaseEntitiesQuery = (z: ReturnType<typeof useZero>, entityName: 
     }
 
     // Filter out soft deleted items for now
-    // @ts-expect-error - this is the way
-    const baseQuery = z.query[entityName as keyof typeof z.query].where('deletedAt', 'IS', null)
+    const baseQuery = z.query[entityName as keyof typeof z.query]
 
     // Try to access the schema from the query object to check for relationships
     const queryWithSchema = baseQuery as any
 
     // Check if this entity has sourceEdges/targetEdges relationships in the schema
     const entityRelationships = (schema?.relationships as any)?.[entityName]
+    const entityTable = (schema?.tables as any)?.[entityName]
+
+    // You need to check everything on the entity that we want to filter or join automatically. If we try and filter /
+    // join a value that isn't there, it crashes.
     const hasSourceEdges = entityRelationships?.sourceEdges
     const hasTargetEdges = entityRelationships?.targetEdges
+    const hasDeletedAt = entityTable?.columns?.deletedAt
+
+    if (hasDeletedAt) {
+      // Filter out deleted items
+      queryWithSchema.where('deletedAt', 'IS', null)
+    }
 
     if (hasSourceEdges && hasTargetEdges) {
       // Add both edge relationships
-      return queryWithSchema.related('sourceEdges').related('targetEdges')
+      queryWithSchema.related('sourceEdges').related('targetEdges')
+    } else {
+      if (hasSourceEdges) {
+        // Add only sourceEdges relationship
+        queryWithSchema.related('sourceEdges')
+      }
+
+      if (hasTargetEdges) {
+        // Add only targetEdges relationship
+        queryWithSchema.related('targetEdges')
+      }
     }
 
-    if (hasSourceEdges) {
-      // Add only sourceEdges relationship
-      return queryWithSchema.related('sourceEdges')
-    }
-
-    if (hasTargetEdges) {
-      // Add only targetEdges relationship
-      return queryWithSchema.related('targetEdges')
-    }
-
-    // Return base query for entities without edge relationships
     return baseQuery
   }).pipe(Effect.runSync)
 }
