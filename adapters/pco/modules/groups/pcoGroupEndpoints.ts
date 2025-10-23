@@ -20,6 +20,7 @@ export const listGroupsDefinition = pcoApiAdapter({
     fields: ['name'],
     special: ['archive_status'],
   },
+  skipSync: true,
 } as const)
 
 export const getGroupByIdDefinition = pcoApiAdapter({

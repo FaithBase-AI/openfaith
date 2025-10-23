@@ -18,7 +18,7 @@ export class BaseCircle extends BaseSystemFields.extend<BaseCircle>('BaseCircle'
         width: 60,
       },
     },
-  }).pipe(Schema.NullOr),
+  }).pipe(Schema.NullOr, Schema.optional),
   description: Schema.String.annotations({
     description: "Optional longer description of the circle's purpose and activities",
     [OfUiConfig]: {
@@ -27,7 +27,7 @@ export class BaseCircle extends BaseSystemFields.extend<BaseCircle>('BaseCircle'
         sortable: true,
       },
     },
-  }).pipe(Schema.NullOr),
+  }).pipe(Schema.NullOr, Schema.optional),
   name: Schema.String.annotations({
     description: 'The display name of the circle',
     [OfUiConfig]: {

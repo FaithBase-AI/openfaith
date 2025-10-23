@@ -4,7 +4,7 @@ import { PcoTeam } from '@openfaith/pco/modules/services/pcoTeamSchema'
 export const listTeamsDefinition = pcoApiAdapter({
   apiSchema: PcoTeam,
   defaultQuery: {
-    include: ['people'],
+    include: [],
     order: 'created_at',
     per_page: 100,
   },

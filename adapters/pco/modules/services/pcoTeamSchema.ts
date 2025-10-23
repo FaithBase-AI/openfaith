@@ -8,7 +8,6 @@ import {
   OfEntity,
   OfFieldName,
   OfPartialTransformer,
-  OfSkipField,
   OfTransformer,
 } from '@openfaith/schema'
 import { Schema } from 'effect'
@@ -16,7 +15,6 @@ import { Schema } from 'effect'
 export const PcoTeamAttributes = Schema.Struct({
   _circle_type: Schema.optional(Schema.Literal('team')).annotations({
     [OfFieldName]: 'type',
-    [OfSkipField]: true,
     [OfDefaultValueFn]: () => 'team',
   }),
   archived_at: Schema.NullOr(Schema.String).annotations({
