@@ -35,6 +35,7 @@ import type {
 import { pcoEntityManifest } from '@openfaith/pco/server'
 import {
   getAnnotationFromSchema,
+  getSchemaByEntityType,
   OfEntity,
   OfPartialTransformer,
   OfSkipEntity,
@@ -1438,6 +1439,13 @@ const extractRelationshipsEnhanced = (params: {
               relationshipAnnotations,
               Record.toEntries,
               Array.forEach(([relKey, targetType]) => {
+                // Check if target entity type is supported in OpenFaith
+                const targetSchemaOpt = getSchemaByEntityType(targetType)
+                if (Option.isNone(targetSchemaOpt)) {
+                  // Skip this relationship - target entity not supported in OpenFaith
+                  return
+                }
+
                 const relData = entity.relationships?.[relKey]?.data
                 if (relData?.id) {
                   const hasLink = pipe(externalLinkMap, HashMap.has(relData.id))
@@ -1631,6 +1639,13 @@ const extractRelationships = (params: {
                 relationshipAnnotations,
                 Record.toEntries,
                 Array.filterMap(([relKey, targetType]) => {
+                  // Check if target entity type is supported in OpenFaith
+                  const targetSchemaOpt = getSchemaByEntityType(targetType)
+                  if (Option.isNone(targetSchemaOpt)) {
+                    // Skip this relationship - target entity not supported in OpenFaith
+                    return Option.none()
+                  }
+
                   return pipe(
                     entity.relationships,
                     Option.fromNullable,
