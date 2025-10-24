@@ -9,7 +9,7 @@ import {
   OfRelations,
   type RelationConfig,
 } from '@openfaith/schema'
-import { mkZeroTableName, nullOp, pluralize, singularize } from '@openfaith/shared'
+import { mkZeroTableName, nullOp, singularize } from '@openfaith/shared'
 import { CircleIcon } from '@openfaith/ui/icons/circleIcon'
 import { useStableMemo } from '@openfaith/ui/shared/hooks/memo'
 import { useFilterQuery } from '@openfaith/ui/shared/hooks/useFilterQuery'
@@ -76,14 +76,16 @@ export const loadAllEntityIcons = Effect.fn('loadAllEntityIcons')(function* (
 
   const iconPairs = yield* pipe(
     entities,
-    Array.map((entity) =>
-      pipe(
-        getIconComponent(entity.navItem.iconName),
+    Array.map((entity) => {
+      const iconName = entity.navConfig.icon || entity.tag
+
+      return pipe(
+        getIconComponent(iconName),
         Effect.map((IconComponent) => {
-          return [entity.tag, IconComponent] as const
+          return [iconName, IconComponent] as const
         }),
-      ),
-    ),
+      )
+    }),
     Effect.all,
   )
 
@@ -172,7 +174,7 @@ export const useEntityRegistry = () => {
         Array.filterMap((cached) =>
           pipe(
             discoveredEntities,
-            Array.findFirst((e) => e.tag === cached.tag),
+            Array.findFirst((e) => e.tag === cached.tag && e.navConfig.title === cached.title),
           ),
         ),
       )
@@ -227,10 +229,7 @@ export const useEntityRegistry = () => {
     () =>
       pipe(
         entities,
-        Array.map((e) => {
-          const urlParam = pipe(e.tag, String.toLowerCase, pluralize)
-          return [urlParam, e] as const
-        }),
+        Array.map((e) => [e.navItem.url, e] as const),
         HashMap.fromIterable,
       ),
     [entities],
@@ -243,11 +242,7 @@ export const useEntityRegistry = () => {
     module: string,
     entityParam: string,
   ): Option.Option<EntityUiConfig> =>
-    pipe(
-      entityByUrlParam,
-      HashMap.get(entityParam),
-      Option.filter((e) => e.navConfig.module === module),
-    )
+    pipe(entityByUrlParam, HashMap.get(`/${module}/${entityParam}`))
 
   const getEntitySchema = (tag: string) =>
     pipe(
@@ -256,10 +251,10 @@ export const useEntityRegistry = () => {
       Option.map((e) => e.schema),
     )
 
-  const getEntityIcon = (tag: string): ComponentType =>
+  const getEntityIcon = <T>(entity: EntityUiConfig<T>): ComponentType =>
     pipe(
       iconComponents,
-      HashMap.get(tag),
+      HashMap.get(entity.navConfig.icon || entity.tag),
       Option.getOrElse(() => CircleIcon),
     )
 

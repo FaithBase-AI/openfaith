@@ -28,6 +28,26 @@ export type OfFolderAnnotation = {
   folderType: string
 }
 
+export type Navigation = {
+  enabled: boolean
+  title: string
+  icon?: string
+  url?: string
+  module:
+    | 'directory'
+    | 'domain'
+    | 'collection'
+    | 'schedule'
+    | 'giving'
+    | 'circles'
+    | 'management'
+    | 'drive'
+    | 'system'
+    | 'external'
+  order?: number
+  description?: string
+}
+
 export interface FieldConfig {
   field?: {
     type?:
@@ -83,24 +103,7 @@ export interface FieldConfig {
     order?: number
     readonly?: boolean
   }
-  navigation?: {
-    enabled: boolean
-    title: string
-    icon?: string
-    url?: string
-    module:
-      | 'directory'
-      | 'domain'
-      | 'collection'
-      | 'schedule'
-      | 'giving'
-      | 'management'
-      | 'drive'
-      | 'system'
-      | 'external'
-    order?: number
-    description?: string
-  }
+  navigation?: Navigation | Array<Navigation>
 
   meta?: {
     disableCreate?: boolean

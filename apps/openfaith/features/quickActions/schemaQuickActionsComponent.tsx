@@ -28,7 +28,7 @@ export const SchemaQuickActions: FC<SchemaQuickActionsProps> = () => {
             entityType={quickAction.tag}
             iconComponents={iconComponents}
             isOpen={getIsOpen(quickAction.quickActionKey)}
-            key={quickAction.quickActionKey}
+            key={`create-${quickAction.tag}-${quickAction.navConfig.title}`}
             onOpenChange={(isOpen) => setIsOpen(quickAction.quickActionKey, isOpen)}
             quickAction={quickAction}
           />
@@ -40,7 +40,7 @@ export const SchemaQuickActions: FC<SchemaQuickActionsProps> = () => {
         quickActions,
         Array.map((quickAction) => {
           const editState = getEditState(quickAction.tag)
-          const editKey = `edit${quickAction.tag}`
+          const editKey = `edit-${quickAction.tag}-${quickAction.navConfig.title}`
 
           return (
             <UniversalQuickAction

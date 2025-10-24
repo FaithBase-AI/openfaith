@@ -1,5 +1,10 @@
 import * as OfSchemas from '@openfaith/schema'
-import { type FieldConfig, OfTable, OfUiConfig } from '@openfaith/schema/shared/schema'
+import {
+  type FieldConfig,
+  type Navigation,
+  OfTable,
+  OfUiConfig,
+} from '@openfaith/schema/shared/schema'
 import { pluralize } from '@openfaith/shared'
 import { Array, Option, Order, pipe, Record, Schema, SchemaAST, String } from 'effect'
 
@@ -102,7 +107,7 @@ export const getSchemaByEntityType = (
 export interface EntityUiConfig<T = { id: string } & Record<string, any>> {
   schema: Schema.Schema<T>
   tag: string
-  navConfig: NonNullable<FieldConfig['navigation']>
+  navConfig: Navigation
   navItem: {
     iconName?: string
     title: string
@@ -121,51 +126,53 @@ export const discoverUiEntities = (): Array<EntityUiConfig> => {
 
   return pipe(
     entitySchemas,
-    Array.filterMap((entitySchema) => {
+    Array.map((entitySchema) => {
       const uiConfigOpt = getAnnotationFromSchema<FieldConfig>(OfUiConfig, entitySchema.schema.ast)
-      const navConfigOpt = pipe(
+
+      return pipe(
         uiConfigOpt,
         Option.flatMap((config) => Option.fromNullable(config.navigation)),
-        Option.filter((navConfig) => navConfig.enabled),
-      )
+        Option.map(Array.ensure),
+        Option.getOrElse((): Array<Navigation> => []),
+        Array.filterMap((navConfig) => {
+          if (!navConfig.enabled) {
+            return Option.none()
+          }
 
-      const meta = pipe(
-        uiConfigOpt,
-        Option.flatMap((config) => Option.fromNullable(config.meta)),
-        Option.getOrElse(() => ({
-          disableCreate: false,
-          disableDelete: false,
-          disableEdit: false,
-        })),
-        (x) => ({
-          disableCreate: x.disableCreate || false,
-          disableDelete: x.disableDelete || false,
-          disableEdit: x.disableEdit || false,
+          const meta = pipe(
+            uiConfigOpt,
+            Option.flatMap((config) => Option.fromNullable(config.meta)),
+            Option.getOrElse(() => ({
+              disableCreate: false,
+              disableDelete: false,
+              disableEdit: false,
+            })),
+            (x) => ({
+              disableCreate: x.disableCreate || false,
+              disableDelete: x.disableDelete || false,
+              disableEdit: x.disableEdit || false,
+            }),
+          )
+
+          const navItem = {
+            iconName: navConfig.icon,
+            title: navConfig.title,
+            url:
+              navConfig.url ||
+              `/${navConfig.module}/${pluralize(pipe(entitySchema.tag, String.toLowerCase))}`,
+          }
+
+          return Option.some({
+            meta,
+            navConfig,
+            navItem,
+            schema: entitySchema.schema,
+            tag: entitySchema.tag,
+          })
         }),
       )
-
-      if (Option.isNone(navConfigOpt)) {
-        return Option.none()
-      }
-
-      const navConfig = navConfigOpt.value
-
-      const navItem = {
-        iconName: navConfig.icon,
-        title: navConfig.title,
-        url:
-          navConfig.url ||
-          `/${navConfig.module}/${pluralize(pipe(entitySchema.tag, String.toLowerCase))}`,
-      }
-
-      return Option.some({
-        meta,
-        navConfig,
-        navItem,
-        schema: entitySchema.schema,
-        tag: entitySchema.tag,
-      })
     }),
+    Array.flatten,
     Array.sort(Order.mapInput(Order.number, (item: EntityUiConfig) => item.navConfig.order ?? 999)),
   )
 }

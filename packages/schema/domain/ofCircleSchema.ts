@@ -59,14 +59,26 @@ export class Circle extends BaseCircle.extend<Circle>('Circle')(BaseIdentifiedEn
     title: 'circle',
     [OfTable]: circlesTable,
     [OfUiConfig]: {
-      navigation: {
-        description: 'Manage groups and teams of people',
-        enabled: true,
-        icon: 'usersIcon',
-        module: 'domain',
-        order: 1,
-        title: 'Circles',
-      },
+      navigation: [
+        {
+          description: 'Manage teams of people',
+          enabled: true,
+          icon: 'teamIcon',
+          module: 'circles',
+          order: 2,
+          title: 'Teams',
+          url: '/circles/teams',
+        },
+        {
+          description: 'Manage groups of people',
+          enabled: true,
+          icon: 'groupIcon',
+          module: 'circles',
+          order: 2,
+          title: 'Groups',
+          url: '/circles/groups',
+        },
+      ],
     } satisfies FieldConfig,
   },
 ]) {}
