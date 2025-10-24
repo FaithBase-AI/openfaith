@@ -606,8 +606,11 @@ const decodeSchemaCollection = <T>(
 /*
  * Hook that provides collection data for a given schema using Zero queries with filtering support
  */
-export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> }) => {
-  const { schema } = params
+export const useSchemaCollection = <T>(params: {
+  schema: SchemaType.Schema<T>
+  filter?: (query: any) => any
+}) => {
+  const { schema, filter } = params
 
   const entityTagOpt = extractEntityTagOpt(schema.ast)
 
@@ -620,7 +623,9 @@ export const useSchemaCollection = <T>(params: { schema: SchemaType.Schema<T> })
   )
 
   const queryFn = (z: ReturnType<typeof useZero>) => {
-    return buildSchemaCollectionQuery(schema, z)
+    const baseQuery = buildSchemaCollectionQuery(schema, z)
+
+    return filter ? filter(baseQuery) : baseQuery
   }
 
   const { info, limit, nextPage, pageSize, result } = useFilterQuery({

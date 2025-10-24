@@ -46,6 +46,7 @@ export type Navigation = {
     | 'external'
   order?: number
   description?: string
+  filter?: (query: any) => any
 }
 
 export interface FieldConfig {

@@ -63,6 +63,7 @@ export class Circle extends BaseCircle.extend<Circle>('Circle')(BaseIdentifiedEn
         {
           description: 'Manage teams of people',
           enabled: true,
+          filter: (query) => query.where('type', 'team'),
           icon: 'teamIcon',
           module: 'circles',
           order: 2,
@@ -72,6 +73,7 @@ export class Circle extends BaseCircle.extend<Circle>('Circle')(BaseIdentifiedEn
         {
           description: 'Manage groups of people',
           enabled: true,
+          filter: (query) => query.where('type', 'group'),
           icon: 'groupIcon',
           module: 'circles',
           order: 2,

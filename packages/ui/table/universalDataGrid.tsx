@@ -77,7 +77,10 @@ export const UniversalDataGrid = <T extends { id: string }>(
     return extractEntityInfo(schema)
   }, [schema])
 
-  const { collection, nextPage, loading, pageSize } = useSchemaCollection({ schema })
+  const { collection, nextPage, loading, pageSize } = useSchemaCollection({
+    filter: config.navConfig.filter,
+    schema,
+  })
 
   const [showMenu, setShowMenu] = useState<
     | {
