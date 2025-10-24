@@ -457,10 +457,7 @@ export const mkPcoEntityManifest = <
                         Option.flatMap(Record.get(include)),
                         Option.getOrElse(() =>
                           Schema.Struct({
-                            attributes: Schema.Struct({
-                              // We know at a minimum that we have an `id`.
-                              id: Schema.String,
-                            }),
+                            attributes: Schema.Any,
                             type: Schema.Literal(mkEntityName(include)),
                           }),
                         ),
