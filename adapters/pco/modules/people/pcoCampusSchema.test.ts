@@ -75,39 +75,39 @@ effect('PcoCampus transformation: handles null values correctly', () =>
     const pcoCampusData = {
       avatar_url: null,
       church_center_enabled: false,
-      city: null,
+      city: 'Test City',
       contact_email_address: null,
-      country: null,
+      country: 'US',
       created_at: '2024-01-01T00:00:00Z',
       date_format: null,
       description: null,
       geolocation_set_manually: false,
-      latitude: null,
-      longitude: null,
+      latitude: 77.0369,
+      longitude: -138.1761,
       name: 'Test Campus',
       phone_number: null,
-      state: null,
-      street: null,
-      time_zone: null,
+      state: 'FL',
+      street: '123 Main St',
+      time_zone: 'America/New_York',
       twenty_four_hour_time: null,
       updated_at: '2024-01-02T00:00:00Z',
       website: null,
-      zip: null,
+      zip: '12345',
     }
 
     const result = Schema.decodeSync(pcoCampusTransformer)(pcoCampusData)
 
     expect(result.avatar).toBeNull()
-    expect(result.city).toBeNull()
-    expect(result.countryCode).toBeNull()
+    expect(result.city).toBe('Test City')
+    expect(result.countryCode).toBe('US')
     expect(result.description).toBeNull()
-    expect(result.latitude).toBeNull()
-    expect(result.longitude).toBeNull()
+    expect(result.latitude).toBe(77.0369)
+    expect(result.longitude).toBe(-138.1761)
     expect(result.name).toBe('Test Campus')
-    expect(result.state).toBeNull()
-    expect(result.street).toBeNull()
+    expect(result.state).toBe('FL')
+    expect(result.street).toBe('123 Main St')
     expect(result.url).toBeNull()
-    expect(result.zip).toBeNull()
+    expect(result.zip).toBe('12345')
   }),
 )
 

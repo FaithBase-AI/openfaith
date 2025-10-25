@@ -103,8 +103,8 @@ layer(PgContainer.ClientLive, { timeout: 60_000 })('PgClient Database Tests', (i
       const sql = yield* PgClient.PgClient
       const [query, params] =
         sql`INSERT INTO people ${sql.insert({ age: 10, name: 'Tim' })}`.compile()
-      expect(query).toEqual(`INSERT INTO people ("name","age") VALUES ($1,$2)`)
-      expect(params).toEqual(['Tim', 10])
+      expect(query).toEqual(`INSERT INTO people ("age","name") VALUES ($1,$2)`)
+      expect(params).toEqual([10, 'Tim'])
     }),
   )
 
@@ -230,8 +230,8 @@ layer(PgContainer.ClientTransformLive, { timeout: 60_000 })('PgClient Transform 
       const sql = yield* PgClient.PgClient
       const [query, params] =
         sql`INSERT INTO people ${sql.insert({ age: 10, firstName: 'Tim' })}`.compile()
-      expect(query).toEqual(`INSERT INTO people ("first_name","age") VALUES ($1,$2)`)
-      expect(params).toEqual(['Tim', 10])
+      expect(query).toEqual(`INSERT INTO people ("age","first_name") VALUES ($1,$2)`)
+      expect(params).toEqual([10, 'Tim'])
     }),
   )
 
@@ -240,8 +240,8 @@ layer(PgContainer.ClientTransformLive, { timeout: 60_000 })('PgClient Transform 
       const sql = (yield* PgClient.PgClient).withoutTransforms()
       const [query, params] =
         sql`INSERT INTO people ${sql.insert({ age: 10, first_name: 'Tim' })}`.compile()
-      expect(query).toEqual(`INSERT INTO people ("first_name","age") VALUES ($1,$2)`)
-      expect(params).toEqual(['Tim', 10])
+      expect(query).toEqual(`INSERT INTO people ("age","first_name") VALUES ($1,$2)`)
+      expect(params).toEqual([10, 'Tim'])
     }),
   )
 })

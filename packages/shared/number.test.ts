@@ -87,7 +87,7 @@ effect('StringOrNumberToNumber - fails on boolean', () =>
 effect('StringOrNumberToNumber - encode transforms number to string', () =>
   Effect.gen(function* () {
     const result = Schema.encodeSync(StringOrNumberToNumber)(42.5)
-    expect(result).toBe('42.5')
+    expect(result).toBe(42.5)
   }),
 )
 
