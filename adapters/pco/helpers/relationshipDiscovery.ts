@@ -1,4 +1,4 @@
-import * as PcoSchemas from '@openfaith/pco/server'
+import * as PcoSchemas from '@openfaith/pco/schemas'
 import { extractEntityName, getAnnotationFromSchema, OfEntity } from '@openfaith/schema'
 import { Array, Option, pipe, Record, Schema, type SchemaAST } from 'effect'
 

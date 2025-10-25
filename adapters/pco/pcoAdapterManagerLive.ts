@@ -20,6 +20,7 @@ import {
 } from '@openfaith/adapter-core/server'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import type { PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
+import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import {
   getEntitySchemaOpt,
   getOfEntityFilterFnForPcoSchemaOpt,
@@ -32,7 +33,6 @@ import type {
   pcoPersonPartialTransformer,
   pcoPersonTransformer,
 } from '@openfaith/pco/modules/people/pcoPersonSchema'
-import { pcoEntityManifest } from '@openfaith/pco/server'
 import {
   getAnnotationFromSchema,
   getSchemaByEntityType,
