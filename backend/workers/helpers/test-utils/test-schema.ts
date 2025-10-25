@@ -163,6 +163,31 @@ export const createTestTables = Effect.gen(function* () {
   `
 
   yield* sql`
+    CREATE TABLE IF NOT EXISTS "openfaith_emails" (
+      "_tag" text DEFAULT 'email' NOT NULL,
+      "id" text PRIMARY KEY NOT NULL,
+      "orgId" text NOT NULL,
+      "createdAt" timestamp DEFAULT now() NOT NULL,
+      "updatedAt" timestamp DEFAULT now() NOT NULL,
+      "deletedAt" timestamp,
+      "deletedBy" text,
+      "createdBy" text,
+      "updatedBy" text,
+      "inactivatedAt" timestamp,
+      "inactivatedBy" text,
+      "address" text,
+      "blocked" boolean DEFAULT false NOT NULL,
+      "customFields" jsonb DEFAULT '[]',
+      "externalIds" jsonb DEFAULT '[]',
+      "location" text,
+      "primary" boolean DEFAULT false NOT NULL,
+      "status" text DEFAULT 'active' NOT NULL,
+      "tags" jsonb DEFAULT '[]',
+      "type" text DEFAULT 'default'
+    )
+  `
+
+  yield* sql`
     CREATE TABLE IF NOT EXISTS "openfaith_campuses" (
       "_tag" text DEFAULT 'campus' NOT NULL,
       "id" text PRIMARY KEY NOT NULL,
@@ -185,10 +210,10 @@ export const createTestTables = Effect.gen(function* () {
     CREATE TABLE IF NOT EXISTS "openfaith_entityRelationships" (
       "_tag" text DEFAULT 'entityRelationships' NOT NULL,
       "orgId" text NOT NULL,
-      "sourceEntityType" text NOT NULL,
-      "targetEntityTypes" jsonb DEFAULT '[]' NOT NULL,
+      "entityTypeTag" text NOT NULL,
+      "relatedEntityTypeTags" jsonb DEFAULT '[]' NOT NULL,
       "updatedAt" timestamp DEFAULT now() NOT NULL,
-      UNIQUE("orgId", "sourceEntityType")
+      UNIQUE("orgId", "entityTypeTag")
     )
   `
 })
