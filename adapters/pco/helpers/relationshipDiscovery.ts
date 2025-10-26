@@ -1,5 +1,10 @@
 import * as PcoSchemas from '@openfaith/pco/schemas'
-import { extractEntityName, getAnnotationFromSchema, OfEntity } from '@openfaith/schema'
+import {
+  extractEntityName,
+  getAnnotationFromSchema,
+  OfEntity,
+  OfSkipField,
+} from '@openfaith/schema'
 import { Array, Option, pipe, Record, Schema, type SchemaAST } from 'effect'
 
 /**
@@ -54,6 +59,14 @@ export const discoverPcoRelationships = (entityType: string): Record<string, str
         Array.filterMap((relProp) => {
           const relKey = relProp.name
           if (typeof relKey !== 'string') {
+            return Option.none()
+          }
+
+          // Check for OfSkipField annotation - skip this relationship if present
+          const skipField = getAnnotationFromSchema<boolean>(OfSkipField, relProp.type).pipe(
+            Option.getOrElse(() => false),
+          )
+          if (skipField) {
             return Option.none()
           }
 

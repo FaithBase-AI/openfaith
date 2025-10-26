@@ -2,6 +2,66 @@ import { HttpClient, HttpClientResponse } from '@effect/platform'
 import { Effect, Layer, pipe, String } from 'effect'
 
 const responseLookup = {
+  '/people/v2/campuses': {
+    data: [
+      {
+        attributes: {
+          avatar_url: null,
+          church_center_enabled: true,
+          city: 'Braintree',
+          contact_email_address: null,
+          country: 'US',
+          created_at: '2020-05-03T16:11:52Z',
+          date_format: null,
+          description: null,
+          geolocation_set_manually: false,
+          latitude: '42.2116041',
+          longitude: '-71.0236303',
+          name: 'Yeet Building',
+          phone_number: null,
+          state: 'Massachusetts',
+          street: '440 West St.',
+          time_zone: 'America/Los_Angeles',
+          twenty_four_hour_time: null,
+          updated_at: '2025-10-14T21:43:09Z',
+          website: null,
+          zip: '02184',
+        },
+        id: '46838',
+        links: {
+          self: 'https://api.planningcenteronline.com/people/v2/campuses/46838',
+        },
+        relationships: {
+          organization: {
+            data: {
+              id: '361920',
+              type: 'Organization',
+            },
+          },
+        },
+        type: 'Campus',
+      },
+    ],
+    included: [],
+    links: {
+      next: 'https://api.planningcenteronline.com/people/v2/campuses?offset=1&per_page=1',
+      self: 'https://api.planningcenteronline.com/people/v2/campuses?per_page=1',
+    },
+    meta: {
+      can_include: ['lists', 'service_times'],
+      can_order_by: ['name', 'created_at', 'updated_at'],
+      can_query_by: ['created_at', 'updated_at', 'id'],
+      count: 1,
+      next: {
+        offset: 1,
+      },
+      parent: {
+        id: '361920',
+        type: 'Organization',
+      },
+      total_count: 3,
+    },
+  },
   '/people/v2/people': {
     data: [
       {

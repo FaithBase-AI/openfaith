@@ -199,10 +199,47 @@ export const createTestTables = Effect.gen(function* () {
       "deletedBy" text,
       "createdBy" text,
       "updatedBy" text,
+      "inactivatedAt" timestamp,
+      "inactivatedBy" text,
       "customFields" jsonb DEFAULT '[]',
       "externalIds" jsonb DEFAULT '[]',
       "tags" jsonb DEFAULT '"[]"',
-      "type" text DEFAULT 'default'
+      "type" text DEFAULT 'default',
+      "status" text DEFAULT 'active' NOT NULL,
+      "avatar" text,
+      "city" text NOT NULL,
+      "countryCode" text,
+      "description" text,
+      "latitude" double precision,
+      "longitude" double precision,
+      "state" text NOT NULL,
+      "street" text NOT NULL,
+      "url" text,
+      "zip" text NOT NULL
+    )
+  `
+
+  yield* sql`
+    CREATE TABLE IF NOT EXISTS "openfaith_circles" (
+      "_tag" char(6) DEFAULT 'circle' NOT NULL,
+      "externalIds" jsonb DEFAULT '[]' NOT NULL,
+      "id" text PRIMARY KEY NOT NULL,
+      "orgId" text NOT NULL,
+      "createdAt" timestamp with time zone NOT NULL,
+      "createdBy" text,
+      "customFields" jsonb DEFAULT '[]' NOT NULL,
+      "deletedAt" timestamp with time zone,
+      "deletedBy" text,
+      "inactivatedAt" timestamp with time zone,
+      "inactivatedBy" text,
+      "status" text DEFAULT 'active' NOT NULL,
+      "tags" jsonb DEFAULT '[]' NOT NULL,
+      "updatedAt" timestamp with time zone,
+      "updatedBy" text,
+      "avatar" text,
+      "description" text,
+      "name" text NOT NULL,
+      "type" text NOT NULL
     )
   `
 

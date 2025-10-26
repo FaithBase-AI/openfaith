@@ -216,6 +216,16 @@ const createExternalLinks = (
 ): Array<ExternalLinkInput> =>
   pipe(
     entities,
+    // Filter out entities with invalid/placeholder IDs
+    Array.filter((entity) => {
+      if (!entity.id) {
+        return false
+      }
+      if (entity.id === '0') {
+        return false
+      }
+      return true
+    }),
     Array.map((entity) => ({
       adapter: 'pco' as const,
       createdAt: entity.attributes.created_at,
@@ -1448,6 +1458,11 @@ const extractRelationshipsEnhanced = (params: {
 
                 const relData = entity.relationships?.[relKey]?.data
                 if (relData?.id) {
+                  // Skip invalid/placeholder IDs like '0' which indicate no actual relationship
+                  if (relData.id === '0') {
+                    return
+                  }
+
                   const hasLink = pipe(externalLinkMap, HashMap.has(relData.id))
 
                   if (!hasLink && !seenExternalIds.has(relData.id)) {

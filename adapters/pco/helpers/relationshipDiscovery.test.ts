@@ -41,4 +41,23 @@ describe('relationshipDiscovery', () => {
       expect(relationships).toEqual({})
     }),
   )
+
+  effect('skips relationships marked with OfSkipField annotation', () =>
+    Effect.gen(function* () {
+      const relationships = discoverPcoRelationships('Team')
+
+      // Should discover normal relationships (service_type is a required relationship without OfSkipField)
+      expect(relationships).toHaveProperty('service_type')
+      expect(relationships.service_type).toBe('servicetype')
+
+      // Should NOT discover relationships marked with OfSkipField
+      // The Team schema has a 'default_responds_to' relationship with OfSkipField: true
+      expect(relationships).not.toHaveProperty('default_responds_to')
+
+      // Verify it's only finding the expected relationships
+      const relationshipKeys = Object.keys(relationships)
+      expect(relationshipKeys).toHaveLength(1)
+      expect(relationshipKeys).toContain('service_type')
+    }),
+  )
 })
