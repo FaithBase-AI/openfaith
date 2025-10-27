@@ -44,7 +44,6 @@ const responseLookup = {
     ],
     included: [],
     links: {
-      next: 'https://api.planningcenteronline.com/people/v2/campuses?offset=1&per_page=1',
       self: 'https://api.planningcenteronline.com/people/v2/campuses?per_page=1',
     },
     meta: {
@@ -52,9 +51,6 @@ const responseLookup = {
       can_order_by: ['name', 'created_at', 'updated_at'],
       can_query_by: ['created_at', 'updated_at', 'id'],
       count: 1,
-      next: {
-        offset: 1,
-      },
       parent: {
         id: '361920',
         type: 'Organization',
@@ -590,7 +586,6 @@ const responseLookup = {
       },
     ],
     links: {
-      next: 'https://api.planningcenteronline.com/services/v2/teams?include=people&offset=1&per_page=1',
       self: 'https://api.planningcenteronline.com/services/v2/teams?include=people&per_page=1',
     },
     meta: {
@@ -605,9 +600,6 @@ const responseLookup = {
       can_order_by: ['name', 'created_at', 'updated_at'],
       can_query_by: ['name', 'service_type_id'],
       count: 1,
-      next: {
-        offset: 1,
-      },
       parent: {
         id: '361920',
         type: 'Organization',

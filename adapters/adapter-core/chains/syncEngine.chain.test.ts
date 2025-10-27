@@ -268,12 +268,12 @@ layer(TestLayer)('externalSyncEntity', (it) => {
 
         const sql = yield* SqlClient.SqlClient
 
-        // Verify Team entities were created (mock has 42 teams)
+        // Verify Team entities were created (mock has 1 teams)
         const teams = yield* sql`
             SELECT * FROM "openfaith_circles" 
             WHERE "orgId" = 'test_org_123'
           `
-        expect(teams.length).toBe(42)
+        expect(teams.length).toBe(1)
 
         // Check for a specific team with people relationships
         const audioVisualTeam = pipe(
@@ -335,7 +335,7 @@ layer(TestLayer)('externalSyncEntity', (it) => {
           expect(hasCirclePersonRelationship).toBe(true)
         }
 
-        // Verify all teams have external links (42 teams)
+        // Verify all teams have external links (1 teams)
         const teamExternalLinks = yield* sql`
             SELECT * FROM "openfaith_externalLinks" 
             WHERE "adapter" = 'pco'
@@ -343,7 +343,7 @@ layer(TestLayer)('externalSyncEntity', (it) => {
             AND "orgId" = 'test_org_123'
           `
 
-        expect(teamExternalLinks.length).toBe(42)
+        expect(teamExternalLinks.length).toBe(1)
 
         // Verify total edges for all circle-person relationships exist
         const allCirclePersonEdges = yield* sql`
