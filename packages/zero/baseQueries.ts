@@ -46,7 +46,7 @@ export const getBaseEntitiesQuery = (z: ReturnType<typeof useZero>, entityName: 
     const baseQuery = z.query[entityName as keyof typeof z.query]
 
     // Try to access the schema from the query object to check for relationships
-    const queryWithSchema = baseQuery as any
+    let queryWithSchema = baseQuery as any
 
     // Check if this entity has sourceEdges/targetEdges relationships in the schema
     const entityRelationships = (schema?.relationships as any)?.[entityName]
@@ -60,25 +60,25 @@ export const getBaseEntitiesQuery = (z: ReturnType<typeof useZero>, entityName: 
 
     if (hasDeletedAt) {
       // Filter out deleted items
-      queryWithSchema.where('deletedAt', 'IS', null)
+      queryWithSchema = queryWithSchema.where('deletedAt', 'IS', null)
     }
 
     if (hasSourceEdges && hasTargetEdges) {
       // Add both edge relationships
-      queryWithSchema.related('sourceEdges').related('targetEdges')
+      queryWithSchema = queryWithSchema.related('sourceEdges').related('targetEdges')
     } else {
       if (hasSourceEdges) {
         // Add only sourceEdges relationship
-        queryWithSchema.related('sourceEdges')
+        queryWithSchema = queryWithSchema.related('sourceEdges')
       }
 
       if (hasTargetEdges) {
         // Add only targetEdges relationship
-        queryWithSchema.related('targetEdges')
+        queryWithSchema = queryWithSchema.related('targetEdges')
       }
     }
 
-    return baseQuery as any
+    return queryWithSchema as any
   }).pipe(Effect.runSync)
 }
 export const getBaseEntityQuery = (
