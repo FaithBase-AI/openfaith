@@ -54,10 +54,14 @@ describe('relationshipDiscovery', () => {
       // The Team schema has a 'default_responds_to' relationship with OfSkipField: true
       expect(relationships).not.toHaveProperty('default_responds_to')
 
-      // Verify it's only finding the expected relationships
+      // Verify it's finding all the expected relationships (5 total, excluding the skipped one)
       const relationshipKeys = Object.keys(relationships)
-      expect(relationshipKeys).toHaveLength(1)
+      expect(relationshipKeys).toHaveLength(5)
       expect(relationshipKeys).toContain('service_type')
+      expect(relationshipKeys).toContain('people')
+      expect(relationshipKeys).toContain('person_team_position_assignments')
+      expect(relationshipKeys).toContain('team_leaders')
+      expect(relationshipKeys).toContain('team_positions')
     }),
   )
 })

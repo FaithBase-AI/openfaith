@@ -8,12 +8,14 @@ import { SqlError } from '@effect/sql/SqlError'
 import type { Custom, Fragment, Primitive } from '@effect/sql/Statement'
 import * as Statement from '@effect/sql/Statement'
 import { SQL } from 'bun'
+import * as Array from 'effect/Array'
 import * as Chunk from 'effect/Chunk'
 import * as Config from 'effect/Config'
 import type { ConfigError } from 'effect/ConfigError'
 import * as Context from 'effect/Context'
 import * as Duration from 'effect/Duration'
 import * as Effect from 'effect/Effect'
+import { pipe } from 'effect/Function'
 import * as Layer from 'effect/Layer'
 import * as Redacted from 'effect/Redacted'
 import type * as Scope from 'effect/Scope'
@@ -203,7 +205,7 @@ export const make = (
       ) {
         // Bun SQL doesn't have cursor support like postgres.js, so we'll simulate it
         return Stream.fromEffect(this.execute(sql, params, transformRows)).pipe(
-          Stream.mapChunks((rows) => Chunk.fromIterable(Array.isArray(rows) ? rows : [rows])),
+          Stream.mapChunks((rows) => Chunk.fromIterable(pipe(rows, Array.ensure))),
         )
       }
     }

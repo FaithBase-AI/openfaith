@@ -167,8 +167,12 @@ effect('autoDetectCellConfig - string field types by name', () =>
     const categoryResult = autoDetectCellConfig(stringAST, 'category')
     expect(categoryResult?.cellType).toBe('badge')
 
+    // Name field (special case for entity links)
+    const nameResult = autoDetectCellConfig(stringAST, 'name')
+    expect(nameResult?.cellType).toBe('entityLink')
+
     // Default string field
-    const defaultResult = autoDetectCellConfig(stringAST, 'name')
+    const defaultResult = autoDetectCellConfig(stringAST, 'title')
     expect(defaultResult?.cellType).toBe('text')
   }),
 )
