@@ -1,6 +1,87 @@
-import * as PcoSchemas from '@openfaith/pco/server'
-import { extractEntityName, getAnnotationFromSchema, OfEntity } from '@openfaith/schema'
-import { Array, Option, pipe, Record, Schema, type SchemaAST } from 'effect'
+import * as PcoSchemas from '@openfaith/pco/schemas'
+import {
+  extractAST,
+  extractEntityName,
+  getAnnotationFromSchema,
+  OfEntity,
+  OfSkipField,
+} from '@openfaith/schema'
+import { Array, Option, pipe, Record, Schema, SchemaAST } from 'effect'
+
+/**
+ * Helper to check if an AST represents null or undefined
+ */
+const isNullOrUndefined = (ast: SchemaAST.AST): boolean =>
+  ast._tag === 'UndefinedKeyword' || (SchemaAST.isLiteral(ast) && ast.literal === null)
+
+/**
+ * Unwraps optional and nullable schemas to get the underlying type
+ * Handles Union types created by Schema.optional() and Schema.NullOr()
+ *
+ * This is similar to patterns in introspection.ts but specialized for relationship discovery
+ */
+const unwrapOptionalAndNullable = (ast: SchemaAST.AST): SchemaAST.AST => {
+  if (SchemaAST.isUnion(ast)) {
+    // Find the first non-null, non-undefined type in the union
+    const nonOptionalType = pipe(
+      ast.types,
+      Array.findFirst((t) => !isNullOrUndefined(t)),
+    )
+    if (Option.isSome(nonOptionalType)) {
+      return unwrapOptionalAndNullable(nonOptionalType.value)
+    }
+  }
+
+  if (SchemaAST.isTransformation(ast)) {
+    return unwrapOptionalAndNullable(ast.from)
+  }
+
+  return ast
+}
+
+/**
+ * Extracts entity type from array or single relationship data structure
+ * Handles both { data: { type: 'EntityType' } } and { data: Array<{ type: 'EntityType' }> }
+ *
+ * This follows the pattern of recursive type traversal seen in introspection utilities
+ */
+const extractEntityTypeFromDataField = (dataType: SchemaAST.AST): Option.Option<string> => {
+  // Handle Union types (e.g., NullOr)
+  if (SchemaAST.isUnion(dataType)) {
+    return pipe(
+      dataType.types,
+      Array.findFirst((t) => SchemaAST.isTypeLiteral(t) || t._tag === 'TupleType'),
+      Option.flatMap(extractEntityTypeFromDataField),
+    )
+  }
+
+  // Handle arrays: Schema.Array creates a TupleType with rest elements
+  // The rest array contains Schema Type objects (not AST directly)
+  if (dataType._tag === 'TupleType' && dataType.rest.length > 0) {
+    const restType = dataType.rest[0] as any
+    if (restType?.type) {
+      // The 'type' property contains the actual AST for the array element
+      return extractEntityTypeFromDataField(restType.type)
+    }
+  }
+
+  // Handle TypeLiteral (single object or array element)
+  if (SchemaAST.isTypeLiteral(dataType)) {
+    const typeFieldOpt = pipe(
+      dataType.propertySignatures,
+      Array.findFirst((prop) => prop.name === 'type'),
+    )
+
+    if (Option.isSome(typeFieldOpt)) {
+      const typeFieldAST = extractAST(typeFieldOpt.value)
+      if (SchemaAST.isLiteral(typeFieldAST) && typeof typeFieldAST.literal === 'string') {
+        return Option.some(typeFieldAST.literal.toLowerCase())
+      }
+    }
+  }
+
+  return Option.none()
+}
 
 /**
  * Discovers relationship annotations for a PCO entity type
@@ -32,7 +113,7 @@ export const discoverPcoRelationships = (entityType: string): Record<string, str
 
   // Extract relationships from the schema AST
   const extractRelationships = (ast: SchemaAST.AST): Record<string, string> => {
-    if (ast._tag === 'TypeLiteral') {
+    if (SchemaAST.isTypeLiteral(ast)) {
       // Find the relationships property
       const relationshipsFieldOpt = pipe(
         ast.propertySignatures,
@@ -44,7 +125,7 @@ export const discoverPcoRelationships = (entityType: string): Record<string, str
       }
 
       const relType = relationshipsFieldOpt.value.type
-      if (relType._tag !== 'TypeLiteral') {
+      if (!SchemaAST.isTypeLiteral(relType)) {
         return {}
       }
 
@@ -57,62 +138,39 @@ export const discoverPcoRelationships = (entityType: string): Record<string, str
             return Option.none()
           }
 
-          // Check for OfEntity annotation
-          const ofEntityOpt = getAnnotationFromSchema<any>(OfEntity, relProp.type)
+          // Check for OfSkipField annotation using the shared helper
+          const skipFieldOpt = getAnnotationFromSchema<boolean>(OfSkipField, relProp.type)
+          if (Option.isSome(skipFieldOpt) && skipFieldOpt.value) {
+            return Option.none()
+          }
+
+          // Unwrap optional/nullable wrappers
+          const unwrappedType = unwrapOptionalAndNullable(relProp.type)
+
+          // Check for OfEntity annotation using the shared helper
+          const ofEntityOpt = getAnnotationFromSchema<any>(OfEntity, unwrappedType)
 
           if (Option.isSome(ofEntityOpt)) {
             // Has OfEntity annotation - extract the target entity name
-            const targetEntityOpt = extractEntityName(ofEntityOpt.value)
-
+            const targetEntityOpt = extractEntityName(ofEntityOpt.value as any)
             return pipe(
               targetEntityOpt,
               Option.map((targetEntity) => [relKey, targetEntity] as const),
             )
           }
 
-          // Fallback: Try to extract from the structure
-          // Structure: { relKey: { data: { type: 'EntityType' } } }
-          if (relProp.type._tag === 'TypeLiteral') {
+          // Fallback: Extract from the PCO API structure
+          // Structure: { relKey: { data: { type: 'EntityType' } } } or { data: Array<{ type: 'EntityType' }> }
+          if (SchemaAST.isTypeLiteral(unwrappedType)) {
             const dataFieldOpt = pipe(
-              relProp.type.propertySignatures,
+              unwrappedType.propertySignatures,
               Array.findFirst((prop) => prop.name === 'data'),
             )
 
             if (Option.isSome(dataFieldOpt)) {
-              const dataField = dataFieldOpt.value
-
-              // Handle union types (e.g., NullOr)
-              const extractFromDataType = (dataType: SchemaAST.AST): Option.Option<string> => {
-                if (dataType._tag === 'Union') {
-                  // Try each member of the union
-                  return pipe(
-                    dataType.types,
-                    Array.findFirst((t) => t._tag === 'TypeLiteral'),
-                    Option.flatMap(extractFromDataType),
-                  )
-                }
-
-                if (dataType._tag === 'TypeLiteral') {
-                  const typeFieldOpt = pipe(
-                    dataType.propertySignatures,
-                    Array.findFirst((prop) => prop.name === 'type'),
-                  )
-
-                  if (Option.isSome(typeFieldOpt)) {
-                    const typeField = typeFieldOpt.value
-                    if (
-                      typeField.type._tag === 'Literal' &&
-                      typeof typeField.type.literal === 'string'
-                    ) {
-                      return Option.some(typeField.type.literal.toLowerCase())
-                    }
-                  }
-                }
-
-                return Option.none()
-              }
-
-              const targetTypeOpt = extractFromDataType(dataField.type)
+              // Use extractAST to handle PropertySignature properly
+              const dataFieldAST = extractAST(dataFieldOpt.value)
+              const targetTypeOpt = extractEntityTypeFromDataField(dataFieldAST)
               if (Option.isSome(targetTypeOpt)) {
                 return Option.some([relKey, targetTypeOpt.value] as const)
               }
@@ -126,7 +184,7 @@ export const discoverPcoRelationships = (entityType: string): Record<string, str
     }
 
     // Handle Transformation (class-based schemas)
-    if (ast._tag === 'Transformation') {
+    if (SchemaAST.isTransformation(ast)) {
       return extractRelationships(ast.from)
     }
 

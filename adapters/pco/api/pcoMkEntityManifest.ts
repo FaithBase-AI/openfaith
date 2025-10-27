@@ -400,18 +400,35 @@ export const mkPcoEntityManifest = <
     Record.toEntries,
   )
 
+  // PCO has unique entity attributes for each module. Eg the shape of a Person is different in People vs Groups vs
+  // Services. We are making a with the Module then the Include name. This lets us build the correct schemas.
   const PcoEntityRegistry = pipe(
     endpointLookup,
-    Array.map(([, entityEndpoints]) => {
-      const apiSchema = pipe(entityEndpoints, Array.headNonEmpty).apiSchema
+    Array.reduce(
+      // { People: { Person: PcoPerson }, Groups: { Person: PcoGroupPerson }, Services: { Person: PcoServicePerson } }
+      {} as Record<string, Record<string, Schema.Schema<any, any, never>>>,
+      (b, [, entityEndpoints]) => {
+        const endpoint = pipe(entityEndpoints, Array.headNonEmpty)
 
-      return [
-        // @ts-expect-error - It doesn't know that it's {}
-        mkTableName(apiSchema.fields.type.ast.type.literal as string),
-        apiSchema,
-      ] as const
-    }),
-    Record.fromEntries,
+        const apiSchema = endpoint.apiSchema
+
+        return {
+          ...b,
+          [endpoint.module]: {
+            ...pipe(
+              b,
+              Record.get(endpoint.module),
+              Option.getOrElse(() => {}),
+            ),
+            [mkTableName(
+              // @ts-expect-error - Type narrowing to fix `ast.type.literal` is brutal, this is good for now.
+              (apiSchema as Schema.Struct<{ type: Schema.Literal<[string]> }>).fields.type.ast.type
+                .literal as string,
+            )]: apiSchema,
+          },
+        }
+      },
+    ),
   )
 
   // Build the entities structure
@@ -434,7 +451,10 @@ export const mkPcoEntityManifest = <
                     Array.map((include) =>
                       pipe(
                         PcoEntityRegistry,
-                        Record.get(include),
+                        // We need to get the Module Entities
+                        Record.get(endpoint.module),
+                        // Now we can get the includes for the Module.
+                        Option.flatMap(Record.get(include)),
                         Option.getOrElse(() =>
                           Schema.Struct({
                             attributes: Schema.Any,

@@ -73,6 +73,25 @@ export const schema = {
         },
       ],
     },
+    circles: {
+      org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
+      sourceEdges: [
+        {
+          cardinality: 'many',
+          destField: ['sourceEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+      targetEdges: [
+        {
+          cardinality: 'many',
+          destField: ['targetEntityId'],
+          destSchema: 'edges',
+          sourceField: ['id'],
+        },
+      ],
+    },
     edges: {
       org: [{ cardinality: 'one', destField: ['id'], destSchema: 'orgs', sourceField: ['orgId'] }],
       sourceAddress: [
@@ -88,6 +107,14 @@ export const schema = {
           cardinality: 'one',
           destField: ['id'],
           destSchema: 'campuses',
+          sourceField: ['sourceEntityId'],
+        },
+      ],
+      sourceCircle: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'circles',
           sourceField: ['sourceEntityId'],
         },
       ],
@@ -192,6 +219,14 @@ export const schema = {
           cardinality: 'one',
           destField: ['id'],
           destSchema: 'campuses',
+          sourceField: ['targetEntityId'],
+        },
+      ],
+      targetCircle: [
+        {
+          cardinality: 'one',
+          destField: ['id'],
+          destSchema: 'circles',
           sourceField: ['targetEntityId'],
         },
       ],
@@ -1448,6 +1483,160 @@ export const schema = {
       name: 'campuses',
       primaryKey: ['id'],
       serverName: 'openfaith_campuses',
+    },
+    circles: {
+      columns: {
+        _tag: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'circlesTable', '_tag'>,
+          optional: false,
+          type: 'string',
+        },
+        avatar: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'circlesTable',
+            'avatar'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        createdAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'circlesTable',
+            'createdAt'
+          >,
+          optional: false,
+          type: 'number',
+        },
+        createdBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'circlesTable',
+            'createdBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        customFields: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'circlesTable',
+            'customFields'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        deletedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'circlesTable',
+            'deletedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        deletedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'circlesTable',
+            'deletedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        description: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'circlesTable',
+            'description'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        externalIds: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'circlesTable',
+            'externalIds'
+          >,
+          optional: true,
+          type: 'json',
+        },
+        id: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'circlesTable', 'id'>,
+          optional: false,
+          type: 'string',
+        },
+        inactivatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'circlesTable',
+            'inactivatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        inactivatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'circlesTable',
+            'inactivatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        name: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'circlesTable', 'name'>,
+          optional: false,
+          type: 'string',
+        },
+        orgId: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'circlesTable', 'orgId'>,
+          optional: false,
+          type: 'string',
+        },
+        status: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'circlesTable',
+            'status'
+          >,
+          optional: true,
+          type: 'string',
+        },
+        tags: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'circlesTable', 'tags'>,
+          optional: true,
+          type: 'json',
+        },
+        type: {
+          customType: null as unknown as ZeroCustomType<typeof zeroSchema, 'circlesTable', 'type'>,
+          optional: false,
+          type: 'string',
+        },
+        updatedAt: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'circlesTable',
+            'updatedAt'
+          >,
+          optional: true,
+          type: 'number',
+        },
+        updatedBy: {
+          customType: null as unknown as ZeroCustomType<
+            typeof zeroSchema,
+            'circlesTable',
+            'updatedBy'
+          >,
+          optional: true,
+          type: 'string',
+        },
+      },
+      name: 'circles',
+      primaryKey: ['id'],
+      serverName: 'openfaith_circles',
     },
     edges: {
       columns: {
@@ -4010,6 +4199,11 @@ export type AddressesTable = Row<Schema['tables']['addressesTable']>
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type CampusesTable = Row<Schema['tables']['campusesTable']>
+/**
+ * Represents a row from the "circlesTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ */
+export type CirclesTable = Row<Schema['tables']['circlesTable']>
 /**
  * Represents a row from the "edgesTable" table.
  * This type is auto-generated from your Drizzle schema definition.

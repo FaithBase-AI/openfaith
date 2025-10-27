@@ -27,7 +27,7 @@ export const useSchemaQuickActions = () => {
       quickActions,
       Array.filter((quickAction) => !quickAction.meta.disableCreate),
       Array.map((quickAction) => ({
-        icon: createElement(getEntityIcon(quickAction.tag)),
+        icon: createElement(getEntityIcon(quickAction)),
         name: quickAction.createTitle,
         onSelect: () => {
           setQuickActionStates((current) =>

@@ -18,7 +18,7 @@
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "format": "biome check",
-    "test": "bun test",
+    "test": "TESTCONTAINERS_RYUK_DISABLED=true bun test",
     "typecheck": "tsgo --noEmit"
   },
   "type": "module",

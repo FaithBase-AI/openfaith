@@ -1,4 +1,5 @@
-import { type PcoPersonSchema, pcoEntityManifest } from '@openfaith/pco/server'
+import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
+import type { PcoPersonSchema } from '@openfaith/pco/modules/people/pcoPersonSchema'
 import { extractEntityName, getAnnotationFromSchema, OfEntity, OfFilterFn } from '@openfaith/schema'
 import { Option, pipe, type Schema, String } from 'effect'
 

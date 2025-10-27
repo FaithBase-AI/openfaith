@@ -169,7 +169,7 @@ export class Campus extends BaseCampus.extend<Campus>('Campus')(BaseIdentifiedEn
         enabled: true,
         icon: 'buildingIcon',
         module: 'domain',
-        order: 2,
+        order: 3,
         title: 'Campuses',
       },
     } satisfies FieldConfig,

@@ -278,6 +278,14 @@ export type PcoBaseEntity = {
   }
 
   readonly relationships?:
-    | Record<string, { readonly data: { readonly id: string; readonly type: string } | null }>
+    | Record<
+        string,
+        {
+          readonly data:
+            | { readonly id: string; readonly type: string }
+            | Array<{ readonly id: string; readonly type: string }>
+            | null
+        }
+      >
     | undefined
 }

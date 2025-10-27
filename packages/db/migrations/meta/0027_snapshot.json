@@ -1,0 +1,3531 @@
+{
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  },
+  "dialect": "postgresql",
+  "enums": {},
+  "id": "185abba7-5a46-4ff6-8cbb-52c87a114753",
+  "policies": {},
+  "prevId": "8ba7a3f7-25a5-4091-8ac3-3c9061e7b6f7",
+  "roles": {},
+  "schemas": {},
+  "sequences": {},
+  "tables": {
+    "public.openfaith_adapterDetails": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'adapterDetails'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(14)"
+        },
+        "adapter": {
+          "name": "adapter",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "enabled": {
+          "name": "enabled",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "syncStatus": {
+          "name": "syncStatus",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        }
+      },
+      "compositePrimaryKeys": {
+        "adapterDetailsId": {
+          "columns": ["orgId", "adapter"],
+          "name": "adapterDetailsId"
+        }
+      },
+      "foreignKeys": {},
+      "indexes": {},
+      "isRLSEnabled": false,
+      "name": "openfaith_adapterDetails",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_adapterTokens": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'adapterToken'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(12)"
+        },
+        "accessToken": {
+          "name": "accessToken",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "adapter": {
+          "name": "adapter",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "expiresIn": {
+          "name": "expiresIn",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "integer"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "refreshToken": {
+          "name": "refreshToken",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "userId": {
+          "name": "userId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {
+        "adapterTokensId": {
+          "columns": ["userId", "orgId", "adapter"],
+          "name": "adapterTokensId"
+        }
+      },
+      "foreignKeys": {},
+      "indexes": {},
+      "isRLSEnabled": false,
+      "name": "openfaith_adapterTokens",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_adapterWebhooks": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'adapterWebhook'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(14)"
+        },
+        "adapter": {
+          "name": "adapter",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "authenticitySecret": {
+          "name": "authenticitySecret",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "enabled": {
+          "default": true,
+          "name": "enabled",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "eventType": {
+          "name": "eventType",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalWebhookId": {
+          "name": "externalWebhookId",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "lastProcessedAt": {
+          "name": "lastProcessedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "lastReceivedAt": {
+          "name": "lastReceivedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "verificationMethod": {
+          "name": "verificationMethod",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "webhookUrl": {
+          "name": "webhookUrl",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "webhook_org_adapter_idx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            },
+            {
+              "asc": true,
+              "expression": "adapter",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "webhook_org_adapter_idx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_adapterWebhooks",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_addresses": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'address'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(7)"
+        },
+        "city": {
+          "name": "city",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "countryCode": {
+          "name": "countryCode",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "customFields": {
+          "default": "'[]'::jsonb",
+          "name": "customFields",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalIds": {
+          "default": "'[]'::jsonb",
+          "name": "externalIds",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inactivatedAt": {
+          "name": "inactivatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "inactivatedBy": {
+          "name": "inactivatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "location": {
+          "name": "location",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "primary": {
+          "default": false,
+          "name": "primary",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "state": {
+          "name": "state",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "status": {
+          "default": "'active'",
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "streetLine1": {
+          "name": "streetLine1",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "streetLine2": {
+          "name": "streetLine2",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "tags": {
+          "default": "'[]'::jsonb",
+          "name": "tags",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "type": {
+          "default": "'default'",
+          "name": "type",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "zip": {
+          "name": "zip",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "addressOrgIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "addressOrgIdIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_addresses",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_campuses": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'campus'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(6)"
+        },
+        "avatar": {
+          "name": "avatar",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "city": {
+          "name": "city",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "countryCode": {
+          "name": "countryCode",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "customFields": {
+          "default": "'[]'::jsonb",
+          "name": "customFields",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "description": {
+          "name": "description",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalIds": {
+          "default": "'[]'::jsonb",
+          "name": "externalIds",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inactivatedAt": {
+          "name": "inactivatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "inactivatedBy": {
+          "name": "inactivatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "latitude": {
+          "name": "latitude",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "double precision"
+        },
+        "longitude": {
+          "name": "longitude",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "double precision"
+        },
+        "name": {
+          "name": "name",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "state": {
+          "name": "state",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "status": {
+          "default": "'active'",
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "street": {
+          "name": "street",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "tags": {
+          "default": "'[]'::jsonb",
+          "name": "tags",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "type": {
+          "default": "'default'",
+          "name": "type",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "url": {
+          "name": "url",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "zip": {
+          "name": "zip",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "campusOrgIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "campusOrgIdIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_campuses",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_circles": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'circle'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(6)"
+        },
+        "avatar": {
+          "name": "avatar",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "customFields": {
+          "default": "'[]'::jsonb",
+          "name": "customFields",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "description": {
+          "name": "description",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalIds": {
+          "default": "'[]'::jsonb",
+          "name": "externalIds",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inactivatedAt": {
+          "name": "inactivatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "inactivatedBy": {
+          "name": "inactivatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "name": {
+          "name": "name",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "status": {
+          "default": "'active'",
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "tags": {
+          "default": "'[]'::jsonb",
+          "name": "tags",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "type": {
+          "name": "type",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "circleOrgIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "circleOrgIdIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_circles",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_edges": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'edge'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(4)"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "metadata": {
+          "default": "'{}'::jsonb",
+          "name": "metadata",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "relationshipType": {
+          "name": "relationshipType",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "sourceEntityId": {
+          "name": "sourceEntityId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "sourceEntityTypeTag": {
+          "name": "sourceEntityTypeTag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "targetEntityId": {
+          "name": "targetEntityId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "targetEntityTypeTag": {
+          "name": "targetEntityTypeTag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {
+        "edgePk": {
+          "columns": ["orgId", "sourceEntityId", "targetEntityId", "relationshipType"],
+          "name": "edgePk"
+        }
+      },
+      "foreignKeys": {},
+      "indexes": {
+        "edgeRelationshipTypeIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "relationshipType",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "edgeRelationshipTypeIdx",
+          "with": {}
+        },
+        "edgeSourceEntityIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "sourceEntityId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "edgeSourceEntityIdx",
+          "with": {}
+        },
+        "edgeTargetEntityIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "targetEntityId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "edgeTargetEntityIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_edges",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_emails": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'email'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(5)"
+        },
+        "address": {
+          "name": "address",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "blocked": {
+          "default": false,
+          "name": "blocked",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "customFields": {
+          "default": "'[]'::jsonb",
+          "name": "customFields",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalIds": {
+          "default": "'[]'::jsonb",
+          "name": "externalIds",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inactivatedAt": {
+          "name": "inactivatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "inactivatedBy": {
+          "name": "inactivatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "location": {
+          "name": "location",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "primary": {
+          "default": false,
+          "name": "primary",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "status": {
+          "default": "'active'",
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "tags": {
+          "default": "'[]'::jsonb",
+          "name": "tags",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "type": {
+          "default": "'default'",
+          "name": "type",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "emailOrgIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "emailOrgIdIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_emails",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_entityRelationships": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'entityRelationships'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(19)"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "sourceEntityType": {
+          "name": "sourceEntityType",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "targetEntityTypes": {
+          "default": "'[]'::jsonb",
+          "name": "targetEntityTypes",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "updatedAt": {
+          "default": "now()",
+          "name": "updatedAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        }
+      },
+      "compositePrimaryKeys": {
+        "entityRelationshipsPk": {
+          "columns": ["orgId", "sourceEntityType"],
+          "name": "entityRelationshipsPk"
+        }
+      },
+      "foreignKeys": {},
+      "indexes": {
+        "entityRelationshipsOrgIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "entityRelationshipsOrgIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_entityRelationships",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_externalLinks": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'externalLink'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(12)"
+        },
+        "adapter": {
+          "name": "adapter",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "entityId": {
+          "name": "entityId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "entityType": {
+          "name": "entityType",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalId": {
+          "name": "externalId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "lastProcessedAt": {
+          "name": "lastProcessedAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "syncing": {
+          "default": false,
+          "name": "syncing",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        }
+      },
+      "compositePrimaryKeys": {
+        "externalLinkPk": {
+          "columns": ["orgId", "adapter", "externalId"],
+          "name": "externalLinkPk"
+        }
+      },
+      "foreignKeys": {},
+      "indexes": {
+        "adapterExternalIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "adapter",
+              "isExpression": false,
+              "nulls": "last"
+            },
+            {
+              "asc": true,
+              "expression": "externalId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "adapterExternalIdIdx",
+          "with": {}
+        },
+        "entityIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "entityId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "entityIdIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_externalLinks",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_fieldOptions": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'fieldOption'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(11)"
+        },
+        "active": {
+          "default": true,
+          "name": "active",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "customFields": {
+          "default": "'[]'::jsonb",
+          "name": "customFields",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalIds": {
+          "default": "'[]'::jsonb",
+          "name": "externalIds",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "fieldId": {
+          "name": "fieldId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inactivatedAt": {
+          "name": "inactivatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "inactivatedBy": {
+          "name": "inactivatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "label": {
+          "name": "label",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "order": {
+          "default": 0,
+          "name": "order",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "integer"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "pathwayConfig": {
+          "default": "'{}'::jsonb",
+          "name": "pathwayConfig",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "status": {
+          "default": "'active'",
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "tags": {
+          "default": "'[]'::jsonb",
+          "name": "tags",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "value": {
+          "name": "value",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "fieldOptionFieldIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "fieldId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "fieldOptionFieldIdIdx",
+          "with": {}
+        },
+        "fieldOptionOrgIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "fieldOptionOrgIdIdx",
+          "with": {}
+        },
+        "fieldOptionValueIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            },
+            {
+              "asc": true,
+              "expression": "fieldId",
+              "isExpression": false,
+              "nulls": "last"
+            },
+            {
+              "asc": true,
+              "expression": "value",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "fieldOptionValueIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_fieldOptions",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_fields": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'field'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(5)"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "customFields": {
+          "default": "'[]'::jsonb",
+          "name": "customFields",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "description": {
+          "name": "description",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "entityTag": {
+          "name": "entityTag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalIds": {
+          "default": "'[]'::jsonb",
+          "name": "externalIds",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inactivatedAt": {
+          "name": "inactivatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "inactivatedBy": {
+          "name": "inactivatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "key": {
+          "name": "key",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "label": {
+          "name": "label",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "source": {
+          "name": "source",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "status": {
+          "default": "'active'",
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "tags": {
+          "default": "'[]'::jsonb",
+          "name": "tags",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "type": {
+          "default": "'singleSelect'",
+          "name": "type",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "fieldEntityIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "entityTag",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "fieldEntityIdx",
+          "with": {}
+        },
+        "fieldKeyIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            },
+            {
+              "asc": true,
+              "expression": "key",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "fieldKeyIdx",
+          "with": {}
+        },
+        "fieldOrgIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "fieldOrgIdIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_fields",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_folders": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'folder'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(6)"
+        },
+        "color": {
+          "name": "color",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "customFields": {
+          "default": "'[]'::jsonb",
+          "name": "customFields",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "description": {
+          "name": "description",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalIds": {
+          "default": "'[]'::jsonb",
+          "name": "externalIds",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "folderType": {
+          "name": "folderType",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "icon": {
+          "name": "icon",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inactivatedAt": {
+          "name": "inactivatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "inactivatedBy": {
+          "name": "inactivatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "name": {
+          "name": "name",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "orderingKey": {
+          "name": "orderingKey",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "parentFolderId": {
+          "name": "parentFolderId",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "status": {
+          "default": "'active'",
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "tags": {
+          "default": "'[]'::jsonb",
+          "name": "tags",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "folderNameIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "name",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "folderNameIdx",
+          "with": {}
+        },
+        "folderOrgIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "folderOrgIdIdx",
+          "with": {}
+        },
+        "folderParentFolderIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "parentFolderId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "folderParentFolderIdIdx",
+          "with": {}
+        },
+        "folderTypeIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "folderType",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "folderTypeIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_folders",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_invitations": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'invitation'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(10)"
+        },
+        "email": {
+          "name": "email",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "expiresAt": {
+          "name": "expiresAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inviterId": {
+          "name": "inviterId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "role": {
+          "name": "role",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "status": {
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "invitationOrgIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "invitationOrgIdx",
+          "with": {}
+        },
+        "invitationUserIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "inviterId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "invitationUserIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_invitations",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_journeys": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'journey'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(7)"
+        },
+        "assimilationComplete": {
+          "default": false,
+          "name": "assimilationComplete",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "completedAt": {
+          "name": "completedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "currentStage": {
+          "name": "currentStage",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "customFields": {
+          "default": "'[]'::jsonb",
+          "name": "customFields",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalIds": {
+          "default": "'[]'::jsonb",
+          "name": "externalIds",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inactivatedAt": {
+          "name": "inactivatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "inactivatedBy": {
+          "name": "inactivatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "lastActivityAt": {
+          "name": "lastActivityAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "pathwayId": {
+          "name": "pathwayId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "state": {
+          "default": "'active'",
+          "name": "state",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "status": {
+          "default": "'active'",
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "subjectId": {
+          "name": "subjectId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "subjectTag": {
+          "name": "subjectTag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "tags": {
+          "default": "'[]'::jsonb",
+          "name": "tags",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "type": {
+          "default": "'default'",
+          "name": "type",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "journeyOrgIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "journeyOrgIdIdx",
+          "with": {}
+        },
+        "journeyPathwayIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "pathwayId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "journeyPathwayIdIdx",
+          "with": {}
+        },
+        "journeyStateIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "state",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "journeyStateIdx",
+          "with": {}
+        },
+        "journeySubjectIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "subjectTag",
+              "isExpression": false,
+              "nulls": "last"
+            },
+            {
+              "asc": true,
+              "expression": "subjectId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "journeySubjectIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_journeys",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_jwks": {
+      "checkConstraints": {},
+      "columns": {
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "privateKey": {
+          "name": "privateKey",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "publicKey": {
+          "name": "publicKey",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {},
+      "isRLSEnabled": false,
+      "name": "openfaith_jwks",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_orgSettings": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'orgSettings'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(11)"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {},
+      "isRLSEnabled": false,
+      "name": "openfaith_orgSettings",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_orgs": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'org'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(3)"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "logo": {
+          "name": "logo",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "metadata": {
+          "name": "metadata",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "name": {
+          "name": "name",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "slug": {
+          "name": "slug",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "orgSlugIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "slug",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "orgSlugIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_orgs",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {
+        "openfaith_orgs_slug_unique": {
+          "columns": ["slug"],
+          "name": "openfaith_orgs_slug_unique",
+          "nullsNotDistinct": false
+        }
+      }
+    },
+    "public.openfaith_orgUsers": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'orgUser'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(7)"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "role": {
+          "name": "role",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "userId": {
+          "name": "userId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "orgUserOrgIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "orgUserOrgIdx",
+          "with": {}
+        },
+        "orgUserUserIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "userId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "orgUserUserIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_orgUsers",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_pathways": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'pathway'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(7)"
+        },
+        "active": {
+          "default": true,
+          "name": "active",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "completionRule": {
+          "default": "'{}'::jsonb",
+          "name": "completionRule",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "customFields": {
+          "default": "'[]'::jsonb",
+          "name": "customFields",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "description": {
+          "name": "description",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "enrollmentConfig": {
+          "default": "'{}'::jsonb",
+          "name": "enrollmentConfig",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "externalIds": {
+          "default": "'[]'::jsonb",
+          "name": "externalIds",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inactivatedAt": {
+          "name": "inactivatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "inactivatedBy": {
+          "name": "inactivatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "linkedFieldId": {
+          "name": "linkedFieldId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "name": {
+          "name": "name",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "status": {
+          "default": "'active'",
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "stepsConfig": {
+          "default": "'{}'::jsonb",
+          "name": "stepsConfig",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "tags": {
+          "default": "'[]'::jsonb",
+          "name": "tags",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "type": {
+          "default": "'default'",
+          "name": "type",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "pathwayNameIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "name",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "pathwayNameIdx",
+          "with": {}
+        },
+        "pathwayOrgIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "pathwayOrgIdIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_pathways",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_people": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'person'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(6)"
+        },
+        "anniversary": {
+          "name": "anniversary",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "avatar": {
+          "name": "avatar",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "birthdate": {
+          "name": "birthdate",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "customFields": {
+          "default": "'[]'::jsonb",
+          "name": "customFields",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalIds": {
+          "default": "'[]'::jsonb",
+          "name": "externalIds",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "firstName": {
+          "name": "firstName",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "gender": {
+          "name": "gender",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inactivatedAt": {
+          "name": "inactivatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "inactivatedBy": {
+          "name": "inactivatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "lastName": {
+          "name": "lastName",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "membership": {
+          "name": "membership",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "middleName": {
+          "name": "middleName",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "name": {
+          "name": "name",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "status": {
+          "default": "'active'",
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "tags": {
+          "default": "'[]'::jsonb",
+          "name": "tags",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "type": {
+          "default": "'default'",
+          "name": "type",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "peopleOrgIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "peopleOrgIdIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_people",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_phoneNumbers": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'phoneNumber'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(11)"
+        },
+        "countryCode": {
+          "name": "countryCode",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "customFields": {
+          "default": "'[]'::jsonb",
+          "name": "customFields",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalIds": {
+          "default": "'[]'::jsonb",
+          "name": "externalIds",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inactivatedAt": {
+          "name": "inactivatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "inactivatedBy": {
+          "name": "inactivatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "location": {
+          "name": "location",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "number": {
+          "name": "number",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "primary": {
+          "default": false,
+          "name": "primary",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "status": {
+          "default": "'active'",
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "tags": {
+          "default": "'[]'::jsonb",
+          "name": "tags",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "type": {
+          "default": "'default'",
+          "name": "type",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "phoneNumberOrgIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "phoneNumberOrgIdIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_phoneNumbers",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_qualifications": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'qualification'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(13)"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "customFields": {
+          "default": "'[]'::jsonb",
+          "name": "customFields",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "description": {
+          "name": "description",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalIds": {
+          "default": "'[]'::jsonb",
+          "name": "externalIds",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inactivatedAt": {
+          "name": "inactivatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "inactivatedBy": {
+          "name": "inactivatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "key": {
+          "name": "key",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "name": {
+          "name": "name",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "status": {
+          "default": "'active'",
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "tags": {
+          "default": "'[]'::jsonb",
+          "name": "tags",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "type": {
+          "default": "'default'",
+          "name": "type",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "qualificationKeyIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            },
+            {
+              "asc": true,
+              "expression": "key",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "qualificationKeyIdx",
+          "with": {}
+        },
+        "qualificationNameIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "name",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "qualificationNameIdx",
+          "with": {}
+        },
+        "qualificationOrgIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "qualificationOrgIdIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_qualifications",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_sacraments": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'sacrament'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(9)"
+        },
+        "administeredBy": {
+          "name": "administeredBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "customFields": {
+          "default": "'[]'::jsonb",
+          "name": "customFields",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "deletedBy": {
+          "name": "deletedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "externalIds": {
+          "default": "'[]'::jsonb",
+          "name": "externalIds",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "inactivatedAt": {
+          "name": "inactivatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "inactivatedBy": {
+          "name": "inactivatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "occurredAt": {
+          "name": "occurredAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "orgId": {
+          "name": "orgId",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "receivedBy": {
+          "name": "receivedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "status": {
+          "default": "'active'",
+          "name": "status",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "tags": {
+          "default": "'[]'::jsonb",
+          "name": "tags",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "jsonb"
+        },
+        "type": {
+          "name": "type",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "sacramentsAdministeredByIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "administeredBy",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "sacramentsAdministeredByIdx",
+          "with": {}
+        },
+        "sacramentsOrgIdIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "orgId",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "sacramentsOrgIdIdx",
+          "with": {}
+        },
+        "sacramentsReceivedByIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "receivedBy",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "sacramentsReceivedByIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_sacraments",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    },
+    "public.openfaith_users": {
+      "checkConstraints": {},
+      "columns": {
+        "_tag": {
+          "default": "'user'",
+          "name": "_tag",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "char(4)"
+        },
+        "banExpires": {
+          "name": "banExpires",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "banned": {
+          "name": "banned",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "banReason": {
+          "name": "banReason",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "email": {
+          "name": "email",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "emailVerified": {
+          "name": "emailVerified",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "image": {
+          "name": "image",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "isAnonymous": {
+          "name": "isAnonymous",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "boolean"
+        },
+        "name": {
+          "name": "name",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "role": {
+          "name": "role",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "stripeCustomerId": {
+          "name": "stripeCustomerId",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "userEmailIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "email",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "userEmailIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_users",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {
+        "openfaith_users_email_unique": {
+          "columns": ["email"],
+          "name": "openfaith_users_email_unique",
+          "nullsNotDistinct": false
+        }
+      }
+    },
+    "public.openfaith_verifications": {
+      "checkConstraints": {},
+      "columns": {
+        "createdAt": {
+          "name": "createdAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "expiresAt": {
+          "name": "expiresAt",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "id": {
+          "name": "id",
+          "notNull": true,
+          "primaryKey": true,
+          "type": "text"
+        },
+        "identifier": {
+          "name": "identifier",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "notNull": false,
+          "primaryKey": false,
+          "type": "timestamp with time zone"
+        },
+        "value": {
+          "name": "value",
+          "notNull": true,
+          "primaryKey": false,
+          "type": "text"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "foreignKeys": {},
+      "indexes": {
+        "verificationIdentifierIdx": {
+          "columns": [
+            {
+              "asc": true,
+              "expression": "identifier",
+              "isExpression": false,
+              "nulls": "last"
+            }
+          ],
+          "concurrently": false,
+          "isUnique": false,
+          "method": "btree",
+          "name": "verificationIdentifierIdx",
+          "with": {}
+        }
+      },
+      "isRLSEnabled": false,
+      "name": "openfaith_verifications",
+      "policies": {},
+      "schema": "",
+      "uniqueConstraints": {}
+    }
+  },
+  "version": "7",
+  "views": {}
+}

@@ -66,8 +66,8 @@ export const AppNavigation: FC<AppSidebarProps> = (props) => {
                   section.entities,
                   Array.map((entity) => (
                     <SideBarItem
-                      icon={createElement(getEntityIcon(entity.tag))}
-                      key={entity.tag}
+                      icon={createElement(getEntityIcon(entity))}
+                      key={`${entity.tag}-${entity.navItem.title}`}
                       title={entity.navItem.title}
                       url={entity.navItem.url}
                     />

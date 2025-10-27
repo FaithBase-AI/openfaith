@@ -63,19 +63,23 @@ const tokenApiGroup = HttpApiGroup.make('token')
   .addError(PcoServiceUnavailableError, { status: 503 })
   .addError(PcoGatewayTimeoutError, { status: 504 })
 
-const peopleApiGroup = toPcoHttpApiGroup(pcoEntityManifest.entities.Person)
+const personApiGroup = toPcoHttpApiGroup(pcoEntityManifest.entities.Person)
 const addressApiGroup = toPcoHttpApiGroup(pcoEntityManifest.entities.Address)
 const campusApiGroup = toPcoHttpApiGroup(pcoEntityManifest.entities.Campus)
 const phoneNumberApiGroup = toPcoHttpApiGroup(pcoEntityManifest.entities.PhoneNumber)
 const webhookApiGroup = toPcoHttpApiGroup(pcoEntityManifest.entities.WebhookSubscription)
+const groupApiGroup = toPcoHttpApiGroup(pcoEntityManifest.entities.Group)
+const teamApiGroup = toPcoHttpApiGroup(pcoEntityManifest.entities.Team)
 
 export const PcoApi = HttpApi.make('PCO')
-  .add(peopleApiGroup)
+  .add(personApiGroup)
   .add(addressApiGroup)
   .add(campusApiGroup)
   .add(phoneNumberApiGroup)
   .add(tokenApiGroup)
   .add(webhookApiGroup)
+  .add(groupApiGroup)
+  .add(teamApiGroup)
 
 const calculateRateLimitDelay = (
   response: HttpClientResponse.HttpClientResponse,

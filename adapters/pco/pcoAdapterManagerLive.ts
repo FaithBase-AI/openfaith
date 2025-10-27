@@ -20,6 +20,7 @@ import {
 } from '@openfaith/adapter-core/server'
 import { PcoHttpClient } from '@openfaith/pco/api/pcoApi'
 import type { PcoBaseEntity } from '@openfaith/pco/api/pcoResponseSchemas'
+import { pcoEntityManifest } from '@openfaith/pco/base/pcoEntityManifest'
 import {
   getEntitySchemaOpt,
   getOfEntityFilterFnForPcoSchemaOpt,
@@ -32,9 +33,9 @@ import type {
   pcoPersonPartialTransformer,
   pcoPersonTransformer,
 } from '@openfaith/pco/modules/people/pcoPersonSchema'
-import { pcoEntityManifest } from '@openfaith/pco/server'
 import {
   getAnnotationFromSchema,
+  getSchemaByEntityType,
   OfEntity,
   OfPartialTransformer,
   OfSkipEntity,
@@ -131,9 +132,7 @@ const normalizeResponse = <D extends PcoBaseEntity, I extends PcoBaseEntity>(res
 } => {
   const { included = [] } = response
 
-  const data = Array.isArray(response.data)
-    ? (response.data as ReadonlyArray<D>)
-    : ([response.data] as ReadonlyArray<D>)
+  const data = pipe(response.data, Array.ensure)
 
   // One of the main things we need to do with an adapter is pre filter out bad data before we walk down the
   // processPcoData path. For instance, PCO will give us back empty PhoneNumbers. They exist in PCO but
@@ -215,6 +214,16 @@ const createExternalLinks = (
 ): Array<ExternalLinkInput> =>
   pipe(
     entities,
+    // Filter out entities with invalid/placeholder IDs
+    Array.filter((entity) => {
+      if (!entity.id) {
+        return false
+      }
+      if (entity.id === '0') {
+        return false
+      }
+      return true
+    }),
     Array.map((entity) => ({
       adapter: 'pco' as const,
       createdAt: entity.attributes.created_at,
@@ -608,6 +617,16 @@ export const PcoAdapterManagerLive = Layer.effect(
 
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
 
+          if (!('create' in entityClient)) {
+            return yield* Effect.fail(
+              new AdapterEntityNotFoundError({
+                adapter: 'pco',
+                entityType,
+                message: `No create method found for ${entityType}`,
+              }),
+            )
+          }
+
           const createMethod = yield* Option.fromNullable(
             entityClient.create as typeof pcoClient.Person.create,
           ).pipe(
@@ -681,6 +700,16 @@ export const PcoAdapterManagerLive = Layer.effect(
           const { entityType, externalId, internalId, deleteEntity } = params
 
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
+
+          if (!('delete' in entityClient)) {
+            return yield* Effect.fail(
+              new AdapterEntityNotFoundError({
+                adapter: 'pco',
+                entityType,
+                message: `No delete method found for ${entityType}`,
+              }),
+            )
+          }
 
           const deleteMethod = yield* Option.fromNullable(
             entityClient.delete as typeof pcoClient.Person.delete,
@@ -1171,8 +1200,28 @@ export const PcoAdapterManagerLive = Layer.effect(
 
           const entityClient = yield* getEntityClient(pcoClient, entityType as PcoEntityClientKeys)
 
+          if (!('update' in entityClient)) {
+            return yield* Effect.fail(
+              new AdapterEntityNotFoundError({
+                adapter: 'pco',
+                entityType,
+                message: `No update method found for ${entityType}`,
+              }),
+            )
+          }
+
           const updateMethod = yield* Option.fromNullable(
             entityClient.update as typeof pcoClient.Person.update,
+          ).pipe(
+            Effect.mapError(
+              (error) =>
+                new AdapterEntityNotFoundError({
+                  adapter: 'pco',
+                  cause: error,
+                  entityType,
+                  message: `No update method found for ${entityType}`,
+                }),
+            ),
           )
 
           const transformedData = yield* transformPartialEntityDataE(entityType, data)
@@ -1398,22 +1447,45 @@ const extractRelationshipsEnhanced = (params: {
               relationshipAnnotations,
               Record.toEntries,
               Array.forEach(([relKey, targetType]) => {
-                const relData = entity.relationships?.[relKey]?.data
-                if (relData?.id) {
-                  const hasLink = pipe(externalLinkMap, HashMap.has(relData.id))
-
-                  if (!hasLink && !seenExternalIds.has(relData.id)) {
-                    // Use the discovered target type (e.g., 'campus' not 'primarycampus')
-                    seenExternalIds.add(relData.id)
-                    missingLinks.push({
-                      adapter: 'pco' as const,
-                      createdAt: undefined,
-                      entityType: targetType,
-                      externalId: relData.id,
-                      updatedAt: undefined,
-                    })
-                  }
+                // Check if target entity type is supported in OpenFaith
+                const targetSchemaOpt = getSchemaByEntityType(targetType)
+                if (Option.isNone(targetSchemaOpt)) {
+                  // Skip this relationship - target entity not supported in OpenFaith
+                  return
                 }
+
+                const relData = entity.relationships?.[relKey]?.data
+
+                if (!relData) {
+                  return
+                }
+
+                // Normalize to array - handle both single object and array relationships
+                const relDataItems = pipe(relData, Array.ensure)
+
+                pipe(
+                  relDataItems,
+                  Array.forEach((item) => {
+                    // Skip invalid/placeholder IDs like '0' which indicate no actual relationship
+                    if (!item.id || item.id === '0') {
+                      return
+                    }
+
+                    const hasLink = pipe(externalLinkMap, HashMap.has(item.id))
+
+                    if (!hasLink && !seenExternalIds.has(item.id)) {
+                      // Use the discovered target type (e.g., 'campus' not 'primarycampus')
+                      seenExternalIds.add(item.id)
+                      missingLinks.push({
+                        adapter: 'pco' as const,
+                        createdAt: undefined,
+                        entityType: targetType,
+                        externalId: item.id,
+                        updatedAt: undefined,
+                      })
+                    }
+                  }),
+                )
               }),
             )
           }),
@@ -1478,107 +1550,11 @@ const extractRelationships = (params: {
         return Option.none()
       }
 
-      // Extract relationship annotations from the schema
       const apiSchema = apiSchemaOpt.value
-      const ast = apiSchema.ast
 
-      const relationshipAnnotations: Record<string, string> =
-        ast._tag === 'TypeLiteral'
-          ? pipe(
-              ast.propertySignatures,
-              Array.findFirst((prop) => prop.name === 'relationships'),
-              Option.filterMap((relationshipsField) => {
-                const relType = relationshipsField.type
-
-                if (relType._tag === 'TypeLiteral') {
-                  return pipe(
-                    relType.propertySignatures,
-                    Array.filterMap((relProp) => {
-                      const relKey = relProp.name
-
-                      if (typeof relKey !== 'string') {
-                        return Option.none()
-                      }
-
-                      const ofEntityOpt = getAnnotationFromSchema<any>(OfEntity, relProp.type)
-
-                      return pipe(
-                        ofEntityOpt,
-                        Option.match({
-                          // Fallback: Extract type from schema structure (e.g., PhoneNumber -> Person)
-                          onNone: () => {
-                            // Navigate to the 'data.type' field if it exists
-                            // Structure: { person: { data: { type: 'Person' } } }
-                            if (relProp.type._tag === 'TypeLiteral') {
-                              const dataFieldOpt = pipe(
-                                relProp.type.propertySignatures,
-                                Array.findFirst((prop) => prop.name === 'data'),
-                              )
-
-                              if (Option.isSome(dataFieldOpt)) {
-                                const dataField = dataFieldOpt.value
-                                if (dataField.type._tag === 'TypeLiteral') {
-                                  const typeFieldOpt = pipe(
-                                    dataField.type.propertySignatures,
-                                    Array.findFirst((prop) => prop.name === 'type'),
-                                  )
-
-                                  if (Option.isSome(typeFieldOpt)) {
-                                    const typeField = typeFieldOpt.value
-                                    // Check if it's a literal type
-                                    if (
-                                      typeField.type._tag === 'Literal' &&
-                                      typeof typeField.type.literal === 'string'
-                                    ) {
-                                      const targetType = typeField.type.literal.toLowerCase()
-
-                                      return Option.some([relKey, targetType] as const)
-                                    }
-                                  }
-                                }
-                              }
-                            }
-
-                            return Option.none()
-                          },
-                          // When OfEntity annotation exists (e.g., Person -> Campus)
-                          onSome: (ofEntity) => {
-                            const titleOpt = getAnnotationFromSchema<string>(
-                              SchemaAST.TitleAnnotationId,
-                              ofEntity.ast,
-                            )
-
-                            return pipe(
-                              titleOpt,
-                              Option.match({
-                                onNone: () => {
-                                  const constructorName = ofEntity.constructor?.name
-                                  return Option.some([
-                                    relKey,
-                                    (constructorName
-                                      ? constructorName.toLowerCase()
-                                      : 'unknown') as string,
-                                  ] as const)
-                                },
-                                onSome: (title) => {
-                                  return Option.some([relKey, title] as const)
-                                },
-                              }),
-                            )
-                          },
-                        }),
-                      )
-                    }),
-                    Option.some,
-                  )
-                }
-
-                return Option.none()
-              }),
-              Option.getOrElse(() => []),
-              Record.fromEntries,
-            )
-          : {}
+      // Use discoverPcoRelationships instead of manual AST traversal
+      // This handles optional fields, arrays, and all the edge cases
+      const relationshipAnnotations = discoverPcoRelationships(entityType)
 
       return pipe(
         entities,
@@ -1590,8 +1566,15 @@ const extractRelationships = (params: {
               pipe(
                 relationshipAnnotations,
                 Record.toEntries,
-                Array.filterMap(([relKey, targetType]) => {
-                  return pipe(
+                Array.flatMap(([relKey, targetType]) => {
+                  // Check if target entity type is supported in OpenFaith
+                  const targetSchemaOpt = getSchemaByEntityType(targetType)
+                  if (Option.isNone(targetSchemaOpt)) {
+                    // Skip this relationship - target entity not supported in OpenFaith
+                    return []
+                  }
+
+                  const relDataOpt = pipe(
                     entity.relationships,
                     Option.fromNullable,
                     Option.flatMap((relationships) =>
@@ -1601,10 +1584,22 @@ const extractRelationships = (params: {
                         Option.flatMapNullable((x) => x.data),
                       ),
                     ),
-                    Option.flatMap((relData) =>
+                    Option.map(Array.ensure),
+                  )
+
+                  if (Option.isNone(relDataOpt)) {
+                    return []
+                  }
+
+                  const relData = relDataOpt.value
+
+                  // Create a relationship for each item in the array
+                  return pipe(
+                    relData,
+                    Array.filterMap((item) =>
                       pipe(
                         externalLinkMap,
-                        HashMap.get(relData.id),
+                        HashMap.get(item.id),
                         Option.map((targetLink) => {
                           // This is an id since we are passing in ids.
                           const { source, target } = Schema.decodeUnknownSync(EdgeDirectionSchema)({

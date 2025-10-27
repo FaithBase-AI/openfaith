@@ -80,6 +80,7 @@ export const ExternalSyncEntityWorkflowLayer = ExternalSyncEntityWorkflow.toLaye
           tokenKey,
         })
       }).pipe(
+        Effect.tapError((error) => Effect.log(`❌ Error syncing ${entity} entity`, error)),
         Effect.catchTags({
           AdapterEntityMethodNotFoundError: (error) =>
             Effect.fail(
